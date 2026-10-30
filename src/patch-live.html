@@ -1,8 +1,5 @@
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
 <style>
 /* Layout : barre de dossier en haut, onglets, puis une vue de travail pleine largeur (tableau dense, grilles de boîtiers) */
 :root {
@@ -22,8 +19,9 @@
   --danger: #a3201a;
   --danger-soft: #fbe2df;
   --ok: #1f7a4a;
-  --font-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Police système : San Francisco sur Mac et iPhone, Segoe UI sur PC, Roboto sur Android. Rien à télécharger, marche hors ligne */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", Consolas, "Roboto Mono", monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -41,7 +39,7 @@
 input[type="checkbox"], input[type="radio"], input[type="range"], progress { accent-color: var(--accent); }
 [hidden] { display: none !important; }
 body {
-  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.4;
+  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.4; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; letter-spacing: -0.005em;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 12px 40px;
 }
@@ -2607,7 +2605,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     let g = "";
     for (let x = 1; x < P.w; x++) g += `<line x1="${x}" y1="0" x2="${x}" y2="${P.d}" stroke="#e5e7eb" stroke-width="0.01"/>`;
     for (let y = 1; y < P.d; y++) g += `<line x1="0" y1="${y}" x2="${P.w}" y2="${y}" stroke="#e5e7eb" stroke-width="0.01"/>`;
-    const tf = Math.max(fs * 0.72, pxW ? (11 * W) / pxW : 0), font = `font-family="IBM Plex Sans Condensed, Arial Narrow, sans-serif" fill="#111827"`;
+    const tf = Math.max(fs * 0.72, pxW ? (11 * W) / pxW : 0), font = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827"`;
     // Libellés lisibles à taille fixe : au centre pour musiciens et texte (sur deux lignes si besoin), en coin pour un praticable, sous l'objet sinon
     const lines = (t, w) => { const words = t.split(/\s+/); if (t.length * tf * 0.5 <= w || words.length < 2) return [t]; const mid = Math.ceil(words.length / 2); return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")]; };
     const items = [...P.items].sort((a, b) => (a.kind === "riser" ? -1 : 0) - (b.kind === "riser" ? -1 : 0)).map((it) => {
@@ -2623,13 +2621,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }
       return `<g class="it${planSel === it.id && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}${txt}</g>`;
     }).join("");
-    const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" font-family="Arial, sans-serif" fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
+    const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"${forExport ? ` width="${Math.round(W * 100)}" height="${Math.round(H * 100)}"` : ""}><rect width="${W}" height="${H}" fill="#ffffff"/>${title}
       <g transform="translate(${m} ${m})"><rect width="${P.w}" height="${P.d}" fill="#fafaf9" stroke="#111827" stroke-width="0.05"/>${g}
-      <text x="${-m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
-      <text x="${P.w + m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
-      <text x="${P.w / 2}" y="${P.d + m * 0.55}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif">FACE · PUBLIC</text>
-      <text x="${P.w / 2}" y="${-0.12}" font-size="${fs * 0.7}" text-anchor="middle" fill="#9ca3af" font-family="Arial, sans-serif">lointain · ${P.w} × ${P.d} m</text>
+      <text x="${-m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
+      <text x="${P.w + m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
+      <text x="${P.w / 2}" y="${P.d + m * 0.55}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">FACE · PUBLIC</text>
+      <text x="${P.w / 2}" y="${-0.12}" font-size="${fs * 0.7}" text-anchor="middle" fill="#9ca3af" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">lointain · ${P.w} × ${P.d} m</text>
       ${items}</g></svg>`;
   }
   function renderPlan() {
@@ -2795,7 +2793,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // ---------- Impression ----------
   const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
-    .pr { font-family: "IBM Plex Sans", Arial, sans-serif; color: #111; font-size: 9.5pt; }
+    .pr { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #111; font-size: 9.5pt; }
     .pr .prhead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #111; padding-bottom: 4px; margin-bottom: 8px; }
     .pr .prhead b { font-size: 15pt; }
     .pr h1 { font-size: 13pt; margin: 0 0 6px; }
