@@ -3713,6 +3713,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (e && e.code === "auth") dbxPaint("auth");
       else if (e && e.status === 409 && /not_found/.test(e.summary)) { dbxPaint("lost"); }
       else { dbxPaint(navigator.onLine ? "err" : "offline"); dbx.retry = setTimeout(dbxSync, 8000); }
+      dbx.lastErr = dbxErr(e) || (e && (e.summary || e.message)) || "";
       if (window.__dbxlog) console.log("DBXERR", e && (e.summary || e.message));
     } finally {
       dbx.busy = false;
@@ -3752,7 +3753,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       return true;
     } catch (e) {
       dbxPaint("err");
-      notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : "Impossible d'ouvrir ce fichier depuis Dropbox.", true);
+      notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
       return false;
     }
   }
@@ -3766,8 +3767,20 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       dbxSetFile(up); dbxSetBase(snap);
       notice(`Enregistré dans Dropbox : ${esc(up.path_display || up.name)}. Les prochaines modifs s'y enregistrent toutes seules. « Dropbox › Copier le lien » pour l'envoyer à l'équipe.`);
       dbxStart();
-    } catch (e) { dbxPaint("err"); notice("L'enregistrement dans Dropbox n'a pas abouti.", true); }
+    } catch (e) { dbxPaint("err"); notice(dbxErrMsg("L'enregistrement dans Dropbox n'a pas abouti.", e), true); if (/missing_scope/.test((e && e.summary) || "")) dbxLogout(); }
   }
+  // Raison lisible d'une erreur Dropbox (et le code brut, pour le dépannage)
+  function dbxErr(e) {
+    const m = (e && (e.summary || e.message)) || "inconnue";
+    if (/missing_scope/.test(m)) return "Il manque une autorisation à la clé Dropbox. Dans l'onglet Permissions de l'appli Dropbox, coche files.metadata.read, files.content.read et files.content.write, clique sur Submit, puis reconnecte-toi ici (Dropbox › Se connecter à Dropbox).";
+    if (/insufficient_space/.test(m)) return "Ton Dropbox est plein.";
+    if (/no_write_permission/.test(m)) return "Tu n'as pas le droit d'écrire dans ce dossier (partagé en lecture seule ?).";
+    if (/disallowed_name|malformed_path/.test(m)) return "Ce nom de fichier n'est pas accepté par Dropbox.";
+    if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Dropbox ne répond pas (réseau, ou bloqueur de pub / extension du navigateur qui bloque dropboxapi.com).";
+    if (e && e.code === "auth") return "La connexion Dropbox a expiré : reconnecte-toi.";
+    return "";
+  }
+  const dbxErrMsg = (base, e) => { const t = dbxErr(e), raw = (e && (e.summary || e.message)) || ""; return `${base} ${esc(t)}${raw ? ` <small>(code : ${esc(raw)})</small>` : ""}`; };
   const dbxLink = () => dbxRedirect() + "#dbx=" + encodeURIComponent(dbx.file.id);
 
   // Fenêtre de navigation dans Dropbox
@@ -3789,7 +3802,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const es = (await dbxListFolder(dlgPath)).filter((e) => e[".tag"] === "folder" || (mode === "open" && /\.xlsx$/i.test(e.name)));
       es.sort((a, b) => (a[".tag"] === b[".tag"] ? a.name.localeCompare(b.name, "fr") : a[".tag"] === "folder" ? -1 : 1));
       list.innerHTML = es.map((e) => e[".tag"] === "folder" ? `<button type="button" class="dbxit" data-dpath="${esc(e.path_display || e.path_lower)}"><span>📁 ${esc(e.name)}</span></button>` : `<button type="button" class="dbxit" data-dfile="${esc(e.id)}"><span>📄 ${esc(e.name)}</span><small>${esc((e.server_modified || "").slice(0, 10))}</small></button>`).join("") || `<p class="hint">${mode === "open" ? "Aucun dossier ni fichier .xlsx ici." : "Aucun sous-dossier."}</p>`;
-    } catch (e) { list.innerHTML = `<p class="hint warn">Impossible de lire ce dossier Dropbox.</p>`; }
+    } catch (e) { list.innerHTML = `<p class="hint warn">${dbxErrMsg("Impossible de lire ce dossier Dropbox.", e)}</p>`; }
   }
   // Bouton et état dans l'en-tête
   const DBX_TXT = { ok: "à jour", sync: "enregistrement…", pending: "modifié…", offline: "hors ligne, modifs en attente", err: "erreur, nouvel essai bientôt", auth: "reconnecte-toi", lost: "fichier introuvable" };
@@ -3802,7 +3815,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     s.hidden = !dbx.file;
     if (dbx.file) {
       const st = dbx.status || "ok", t = dbx.lastIn && st === "ok" ? ` · modifs de l'équipe reçues à ${dbx.lastIn.toTimeString().slice(0, 5)}` : "";
-      s.className = "dbxstate " + st; s.textContent = `☁ ${dbx.file.name} · ${DBX_TXT[st] || DBX_TXT.ok}${t}`; s.title = dbx.file.path;
+      s.className = "dbxstate " + st; s.textContent = `☁ ${dbx.file.name} · ${DBX_TXT[st] || DBX_TXT.ok}${t}`; s.title = dbx.file.path + (st === "err" && dbx.lastErr ? "\n" + dbx.lastErr : "");
     }
   }
   function dbxMenu(btn) {
