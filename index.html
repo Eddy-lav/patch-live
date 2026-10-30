@@ -82,6 +82,40 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
 .notice { margin-top: 10px; padding: 8px 12px; border-radius: 4px; background: var(--accent-soft); border: 1px solid var(--accent); font-size: 14px; }
 .notice.err { background: var(--danger-soft); border-color: var(--danger); }
 .notice ul { margin: 4px 0 0; padding-left: 18px; }
+/* Couverture façon Notion : un bandeau image ou motif en haut du dossier */
+.cover { position: relative; margin: -12px calc(-1 * max(16px, env(safe-area-inset-right, 0px))) 10px calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+.cover-img { height: 200px; background: var(--surface-2) center 50% / cover no-repeat; }
+.cover.empty .cover-img { display: none; }
+.cover-tools { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.15s; }
+.cover:hover .cover-tools, .cover:focus-within .cover-tools, .cover.moving .cover-tools { opacity: 1; }
+.cover .cbtn { border: 0; border-radius: 6px; padding: 5px 10px; font-size: 13px; background: rgb(255 255 255 / 0.88); color: #2b2b2b; box-shadow: 0 1px 3px rgb(0 0 0 / 0.18); backdrop-filter: blur(4px); }
+.cover .cbtn:hover { background: #fff; }
+.cover .cbtn.add, .cover .cbtn.done { display: none; }
+.cover.empty .cbtn { display: none; }
+.cover.empty .cbtn.add { display: inline-block; }
+.cover.moving .cbtn { display: none; }
+.cover.moving .cbtn.done { display: inline-block; }
+.cover.moving .cover-img { cursor: ns-resize; touch-action: none; }
+.cover.moving .cover-img::after { content: "Glisse l'image vers le haut ou le bas"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 5px 12px; border-radius: 6px; background: rgb(0 0 0 / 0.55); color: #fff; font-size: 13px; pointer-events: none; }
+.cover.empty { margin-bottom: 0; min-height: 30px; }
+.cover.empty .cover-tools { position: static; justify-content: flex-start; padding: 6px max(16px, env(safe-area-inset-left, 0px)) 0; }
+.cover.empty .cbtn.add { background: transparent; box-shadow: none; color: var(--muted); padding: 3px 6px; }
+.cover.empty .cbtn.add:hover { background: var(--surface-2); color: var(--ink); }
+.cover-pick { position: absolute; z-index: 75; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(100% - 4px); width: min(460px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.25); padding: 12px; }
+.cover.empty .cover-pick { left: max(16px, env(safe-area-inset-left, 0px)); right: auto; top: 100%; }
+.cover-pick h4 { margin: 0 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.cover-pick .cgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.cover-pick .cg { height: 64px; border-radius: 6px; border: 2px solid transparent; background: center / cover no-repeat; position: relative; }
+.cover-pick .cg span { position: absolute; left: 5px; bottom: 5px; font-size: 11px; color: #fff; background: rgb(0 0 0 / 0.5); padding: 1px 6px; border-radius: 4px; }
+.cover-pick .cg.on, .cover-pick .cg:hover { border-color: var(--accent); }
+.cover-pick .crow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .cover-img { height: 120px; }
+  .cover-tools { opacity: 1; bottom: 8px; }
+  .cover .cbtn { font-size: 12px; padding: 4px 8px; }
+  .cover-pick .cgrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media print { .cover { display: none; } }
 .btn.themebtn { min-width: 38px; justify-content: center; font-size: 17px; line-height: 1; }
 .notice li .btn.small { margin-left: 6px; padding: 1px 8px; }
 /* Dropbox : état du fichier, menu, fenêtre de navigation */
@@ -575,6 +609,18 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
 }
 </style>
 
+<div id="cover" class="cover empty">
+  <div id="coverImg" class="cover-img" aria-hidden="true"></div>
+  <div class="cover-tools">
+    <button type="button" class="cbtn add" data-cover="add">＋ Ajouter une couverture</button>
+    <button type="button" class="cbtn" data-cover="change">Changer la couverture</button>
+    <button type="button" class="cbtn" data-cover="move">Repositionner</button>
+    <button type="button" class="cbtn" data-cover="remove">Retirer</button>
+    <button type="button" class="cbtn done" data-cover="done">Enregistrer la position</button>
+  </div>
+  <div id="coverPick" class="cover-pick" role="dialog" aria-label="Choisir une couverture" hidden></div>
+  <input id="coverFile" type="file" accept="image/*" hidden>
+</div>
 <header class="top">
   <div class="doc-fields">
     <div class="field" style="flex: 1 1 260px; min-width: 0;">
@@ -2809,6 +2855,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // ---------- Impression ----------
   const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
+    .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .pr { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #111; font-size: 9.5pt; }
     .pr .prhead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #111; padding-bottom: 4px; margin-bottom: 8px; }
     .pr .prhead b { font-size: 15pt; }
@@ -2868,7 +2915,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function printHtml(parts) {
     const d = state.dossier, today = new Date().toLocaleDateString("fr-FR");
     const head = `<div class="prhead"><b>${esc(d.nom)}</b><span>${esc([d.type, d.version, d.lieu].filter(Boolean).join(" · "))} · imprimé le ${today}</span></div>`;
-    const body = parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](); return h ? `<div class="part">${head}<h1>${esc(t)}</h1>${h}</div>` : ""; }).join("");
+    const cov = coverCss(d.cover);
+    let first = true;
+    const body = parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](); if (!h) return ""; const band = first && cov ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
     render();
     return `<style>${PRINT_CSS}</style><div class="pr">${body}</div>`;
   }
@@ -2906,6 +2955,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
 
   // ---------- Rendu général ----------
   function renderHeader() {
+    renderCover();
     $("#docName").value = state.dossier.nom;
     $("#docType").value = state.dossier.type;
     $("#docVersion").value = state.dossier.version;
@@ -3020,6 +3070,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     info.addRow(["Fichier créé par l'appli Patch Live. Il se lit et s'imprime sans l'appli. Dans le master patch, tu peux corriger les textes et les entrées ; l'appli vérifie tout à la réouverture."]).getCell(1).alignment = { wrapText: true };
     info.mergeCells(`A${info.rowCount}:B${info.rowCount}`);
     info.getRow(info.rowCount).height = 45;
+    const cv = d.cover && d.cover.img && d.cover.img.match(/^data:image\/(jpeg|png);base64,(.+)$/);
+    if (cv) { const id = wb.addImage({ base64: cv[2], extension: cv[1] }); info.addImage(id, { tl: { col: 0, row: info.rowCount + 1 }, ext: { width: 640, height: 200 } }); }
 
     const cols = srCols();
     const m = wb.addWorksheet("Master patch", { views: [{ state: "frozen", ySplit: 2 }] });
@@ -3909,6 +3961,64 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     dbxStart();
   }
 
+  // ---------- Couverture du dossier (façon Notion) ----------
+  // Modèles dessinés (aucune image à télécharger) ou image importée, réduite et gardée dans le dossier, donc partagée avec l'équipe
+  const svgUri = (svg) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  const beams = () => { let g = ""; [[180, "#fce694"], [520, "#c1dbe3"], [800, "#f6feaa"], [1080, "#c1dbe3"], [1420, "#fce694"]].forEach(([x, c], i) => { g += `<polygon points="${x - 12},0 ${x + 12},0 ${x + 190 - i * 30},260 ${x - 190 + i * 30},260" fill="${c}" opacity="0.22"/><circle cx="${x}" cy="5" r="9" fill="${c}"/>`; }); let crowd = ""; for (let x = 10; x < 1600; x += 30) crowd += `<circle cx="${x + (x % 3) * 4}" cy="${258 - (x % 5) * 3}" r="${13 + (x % 4) * 2}" fill="#151718"/>`; return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 260" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2021"/><stop offset="1" stop-color="#373737"/></linearGradient></defs><rect width="1600" height="260" fill="url(#b)"/>${g}<rect y="196" width="1600" height="5" fill="#151718" opacity="0.6"/>${crowd}</svg>`; };
+  const faders = () => { let g = ""; for (let i = 0; i < 40; i++) { const x = 30 + i * 40, h = 60 + ((i * 37) % 200), c = i % 8 === 7 ? "#fce694" : i % 4 === 3 ? "#c7dfc5" : "#c1dbe3"; g += `<rect x="${x}" y="60" width="4" height="170" rx="2" fill="#4b5052"/><rect x="${x - 10}" y="${222 - (h * 0.6)}" width="24" height="12" rx="3" fill="${c}"/><circle cx="${x + 2}" cy="30" r="9" fill="none" stroke="${c}" stroke-width="3"/>`; } return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 260" preserveAspectRatio="xMidYMid slice"><rect width="1600" height="260" fill="#2b2d2e"/>${g}</svg>`; };
+  const road = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 260" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c1dbe3"/><stop offset="0.7" stop-color="#f6feaa"/><stop offset="1" stop-color="#fce694"/></linearGradient></defs><rect width="1600" height="260" fill="url(#s)"/><path d="M0 180 Q 300 130 600 170 T 1200 155 T 1600 165 V260 H0Z" fill="#c7dfc5"/><path d="M-20 250 C 400 190, 700 235, 1000 190 S 1500 160, 1620 172" fill="none" stroke="#373737" stroke-width="16" stroke-linecap="round"/><path d="M-20 250 C 400 190, 700 235, 1000 190 S 1500 160, 1620 172" fill="none" stroke="#fce694" stroke-width="3" stroke-dasharray="26 22"/></svg>`;
+  const COVERS = [
+    ["scene", "Scène", () => svgUri(beams())], ["console", "Console", () => svgUri(faders())], ["route", "Sur la route", () => svgUri(road())],
+    ["ciel", "Ciel", () => "linear-gradient(120deg, #c1dbe3, #c7dfc5)"], ["citron", "Citron", () => "linear-gradient(120deg, #f6feaa, #fce694)"], ["graphite", "Graphite", () => "linear-gradient(120deg, #2b2d2e, #373737 55%, #56605f)"]
+  ];
+  const coverCss = (c) => { if (!c) return ""; if (c.img) return `url("${c.img}")`; const p = COVERS.find((x) => x[0] === c.preset); return p ? p[2]() : ""; };
+  function renderCover() {
+    const c = state.dossier.cover, el = $("#cover"), css = coverCss(c);
+    el.classList.toggle("empty", !css);
+    $("#coverImg").style.backgroundImage = css;
+    $("#coverImg").style.backgroundPosition = `center ${c && c.pos != null ? c.pos : 50}%`;
+  }
+  function coverPicker() {
+    const pk = $("#coverPick"); if (!pk.hidden) { pk.hidden = true; return; }
+    const cur = state.dossier.cover || {};
+    pk.innerHTML = `<h4>Modèles</h4><div class="cgrid">${COVERS.map(([id, n, f]) => `<button type="button" class="cg${!cur.img && cur.preset === id ? " on" : ""}" data-cpreset="${id}" style="background-image:${esc(f())}" aria-label="${esc(n)}"><span>${esc(n)}</span></button>`).join("")}</div>
+      <h4>Ton image</h4><div class="crow"><button type="button" class="btn small primary" data-cover="upload">Importer une image…</button><span class="hint">Affiche, photo de la salle ou de l'équipe. Elle est réduite et rangée dans le dossier, donc toute l'équipe la voit.</span></div>`;
+    pk.hidden = false;
+  }
+  function setCover(c) { state.dossier.cover = c; commit(false); renderCover(); }
+  // Image importée : redimensionnée (1400 px de large max) et compressée pour garder le fichier léger
+  async function coverUpload(file) {
+    try {
+      const url = URL.createObjectURL(file), img = new Image();
+      await new Promise((ok, ko) => { img.onload = ok; img.onerror = ko; img.src = url; });
+      const k = Math.min(1, 1400 / img.naturalWidth), cv = document.createElement("canvas");
+      cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      let q = 0.8, data = cv.toDataURL("image/jpeg", q);
+      while (data.length > 260000 && q > 0.4) { q -= 0.1; data = cv.toDataURL("image/jpeg", q); }
+      setCover({ img: data, pos: 50 });
+    } catch (e) { notice("Cette image n'a pas pu être lue. Essaie un JPEG ou un PNG.", true); }
+  }
+  function coverBind() {
+    const el = $("#cover");
+    el.addEventListener("click", (e) => {
+      const p = e.target.closest("[data-cpreset]"); if (p) { $("#coverPick").hidden = true; setCover({ preset: p.dataset.cpreset, pos: 50 }); return; }
+      const b = e.target.closest("[data-cover]"); if (!b) return;
+      const a = b.dataset.cover;
+      if (a === "add" || a === "change") coverPicker();
+      if (a === "upload") { $("#coverPick").hidden = true; $("#coverFile").click(); }
+      if (a === "remove") { $("#coverPick").hidden = true; setCover(null); }
+      if (a === "move") { $("#coverPick").hidden = true; el.classList.add("moving"); }
+      if (a === "done") { el.classList.remove("moving"); commit(false); }
+    });
+    $("#coverFile").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) coverUpload(f); e.target.value = ""; });
+    document.addEventListener("click", (e) => { const pk = $("#coverPick"); if (!pk.hidden && !e.target.closest("#coverPick, [data-cover]")) pk.hidden = true; });
+    // Repositionner : glisser l'image verticalement
+    let drag = null;
+    $("#coverImg").addEventListener("pointerdown", (e) => { if (!el.classList.contains("moving")) return; const c = state.dossier.cover; drag = { y: e.clientY, pos: c && c.pos != null ? c.pos : 50, h: e.currentTarget.offsetHeight }; e.currentTarget.setPointerCapture(e.pointerId); });
+    $("#coverImg").addEventListener("pointermove", (e) => { if (!drag) return; const c = state.dossier.cover; if (!c) return; c.pos = Math.max(0, Math.min(100, Math.round(drag.pos - ((e.clientY - drag.y) / drag.h) * 100))); renderCover(); });
+    $("#coverImg").addEventListener("pointerup", () => { drag = null; });
+  }
   // Thème clair / sombre choisi à la main (sinon il suit l'appareil) ; gardé dans ce navigateur
   const THEMES = [["", "◐", "automatique (suit l'appareil)"], ["light", "☀", "clair"], ["dark", "☾", "sombre"]];
   function applyTheme(t) {
@@ -3930,6 +4040,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   learnDossier(state);
   bind();
   record();
+  coverBind();
   view = ""; setView(homeView(), true);
   // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
   try { history.replaceState({ v: view, base: true }, ""); history.pushState({ v: view }, ""); } catch (e) { /* ignore */ }
