@@ -3787,7 +3787,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const m = (e && (e.summary || e.message)) || "inconnue";
     if (/missing_scope/.test(m)) return "Il manque une autorisation à la clé Dropbox. Dans l'onglet Permissions de l'appli Dropbox, coche files.metadata.read, files.content.read et files.content.write, clique sur Submit, puis reconnecte-toi ici (Dropbox › Se connecter à Dropbox).";
     if (/insufficient_space/.test(m)) return "Ton Dropbox est plein.";
-    if (/no_write_permission/.test(m)) return "Tu n'as pas le droit d'écrire dans ce dossier (partagé en lecture seule ?).";
+    if (/no_write_permission/.test(m)) return "Dropbox refuse l'écriture à cet endroit : soit c'est la racine d'un compte Dropbox d'équipe (entre d'abord dans ton dossier ou un dossier partagé), soit le dossier est partagé en lecture seule. Choisis un autre dossier.";
     if (/disallowed_name|malformed_path/.test(m)) return "Ce nom de fichier n'est pas accepté par Dropbox.";
     if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return "Dropbox ne répond pas (réseau, ou bloqueur de pub / extension du navigateur qui bloque dropboxapi.com).";
     if (e && e.code === "auth") return "La connexion Dropbox a expiré : reconnecte-toi.";
