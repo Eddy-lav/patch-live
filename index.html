@@ -84,6 +84,7 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
 .notice { margin-top: 10px; padding: 8px 12px; border-radius: 4px; background: var(--accent-soft); border: 1px solid var(--accent); font-size: 14px; }
 .notice.err { background: var(--danger-soft); border-color: var(--danger); }
 .notice ul { margin: 4px 0 0; padding-left: 18px; }
+.btn.themebtn { min-width: 38px; justify-content: center; font-size: 17px; line-height: 1; }
 .notice li .btn.small { margin-left: 6px; padding: 1px 8px; }
 /* Dropbox : état du fichier, menu, fenêtre de navigation */
 .dbxstate { display: inline-block; vertical-align: middle; margin-left: 6px; padding: 1px 8px; text-transform: none; letter-spacing: 0; max-width: min(60vw, 420px); border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -515,6 +516,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   header.top .actions .btn { padding: 6px 6px; font-size: 13px; min-height: 36px; }
   /* Avec Dropbox, l'ouverture d'un fichier local passe au second plan sur téléphone */
   body.dbx header.top .actions .file-btn { display: none; }
+  /* Le bouton de thème passe en haut à droite, au niveau du libellé « Dossier » */
+  header.top { position: relative; }
+  header.top .actions .themebtn { position: absolute; top: 0; right: 0; min-height: 26px; padding: 1px 8px; font-size: 15px; }
   .field > span { font-size: 10px; }
   .doc-name { font-size: 18px; padding: 4px 8px; }
   /* Onglets plus serrés */
@@ -594,6 +598,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     <button id="undoBtn" class="btn" type="button" title="Annuler (Cmd/Ctrl+Z)" disabled aria-label="Annuler">↶<span class="lg"> Annuler</span></button>
     <button id="redoBtn" class="btn" type="button" title="Rétablir (Maj+Cmd+Z ou Ctrl+Y)" disabled aria-label="Rétablir">↷<span class="lg"> Rétablir</span></button>
     <button id="newBtn" class="btn" type="button">Nouveau<span class="lg"> dossier</span></button>
+    <button id="themeBtn" class="btn themebtn" type="button" title="Thème : automatique (suit l'appareil)" aria-label="Thème : automatique">◐</button>
   </div>
 </header>
 <div id="dbxMenu" class="dbxmenu" role="menu" hidden></div>
@@ -3901,6 +3906,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     dbxStart();
   }
 
+  // Thème clair / sombre choisi à la main (sinon il suit l'appareil) ; gardé dans ce navigateur
+  const THEMES = [["", "◐", "automatique (suit l'appareil)"], ["light", "☀", "clair"], ["dark", "☾", "sombre"]];
+  function applyTheme(t) {
+    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    const th = THEMES.find((x) => x[0] === t) || THEMES[0], b = $("#themeBtn");
+    b.textContent = th[1]; b.title = "Thème : " + th[2] + " · clic pour changer"; b.setAttribute("aria-label", "Thème : " + th[2]);
+  }
+  let theme = ""; try { theme = localStorage.getItem("patch-live-theme") || ""; } catch (e) { /* ignore */ }
+  applyTheme(theme);
+  $("#themeBtn").addEventListener("click", () => {
+    theme = THEMES[(THEMES.findIndex((x) => x[0] === theme) + 1) % THEMES.length][0];
+    try { localStorage.setItem("patch-live-theme", theme); } catch (e) { /* ignore */ }
+    applyTheme(theme);
+    notice(`Thème ${(THEMES.find((x) => x[0] === theme) || THEMES[0])[2]}.`);
+  });
   loadLib();
   state = restore() || exemple();
   state.sorties = state.sorties || [];
