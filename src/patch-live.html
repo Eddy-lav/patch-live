@@ -3199,11 +3199,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     [18, 26, 80].forEach((w, i) => { jr.getColumn(i + 1).width = w; });
     [...state.journal].reverse().forEach((j) => jr.addRow([j.t.replace("T", " ").slice(0, 16), j.lieu, j.txt]));
 
-    // Feuille cachée : l'état complet, pour relire le fichier sans perte
-    const app = wb.addWorksheet("_appli", { state: "veryHidden" });
+    // Dernière feuille : l'état complet, pour relire le fichier sans perte. Elle reste visible :
+    // Numbers (et d'autres tableurs) suppriment les feuilles cachées quand on réenregistre en Excel
+    const app = wb.addWorksheet("_appli", { properties: { tabColor: { argb: "FF9AA3AD" } } });
     const json = JSON.stringify({ ...state, exemple: false, bibliotheque: lib, savedAt: new Date().toISOString() });
     app.getCell(1, 1).value = "patch-live";
     app.getCell(1, 2).value = 1;
+    app.getCell(1, 3).value = "Données de l'appli Patch Live : ne pas modifier ni supprimer cette feuille. Les corrections se font dans le master patch.";
+    app.getCell(1, 3).font = { bold: true, color: { argb: "FFA3201A" } };
+    app.getColumn(1).width = 12; app.getColumn(3).width = 90;
     for (let i = 0, r = 2; i < json.length; i += 30000, r++) app.getCell(r, 1).value = json.slice(i, i + 30000);
     return wb;
   }
@@ -3232,10 +3236,24 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buf);
     const app = wb.getWorksheet("_appli");
-    if (!app || app.getCell(1, 1).value !== "patch-live") { const e = new Error("pas-appli"); e.code = "pas-appli"; throw e; }
+    const raw = (c) => { const v = c.value; return typeof v === "string" ? v : v && v.richText ? v.richText.map((t) => t.text).join("") : ""; };
+    let next;
+    if (!app || raw(app.getCell(1, 1)) !== "patch-live") {
+      // Fichier réenregistré par Numbers ou un autre tableur : la feuille de données a disparu.
+      // Si c'est le dossier ouvert dans l'appli (mêmes ID appli dans le master), on repart de lui et on reprend les corrections du master.
+      const ws = wb.getWorksheet("Master patch"), ids = [];
+      if (ws) { const head = ws.getRow(2).values.map((v) => (v == null ? "" : String(v))), ic = head.indexOf("ID appli"); if (ic > 0) for (let r = 3; r <= ws.rowCount; r++) { const t = cellText(ws.getRow(r).getCell(ic)); if (t) ids.push(t); } }
+      const known = new Set(state.lignes.map((l) => l.id)), hit = ids.filter((id) => known.has(id)).length;
+      if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; throw e; }
+      next = JSON.parse(JSON.stringify(state));
+      const report = reconcile(next, ws);
+      report.problems.unshift("Ce fichier a perdu les données de l'appli (réenregistré par Numbers ou un autre tableur) : le dossier a été repris depuis cet appareil, avec les corrections du master patch. Les modifs faites dans les autres feuilles ne sont pas reprises.");
+      next.sorties = next.sorties || []; learnDossier(next); next.exemple = false;
+      return { next, report };
+    }
     let json = "";
-    for (let r = 2; r <= app.rowCount; r++) { const v = app.getCell(r, 1).value; if (typeof v === "string") json += v; }
-    const next = JSON.parse(json);
+    for (let r = 2; r <= app.rowCount; r++) json += raw(app.getCell(r, 1));
+    next = JSON.parse(json);
     if (!next || next.v !== 1) throw new Error("format");
     const report = reconcile(next, wb.getWorksheet("Master patch"));
     next.sorties = next.sorties || [];
@@ -3259,6 +3277,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       record(); persist(); render();
       notice(`Dossier « ${esc(state.dossier.nom)} » ouvert.` + openReport(report), report.problems.length > 0);
     } catch (e) {
+      if (e && e.code === "autre-dossier") { notice("Ce fichier a perdu les données de l'appli (il a sans doute été réenregistré par Numbers ou un autre tableur). On ne peut le récupérer que sur l'appareil où ce dossier est encore ouvert dans l'appli : ouvre-le depuis cet appareil.", true); return; }
       if (e && e.code === "pas-appli") { notice("Ce fichier n'a pas été créé par l'appli. Pour l'instant, l'appli ne relit que ses propres fichiers ; l'import de tes anciens dossiers Excel viendra ensuite.", true); return; }
       notice("Impossible de lire ce fichier. Vérifie qu'il s'agit bien d'un .xlsx enregistré par l'appli.", true);
     }
