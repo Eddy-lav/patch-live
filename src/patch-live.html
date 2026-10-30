@@ -6,34 +6,37 @@
 <style>
 /* Layout : barre de dossier en haut, onglets, puis une vue de travail pleine largeur (tableau dense, grilles de boîtiers) */
 :root {
-  --bg: #eceef1;
+  /* Palette : ink black #050517, spicy paprika #cf5c36, apricot cream #efc88b, vanilla custard #f4e3b2, alabaster grey #d3d5d7 */
+  --bg: #e9eaeb;
   --surface: #ffffff;
-  --surface-2: #f5f6f8;
-  --ink: #15181c;
-  --muted: #5b636d;
-  --line: #d3d8de;
-  --accent: #a85d00;
-  --accent-ink: #ffffff;
-  --accent-soft: #fbe9cf;
-  --danger: #b42318;
-  --danger-soft: #fde8e6;
+  --surface-2: #faf5e8;
+  --ink: #050517;
+  --muted: #4a4a5c;
+  --line: #d3d5d7;
+  --accent: #cf5c36;
+  --accent-ink: #050517;
+  --accent-soft: #f4e3b2;
+  --apricot: #efc88b;
+  --danger: #a3201a;
+  --danger-soft: #fbe2df;
   --ok: #1f7a4a;
   --font-ui: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111316; --surface: #1a1d22; --surface-2: #22262c; --ink: #e8eaed; --muted: #9aa3ad;
-    --line: #333941; --accent: #f0a432; --accent-ink: #1a1206; --accent-soft: #3a2a12;
+    --bg: #050517; --surface: #0e0e24; --surface-2: #16162f; --ink: #f1ede2; --muted: #a3a3b5;
+    --line: #2a2a45; --accent: #e3764f; --accent-ink: #050517; --accent-soft: #3a1d14; --apricot: #efc88b;
     --danger: #ff8a80; --danger-soft: #3b1d1b; --ok: #6fd39b; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #111316; --surface: #1a1d22; --surface-2: #22262c; --ink: #e8eaed; --muted: #9aa3ad;
-  --line: #333941; --accent: #f0a432; --accent-ink: #1a1206; --accent-soft: #3a2a12;
+  --bg: #050517; --surface: #0e0e24; --surface-2: #16162f; --ink: #f1ede2; --muted: #a3a3b5;
+  --line: #2a2a45; --accent: #e3764f; --accent-ink: #050517; --accent-soft: #3a1d14; --apricot: #efc88b;
   --danger: #ff8a80; --danger-soft: #3b1d1b; --ok: #6fd39b; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+input[type="checkbox"], input[type="radio"], input[type="range"], progress { accent-color: var(--accent); }
 [hidden] { display: none !important; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.4;
@@ -258,7 +261,7 @@ table.rack tr.hit td { background: var(--accent-soft); }
 .zoom { display: inline-flex; align-items: center; gap: 4px; }
 .zoom .mono { font-size: 13px; min-width: 46px; text-align: center; }
 #planSvg .it { cursor: grab; }
-#planSvg .it.on > .shape { stroke: #b45309; stroke-width: 0.06; }
+#planSvg .it.on > .shape { stroke: #cf5c36; stroke-width: 0.06; }
 .plan-side h3 { margin: 0 0 8px; font-size: 16px; }
 .plan-side label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 .plan-side input, .plan-side select { width: 100%; }
@@ -332,7 +335,7 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .spxrf .det { color: var(--muted); }
 .gauge { display: block; height: 10px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
 .gauge span { display: block; height: 100%; background: var(--accent); }
-.gauge.warn span { background: #c98a00; }
+.gauge.warn span { background: #d9a248; }
 .gauge.over span { background: var(--danger, #b3261e); }
 @media (max-width: 760px) { .spxrf { grid-template-columns: 40px 1fr 64px; } .spxrf .det { grid-column: 2 / -1; } }
 .spxmode { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -2588,7 +2591,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const K = PLAN_KINDS[it.kind], w = it.w, h = it.h;
     if (K.round) return `<ellipse class="shape" cx="${w / 2}" cy="${h / 2}" rx="${w / 2}" ry="${h / 2}" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
     if (K.wedge) return `<polygon class="shape" points="0,${h} ${w},${h} ${w * 0.85},0 ${w * 0.15},0" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
-    if (it.kind === "texte") return `<rect class="shape" width="${w}" height="${h}" fill="transparent" stroke="${planSel === it.id ? "#b45309" : "none"}" stroke-width="0.03" stroke-dasharray="0.08"/>`;
+    if (it.kind === "texte") return `<rect class="shape" width="${w}" height="${h}" fill="transparent" stroke="${planSel === it.id ? "#cf5c36" : "none"}" stroke-width="0.03" stroke-dasharray="0.08"/>`;
     return `<rect class="shape" width="${w}" height="${h}" rx="0.04" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
   }
   function planSvgMarkup(forExport, pxW) {
