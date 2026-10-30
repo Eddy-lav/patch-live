@@ -678,7 +678,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <div class="toolbar">
     <select id="hfAddModel" aria-label="Modèle à ajouter"></select>
     <button id="hfAdd" class="btn" type="button">+ Groupe HF</button>
-    <span class="hint">Un tableau par modèle d'appareil, comme sur le dossier Aya : micros (émetteurs), ears (récepteurs), Spectera SEK… Le nom du modèle se modifie directement. Clic sur le N° pour sélectionner des lignes (Maj+clic : plage) et leur donner la même valeur.</span>
+    <span class="hint">Un tableau par modèle d'appareil : micros (émetteurs), ears (récepteurs), Spectera SEK… Le nom du modèle se modifie directement. Clic sur le N° pour sélectionner des lignes (Maj+clic : plage) et leur donner la même valeur.</span>
   </div>
   <div id="hfOut" class="hfgrid"></div>
 </section>
@@ -1179,7 +1179,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#hfAddModel").innerHTML = [["tx", "Émetteurs (micros HF)"], ["iem", "Récepteurs (ears HF)"], ["spx", "Spectera (SEK et micros main)"]].map(([kk, lab]) => `<optgroup label="${lab}">${HF_MODELS.map(([m, k, t], i) => (k === kk || (kk === "spx" && k === "spxm") ? `<option value="${i}">${esc(t)}</option>` : "")).join("")}</optgroup>`).join("");
     if (keep) $("#hfAddModel").value = keep;
     if (!hfState().length) { out.innerHTML = `<div class="empty-state">Aucun groupe HF. Choisis un modèle et clique « + Groupe HF ».</div>`; return; }
-    // Comme sur le dossier Aya : une colonne pour les micros, une pour les Spectera, une pour les ears
+    // Une colonne pour les micros, une pour les Spectera, une pour les ears
     const kindOf = (g) => (g.kind === "spxm" ? "spx" : HF_KINDS[g.kind] ? g.kind : "tx");
     // Spectera sur toute la largeur (plus de colonnes), avec les ressources au-dessus
     const spx = hfState().filter((g) => kindOf(g) === "spx");
@@ -3100,7 +3100,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     page(mat, false);
 
     if (hfState().length) {
-      // Comme l'onglet DISTRIBUTION RF du dossier Aya : micros, Spectera et ears côte à côte, groupes empilés
+      // Micros, Spectera et ears côte à côte, groupes empilés
       const hs = wb.addWorksheet("Distribution HF");
       hs.addRow([`Distribution HF · ${titre}`]).font = { bold: true, size: 14 };
       let col = 1;
