@@ -295,6 +295,9 @@ td.tot { font-family: var(--font-mono); color: var(--muted); text-align: center;
 .rack-occ h3 { margin: 0; font-size: 14px; }
 
 html { overflow-anchor: none; }
+/* Un défilement vers la gauche ne doit pas déclencher « Précédent » (geste du trackpad, Chrome / Edge) */
+html, body { overscroll-behavior-x: none; }
+.table-wrap, .hftw, .kb, .tbl, nav.tabs { overscroll-behavior-x: contain; }
 .spxp { margin-bottom: 14px; border-color: var(--accent); }
 .spxph { display: flex; gap: 8px 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 .spxph h3 { margin: 0; font-size: 16px; }
@@ -2962,8 +2965,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     document.querySelectorAll("section .hint, .panel > p.hint, .spxres > p.hint").forEach((h) => { if (h.id === "searchHint") return; h.classList.toggle("clamp", phone.matches && h.textContent.length > 110); });
   }
   document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
-  function setView(v) {
+  // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
+  function setView(v, fromHistory) {
     if (v === "master" && !showMaster) v = "racks";
+    if (!fromHistory && view && v !== view) { try { history.pushState({ v }, ""); } catch (e) { /* ignore */ } }
     view = v;
     $('nav.tabs button[data-v="master"]').hidden = !showMaster; $("nav.tabs").classList.toggle("nomaster", !showMaster); $("#showMaster").checked = showMaster;
     document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
@@ -3912,7 +3917,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   learnDossier(state);
   bind();
   record();
-  setView(homeView());
+  view = ""; setView(homeView(), true);
+  // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
+  try { history.replaceState({ v: view, base: true }, ""); history.pushState({ v: view }, ""); } catch (e) { /* ignore */ }
+  addEventListener("popstate", (e) => {
+    const st = e.state || {};
+    if (st.base) {
+      try { history.pushState({ v: view }, ""); } catch (err) { /* ignore */ }
+      notice(`Tu es revenu au début : Patch Live reste ouvert pour ne rien perdre. <button class="btn small" type="button" id="reallyLeave">Quitter quand même</button>`);
+      $("#reallyLeave").onclick = () => history.go(-2);
+      return;
+    }
+    if (st.v) setView(st.v, true);
+  });
+  // Modifs pas encore arrivées dans Dropbox : le navigateur demande confirmation avant de fermer ou de quitter
+  addEventListener("beforeunload", (e) => { if (DBX_ON && dbx.file && /pending|sync|offline|err/.test(dbx.status || "")) { e.preventDefault(); e.returnValue = ""; } });
   if (state.exemple) notice("Ceci est un dossier d'exemple pour tester l'appli. « Nouveau dossier » repart de zéro, « Ouvrir un fichier Excel » relit un fichier enregistré par l'appli.");
   dbxInit();
 })();
