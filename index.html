@@ -1128,7 +1128,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const m = document.createElement("div");
     kbMenuY = scrollY;
     m.id = "kbMenu"; m.className = "kbmenu"; m.setAttribute("role", "menu");
-    m.innerHTML = `<div class="kbmh">Codec ${all.length > 1 ? "de " + all.length + " cartes" : "de " + esc(hfName(all[0]) || "la carte")}${c ? ` · ${esc(spxName(spot.b))} RF ${esc(all[0].rf)}` : ""}</div>${sec("Ears", "iem", SPX_IEM, earsRows, "Pas d'ears")}${cp}${sec("Micro", "mic", SPX_MIC, all, "Pas de micro")}`;
+    m.innerHTML = `<div class="kbmh">Codec ${all.length > 1 ? "de " + all.length + " cartes" : "de " + esc(hfName(all[0]) || "la carte")}${c ? ` · ${esc(spxName(spot.b))} RF ${esc(all[0].rf)}` : ""}</div>${sec("Ears", "iem", SPX_IEM, earsRows, "Pas d'ears")}${cp}${sec("Micro", "mic", SPX_MIC, all, "Pas de micro")}<div class="kbmg"></div><button type="button" role="menuitem" data-kbdone><span>Terminé</span></button>`;
     m.dataset.ids = ids.join(",");
     document.body.appendChild(m);
     const r = m.getBoundingClientRect();
@@ -1167,7 +1167,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const b = e.target.closest("[data-kbto]");
     if (b && m.contains(b)) { const ids = m.dataset.ids.split(","); kbMenuClose(); spxDrop(ids, b.dataset.kbto); return; }
     const cs = e.target.closest("[data-kbset]");
-    if (cs && m.contains(cs)) { const ids = m.dataset.ids.split(","); kbMenuClose(); kbSetCodec(ids, ...cs.dataset.kbset.split("|")); return; }
+    // Le menu des codecs reste ouvert : on peut changer l'ears puis le micro à la suite
+    if (cs && m.contains(cs)) { const ids = m.dataset.ids.split(","), r = m.getBoundingClientRect(), sc = m.scrollTop; kbSetCodec(ids, ...cs.dataset.kbset.split("|")); kbCodecMenu(ids, r.left, r.top); const n = $("#kbMenu"); if (n) { n.scrollTop = sc; const f = n.querySelector(`[data-kbset="${cs.dataset.kbset}"]`); if (f) f.focus({ preventScroll: true }); } return; }
+    if (e.target.closest("[data-kbdone]") && m.contains(e.target)) { kbMenuClose(); return; }
     if (e.target.closest("[data-kbcodec]") && m.contains(e.target)) { const r = m.getBoundingClientRect(); kbCodecMenu(m.dataset.ids.split(","), r.left, r.top); return; }
     if (e.target.closest("[data-kbren]")) { const id = m.dataset.ids; kbMenuClose(); const c = document.querySelector(`.kbcard[data-kb="${id}"]`); if (c) kbRename(c); return; }
     if (!e.target.closest("#kbMenu") && !e.target.closest("[data-kbmenu]")) kbMenuClose();
