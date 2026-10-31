@@ -470,11 +470,15 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hfg .hfsel .hsm { display: inline-flex; flex-direction: column; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); gap: 1px; }
 .hfg .hfsel .hsm select { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink); max-width: 210px; }
 .hfg .hfsel input { flex: 1 1 120px; }
-.hfg .acc { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; min-width: 140px; }
+/* Accessoires sur une seule ligne : étiquettes puis un petit champ « + » qui s'élargit quand on tape */
+.hfg .acc { display: flex; flex-wrap: nowrap; gap: 3px; align-items: center; min-width: 140px; }
+.hfg .acc .tag { flex: none; }
 .hfg .acc .tag { display: inline-flex; align-items: center; gap: 2px; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 10px; padding: 0 2px 0 7px; font-size: 12px; white-space: nowrap; }
 .hfg .acc .tag button { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0 4px; font-size: 13px; line-height: 1.4; }
 .hfg .acc .tag button:hover { color: var(--danger); }
 .hfg .acc input { flex: 1 1 90px; min-width: 80px; }
+.hfg .acc .tag ~ input { flex: 1 1 34px; min-width: 34px; }
+.hfg .acc .tag ~ input:focus { min-width: 110px; }
 .hfg .hfact { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
 @media (max-width: 760px) {
   .hfg table, .hfg tbody { display: block; }
@@ -922,7 +926,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function hfInput(g, r, f, t, dl, k) {
     // Accessoires : une étiquette par article, chacune comptée dans la liste matériel
-    if (f === "acc") return `<div class="acc">${(r.acc || []).map((a, i) => `<span class="tag">${esc(a)}<button type="button" data-accdel="${i}" aria-label="Retirer ${esc(a)}">×</button></span>`).join("")}<input type="text" data-accin="1" placeholder="+ accessoire" aria-label="Ajouter un accessoire ${k + 1}" autocomplete="off" data-suggest="dlAcc"></div>`;
+    if (f === "acc") return `<div class="acc">${(r.acc || []).map((a, i) => `<span class="tag">${esc(a)}<button type="button" data-accdel="${i}" aria-label="Retirer ${esc(a)}">×</button></span>`).join("")}<input type="text" data-accin="1" placeholder="${(r.acc || []).length ? "+" : "+ accessoire"}" aria-label="Ajouter un accessoire ${k + 1}" autocomplete="off" data-suggest="dlAcc"></div>`;
     const ch = hfChoices(g, f);
     if (ch) {
       const v = String(r[f] || ""), unknown = v && !ch.some(([x]) => x === v) ? `<option value="${esc(v)}" selected>${esc(v)} (inconnue)</option>` : "";
