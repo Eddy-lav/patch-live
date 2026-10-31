@@ -325,6 +325,17 @@ td.tot { font-family: var(--font-mono); color: var(--muted); text-align: center;
 .occ-row .lbl { font-family: var(--font-mono); font-size: 11px; color: var(--muted); min-width: 22px; white-space: nowrap; text-align: right; margin-right: 3px; }
 .occ-cell { width: 18px; height: 14px; border-radius: 2px; border: 1px solid var(--line); background: var(--surface-2); }
 .occ-cell.on { background: var(--accent); border-color: var(--accent); }
+.occ-cell.out.on { background: #5f9fb3; border-color: #5f9fb3; }
+.occ-cell[data-tip] { cursor: help; }
+.occ.wide .occ-row .lbl { min-width: 50px; }
+.occ-cell.hl { outline: 2px solid var(--ink); outline-offset: 1px; }
+.occ-sub { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 8px 0 0; display: flex; align-items: center; gap: 6px; }
+.occ-sub::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); }
+.occ-sub.out::before { background: #5f9fb3; }
+.occ-tip { position: fixed; z-index: 90; pointer-events: none; max-width: 280px; background: var(--ink); color: var(--surface); border-radius: 6px; padding: 7px 10px; font-size: 12.5px; line-height: 1.45; box-shadow: 0 6px 18px rgb(0 0 0 / 0.25); }
+.occ-tip b { font-size: 13.5px; }
+.occ-tip .a { font-family: var(--font-mono); opacity: 0.75; font-size: 11.5px; }
+.occ-tip .free { opacity: 0.7; font-style: italic; }
 .rack-occ { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .rack-occ h3 { margin: 0; font-size: 14px; }
 
@@ -773,7 +784,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   </div>
   <div class="panel" style="margin-top:18px">
     <h2>Occupation des stage racks</h2>
-    <p class="hint">Une case par entrée, remplie quand une source l'occupe.</p>
+    <p class="hint">Une case par entrée et par sortie, remplie quand elle est utilisée. Passe la souris sur une case (ou touche-la) pour voir ce qui y est patché et câblé.</p>
     <div class="rack-occ" id="rackOcc"></div>
   </div>
 </section>
@@ -2489,19 +2500,28 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td><button class="btn small danger" type="button" data-delbox="${b.id}">${usedBox(b) ? "Suppr. (utilisé)" : "Suppr."}</button></td>
       </tr>`).join("")}</tbody>`;
     labelCells($("#racksTbl")); labelCells($("#boxesTbl"));
-    $("#rackOcc").innerHTML = state.racks.length ? state.racks.map((r) => {
+    // Infobulle : adresse, puis ce qui est patché (source ou mix) et câblé (boîtier, émetteur, récepteur)
+    const tipIn = (r, c, i, l) => `<span class="a">${esc(rackTitle(r))} · entrée ${esc(rackShort(r, c, i))}</span><br>` + (l ? `<b>${esc(l.source || "Sans nom")}</b>${[l.musicien, l.micro, l.pied].filter(Boolean).length ? "<br>" + esc([l.musicien, l.micro, l.pied].filter(Boolean).join(" · ")) : ""}${l.box ? "<br>Câblé : " + esc(boxAddr(l.box)) : ""}${l.pad ? "<br>Pad -" + esc(l.pad) + " dB" : ""}${l.p48 ? " · 48V" : ""}` : `<span class="free">libre</span>`);
+    const tipOut = (r, c, i, o) => `<span class="a">${esc(rackTitle(r))} · sortie ${esc(rackShort(r, c, i))}</span><br>` + (o ? `<b>${esc(o.mix || "Sans nom")}</b>${[o.dest, o.type].filter(Boolean).length ? "<br>" + esc([o.dest, o.type].filter(Boolean).join(" · ")) : ""}${o.box ? "<br>Câblé : " + esc(boxAddr(o.box)) : ""}${o.tx ? "<br>Émetteur : " + esc(o.tx) : ""}${o.rx ? "<br>Récepteur : " + esc(o.rx) : ""}` : `<span class="free">libre</span>`);
+    const grid = (r, cellsAll, get, out) => {
       let rows = "";
-      const groups = new Map(); rackInputs(r).forEach((a) => { if (!groups.has(a.c)) groups.set(a.c, []); groups.get(a.c).push(a); });
+      const groups = new Map(); cellsAll.forEach((a) => { if (!groups.has(a.c)) groups.set(a.c, []); groups.get(a.c).push(a); });
       groups.forEach((cells, c) => {
         for (let s = 0; s < cells.length; s += 8) {
           const part = cells.slice(s, s + 8);
           const lbl = r.ports ? (s ? "" : (r.ports[c - 1] || {}).nom || "") : r.flat ? String(part[0].i) : String(c);
-          rows += `<div class="occ-row"><span class="lbl">${esc(lbl)}</span>${part.map(({ i }) => { const l = occ.rack.get(`${r.id}:${c}:${i}`); return `<span class="occ-cell${l ? " on" : ""}" title="${esc(rackShort(r, c, i))}${l ? " : " + esc(l.source) : " : libre"}"></span>`; }).join("")}</div>`;
+          rows += `<div class="occ-row"><span class="lbl">${esc(lbl)}</span>${part.map(({ i }) => { const x = get(c, i); return `<span class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`;
         }
       });
-      const total = rackInputs(r).length;
-      const used = rackInputs(r).filter(({ c, i }) => occ.rack.get(`${r.id}:${c}:${i}`)).length;
-      return `<div><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)} · ${used}/${total}</span></h3><div class="occ">${rows}</div></div>`;
+      return rows;
+    };
+    $("#rackOcc").innerHTML = state.racks.length ? state.racks.map((r) => {
+      const ins = rackInputs(r), outs = rackOutputs(r);
+      const gIn = (c, i) => occ.rack.get(`${r.id}:${c}:${i}`), gOut = (c, i) => occ.out.get(`${r.id}:${c}:${i}`);
+      const uIn = ins.filter(({ c, i }) => gIn(c, i)).length, uOut = outs.filter(({ c, i }) => gOut(c, i)).length;
+      return `<div><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)}</span></h3>
+        ${ins.length ? `<div class="occ-sub">Entrées ${uIn}/${ins.length}</div><div class="occ${r.ports ? " wide" : ""}">${grid(r, ins, gIn, false)}</div>` : ""}
+        ${outs.length ? `<div class="occ-sub out">Sorties ${uOut}/${outs.length}</div><div class="occ${r.ports ? " wide" : ""}">${grid(r, outs, gOut, true)}</div>` : ""}</div>`;
     }).join("") : `<div class="hint">Aucun stage rack.</div>`;
   }
   let armedSetup = null;
@@ -4050,6 +4070,24 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   learnDossier(state);
   bind();
   record();
+  // Infobulle des cases d'occupation : au survol, ou au toucher sur téléphone
+  (() => {
+    let tip = null, cur = null;
+    const show = (cell) => {
+      if (!tip) { tip = document.createElement("div"); tip.className = "occ-tip"; document.body.appendChild(tip); }
+      if (cur) cur.classList.remove("hl");
+      cur = cell; cell.classList.add("hl");
+      tip.innerHTML = cell.dataset.tip; tip.hidden = false;
+      const r = cell.getBoundingClientRect(), t = tip.getBoundingClientRect();
+      let x = r.left + r.width / 2 - t.width / 2, y = r.top - t.height - 8;
+      if (y < 8) y = r.bottom + 8;
+      tip.style.left = Math.max(8, Math.min(x, innerWidth - t.width - 8)) + "px"; tip.style.top = y + "px";
+    };
+    const hide = () => { if (tip) tip.hidden = true; if (cur) { cur.classList.remove("hl"); cur = null; } };
+    document.addEventListener("mouseover", (e) => { const c = e.target.closest(".occ-cell[data-tip]"); if (c) show(c); else if (cur) hide(); });
+    document.addEventListener("click", (e) => { const c = e.target.closest(".occ-cell[data-tip]"); if (c) show(c); else hide(); });
+    addEventListener("scroll", hide, { passive: true });
+  })();
   coverBind();
   view = ""; setView(homeView(), true);
   // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
