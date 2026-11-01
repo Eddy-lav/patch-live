@@ -587,13 +587,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   body.rows table.master td input[type="text"], body.rows table.master td select { padding: 3px 4px; font-size: 14px; }
   body.rows table.master td { min-width: 96px; }
   body.rows table.master td.ch { min-width: 0; width: 40px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
-  body.rows table.master td.src { min-width: 120px; position: sticky; left: 40px; z-index: 2; background: var(--surface); box-shadow: 4px 0 6px -4px rgb(0 0 0 / 0.25); }
+  /* La source reste figée, mais ne cache que ses lettres : le reste défile et réapparaît juste après le nom */
+  body.rows table.master td.src { min-width: 0; width: 1px; position: sticky; left: 40px; z-index: 2; background: transparent; }
+  body.rows table.master td.src input { width: auto; min-width: 3ch; field-sizing: content; background: var(--row-bg, var(--surface)); box-shadow: 6px 0 6px -5px rgb(0 0 0 / 0.3); position: relative; }
+  body.rows table.master tr.sel { --row-bg: var(--hl); }
+  body.rows table.master tr.hit { --row-bg: var(--accent-soft); }
   body.rows table.master th:first-child { position: sticky; left: 0; z-index: 7; background: var(--surface-2); }
   body.rows table.master th:nth-child(2) { position: sticky; left: 40px; z-index: 7; background: var(--surface-2); }
   /* Vue racks : c'est l'entrée du rack qui reste à gauche avec le N° */
-  body.rows table.rack td.src { position: static; box-shadow: none; }
+  body.rows table.rack td.src { position: static; width: auto; }
+  body.rows table.rack td.src input { box-shadow: none; background: transparent; }
   body.rows table.rack td.ent { position: sticky; left: 40px; z-index: 2; background: var(--surface); min-width: 70px; box-shadow: 4px 0 6px -4px rgb(0 0 0 / 0.25); }
-  body.rows table.master tr.sel td.src, body.rows table.master tr.hit td.src { background: inherit; }
   body.rows table.master .more-btn { display: none; }
   body.rows table.master td.ch { cursor: pointer; }
   #masterTools .addn input { width: 100%; min-width: 0; }
@@ -4125,6 +4129,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Téléphone : master en lignes (comme un tableur, défilement en largeur) ou en cartes
   (() => {
     let rows = true; try { rows = localStorage.getItem("patch-live-phonerows") !== "0"; } catch (e) { /* ignore */ }
+    // Navigateurs sans « field-sizing » : la case source prend la largeur de son texte
+    if (!CSS.supports("field-sizing", "content")) {
+      const fit = (i) => { i.size = Math.max(3, (i.value || i.placeholder || "").length + 1); };
+      new MutationObserver(() => { if (rows) document.querySelectorAll("table.master td.src input").forEach(fit); }).observe(document.body, { childList: true, subtree: true });
+      document.addEventListener("input", (e) => { if (e.target.matches && e.target.matches("table.master td.src input")) fit(e.target); });
+    }
     const paint = () => { document.body.classList.toggle("rows", rows); const b = $("#rowsBtn"); b.textContent = rows ? "☰ Lignes" : "▤ Cartes"; b.setAttribute("aria-pressed", rows); };
     paint();
     $("#rowsBtn").addEventListener("click", () => { rows = !rows; try { localStorage.setItem("patch-live-phonerows", rows ? "1" : "0"); } catch (e) { /* ignore */ } paint(); syncNavH(); stickHeads(); });
