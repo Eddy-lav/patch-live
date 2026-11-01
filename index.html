@@ -116,6 +116,8 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
   .cover-pick .cgrid { grid-template-columns: repeat(2, 1fr); }
 }
 @media print { .cover { display: none; } }
+.phone-only { display: none !important; }
+@media (max-width: 760px) { .phone-only { display: inline-flex !important; } }
 .btn.themebtn { min-width: 38px; justify-content: center; font-size: 17px; line-height: 1; }
 .notice li .btn.small { margin-left: 6px; padding: 1px 8px; }
 /* Dropbox : état du fichier, menu, fenêtre de navigation */
@@ -213,25 +215,25 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
   .panel table.cards .port { flex-wrap: wrap; }
 }
 @media (max-width: 760px) {
-  table.master thead { display: none; }
-  table.master, table.master tbody { display: block; }
-  table.master tr { display: grid; grid-template-columns: 38px 1fr 1fr; gap: 0 6px; padding: 6px 8px 4px 0; border-bottom: 1px solid var(--line); }
-  table.master td { border: 0; padding: 0 0 4px; display: flex; flex-direction: column; min-width: 0; }
-  table.master td::before { content: attr(data-l); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); line-height: 1.2; }
-  table.master td.ch { grid-column: 1; grid-row: span 20; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; width: auto; text-align: center; padding-top: 2px; }
-  table.master td.ch::before { content: none; }
-  table.master td.src, table.master td.wide { grid-column: 2 / -1; }
-  table.master td.src::before { content: none; }
-  table.master td.src input { font-size: 16px; }
-  table.master tr:not(.open) td.more { display: none; }
-  table.rack td.ent { grid-column: 1; grid-row: 1; align-items: center; text-align: center; font-size: 12px; font-weight: 600; color: var(--accent); padding-top: 4px; white-space: normal; word-break: break-word; }
-  table.rack td.ent::before { font-size: 8px; font-weight: 400; color: var(--muted); }
-  table.rack tr[data-id] td.ent { border-bottom: 1px solid var(--line); padding-bottom: 3px; margin-bottom: 3px; }
-  table.rack tr[data-id] td.ch { grid-row: 2 / span 20; }
-  table.rack tr.free { grid-template-columns: 38px 1fr; }
-  table.rack tr.free td:last-child { grid-column: 2; }
-  table.rack tr.free td.nfree { display: none; }
-  table.master td input[type="text"], table.master td select { padding: 3px 4px; }
+  body:not(.rows) table.master thead { display: none; }
+  body:not(.rows) table.master, body:not(.rows) table.master tbody { display: block; }
+  body:not(.rows) table.master tr { display: grid; grid-template-columns: 38px 1fr 1fr; gap: 0 6px; padding: 6px 8px 4px 0; border-bottom: 1px solid var(--line); }
+  body:not(.rows) table.master td { border: 0; padding: 0 0 4px; display: flex; flex-direction: column; min-width: 0; }
+  body:not(.rows) table.master td::before { content: attr(data-l); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); line-height: 1.2; }
+  body:not(.rows) table.master td.ch { grid-column: 1; grid-row: span 20; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; width: auto; text-align: center; padding-top: 2px; }
+  body:not(.rows) table.master td.ch::before { content: none; }
+  body:not(.rows) table.master td.src, body:not(.rows) table.master td.wide { grid-column: 2 / -1; }
+  body:not(.rows) table.master td.src::before { content: none; }
+  body:not(.rows) table.master td.src input { font-size: 16px; }
+  body:not(.rows) table.master tr:not(.open) td.more { display: none; }
+  body:not(.rows) table.rack td.ent { grid-column: 1; grid-row: 1; align-items: center; text-align: center; font-size: 12px; font-weight: 600; color: var(--accent); padding-top: 4px; white-space: normal; word-break: break-word; }
+  body:not(.rows) table.rack td.ent::before { font-size: 8px; font-weight: 400; color: var(--muted); }
+  body:not(.rows) table.rack tr[data-id] td.ent { border-bottom: 1px solid var(--line); padding-bottom: 3px; margin-bottom: 3px; }
+  body:not(.rows) table.rack tr[data-id] td.ch { grid-row: 2 / span 20; }
+  body:not(.rows) table.rack tr.free { grid-template-columns: 38px 1fr; }
+  body:not(.rows) table.rack tr.free td:last-child { grid-column: 2; }
+  body:not(.rows) table.rack tr.free td.nfree { display: none; }
+  body:not(.rows) table.master td input[type="text"], body:not(.rows) table.master td select { padding: 3px 4px; }
   .more-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); font-size: 14px; color: var(--muted); }
   .col-48 { text-align: left; }
 }
@@ -576,8 +578,24 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   nav.tabs .count { font-size: 11px; margin-left: 2px; }
   /* Barres d'outils : recherche sur toute la largeur, boutons en une rangée */
   #masterTools .toolbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-  #masterTools .search { grid-column: 1 / 4; max-width: none; min-width: 0; font-size: 16px; padding: 6px 8px; }
-  #masterTools .addn { grid-column: 4; justify-content: flex-end; }
+  #masterTools .search { grid-column: 1 / 3; max-width: none; min-width: 0; font-size: 16px; padding: 6px 8px; }
+  #masterTools .addn { grid-column: 3; justify-content: flex-end; }
+  #masterTools #rowsBtn { grid-column: 4; grid-row: 1; }
+  /* Mode « une ligne par source » : le tableau complet défile en largeur, N° et Source restent à gauche */
+  body.rows table.master { font-size: 14px; }
+  body.rows table.master th, body.rows table.master td { padding: 2px 3px; white-space: nowrap; }
+  body.rows table.master td input[type="text"], body.rows table.master td select { padding: 3px 4px; font-size: 14px; }
+  body.rows table.master td { min-width: 96px; }
+  body.rows table.master td.ch { min-width: 0; width: 40px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
+  body.rows table.master td.src { min-width: 120px; position: sticky; left: 40px; z-index: 2; background: var(--surface); box-shadow: 4px 0 6px -4px rgb(0 0 0 / 0.25); }
+  body.rows table.master th:first-child { position: sticky; left: 0; z-index: 7; background: var(--surface-2); }
+  body.rows table.master th:nth-child(2) { position: sticky; left: 40px; z-index: 7; background: var(--surface-2); }
+  /* Vue racks : c'est l'entrée du rack qui reste à gauche avec le N° */
+  body.rows table.rack td.src { position: static; box-shadow: none; }
+  body.rows table.rack td.ent { position: sticky; left: 40px; z-index: 2; background: var(--surface); min-width: 70px; box-shadow: 4px 0 6px -4px rgb(0 0 0 / 0.25); }
+  body.rows table.master tr.sel td.src, body.rows table.master tr.hit td.src { background: inherit; }
+  body.rows table.master .more-btn { display: none; }
+  body.rows table.master td.ch { cursor: pointer; }
   #masterTools .addn input { width: 100%; min-width: 0; }
   #masterTools .toolbar .btn { padding: 7px 2px; font-size: 13px; justify-content: center; text-align: center; white-space: nowrap; min-height: 36px; }
   #masterTools #searchHint { grid-column: 1 / -1; }
@@ -587,14 +605,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   .hint.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; position: relative; }
   .hint.clamp.open { display: block; -webkit-line-clamp: unset; }
   /* Fiches plus compactes */
-  table.master tr { padding: 5px 6px 2px 0; }
-  table.master td { padding-bottom: 2px; }
-  table.master td::before, table.cards td[data-l]::before, .hfg td[data-l]::before { font-size: 9px; }
-  table.master td input[type="text"], table.master td select { padding: 2px 4px; }
+  body:not(.rows) table.master tr { padding: 5px 6px 2px 0; }
+  body:not(.rows) table.master td { padding-bottom: 2px; }
+  body:not(.rows) table.master td::before, table.cards td[data-l]::before, .hfg td[data-l]::before { font-size: 9px; }
+  body:not(.rows) table.master td input[type="text"], body:not(.rows) table.master td select { padding: 2px 4px; }
   /* Vue racks : l'entrée devient une petite ligne de titre au-dessus de la fiche */
-  table.rack td.ent { grid-column: 1 / -1 !important; grid-row: 1; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 6px; text-align: left; font-family: var(--font-mono); font-size: 13px; padding: 0 0 2px 8px !important; margin-bottom: 4px; word-break: normal; white-space: nowrap; }
-  table.rack td.ent::before { font-family: var(--font-sans, inherit); font-size: 9px; letter-spacing: 0.06em; }
-  table.rack tr.free td.ent { grid-column: 1 !important; border: 0; margin: 0; padding: 4px 0 0 8px !important; }
+  body:not(.rows) table.rack td.ent { grid-column: 1 / -1 !important; grid-row: 1; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 6px; text-align: left; font-family: var(--font-mono); font-size: 13px; padding: 0 0 2px 8px !important; margin-bottom: 4px; word-break: normal; white-space: nowrap; }
+  body:not(.rows) table.rack td.ent::before { font-family: var(--font-sans, inherit); font-size: 9px; letter-spacing: 0.06em; }
+  body:not(.rows) table.rack tr.free td.ent { grid-column: 1 !important; border: 0; margin: 0; padding: 4px 0 0 8px !important; }
   /* Distribution HF : ressources plus courtes */
   .spxres h3 { font-size: 15px; }
   .spxbh { font-size: 13px; }
@@ -702,6 +720,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     <button id="addLine" class="btn" type="button">+ Source</button>
     <button id="addStereo" class="btn" type="button">+ <span class="lg">Source </span>stéréo</button>
     <button id="addBoxMaster" class="btn" type="button">+ Boîtier</button>
+    <button id="rowsBtn" class="btn phone-only" type="button" aria-pressed="true" title="Affichage sur téléphone : une ligne par source ou une carte par source">☰ Lignes</button>
     <button id="rangeBtn" class="btn" type="button"><span class="lg">Affecter une plage</span><span class="sm">Plage…</span></button>
     <span class="hint" id="searchHint"></span>
   </div>
@@ -4102,6 +4121,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     document.addEventListener("mouseover", (e) => { const c = e.target.closest(".occ-cell[data-tip]"); if (c) show(c); else if (cur) hide(); });
     document.addEventListener("click", (e) => { const c = e.target.closest(".occ-cell[data-tip]"); if (c) show(c); else hide(); });
     addEventListener("scroll", hide, { passive: true });
+  })();
+  // Téléphone : master en lignes (comme un tableur, défilement en largeur) ou en cartes
+  (() => {
+    let rows = true; try { rows = localStorage.getItem("patch-live-phonerows") !== "0"; } catch (e) { /* ignore */ }
+    const paint = () => { document.body.classList.toggle("rows", rows); const b = $("#rowsBtn"); b.textContent = rows ? "☰ Lignes" : "▤ Cartes"; b.setAttribute("aria-pressed", rows); };
+    paint();
+    $("#rowsBtn").addEventListener("click", () => { rows = !rows; try { localStorage.setItem("patch-live-phonerows", rows ? "1" : "0"); } catch (e) { /* ignore */ } paint(); syncNavH(); stickHeads(); });
   })();
   coverBind();
   view = ""; setView(homeView(), true);
