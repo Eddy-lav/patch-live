@@ -3171,7 +3171,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function devType(n) {
     if (!n) return "box";
     if (n.kind === "console") return "console";
-    if (n.kind === "hf") return (n.ref || {}).kind === "tx" ? "hftx" : "hfrx";
+    if (n.kind === "hf") { const m = normModel((n.ref || {}).model); return HF_ART[m] || ((n.ref || {}).kind === "tx" ? "hftx" : "hfrx"); }
     if (n.kind === "extra") { const x = n.ref || {}; if (extraModel(x)) return extraModel(x); return x.gen ? "clock" : x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
     const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
     if (r.model === "orange") return "orange"; if (r.model === "spectera") return "spectera"; if (r.model === "m8") return "m8";
@@ -3187,11 +3187,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const EXTRA_MODELS = {
     as80: { nom: "AS 80", type: "Convertisseur HMAC redondant", t: "Midas AS 80 · HMAC vers double HMAC redondant", re: /\bas\s*-?\s*80\b/i, ports: [["Port A (HMAC)", "HyperMAC"], ["Port X (HMAC)", "HyperMAC"], ["Port Y (HMAC)", "HyperMAC"], ["Réseau (contrôle)", "Réseau"]] },
     dn9680: { nom: "DN9680", type: "Extender AES50 · 8 ports", t: "Klark Teknik DN9680 · 8 ports AES50 sur un snake", re: /dn\s*-?\s*9680/i, ports: [["Snake (HMAC)", "HyperMAC"], ...Array.from({ length: 8 }, (_, i) => [`AES50 ${i + 1}`, "AES50"]), ["Réseau (contrôle)", "Réseau"]] },
+    ad600: { nom: "AD600", type: "Analyseur de spectre HF", t: "Shure AD600 · analyseur de spectre (Axient Digital)", re: /\bad\s*-?\s*600\b/i, clk: "none", ports: [["Antenne A", "Antenne"], ["Antenne B", "Antenne"], ["Réseau", "Réseau"]] },
+    ua845: { nom: "UA845", type: "Distribution d'antennes", t: "Shure UA845 · distribution d'antennes", re: /\bua\s*-?\s*845/i, clk: "none", ports: [["Antenne A in", "Antenne"], ["Antenne B in", "Antenne"], ...Array.from({ length: 5 }, (_, i) => [`Sortie ${i + 1} (A/B)`, "Antenne"]), ["Cascade A/B", "Antenne"]] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
-  const DEV_H = { as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
-  function devArt(type, label) {
+  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2" };
+  const DEV_W = { ewdxem2: 241.5 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
     const ears = (c) => R(0, 0, 13, H, c || "#5d646b", 1.5) + R(470, 0, 13, H, c || "#5d646b", 1.5) + C(6.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(6.5, H - Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, H - Math.min(8, H / 4), 2.6, "#1d2125");
@@ -3212,10 +3216,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += T(30, 97, "DiGiCo", 15, "#f3f4f6", 700, 0.3) + T(132, 97, "SD-RACK", 9, "#aab3bb", 700, 1.2);
         s += R(132, 58, 26, 14, "#e8590c", 3) + R(166, 58, 26, 14, "#e8590c", 3) + R(214, 60, 10, 9, "#9aa3ab", 1.5);
         s += [0, 1].map((i) => R(300 + i * 82, 12, 76, 92, "#3a4046", 3) + R(306 + i * 82, 18, 8, 80, "#5d646b", 2) + R(325 + i * 82, 28, 30, 20, "#16191c", 2) + led(370 + i * 82, 80, "#4ade80", 2.5)).join("");
+        // Cartes de gauche à droite (entrées d'abord, puis sorties), les 8 XLR de chaque carte de haut en bas ; les emplacements vides sont obturés
+        const nIn = ref && ref.n !== undefined && !ref.flat && !ref.ports ? Math.min(14, Number(ref.n) || 0) : 7, nOut = ref && ref.out !== undefined && !ref.flat && !ref.ports ? Math.min(14 - nIn, Number(ref.out) || 0) : 7;
         for (let k = 0; k < 14; k++) {
-          const x = 19 + k * 31.9, out = k >= 7;
-          s += R(x, 118, 30, 320, out ? "#30363b" : "#2a2f33", 1.5) + R(x + 1, 120, 28, 6, "#4b5258");
-          for (let j = 0; j < 8; j++) s += out ? xlrM(x + 15, 145 + j * 37, 1.18) : xlrF(x + 15, 145 + j * 37, 1.18);
+          const x = 19 + k * 31.9, out = k >= nIn && k < nIn + nOut, blank = k >= nIn + nOut;
+          s += R(x, 118, 30, 320, blank ? "#3a3f44" : out ? "#30363b" : "#2a2f33", 1.5) + R(x + 1, 120, 28, 6, "#4b5258");
+          if (blank) { s += C(x + 15, 128, 1.6, "#1d2125") + C(x + 15, 430, 1.6, "#1d2125"); continue; }
+          s += T(x + 15, 136, `${out ? "OUT" : "IN"} ${out ? k - nIn + 1 : k + 1}`, 6.5, out ? "#fdba74" : "#93c5fd", 700, 0, "middle");
+          for (let j = 0; j < 8; j++) s += (out ? xlrM : xlrF)(x + 15, 158 + j * 35, 1.12) + T(x + 3, 162 + j * 35 - 12, String(j + 1), 5, "#9aa3ab", 700);
         }
         return s;
       }
@@ -3297,6 +3305,67 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += [0, 1, 2, 3].map((i) => led(90 + i * 11, 17, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("") + [0, 1, 2, 3, 4, 5].map((i) => led(150 + i * 11, 17, i === 0 ? "#3b82f6" : "#7c858d", 2)).join("");
         s += Array.from({ length: 12 }, (_, i) => led(230 + i * 15, 17, "#3b82f6", 2)).join("") + Array.from({ length: 12 }, (_, i) => R(226 + i * 15, 25, 8, 2, "#8a939b")).join("");
         s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2) + T(84, 34, "ROSENDAHL", 6.5, "#374151", 800, 0.6) + T(132, 34, "nanoclocks", 6.5, "#4b5563", 400);
+        return s;
+      }
+      // Shure AD600 : analyseur de spectre 1 U, écran couleur avec la trace du spectre, grand bouton de réglage
+      case "ad600": {
+        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#4b5258") + C(x, y, r * 0.55, "#2f3439") + R(x - 0.7, y - r * 0.78, 1.4, r * 0.45, "#e5e7eb");
+        let s = ears("#2b2f33") + face("#1c1f22") + T(22, 10, "SHURE", 5, "#e5e7eb", 800, 0.4);
+        s += R(22, 15, 7, 17, "#0b0d0f", 2) + C(42, 24, 5, "#9aa3ab") + C(42, 24, 3.4, "#0b0d0f") + T(22, 40, "AD600", 3.6, "#e5e7eb", 700) + T(42, 40, "Spectrum Manager", 2.6, "#9aa3ab", 600);
+        s += Array.from({ length: 16 }, (_, i) => R(112 + i * 6, 7, 3, 30, "#0b0d0f", 1)).join("");
+        s += R(212, 5, 158, 34, "#070b14", 2) + ["#22c55e", "#facc15", "#f472b6", "#38bdf8", "#a78bfa"].map((c, i) => C(262 + i * 9, 10, 2, c)).join("") + R(216, 8, 30, 4, "#1f2937", 1);
+        let d = "M216 36"; for (let i = 0; i <= 75; i++) { const v = (Math.sin(i * 1.7) * 0.5 + Math.sin(i * 0.37) * 0.8 + ((i * 37) % 11) / 11) * 4 + ((i > 20 && i < 26) || (i > 44 && i < 48) ? 9 : 0); d += ` L${(216 + i * 2).toFixed(1)} ${(31 - Math.max(0, v)).toFixed(1)}`; }
+        s += `<path d="${d} L366 36 Z" fill="#1d4ed8" opacity="0.35"/><path d="${d.replace("M216 36 L", "M")}" fill="none" stroke="#60a5fa" stroke-width="0.8"/>` + R(216, 36, 150, 0.6, "#334155");
+        s += [0, 1].map((i) => R(378, 9 + i * 12, 16, 7, "#3a4046", 1.5)).join("") + knob(418, 22, 12) + T(418, 7, "CONTROL", 2.4, "#9aa3ab", 700, 0, "middle");
+        s += R(446, 10, 12, 24, "#0b0d0f", 2) + R(448, 12, 8, 10, "#e5e7eb", 1);
+        return s;
+      }
+      // Shure UA845 : distribution d'antennes 1 U argent, interrupteur à droite (connecteurs à l'arrière)
+      case "ua845": {
+        let s = ears("#c3c9ce") + face("#d3d7db") + R(11, 0, 461, 1.2, "#eef0f2");
+        s += T(30, 17, "SHURE", 8, "#1f2937", 800, 0.6) + T(30, 26, "UA845", 4, "#374151", 700) + T(52, 26, "UHF Antenna Distribution System", 2.8, "#4b5563", 600);
+        s += R(30, 30, 44, 8, "#bfc5cb", 1.5) + T(52, 35.6, "470–952 MHz", 3, "#374151", 700, 0, "middle");
+        s += T(431, 8, "POWER", 2.6, "#374151", 700, 0, "middle") + R(421, 11, 20, 26, "#111315", 2) + R(424, 14, 14, 10, "#2f3439", 1) + R(430, 16, 2, 6, "#e5e7eb");
+        return s;
+      }
+      // Sennheiser EM 6000 : récepteur 2 canaux, écran large (fréquence de chaque canal), molette, touches ESC / SET / SYNC
+      case "em6000": {
+        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#3f454b") + C(x, y, r * 0.5, "#2a2f33");
+        const F = (k) => ((ref && ref.freqs) || {})[k] || "---.---";
+        let s = ears("#cfd4d8") + R(13, 3, 6, 38, "#aeb5bb", 2) + R(464, 3, 6, 38, "#aeb5bb", 2) + face("#141619");
+        s += C(36, 22, 5, "#9aa3ab") + C(36, 22, 3.4, "#0b0d0f") + knob(56, 22, 6.5) + T(36, 36, "HEADPHONES", 2.2, "#9aa3ab", 600, 0, "middle") + T(56, 36, "VOLUME", 2.2, "#9aa3ab", 600, 0, "middle") + led(80, 34, "#22c55e", 1.3) + T(84, 35, "SYNC", 2.2, "#9aa3ab", 600);
+        s += R(100, 5, 262, 34, "#05070a", 2);
+        [0, 1].forEach((k) => { const x = 104 + k * 130; s += [0, 1, 2].map((b) => R(x + b * 5, 10, 3, 24, "#1f2937") + R(x + b * 5, 18 + b * 3, 3, 16 - b * 3, b === 2 ? "#facc15" : "#22c55e")).join(""); s += T(x + 22, 13, "Ch " + (k + 1), 3.4, "#9aa3ab", 700) + T(x + 22, 25, F(k + 1), 8, "#f3f4f6", 700) + T(x + 22, 33, "MHz", 3.2, "#9aa3ab", 600) + (k ? "" : R(232, 8, 0.6, 28, "#374151")); });
+        s += knob(386, 22, 10) + ["ESC", "SET", "SYNC"].map((t, i) => R(404, 7 + i * 11, 18, 8, "#2a2f33", 2) + T(413, 12.6 + i * 11, t, 2.6, "#d1d5db", 700, 0, "middle")).join("");
+        s += C(436, 14, 4.5, "#2a2f33") + T(436, 15.2, "⏻", 4, "#d1d5db", 700, 0, "middle") + T(458, 38, "Digital 6000", 2.6, "#9aa3ab", 600, 0, "end") + T(458, 32, "SENNHEISER", 2.8, "#e5e7eb", 800, 0.2, "end");
+        return s;
+      }
+      // Shure Axient Digital AD4Q / AD4D : 4 ou 2 canaux, bargraphes RF et audio par canal, écran, gros bouton, interrupteur
+      case "ad4q": case "ad4d": {
+        const nC = type === "ad4q" ? 4 : 2, F = (k) => ((ref && ref.freqs) || {})[k] || "---.---";
+        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#4b5258") + C(x, y, r * 0.55, "#2f3439") + R(x - 0.7, y - r * 0.78, 1.4, r * 0.45, "#e5e7eb");
+        let s = ears("#2b2f33") + face("#16181b") + T(22, 9.5, "SHURE", 4.5, "#e5e7eb", 800, 0.3);
+        s += C(28, 24, 5, "#9aa3ab") + C(28, 24, 3.4, "#0b0d0f") + knob(45, 24, 6) + T(20, 39, type.toUpperCase(), 3.6, "#e5e7eb", 700) + T(20, 42.5, "AXIENT DIGITAL", 2, "#9aa3ab", 600);
+        const x0 = 66, cw = 236 / nC;
+        for (let k = 0; k < nC; k++) {
+          const x = x0 + k * cw;
+          s += R(x + 2, 6, 12, 10, "#2c3237", 1.5) + T(x + 8, 13.5, String(k + 1), 5, "#e5e7eb", 700, 0, "middle") + T(x + 18, 9, "RF", 2.2, "#9aa3ab", 600) + T(x + 26, 9, "AUDIO", 2.2, "#9aa3ab", 600);
+          for (let j = 0; j < 8; j++) s += led(x + 20, 13 + j * 3.4, j > 3 ? "#3b82f6" : "#1e3a5f", 1) + led(x + 30, 13 + j * 3.4, j < 2 ? "#ef4444" : j < 4 ? "#facc15" : "#22c55e", 1);
+          s += T(x + 2, 24, "", 1, "#000") + R(x + 2, 20, 12, 3, "#3a4046", 1) + T(x + 2, 40, F(k + 1), 3.6, "#cbd5e1", 700);
+          if (k) s += R(x - 1, 6, 0.6, 34, "#2c3237");
+        }
+        s += R(306, 6, 100, 32, "#0b0f14", 2) + T(312, 14, `Channel ${nC}`, 4.6, "#f3f4f6", 700) + R(378, 9, 22, 7, "#374151", 1) + T(389, 14, "EDIT", 3, "#e5e7eb", 700, 0, "middle") + T(312, 27, F(nC), 7, "#f3f4f6", 700) + T(312, 34, "[AD1]", 3, "#9aa3ab", 600);
+        s += T(426, 7, "FUNCTION", 2.2, "#9aa3ab", 600, 0, "middle") + knob(428, 24, 11) + T(456, 7, "POWER", 2.2, "#9aa3ab", 600, 0, "middle") + R(450, 11, 12, 24, "#0b0d0f", 2) + R(452, 13, 8, 10, "#e5e7eb", 1);
+        return s;
+      }
+      // Sennheiser EW-DX EM 2 : demi-rack (deux par U), écran 2 canaux, molette et touches
+      case "ewdxem2": {
+        const F = (k) => ((ref && ref.freqs) || {})[k] || "---.---";
+        let s = R(0, 0, 241.5, 44.45, "#c9cfd4", 2) + R(4, 2, 233.5, 40.45, "#16181b", 2);
+        s += T(12, 11, "EW-DX", 4, "#e5e7eb", 800) + T(12, 16, "EM 2", 3, "#9aa3ab", 700) + led(14, 30, "#22c55e", 1.3) + T(18, 31, "LINK", 2.2, "#9aa3ab", 600);
+        s += R(50, 7, 108, 30, "#05070a", 2) + [1, 2].map((k) => T(55, 9 + k * 11, String(k), 4, "#9aa3ab", 700) + T(63, 9 + k * 11, F(k), 6.5, "#f3f4f6", 700) + R(126, 4 + k * 11, 26, 3, "#1f2937") + R(126, 4 + k * 11, 14 + k * 4, 3, "#22c55e")).join("");
+        s += C(178, 22, 9, "#0b0d0f") + C(178, 22, 7.4, "#3f454b") + C(178, 22, 4.5, "#2a2f33") + R(196, 11, 12, 7, "#2a2f33", 2) + R(196, 25, 12, 7, "#2a2f33", 2) + T(202, 16, "ESC", 2.4, "#d1d5db", 700, 0, "middle") + T(202, 30, "SET", 2.4, "#d1d5db", 700, 0, "middle");
+        s += T(232, 39, "SENNHEISER", 2.6, "#e5e7eb", 800, 0.2, "end");
         return s;
       }
       // Midas AS 80 : 1 U noir, grilles d'aération de chaque côté, panneau central (sélection optique / cuivre, ports A, X, Y, horloge), voyants Cu/OPT, OK/ERR
@@ -3416,10 +3485,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Une façade à la taille demandée, centrée ou calée à gauche (svg imbriqué : marche dans une page comme dans le synoptique)
   function devImg(n, w, h, x, y, left) {
     const pos = x !== undefined ? ` x="${x}" y="${y}"` : "";
-    const r = n && n.kind === "rack" ? rackById(n.id) : n && n.kind === "extra" ? n.ref : n && n.kind === "console" ? synState().cons[n.cons] || {} : n;
+    const r = n && n.kind === "rack" ? rackById(n.id) : n && n.kind === "extra" ? n.ref : n && n.kind === "console" ? synState().cons[n.cons] || {} : n && n.kind === "hf" ? n.ref || {} : n;
     const ph = r && r.photo, t = devType(n), H = DEV_H[t] || 44.45, par = `${left ? "xMin" : "xMid"}YMid meet`;
     if (ph) return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" class="devimg" aria-hidden="true"><image href="${ph}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="${par}"/></svg>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 483 ${H}" preserveAspectRatio="${par}" class="devimg" aria-hidden="true">${devArt(t, t === "console" ? r && r.model : t === "hfrx" || t === "hftx" ? (n.ref || {}).model || "" : "")}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 ${DEV_W[t] || 483} ${H}" preserveAspectRatio="${par}" class="devimg" aria-hidden="true">${devArt(t, t === "console" ? r && r.model : t === "hfrx" || t === "hftx" ? (n.ref || {}).model || "" : "", r)}</svg>`;
   }
   // Photo perso : réduite (240 px) et gardée dans le dossier
   function readPhoto(file) {
@@ -3919,11 +3988,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Rack simple, double ou triple : chaque colonne a ses U
   const rpCol = (it) => it.col || 0, rpCols = (c) => Math.max(1, Math.min(3, c.cols || 1));
   const RP_COLN = { 2: ["Gauche", "Droite"], 3: ["Gauche", "Milieu", "Droite"] };
-  function rpBusy(c, skip, col) { const s = new Set(); c.items.forEach((it) => { if (it !== skip && rpCol(it) === col) for (let k = it.at; k < it.at + it.h; k++) s.add(k); }); return s; }
-  function rpFits(c, it, at, col = rpCol(it)) { if (at < 1 || at + it.h - 1 > c.u || col >= rpCols(c)) return false; const b = rpBusy(c, it, col); for (let k = at; k < at + it.h; k++) if (b.has(k)) return false; return true; }
-  function rpNearest(c, it, at, col = rpCol(it)) { for (let d = 0; d <= c.u; d++) { if (rpFits(c, it, at - d, col)) return at - d; if (rpFits(c, it, at + d, col)) return at + d; } return 0; }
+  // Un U se partage en deux moitiés (appareils demi-rack, ex. EW-DX EM 2) : « l » à gauche, « r » à droite
+  function rpBusy(c, skip, col) { const s = new Set(); c.items.forEach((it) => { if (it !== skip && rpCol(it) === col) for (let k = it.at; k < it.at + it.h; k++) { if (it.half !== "r") s.add(k + "l"); if (it.half !== "l") s.add(k + "r"); } }); return s; }
+  function rpFits(c, it, at, col = rpCol(it), half = it.half) { if (at < 1 || at + it.h - 1 > c.u || col >= rpCols(c)) return false; const b = rpBusy(c, it, col); for (let k = at; k < at + it.h; k++) { if (half !== "r" && b.has(k + "l")) return false; if (half !== "l" && b.has(k + "r")) return false; } return true; }
+  function rpNearest(c, it, at, col = rpCol(it), half = it.half) { for (let d = 0; d <= c.u; d++) { if (rpFits(c, it, at - d, col, half)) return at - d; if (rpFits(c, it, at + d, col, half)) return at + d; } return 0; }
   // Place libre dans le rack : d'abord dans la colonne de l'élément, sinon dans les autres ; renvoie [colonne, U] ou null
-  function rpPlace(c, it, at) { const n = rpCols(c), first = Math.min(rpCol(it), n - 1); for (const col of [first, ...Array.from({ length: n }, (_, k) => k).filter((k) => k !== first)]) { const a = rpNearest(c, it, at, col); if (a) return [col, a]; } return null; }
+  function rpPlace(c, it, at) { const n = rpCols(c), first = Math.min(rpCol(it), n - 1); for (const col of [first, ...Array.from({ length: n }, (_, k) => k).filter((k) => k !== first)]) { if (it.half) { const best = [it.half, it.half === "l" ? "r" : "l"].map((h) => [rpNearest(c, it, at, col, h), h]).filter(([a]) => a).sort((p, q) => Math.abs(p[0] - at) - Math.abs(q[0] - at))[0]; if (best) return [col, best[0], best[1]]; } else { const a = rpNearest(c, it, at, col); if (a) return [col, a]; } } return null; }
+  const rpDefaultHalf = (kind, ref) => (kind === "hf" && DEV_W[devType({ kind: "hf", ref: hfDevById(ref) || {} })] ? "l" : undefined);
   const rpFind = (id) => { for (const c of rpState().cases) { const it = c.items.find((i) => i.id === id); if (it) return { c, it }; } return null; };
   const rpPlaced = () => new Set(rpState().cases.flatMap((c) => c.items.filter((i) => i.ref).map((i) => i.kind + ":" + i.ref)));
   function rpAddOptions() {
@@ -3952,16 +4023,16 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     else if (f !== "vide") s += `<text x="241.5" y="${H / 2 + 5}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#9aa3ab">${esc(rpLabel(it))}</text>`;
     return s;
   }
-  function rpItemArt(it) {
+  function rpItemArt(it, w = 483) {
     const H = it.h * RP_UH;
     if (it.kind === "rack") {
       const r = rackById(it.ref);
-      if (r && !r.photo && it.face !== "conn" && devType({ kind: "rack", id: it.ref }) === "sd") return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 445" preserveAspectRatio="none">${devArt("sdback")}</svg>`;
-      return devImg({ kind: "rack", id: it.ref }, 483, H, 0, 0);
+      if (r && !r.photo && it.face !== "conn" && devType({ kind: "rack", id: it.ref }) === "sd") return `<svg x="0" y="0" width="${w}" height="${H}" viewBox="0 0 483 445" preserveAspectRatio="none">${devArt("sdback")}</svg>`;
+      return devImg({ kind: "rack", id: it.ref }, w, H, 0, 0);
     }
-    if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, 483, H, 0, 0); }
-    if (it.kind === "hf") return devImg({ kind: "hf", ref: hfDevById(it.ref) || {} }, 483, H, 0, 0);
-    return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 ${H}">${rpFreeArt(it, H)}</svg>`;
+    if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, w, H, 0, 0); }
+    if (it.kind === "hf") return devImg({ kind: "hf", ref: hfDevById(it.ref) || {} }, w, H, 0, 0);
+    return `<svg x="0" y="0" width="${w}" height="${H}" viewBox="0 0 483 ${H}" preserveAspectRatio="none">${rpFreeArt(it, H)}</svg>`;
   }
   const RP_GAP = 18, RP_CW = 483 + RP_SIDE * 2, rpX = (col) => col * (RP_CW + RP_GAP);
   function rpCaseSvg(c, forExport) {
@@ -3981,16 +4052,19 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (n > 1) s += `<text x="${X + RP_CW / 2}" y="${RP_TOP - 7}" text-anchor="middle" font-size="14" font-weight="700" fill="#aab3bb" ${F}>${RP_COLN[n][k].toUpperCase()}</text>`;
     }
     const items = [...c.items].sort((a, b) => a.at - b.at).map((it) => {
-      const y = RP_TOP + (it.at - 1) * RP_UH, hh = it.h * RP_UH, on = !forExport && rpSel === it.id, cy = y + hh / 2, lx = RP_CW + 14, X = rpX(Math.min(rpCol(it), n - 1));
+      const y = RP_TOP + (it.at - 1) * RP_UH, hh = it.h * RP_UH, on = !forExport && rpSel === it.id, cy = y + hh / 2, lx = RP_CW + 14, X = rpX(Math.min(rpCol(it), n - 1)) + (it.half === "r" ? 241.5 : 0), w = it.half ? 241.5 : 483;
+      // Deux demi-rack sur le même U : un seul nom dans la marge, « gauche / droite »
+      const twin = it.half && c.items.find((x) => x !== it && x.half && x.half !== it.half && x.at === it.at && rpCol(x) === rpCol(it));
       const pos = it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`;
       // Rack multiple : le nom est écrit sur l'appareil (pastille), sinon dans la marge à droite
-      const chipT = `${pos} ${rpLabel(it)}`.slice(0, 24), cw = chipT.length * 11 + 16;
-      const chip = n > 1 ? `<rect x="${470 - cw}" y="${hh / 2 - 15}" width="${cw}" height="30" rx="6" fill="#111827" fill-opacity="0.85"/><text x="${462}" y="${hh / 2 + 7}" text-anchor="end" font-size="20" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text>` : "";
-      const g = `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${X + RP_SIDE} ${y})">${rpItemArt(it)}${chip}<rect class="rpsel" x="1" y="1" width="481" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>`;
-      if (n > 1) return g;
+      const chipT = `${it.half ? "" : pos + " "}${rpLabel(it)}`.slice(0, it.half ? 14 : 24), cw = chipT.length * 11 + 16;
+      const chip = n > 1 ? `<rect x="${w - 13 - cw}" y="${hh / 2 - 15}" width="${cw}" height="30" rx="6" fill="#111827" fill-opacity="0.85"/><text x="${w - 21}" y="${hh / 2 + 7}" text-anchor="end" font-size="20" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text>` : "";
+      const g = `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${X + RP_SIDE} ${y})">${rpItemArt(it, w)}${chip}<rect class="rpsel" x="1" y="1" width="${w - 2}" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>`;
+      if (n > 1 || (twin && it.half === "r")) return g;
+      const lab = twin ? `${rpLabel(it)} / ${rpLabel(twin)}` : rpLabel(it);
       return `${g}
-        <line x1="${RP_SIDE + 486}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
-        ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${it.notes ? " · " + esc(it.notes.slice(0, 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(rpLabel(it).slice(0, 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
+        <line x1="${RP_SIDE + (it.half === "l" && !twin ? 245 : 486)}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
+        ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${it.notes ? " · " + esc(it.notes.slice(0, 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(lab.slice(0, twin ? 34 : 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
     }).join("");
     const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${n > 1 ? (n === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
     const top = forExport ? 40 : 0;
@@ -4024,12 +4098,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const pos = []; for (let u = 1; u + it.h - 1 <= c.u; u++) if (rpFits(c, it, u)) pos.push(u);
     const n = rpCols(c);
     side.innerHTML = `<h3>${esc(rpLabel(it))}</h3>
-      ${linked ? `<p class="hint" style="margin:0 0 8px">${it.kind === "rack" ? "Appareil de Racks et I/O : son nom se change dans Réglages racks." : it.kind === "hf" ? "Appareil HF : son nom se change dans l'onglet HF." : "Élément du synoptique."}</p>` : `<label>Nom<input type="text" data-rpf="label" value="${esc(it.label || "")}" placeholder="${esc(rpLabel({ free: it.free }))}"></label>`}
+      ${linked ? `<p class="hint" style="margin:0 0 8px">${it.kind === "rack" ? "Appareil de Racks et I/O : son nom se change dans Réglages racks." : it.kind === "hf" ? "Appareil HF : son nom se change dans l'onglet HF." : "Élément du synoptique."}</p>` : `<label>Nom<input type="text" data-rpf="label" value="${esc(it.label || "")}" placeholder="${esc(rpLabel({ free: it.free }))}"></label><label>C'est un appareil connu ?<select data-rpf="asmodel"><option value="">Non, élément libre</option><optgroup label="Synoptique (transport, intercom, HF…)">${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="x:${k}">${esc(m.t)}</option>`).join("")}</optgroup><optgroup label="Récepteurs et émetteurs HF (onglet HF)">${HFDEV_MODELS.map(([m, kk, nn, t], i) => `<option value="h:${i}">${esc(t)}</option>`).join("")}</optgroup></select></label>`}
       <div class="row2"><label>Hauteur (U)<input type="number" min="1" max="20" data-rpf="h" value="${it.h}" inputmode="numeric"></label>
       <label>Position<select data-rpf="at">${pos.map((u) => `<option value="${u}"${u === it.at ? " selected" : ""}>U${u}${it.h > 1 ? "–" + (u + it.h - 1) : ""}</option>`).join("")}</select></label></div>
       ${n > 1 ? `<label>Colonne<select data-rpf="col">${RP_COLN[n].map((t, k) => `<option value="${k}"${rpCol(it) === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>` : ""}
       ${P.cases.length > 1 ? `<label>Rack<select data-rpf="case">${P.cases.map((x) => `<option value="${x.id}"${x === c ? " selected" : ""}>${esc(x.nom || "Rack")}</option>`).join("")}</select></label>` : ""}
       ${it.kind === "rack" && devType({ kind: "rack", id: it.ref }) === "sd" ? `<label>Côté vers l'avant du rack<select data-rpf="face"><option value="">Ventilation (DiGiCo 192 KHz)</option><option value="conn"${it.face === "conn" ? " selected" : ""}>Connecteurs (cartes)</option></select></label>` : ""}
+      ${it.h === 1 ? `<label>Largeur<select data-rpf="half"><option value="">Pleine largeur (19")</option><option value="l"${it.half === "l" ? " selected" : ""}>Demi-rack, à gauche</option><option value="r"${it.half === "r" ? " selected" : ""}>Demi-rack, à droite</option></select></label>` : ""}
       <label>Notes<input type="text" data-rpf="notes" value="${esc(it.notes || "")}" placeholder="ex. face arrière, alim 16 A"></label>
       <p class="hint" id="rpMsg" style="min-height:1em;margin:0"></p>
       <div class="actions" style="margin-top:8px"><button class="btn small danger" type="button" data-rpdel>Retirer du rack</button></div>`;
@@ -4047,7 +4122,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           const n = Math.max(1, Math.min(3, Number(t.value) || 1)), old = rpCols(c), keep = c.items.map((i) => [i, i.col, i.at]);
           c.cols = n;
           // Les éléments des colonnes retirées se rangent dans celles qui restent, s'il y a la place
-          for (const it of c.items.filter((i) => rpCol(i) >= n)) { it.col = n - 1; const pl = rpPlace(c, it, it.at); if (!pl) { c.cols = old; keep.forEach(([i, cl, a]) => { i.col = cl; i.at = a; }); t.value = old; const h = card.querySelector(".rpadd .hint"); h.textContent = "Pas assez de place : vide d'abord la colonne à retirer, ou utilise « Séparer »."; h.classList.add("warn"); return; } [it.col, it.at] = pl; }
+          for (const it of c.items.filter((i) => rpCol(i) >= n)) { it.col = n - 1; const pl = rpPlace(c, it, it.at); if (!pl) { c.cols = old; keep.forEach(([i, cl, a]) => { i.col = cl; i.at = a; }); t.value = old; const h = card.querySelector(".rpadd .hint"); h.textContent = "Pas assez de place : vide d'abord la colonne à retirer, ou utilise « Séparer »."; h.classList.add("warn"); return; } [it.col, it.at] = pl; if (pl[2]) it.half = pl[2]; }
           if (n === 1) c.items.forEach((i) => { delete i.col; });
         }
         else c[t.dataset.rpcf] = t.value.trim();
@@ -4057,8 +4132,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         const c = P.cases.find((x) => x.id === card.dataset.rpc); let [kind, ref] = t.value.split("|"); if (!c || !kind) return;
         if (kind === "newx") { const m = EXTRA_MODELS[ref]; if (!m) return; const k = synState().nodes.filter((x) => extraModel(x) === ref).length + 1; const x = { id: nid(), nom: k > 1 ? `${m.nom} #${k}` : m.nom, model: ref, type: "", loopId: "" }; synState().nodes.push(x); kind = "extra"; ref = x.id; }
         const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
-        if (kind === "free") it.free = ref; else it.ref = ref;
-        const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; } else it.at = 0;
+        if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
+        const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; if (pl[2]) it.half = pl[2]; } else it.at = 0;
         if (!it.at) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = `Plus de place pour ${it.h} U : agrandis le rack ou libère des U.`; h.classList.add("warn"); return; }
         c.items.push(it); rpSel = it.id; commit(true); return;
       }
@@ -4066,11 +4141,20 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const { c, it } = f, msg = (m) => { const x = $("#rpMsg"); if (x) x.textContent = m; };
       if (k === "label" || k === "notes") it[k] = t.value.trim();
       else if (k === "face") { if (t.value) it.face = t.value; else delete it.face; }
+      else if (k === "asmodel") {
+        // Un élément libre devient un vrai appareil : dessin, ports, et présence dans le synoptique ou l'onglet HF
+        const [w, key] = t.value.split(":"), nm = (it.label || "").trim();
+        if (w === "x" && EXTRA_MODELS[key]) { const m = EXTRA_MODELS[key], x = { id: nid(), nom: nm && nm !== "Autre élément" ? nm : m.nom, model: key, type: "", loopId: "" }; synState().nodes.push(x); it.kind = "extra"; it.ref = x.id; }
+        else if (w === "h" && HFDEV_MODELS[+key]) { const [m, kk, nn] = HFDEV_MODELS[+key], D = hfDevs(); let k2 = D.filter((d) => d.model === m).length + 1; while (D.some((d) => d.nom === `${m} #${k2}`)) k2++; const d = { id: nid(), kind: kk, model: m, nom: nm && nm !== "Autre élément" ? nm : `${m} #${k2}`, n: nn, notes: "", ...(kk === "tx" ? { st: 1 } : {}) }; D.push(d); it.kind = "hf"; it.ref = d.id; if (it.h === 1 && rpDefaultHalf("hf", d.id)) { if (rpFits(c, it, it.at, rpCol(it), "l")) it.half = "l"; } }
+        else return;
+        delete it.free; delete it.label;
+      }
+      else if (k === "half") { const hv = t.value || undefined; if (!rpFits(c, it, it.at, rpCol(it), hv)) { const a = rpNearest(c, it, it.at, rpCol(it), hv); if (!a) { t.value = it.half || ""; msg("Pas de place libre pour cette largeur."); return; } it.at = a; } if (hv) it.half = hv; else delete it.half; }
       else if (k === "at") it.at = Number(t.value) || it.at;
       else if (k === "col") { const col = Number(t.value) || 0, at = rpNearest(c, it, it.at, col); if (!at) { t.value = rpCol(it); msg(`Pas ${it.h} U libres dans cette colonne.`); return; } it.col = col; it.at = at; }
       else if (k === "h") {
-        const h = Math.max(1, Math.min(20, Math.round(Number(t.value)) || it.h)), old = it.h; it.h = h;
-        const at = rpNearest(c, it, it.at); if (!at) { it.h = old; t.value = old; msg(`Pas ${h} U libres d'affilée dans ce rack.`); return; } it.at = at;
+        const h = Math.max(1, Math.min(20, Math.round(Number(t.value)) || it.h)), old = it.h, oh = it.half; it.h = h; if (h > 1) delete it.half;
+        const at = rpNearest(c, it, it.at); if (!at) { it.h = old; if (oh) it.half = oh; t.value = old; msg(`Pas ${h} U libres d'affilée dans ce rack.`); return; } it.at = at;
       } else if (k === "case") {
         const to = P.cases.find((x) => x.id === t.value); if (!to || to === c) return;
         const pl = rpPlace(to, { ...it, id: "_", col: 0 }, 1); if (!pl) { t.value = c.id; msg(`Pas ${it.h} U libres dans ${to.nom || "ce rack"}.`); return; }
@@ -4100,7 +4184,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const wasSel = rpSel === f.it.id;
       if (e.pointerType === "touch" && !wasSel) { rpSel = f.it.id; rpFresh = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); return; }
       const p = rpPoint(svg, e);
-      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), moved: false };
+      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), half: f.it.half, moved: false };
       if (rpSel !== f.it.id) { rpSel = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -4110,12 +4194,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const { c, it, svg, g } = rpDrag, p = rpPoint(svg, e);
       const at = Math.max(1, Math.min(c.u - it.h + 1, Math.round((p.y - rpDrag.dy - RP_TOP) / RP_UH) + 1));
       const col = Math.max(0, Math.min(rpCols(c) - 1, Math.floor(p.x / (RP_CW + RP_GAP))));
-      if (at !== rpDrag.at || col !== rpDrag.col) { rpDrag.at = at; rpDrag.col = col; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at, col)); }
+      const half = it.half ? (p.x - rpX(col) - RP_SIDE > 241.5 ? "r" : "l") : undefined;
+      if (at !== rpDrag.at || col !== rpDrag.col || half !== rpDrag.half) { rpDrag.at = at; rpDrag.col = col; rpDrag.half = half; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE + (half === "r" ? 241.5 : 0)} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at, col, half)); }
     });
     const end = () => {
-      if (!rpDrag) return; const { c, it, at, col, moved } = rpDrag; rpDrag = null;
+      if (!rpDrag) return; const { c, it, at, col, half, moved } = rpDrag; rpDrag = null;
       if (!moved) return;
-      if (rpFits(c, it, at, col)) { it.at = at; if (col) it.col = col; else delete it.col; }
+      if (rpFits(c, it, at, col, half)) { it.at = at; if (col) it.col = col; else delete it.col; if (half) it.half = half; }
       commit(true);
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
@@ -4161,6 +4246,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     HyperMAC: { c: "#b91c1c", w: 4, d: "" },
     AES50: { c: "#0d9488", w: 3, d: "" },
     Intercom: { c: "#ca8a04", w: 2.5, d: "7 3" },
+    Antenne: { c: "#64748b", w: 2.5, d: "" },
     AVB: { c: "#0f8f84", w: 3, d: "12 4 3 4" },
     SoundGrid: { c: "#5d9b0f", w: 3, d: "6 3" },
     Analogique: { c: "#4b5563", w: 2.5, d: "1.5 4" },
@@ -4177,6 +4263,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (/dante/i.test(s)) return "Dante";
     if (/h\s*-?mac|hypermac|snake/i.test(s)) return "HyperMAC";
     if (/aes\s*-?50|supermac/i.test(s)) return "AES50";
+    if (/antenn|coax|\bbnc\b|rf\b/i.test(s) && !/madi/i.test(s)) return "Antenne";
     if (/intercom|party\s*-?line|canal [ab]\b|clear-?com/i.test(s)) return "Intercom";
     if (/aes/i.test(s)) return "AES";
     if (/avb|milan/i.test(s)) return "AVB";
@@ -4243,7 +4330,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16))));
       // Façade de l'appareil en bandeau en haut, aux vraies proportions (40 px de haut au plus)
       const ph = n.kind === "rack" ? (rackById(n.id) || {}).photo : n.kind === "extra" ? n.ref.photo : (S.cons[n.cons] || {}).photo;
-      n.ih = ph ? 40 : Math.min(40, Math.round(((n.w - 20) * (DEV_H[devType(n)] || 44.45)) / 483)); n.dy = n.ih + 8;
+      n.ih = ph ? 40 : Math.min(40, Math.round(((n.w - 20) * (DEV_H[devType(n)] || 44.45)) / (DEV_W[devType(n)] || 483))); n.dy = n.ih + 8;
       n.h = n.dy + (n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52); });
     return out;
   }
@@ -4641,7 +4728,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (c && c.src !== undefined) return c;
     // AS 80 et DN9680 suivent l'horloge qui arrive par l'AES50 ou le snake ; l'intercom MS-702 est analogique
     const xm = n.kind === "extra" ? extraModel(n.ref) : "";
-    if (xm) return { src: xm === "ms702" ? "none" : "aes", from: "" };
+    if (xm) return { src: xm === "ms702" || EXTRA_MODELS[xm].clk === "none" ? "none" : "aes", from: "" };
     return { src: isGen(n) ? "int" : n.loop ? "loop" : n.kind === "extra" && n.ref && (n.ref.type === "Réseau" || /switch/i.test(n.ref.nom || "")) ? "none" : "", from: "" };
   }
   function setClk(id, c) {
@@ -6137,10 +6224,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Ranger un appareil dans un plan de rack (première place libre, ou à l'U demandé)
   function rpPut(c, kind, ref, at = 1, col = 0) {
     const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1, col };
-    if (kind === "free") it.free = ref; else it.ref = ref;
+    if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
     const pl = rpPlace(c, it, at);
     if (!pl) { notice(`Plus de place pour ${it.h} U dans ${esc(c.nom || "ce rack")}.`, true); return; }
-    [it.col, it.at] = pl; if (!it.col) delete it.col;
+    [it.col, it.at] = pl; if (pl[2]) it.half = pl[2]; if (!it.col) delete it.col;
     c.items.push(it); rpSel = it.id; commit(true);
     notice(`${esc(rpLabel(it))} rangé dans ${esc(c.nom || "le rack")}, U${it.at}.`);
   }
