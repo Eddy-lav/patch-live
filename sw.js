@@ -9,7 +9,8 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   if (/dropbox(api)?\.com$/.test(u.hostname)) return;
   if (e.request.mode === "navigate" || (u.origin === location.origin && /\/(index\.html)?$/.test(u.pathname))) {
-    e.respondWith(fetch(e.request).then((r) => { const c = r.clone(); caches.open(CACHE).then((ca) => ca.put("./index.html", c)); return r; }).catch(() => caches.match("./index.html")));
+    // cache "no-cache" : on redemande toujours la page au serveur, sans passer par le cache HTTP du navigateur (10 min sur GitHub Pages)
+    e.respondWith(fetch(u.origin === location.origin ? u.href.split("#")[0] : e.request, { cache: "no-cache", credentials: "same-origin" }).then((r) => { if (r.ok) { const c = r.clone(); caches.open(CACHE).then((ca) => ca.put("./index.html", c)); } return r; }).catch(() => caches.match("./index.html")));
     return;
   }
   if (u.origin === location.origin || /cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com/.test(u.hostname)) {
