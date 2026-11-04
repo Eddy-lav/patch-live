@@ -3416,6 +3416,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <label class="inl"><input type="number" min="1" max="48" data-rpcf="u" value="${c.u}" inputmode="numeric" aria-label="Hauteur en U"> U</label>
         <select data-rpcf="cols" aria-label="Colonnes">${[[1, "Simple"], [2, "Double"], [3, "Triple"]].map(([v, t]) => `<option value="${v}"${rpCols(c) === v ? " selected" : ""}>${t}</option>`).join("")}</select>
         <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" list="dlRpLieu" class="rplieu">
+        ${rpCols(c) > 1 ? `<button class="btn small" type="button" data-rpcsplit title="Faire un rack simple par colonne, avec ses appareils">Séparer en ${rpCols(c)} simples</button>` : ""}
         <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
         <div class="rpadd"><select data-rpadd aria-label="Ajouter dans ce rack">${free}</select><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
         <div class="rpstage">${rpCaseSvg(c)}</div></div>`;
@@ -3451,7 +3452,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           const n = Math.max(1, Math.min(3, Number(t.value) || 1)), old = rpCols(c), keep = c.items.map((i) => [i, i.col, i.at]);
           c.cols = n;
           // Les éléments des colonnes retirées se rangent dans celles qui restent, s'il y a la place
-          for (const it of c.items.filter((i) => rpCol(i) >= n)) { it.col = n - 1; const pl = rpPlace(c, it, it.at); if (!pl) { c.cols = old; keep.forEach(([i, cl, a]) => { i.col = cl; i.at = a; }); t.value = old; const h = card.querySelector(".rpadd .hint"); h.textContent = "Pas assez de place : vide d'abord la colonne à retirer."; h.classList.add("warn"); return; } [it.col, it.at] = pl; }
+          for (const it of c.items.filter((i) => rpCol(i) >= n)) { it.col = n - 1; const pl = rpPlace(c, it, it.at); if (!pl) { c.cols = old; keep.forEach(([i, cl, a]) => { i.col = cl; i.at = a; }); t.value = old; const h = card.querySelector(".rpadd .hint"); h.textContent = "Pas assez de place : vide d'abord la colonne à retirer, ou utilise « Séparer »."; h.classList.add("warn"); return; } [it.col, it.at] = pl; }
           if (n === 1) c.items.forEach((i) => { delete i.col; });
         }
         else c[t.dataset.rpcf] = t.value.trim();
@@ -3484,6 +3485,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const P = rpState();
       const del = e.target.closest("[data-rpcdel]");
       if (del) { const id = del.closest(".rpcase").dataset.rpc; P.cases = P.cases.filter((x) => x.id !== id); commit(true); return; }
+      const sp = e.target.closest("[data-rpcsplit]");
+      if (sp) {
+        // Un rack simple par colonne : chacun garde les appareils de sa colonne, à la même hauteur
+        const c = P.cases.find((x) => x.id === sp.closest(".rpcase").dataset.rpc); if (!c) return;
+        const n = rpCols(c), parts = RP_COLN[n].map((t, k) => ({ id: k ? nid() : c.id, nom: `${c.nom || "Rack"} ${t.toLowerCase()}`, u: c.u, lieu: c.lieu || "", items: c.items.filter((i) => Math.min(rpCol(i), n - 1) === k).map((i) => { const x = { ...i }; delete x.col; return x; }) }));
+        P.cases.splice(P.cases.indexOf(c), 1, ...parts); commit(true); return;
+      }
       if (e.target.closest("[data-rpdel]")) { const f = rpSel && rpFind(rpSel); if (f) { f.c.items = f.c.items.filter((i) => i !== f.it); rpSel = null; commit(true); } }
     });
     host.addEventListener("pointerdown", (e) => {
