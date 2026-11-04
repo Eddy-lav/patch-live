@@ -116,6 +116,64 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
 .dbxmenu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 5px; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; }
 .dbxmenu .dbxlocal { border-top: 1px solid var(--line); border-radius: 0 0 5px 5px; color: var(--muted); }
 .dbxmenu button:hover, .dbxmenu button:focus { background: var(--hl); outline: none; }
+.appmenu .mi { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 5px; font-size: 14px; cursor: pointer; position: relative; }
+.appmenu .mi:hover { background: var(--hl); }
+.appmenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+.appmenu .mh { margin: 4px 10px 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.appmenu .dangerish { color: var(--danger); }
+.appmenu button.armed { background: var(--danger); color: #fff; }
+.appmenu [role="menuitemcheckbox"]::before { content: ""; display: inline-block; width: 18px; }
+.appmenu [role="menuitemcheckbox"][aria-checked="true"]::before { content: "✓"; }
+.btn.icon { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; padding: 6px 8px; font-size: 17px; line-height: 1; }
+body.dbxfile #saveBtn { display: none; }
+/* Recherche globale */
+.gsdlg { width: min(620px, calc(100vw - 24px)); max-height: min(70vh, 560px); margin-top: 10vh; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); box-shadow: 0 20px 50px rgb(0 0 0 / 0.3); }
+.gsdlg::backdrop { background: rgb(0 0 0 / 0.35); }
+.gsbox { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.gsbox input { flex: 1; border: 0; background: transparent; font-size: 18px; padding: 6px 4px; outline: none; }
+.gsbox kbd { font-family: var(--font-mono); font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; }
+.gsres { list-style: none; margin: 0; padding: 4px; overflow: auto; max-height: calc(min(70vh, 560px) - 60px); }
+.gsres li { display: grid; grid-template-columns: 82px minmax(0, auto) minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.gsres li.on, .gsres li:hover { background: var(--hl); }
+.gsres li.none { display: block; color: var(--muted); cursor: default; }
+.gsres .gk { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.gsres .gd { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) { .gsres li { grid-template-columns: 1fr; gap: 0; } .gsdlg { margin-top: 8px; } }
+.flashbox { animation: flash 1.6s ease-out; }
+.pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 2px 4px 4px; }
+.pgrid button { font-family: var(--font-mono); font-size: 13px; text-align: center !important; border: 1px solid var(--line) !important; }
+.appmenu .mh { max-width: 300px; }
+.box li.hs { color: var(--danger); background: var(--danger-soft); }
+.box li.hs .s { font-weight: 700; }
+.box .unhs { margin-left: auto; border: 1px solid var(--line); background: var(--surface); border-radius: 4px; font-size: 11px; padding: 1px 6px; color: var(--ink); }
+/* Tableaux : pad, 48V, groupes de musiciens, croix de suppression, colonnes masquées, lignes serrées */
+table.master td.nopad input::placeholder { color: transparent; }
+table.master td.nopad input { opacity: 0.55; }
+label.p48 { display: inline-flex; cursor: pointer; position: relative; }
+label.p48 input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+label.p48 span { font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); opacity: 0.55; }
+label.p48 input:checked + span { background: #c0392b; border-color: #c0392b; color: #fff; opacity: 1; }
+label.p48 input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+table.master tr.grp td { border-top: 2px solid var(--muted); }
+.btn.xdel { min-width: 30px; padding: 2px 8px; font-size: 17px; line-height: 1.2; font-weight: 700; color: var(--danger); }
+.btn.xdel.armed { font-size: 13px; color: #fff; background: var(--danger); border-color: var(--danger); }
+body.hide-mus .c-mus, body.hide-pied .c-pied, body.hide-pad .c-pad, body.hide-48 .c-48, body.hide-prov .c-prov, body.hide-notes .c-notes { display: none !important; }
+@media (min-width: 761px) {
+  body.dense table.master td { padding-block: 0; }
+  body.dense table.master td input[type="text"], body.dense table.master td select { padding-block: 2px; }
+  body.dense table.master { font-size: 14px; }
+  /* Flèches des listes d'adresses : visibles au survol de la ligne ou au focus seulement */
+  table.master select.addr { -webkit-appearance: none; appearance: none; background-image: none; padding-right: 18px; }
+  table.master tr:hover select.addr, table.master select.addr:focus { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 10px) 52%, calc(100% - 6px) 52%; background-size: 4px 4px; background-repeat: no-repeat; }
+}
+.col-pied { min-width: 130px; }
+/* Thème régie : très sombre, contraste doux, sans blanc pur */
+:root[data-theme="regie"] {
+  --bg: #0b0c0d; --surface: #131415; --surface-2: #191b1c; --ink: #c9c7ba; --muted: #858a84;
+  --line: #262a2b; --accent: #c9a94e; --accent-ink: #141414; --accent-soft: #2c2716; --hl: #20241a; --tea: #1b2419;
+  --danger: #d9776c; --danger-soft: #2a1512; --ok: #5fae84; color-scheme: dark;
+}
+:root[data-theme="regie"] .plan-stage, :root[data-theme="regie"] .syn-stage { filter: brightness(0.55) contrast(1.05); }
 .dbxdlg { width: min(560px, calc(100vw - 24px)); max-height: min(640px, calc(100vh - 24px)); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); display: none; flex-direction: column; }
 .dbxdlg[open] { display: flex; }
 .dbxdlg::backdrop { background: rgb(0 0 0 / 0.4); }
@@ -131,22 +189,41 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
 .dbxsave input { width: 100%; }
 .example-tag { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 3px; background: var(--accent-soft); color: var(--ink); margin-left: 6px; vertical-align: middle; }
 
-nav.tabs { display: flex; gap: 2px; margin-top: 12px; overflow-x: auto; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; background: var(--bg); scrollbar-width: none; }
+.navs { position: sticky; top: 0; z-index: 20; background: var(--bg); margin-top: 10px; }
+nav.spaces { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+nav.spaces::-webkit-scrollbar { display: none; }
+nav.spaces button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; padding: 10px 14px; font-weight: 650; font-size: 15px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+nav.spaces button svg { width: 18px; height: 18px; flex: none; }
+nav.spaces button:hover { color: var(--ink); }
+nav.spaces button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.tabs { display: flex; gap: 6px; padding: 8px 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
 nav.tabs::-webkit-scrollbar { display: none; }
 @media (max-width: 760px) {
   header.top { gap: 8px; padding-bottom: 8px; }
-  .doc-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; width: 100%; }
-  .doc-fields > .field:first-child { grid-column: 1 / -1; }
+  .doc-fields { display: grid; grid-template-columns: minmax(0, 1fr) 118px; gap: 8px; width: 100%; align-items: end; }
   .doc-name { font-size: 20px; width: 100%; }
   .field input, .field select { padding: 4px 6px; width: 100%; }
-  header.top .actions { width: 100%; display: grid; grid-template-columns: 1.2fr 1.4fr 0.6fr 0.6fr 1fr; gap: 6px; }
-  header.top .actions .btn { padding: 7px 4px; justify-content: center; text-align: center; font-size: 14px; }
+  header.top .actions { width: 100%; display: flex; gap: 5px; }
+  header.top .actions .btn { padding: 7px 8px; justify-content: center; text-align: center; font-size: 14px; min-height: 40px; }
+  header.top .actions .btn.icon { min-width: 40px; flex: none; }
+  header.top .actions #dbxBtn, header.top .actions #saveBtn { flex: 1 1 auto; }
+  header.top .actions .themebtn { display: none; }
   .lg { display: none; }
-  nav.tabs button { padding: 9px 10px; }
   .toolbar { padding-block: 8px; }
 }
-nav.tabs button { border: 0; background: transparent; padding: 9px 14px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
-nav.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+#themeMi { display: none; }
+@media (max-width: 760px) { #themeMi { display: block; } }
+nav.tabs button { border: 1px solid var(--line); background: var(--surface); padding: 5px 12px; font-weight: 600; font-size: 14px; color: var(--muted); border-radius: 999px; white-space: nowrap; }
+nav.tabs button:hover { color: var(--ink); border-color: var(--muted); }
+nav.tabs button[aria-selected="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+nav.tabs button[aria-selected="true"] .count { color: inherit; opacity: 0.75; }
+.infos { max-width: 640px; }
+.infos h2 { margin: 0 0 10px; font-size: 18px; }
+.infogrid { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.infostats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.infostats div { background: var(--surface-2); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; }
+.infostats b { font-size: 20px; }
+.infostats span { font-size: 12px; color: var(--muted); }
 .count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-left: 4px; font-weight: 400; }
 
 .addn { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
@@ -184,7 +261,7 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
 @keyframes flash { from { background: var(--accent); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { table.master tr.flash td { animation: none; background: var(--accent-soft); } }
 .pair { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
-.col-src { min-width: 150px; } .col-mus { min-width: 100px; } .col-mic { min-width: 120px; } .col-pied { min-width: 100px; }
+.col-src { min-width: 150px; } .col-mus { min-width: 100px; } .col-mic { min-width: 120px; } .col-pied { min-width: 130px; }
 .col-type { min-width: 124px; } .col-pad { width: 84px; min-width: 84px; } .col-48 { width: 44px; text-align: center; } .col-box { min-width: 160px; } .col-sr { min-width: 130px; } .col-notes { min-width: 140px; } .col-prov { min-width: 130px; }
 
 .more-btn { display: none; }
@@ -386,6 +463,14 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 16px; align-items: start; margin-top: 8px; }
 .hfwide { grid-column: 1 / -1; }
 .spxres h3 { margin: 0 0 8px; font-size: 16px; }
+details.spxres > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+details.spxres > summary::-webkit-details-marker { display: none; }
+details.spxres > summary h3 { margin: 0; }
+details.spxres > summary h3::before { content: "▸ "; color: var(--muted); }
+details.spxres[open] > summary h3::before { content: "▾ "; }
+details.spxres[open] > summary { margin-bottom: 8px; }
+.spxs { font-size: 13px; color: var(--muted); font-family: var(--font-mono); }
+.spxs b { font-family: var(--font-ui); color: var(--ink); }
 .spxbase { padding: 6px 0 8px; border-top: 1px solid var(--line); }
 .spxbase:first-of-type { border-top: 0; }
 .spxbh { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; margin-bottom: 4px; font-size: 14px; }
@@ -560,18 +645,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
 @media (max-width: 760px) {
   .sm { display: inline; }
   body { -webkit-text-size-adjust: 100%; }
-  /* En-tête : boutons sur une ligne, champs serrés */
-  header.top .actions { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: auto; gap: 4px; }
-  header.top .actions .btn { padding: 6px 6px; font-size: 13px; min-height: 36px; }
-  /* Avec Dropbox, l'ouverture d'un fichier local passe au second plan sur téléphone */
-  body.dbx header.top .actions .file-btn { display: none; }
-  /* Le bouton de thème passe en haut à droite, au niveau du libellé « Dossier » */
-  header.top { position: relative; }
-  header.top .actions .themebtn { position: absolute; top: 0; right: 0; min-height: 26px; padding: 1px 8px; font-size: 15px; }
   .field > span { font-size: 10px; }
   .doc-name { font-size: 18px; padding: 4px 8px; }
-  /* Onglets plus serrés */
-  nav.tabs button { padding: 9px 9px; font-size: 14px; }
+  /* Espaces en barre fixe en bas, au pouce ; les sous-onglets restent en haut */
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .navs { margin-top: 6px; }
+  nav.spaces { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--surface); border-top: 1px solid var(--line); border-bottom: 0; padding: 4px max(4px, env(safe-area-inset-left, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -4px 14px rgb(0 0 0 / 0.08); gap: 0; }
+  nav.spaces button { flex: 1 1 0; flex-direction: column; gap: 2px; padding: 6px 2px 4px; font-size: 11px; border-bottom: 0; border-radius: 8px; min-width: 0; }
+  nav.spaces button svg { width: 22px; height: 22px; }
+  nav.spaces button[aria-selected="true"] { background: var(--accent-soft); color: var(--ink); }
+  nav.tabs { padding: 6px 0; }
+  nav.tabs button { padding: 6px 12px; font-size: 14px; }
   nav.tabs .count { font-size: 11px; margin-left: 2px; }
   /* Barres d'outils : recherche sur toute la largeur, boutons en une rangée */
   #masterTools .toolbar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -661,28 +745,37 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       <span>Dossier <span id="exampleTag" class="example-tag" hidden>exemple</span><button id="dbxState" class="dbxstate" type="button" hidden></button></span>
       <input id="docName" class="doc-name" type="text" aria-label="Nom du dossier">
     </div>
-    <label class="field"><span>Type</span>
-      <select id="docType"><option>Tournée</option><option>One shot</option></select>
-    </label>
-    <label class="field"><span>Version</span>
-      <input id="docVersion" type="text" size="5">
-    </label>
-    <label class="field"><span>Salle du jour</span>
+    <label class="field lieu"><span>Salle du jour</span>
       <input id="docLieu" type="text" size="14" placeholder="pour le journal">
     </label>
   </div>
   <div class="actions">
-    <label class="btn file-btn">Ouvrir<span class="lg">&nbsp;un fichier Excel</span><input id="fileIn" type="file" accept=".xlsx"></label>
     <button id="dbxBtn" class="btn" type="button" hidden aria-haspopup="menu">Dropbox</button>
     <button id="saveBtn" class="btn primary" type="button">Enregistrer<span class="lg"> en Excel</span></button>
-    <button id="printBtn" class="btn" type="button" aria-expanded="false">Imprimer</button>
-    <button id="undoBtn" class="btn" type="button" title="Annuler (Cmd/Ctrl+Z)" disabled aria-label="Annuler">↶<span class="lg"> Annuler</span></button>
-    <button id="redoBtn" class="btn" type="button" title="Rétablir (Maj+Cmd+Z ou Ctrl+Y)" disabled aria-label="Rétablir">↷<span class="lg"> Rétablir</span></button>
-    <button id="newBtn" class="btn" type="button">Nouveau<span class="lg"> dossier</span></button>
-    <button id="themeBtn" class="btn themebtn" type="button" title="Thème : automatique (suit l'appareil)" aria-label="Thème : automatique">◐</button>
+    <button id="undoBtn" class="btn icon" type="button" title="Annuler (Cmd/Ctrl+Z)" disabled aria-label="Annuler">↶</button>
+    <button id="redoBtn" class="btn icon" type="button" title="Rétablir (Maj+Cmd+Z ou Ctrl+Y)" disabled aria-label="Rétablir">↷</button>
+    <button id="findBtn" class="btn icon" type="button" title="Rechercher partout (Ctrl+K ou /)" aria-label="Rechercher partout"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M13 13l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button id="themeBtn" class="btn icon themebtn" type="button" title="Thème" aria-label="Thème"></button>
+    <button id="menuBtn" class="btn icon" type="button" aria-haspopup="menu" aria-expanded="false" title="Ouvrir, imprimer, nouveau dossier, affichage…" aria-label="Menu"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="4" cy="10" r="1.8" fill="currentColor"/><circle cx="10" cy="10" r="1.8" fill="currentColor"/><circle cx="16" cy="10" r="1.8" fill="currentColor"/></svg></button>
   </div>
 </header>
+<div id="appMenu" class="dbxmenu appmenu" role="menu" hidden>
+  <label class="mi file-btn" role="menuitem">Ouvrir un fichier Excel de l'appareil…<input id="fileIn" type="file" accept=".xlsx"></label>
+  <button id="exportBtn" type="button" role="menuitem" hidden>Enregistrer une copie Excel sur l'appareil</button>
+  <button id="printBtn" type="button" role="menuitem" aria-expanded="false">Imprimer ou faire un PDF…</button>
+  <hr>
+  <button id="themeMi" type="button" role="menuitem">Changer de thème</button>
+  <button id="densBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes serrées</button>
+  <button id="colsBtn" type="button" role="menuitem">Colonnes à afficher…</button>
+  <hr>
+  <button id="newBtn" type="button" role="menuitem" class="dangerish">Nouveau dossier</button>
+</div>
 <div id="dbxMenu" class="dbxmenu" role="menu" hidden></div>
+<div id="ctxMenu" class="dbxmenu appmenu" role="menu" hidden></div>
+<dialog id="gsDlg" class="gsdlg" aria-label="Rechercher partout">
+  <div class="gsbox"><input id="gsIn" type="search" placeholder="Source, micro, HF, rack, boîtier, 12N #1 → 3…" autocomplete="off" aria-label="Rechercher partout"><kbd>Échap</kbd></div>
+  <ul id="gsRes" class="gsres" role="listbox"></ul>
+</dialog>
 <dialog id="dbxDlg" class="dbxdlg" aria-labelledby="dbxTitle">
   <div class="dbxtop"><strong id="dbxTitle">Dropbox</strong><button class="btn small" type="button" data-dclose>Fermer</button></div>
   <div id="dbxCrumbs" class="dbxcrumbs"></div>
@@ -701,18 +794,29 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <span class="hint" style="width:100%">Dans la fenêtre d'impression, choisis « Enregistrer au format PDF » pour faire un PDF. Si rien ne s'ouvre, prends le fichier à imprimer : il s'ouvre dans n'importe quel navigateur et s'imprime de la même façon.</span>
 </form>
 
+<div class="navs">
+<nav class="spaces" role="tablist" aria-label="Espaces">
+  <button role="tab" data-s="patch" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Patch</span></button>
+  <button role="tab" data-s="hf" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20v-9M8.5 8.5a5 5 0 0 1 7 0M5.6 5.6a9 9 0 0 1 12.8 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="11" r="1.6" fill="currentColor"/></svg><span>HF</span></button>
+  <button role="tab" data-s="regie" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="17" r="1.2" fill="currentColor"/></svg><span>Régie</span></button>
+  <button role="tab" data-s="scene" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17h18M5 17V9l7-4 7 4v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Scène</span></button>
+  <button role="tab" data-s="mat" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4-8 4-8-4zM4 8v8l8 4 8-4V8M12 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Matériel</span></button>
+  <button role="tab" data-s="dossier" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Dossier</span></button>
+</nav>
 <nav class="tabs" role="tablist">
   <button role="tab" data-v="master" aria-selected="true">Master patch<span class="count" id="cMaster"></span></button>
   <button role="tab" data-v="sorties" aria-selected="false">Sorties<span class="count" id="cSorties"></span></button>
-  <button role="tab" data-v="hf" aria-selected="false">Distribution HF<span class="count" id="cHf"></span></button>
   <button role="tab" data-v="boites" aria-selected="false">Boîtiers<span class="count" id="cBoites"></span></button>
+  <button role="tab" data-v="hf" aria-selected="false">Distribution HF<span class="count" id="cHf"></span></button>
   <button role="tab" data-v="racks" aria-selected="false">Racks et I/O<span class="count" id="cRacks"></span></button>
-  <button role="tab" data-v="materiel" aria-selected="false">Réglages racks et boîtiers</button>
-  <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
-  <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
+  <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
+  <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
+  <button role="tab" data-v="infos" aria-selected="false">Infos</button>
+  <button role="tab" data-v="materiel" aria-selected="false">Réglages racks et boîtiers</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
 </nav>
+</div>
 
 <section id="v-master">
   <div id="masterTools">
@@ -730,6 +834,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     <strong id="selCount"></strong>
     <button id="selAssign" class="btn small primary" type="button">Affecter à un boîtier ou un stage rack</button>
     <span class="selmus"><select id="selField" aria-label="Colonne à remplir pour la sélection"><option value="musicien">Musicien</option><option value="micro">Micro / DI</option><option value="pied">Pied</option><option value="pad">Pad dB</option><option value="p48">48V</option><option value="prov">Provenance</option><option value="notes">Notes</option></select><input type="text" id="selMus" placeholder="Musicien (vide = effacer)" aria-label="Valeur pour la sélection" autocomplete="off" data-suggest="dlMus"><select id="selBool" aria-label="48V pour la sélection" hidden><option value="1">48V oui</option><option value="0">48V non</option></select><button id="selMusGo" class="btn small" type="button">Affecter</button></span>
+    <button id="selPanne" class="btn small" type="button" hidden title="L'entrée de boîtier est en panne : passer sur une entrée libre et marquer l'ancienne HS">Panne…</button>
     <button id="selUnbox" class="btn small" type="button">Dépatcher du boîtier</button>
     <button id="selClear" class="btn small" type="button">Désélectionner</button>
   </div>
@@ -798,6 +903,18 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <div id="rackTools"></div>
   <div id="rackOut"></div>
   <p class="hint">Le patch vu depuis chaque stage rack ou équipement I/O, un trait sépare les cartes ou les ports. Chaque ligne se modifie comme dans le master (micro, pied, musicien, boîtier, entrée…). Tape un nom dans une case libre pour y mettre une source : elle est créée, ou reprise si elle n'a pas encore d'entrée ; Entrée passe à la case libre suivante. Les sources ajoutées avec « + Source » attendent dans « Sources sans entrée » en bas. Sélection : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter une ligne.</p>
+</section>
+
+<section id="v-infos" hidden>
+  <div class="panel infos">
+    <h2>Dossier</h2>
+    <div class="infogrid">
+      <label class="field"><span>Type</span><select id="docType"><option>Tournée</option><option>One shot</option></select></label>
+      <label class="field"><span>Version</span><input id="docVersion" type="text" size="8"></label>
+    </div>
+    <p class="hint">Le nom du dossier et la salle du jour se modifient en haut de la page. La couverture se règle depuis « Ajouter une couverture », tout en haut.</p>
+    <div id="infoStats" class="infostats"></div>
+  </div>
 </section>
 
 <section id="v-materiel" hidden>
@@ -875,7 +992,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <ul class="journal" id="journalList"></ul>
 </section>
 
-<footer class="foot">Prototype du module patch. Dans Excel, les corrections du master patch sont reprises à la réouverture ; celles des autres onglets ne le sont pas encore. Le dossier est gardé dans ce navigateur entre deux visites ; le fichier Excel enregistré est la sauvegarde à partager. La synchro Dropbox et le travail à plusieurs viendront à l'étape suivante.</footer>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
@@ -1033,13 +1150,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const { bases, loose, orphans } = spxUsage();
     if (!bases.length) return `<div class="panel spxres"><h3>Ressources Spectera</h3><p class="hint">Ajoute une base Spectera dans « Réglages racks et boîtiers » (modèle Sennheiser Spectera) pour suivre l'utilisation des ressources.</p></div>`;
     const bar = (pct) => `<span class="gauge${pct > 100 ? " over" : pct > 85 ? " warn" : ""}"><span style="width:${Math.min(100, pct)}%"></span></span>`;
-    return `<div class="panel spxres"><h3>Ressources Spectera</h3>${bases.map((u) => `<div class="spxbase"><div class="spxbh"><b>${esc(spxName(u.b))}</b><span class="${u.iemIn > u.maxIn ? "over" : ""}">Entrées IEM <b>${u.iemIn}</b>/${u.maxIn}</span><span class="${u.micOut > u.maxOut ? "over" : ""}">Sorties micro <b>${u.micOut}</b>/${u.maxOut}</span></div>${antHtml(u.b)}
+    // Replié par défaut sur une ligne de résumé ; une alerte (dépassement, RF sans antenne) se voit aussi replié
+    const sum = bases.map((u) => `<span class="spxs"><b>${esc(spxName(u.b))}</b> ${SPX_RF.map((k) => { const c = u.rf[k], noAnt = !antOn(u.b, k).length && c.sek + c.skm; return `<span class="${c.pct > 100 || noAnt ? "over" : ""}">RF ${k} ${pctTxt(c.pct)}${noAnt ? " · sans antenne" : ""}</span>`; }).join(" · ")}${u.iemIn > u.maxIn || u.micOut > u.maxOut ? ` · <span class="over">entrées ou sorties dépassées</span>` : ""}</span>`).join("");
+    return `<details class="panel spxres" id="spxRes"${spxOpen ? " open" : ""}><summary><h3>Ressources Spectera</h3>${sum}</summary>${bases.map((u) => `<div class="spxbase"><div class="spxbh"><b>${esc(spxName(u.b))}</b><span class="${u.iemIn > u.maxIn ? "over" : ""}">Entrées IEM <b>${u.iemIn}</b>/${u.maxIn}</span><span class="${u.micOut > u.maxOut ? "over" : ""}">Sorties micro <b>${u.micOut}</b>/${u.maxOut}</span></div>${antHtml(u.b)}
       ${SPX_RF.map((k) => { const c = u.rf[k]; return `<div class="spxrf"><span class="lab">RF ${k}</span>${bar(c.pct)}<span class="val${c.pct > 100 ? " over" : ""}">${pctTxt(c.pct)}</span><span class="det">${antWarn(u.b, k, c)}${c.sek} SEK · ${c.skm} SKM — ${c.iem} ears${c.dup ? ` (+${c.dup} en copie de mix)` : ""} · ${c.mic} micro${c.mic > 1 ? "s" : ""} · ${c.pct > 100 ? `<b>${pctTxt(c.pct - 100)} de trop</b>` : `reste ${pctTxt(100 - c.pct)}`}</span></div>`; }).join("")}
       ${u.noRf ? `<p class="hint warn">${u.noRf} SEK sur cette base sans RF channel.</p>` : ""}</div>`).join("")}
       ${loose.length ? `<p class="hint warn">Sans base : ${loose.map(esc).join(", ")}.</p>` : ""}
       ${orphans.length ? `<p class="hint warn">Copie de mix impossible (l'original doit avoir un codec ears, la même base et le même RF, et ne pas être lui-même une copie) : ${orphans.map(esc).join(", ")}.</p>` : ""}
-      <details class="hint spxhow"><summary>Comment c'est calculé</summary>Chaque lien prend une part de la porteuse RF selon son mode (doc Sennheiser) : stéréo Live 6,25 %, Low Latency 12,5 %, Ultra Low Latency 25 %, Link Density 3,13 % ; micro Live ou Raw 6,25 %, Low Latency 12,5 %, Link Density 3,13 %, Max Link Density 0,78 %. Une base a 32 entrées IEM (un ear stéréo en prend 2) et 32 sorties micro. Un SEK en « copie de mix » écoute le lien ears d'un autre SEK (même base et même RF) : il ne prend ni porteuse ni entrée en plus, comme dans Spectera Studio.</details></div>`;
+      <details class="hint spxhow"><summary>Comment c'est calculé</summary>Chaque lien prend une part de la porteuse RF selon son mode (doc Sennheiser) : stéréo Live 6,25 %, Low Latency 12,5 %, Ultra Low Latency 25 %, Link Density 3,13 % ; micro Live ou Raw 6,25 %, Low Latency 12,5 %, Link Density 3,13 %, Max Link Density 0,78 %. Une base a 32 entrées IEM (un ear stéréo en prend 2) et 32 sorties micro. Un SEK en « copie de mix » écoute le lien ears d'un autre SEK (même base et même RF) : il ne prend ni porteuse ni entrée en plus, comme dans Spectera Studio.</details></details>`;
   }
+  let spxOpen = false;
+  document.addEventListener("toggle", (e) => { if (e.target.id === "spxRes") spxOpen = e.target.open; }, true);
   // Tableau des ressources pour l'Excel et l'impression
   function spxUsageRows() {
     const { bases, loose } = spxUsage(), rows = [];
@@ -1673,6 +1794,25 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
 
   // ---------- Master ----------
+  // Entrées de boîtier hors service (panne) : clé « boîtier:entrée »
+  const isHs = (k) => !!(state.hs && state.hs[k]);
+  function panneMenu(l, x, y) {
+    if (!l.box) return;
+    const b = boxById(l.box.b); if (!b) return;
+    const occ = occupancy(), free = [];
+    for (let i = 1; i <= boxSize(b); i++) { const k = `${b.id}:${i}`; if (!occ.box.get(k) && !isHs(k)) free.push(i); }
+    const m = $("#ctxMenu");
+    m.innerHTML = `<p class="mh">Panne sur ${esc(boxAddr(l.box))} (${esc(l.source)}) : passer sur</p>` + (free.length ? `<div class="pgrid">${free.map((i) => `<button type="button" data-panne="${i}">${esc(boxName(b))} → ${i}</button>`).join("")}</div>` : `<p class="mh">Plus d'entrée libre sur ce boîtier.</p>`) + `<p class="mh">L'entrée en panne est marquée HS et n'est plus proposée.</p>`;
+    m._line = l; placeMenu(m, x, y);
+  }
+  function doPanne(l, i) {
+    const old = { ...l.box }, k = kBox(old);
+    state.hs = state.hs || {}; state.hs[k] = { t: new Date().toISOString().slice(0, 16), lieu: state.dossier.lieu || "" };
+    l.box = { b: old.b, i };
+    log(`Panne ${boxAddr(old)} : ${label(l)} passe sur ${boxAddr(l.box)} (entrée ${old.i} marquée HS).`);
+    commit(true);
+    notice(`${esc(label(l))} est passée sur <b>${esc(boxAddr(l.box))}</b>. L'entrée ${old.i} est marquée HS dans Boîtiers (bouton « réparée » pour la remettre).`);
+  }
   function boxOptions(l, occ) {
     let h = `<option value="">—</option>`;
     const sides = ["Jardin", "Cour", ""];
@@ -1682,7 +1822,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       for (let i = 1; i <= boxSize(b); i++) {
         const k = `${b.id}:${i}`, who = occ.box.get(k);
         const mine = l.box && kBox(l.box) === k;
-        if (who && !mine) continue;
+        if ((who || isHs(k)) && !mine) continue;
         opts += `<option value="${k}"${mine ? " selected" : ""}>${esc(boxName(b))} → ${i}</option>`;
       }
       if (opts) h += `<optgroup label="${esc(boxTitle(b))}">${opts}</optgroup>`;
@@ -1705,6 +1845,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     for (const id of [...selection]) if (!state.lignes.some((l) => l.id === id)) selection.delete(id);
     const n = selection.size;
     $("#selBar").hidden = !n; syncNavH();
+    const one = n === 1 ? state.lignes.find((l) => selection.has(l.id)) : null;
+    $("#selPanne").hidden = !(one && one.box);
     if (n) $("#selCount").textContent = `${n} ligne${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""} (N° ${compactNums(selectedLines().map(canal))})`;
     $("#rangeBtn").innerHTML = n ? `<span class="lg">Affecter la sélection </span><span class="sm">Affecter </span>(${n})` : `<span class="lg">Affecter une plage</span><span class="sm">Plage…</span>`;
   }
@@ -1882,24 +2024,27 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w));
   }
   // Ligne du master, réutilisée telle quelle dans la vue Racks et I/O (avec une cellule Entrée devant)
+  // Le pad ne s'affiche que pour une DI ou un micro qui a un commutateur de pad (liste à compléter), ou si un pad est déjà saisi
+  const PAD_RE = /\bDI\b|\bD\.I\b|J ?48|J ?33|JDI|RNDI|PRO ?D[12I]|PRO ?48|BSS|AR ?133|COUNTRYMAN|RADIAL|BAGGS|PALMER|KLARK|DN ?100|SB-?[12]\b|C ?414|C ?451|C ?535|C ?1000|C ?3000|C ?4000|C ?214|U ?87|U ?89|TLM ?170|SM ?81|SM ?27|BETA ?27|KSM ?(32|44|137|141|353)|PGA ?27|AT ?40(33|40|41|47|50)|MKH ?(40|50|8040|8050)|E ?914|NT ?2|C ?391|MC ?(930|840)|ADX ?51|SE ?4400/i;
+  const hasPad = (m) => !!m && (PAD_RE.test(m) || state.lignes.some((l) => l.pad && l.micro === m));
   function masterHead(cols, pre = "") {
-    return `<tr><th>N°</th>${pre}<th class="col-src">Source</th><th class="col-mus">Musicien</th><th class="col-mic">Micro / DI</th><th class="col-pied">Pied</th><th class="col-pad">Pad dB</th><th class="col-48">48V</th><th class="col-box">Boîtier → entrée</th>${cols.map((c) => `<th class="col-sr">${esc(c.label)}</th>`).join("")}<th class="col-prov" title="D'où arrive le signal quand ce n'est pas un micro : Ferrofish in 9, base HF 2, séquence…">Provenance</th><th class="col-notes">Notes</th><th></th></tr>`;
+    return `<tr><th>N°</th>${pre}<th class="col-src">Source</th><th class="col-mus c-mus">Musicien</th><th class="col-mic">Micro / DI</th><th class="col-pied c-pied">Pied</th><th class="col-pad c-pad">Pad dB</th><th class="col-48 c-48">48V</th><th class="col-box">Boîtier → entrée</th>${cols.map((c) => `<th class="col-sr">${esc(c.label)}</th>`).join("")}<th class="col-prov c-prov" title="D'où arrive le signal quand ce n'est pas un micro : Ferrofish in 9, base HF 2, séquence…">Provenance</th><th class="col-notes c-notes">Notes</th><th></th></tr>`;
   }
   function masterRow(l, idx, occ, cols, hit, pre = "", extraCls) {
     const partner = l.pair ? state.lignes.find((x) => x.id === l.pair) : null;
     return `<tr data-id="${l.id}" class="${hit ? "hit" : ""}${selection.has(l.id) ? " sel" : ""}${openRows.has(l.id) ? " open" : ""}${extraCls ? " " + extraCls : ""}">
         <td class="ch" data-l="N°" title="Clic : sélectionner · Maj+clic : plage · ${navigator.platform.includes("Mac") ? "Cmd" : "Ctrl"}+clic : ajouter">${idx + 1}${partner ? ` <span class="pair" title="Paire stéréo avec ${esc(partner.source)}">st</span>` : ""}${moreBtn(l.id)}</td>${pre}
         <td class="src" data-l="Source"><input type="text" data-f="source" value="${esc(l.source)}" aria-label="Source"></td>
-        <td data-l="Musicien"><input type="text" data-f="musicien" value="${esc(l.musicien)}" aria-label="Musicien" autocomplete="off" data-suggest="dlMus"></td>
+        <td class="c-mus" data-l="Musicien"><input type="text" data-f="musicien" value="${esc(l.musicien)}" aria-label="Musicien" autocomplete="off" data-suggest="dlMus"></td>
         <td data-l="Micro / DI"><input type="text" data-f="micro" value="${esc(l.micro)}" aria-label="Micro" autocomplete="off" data-suggest="dlMic"></td>
-        <td class="more" data-l="Pied"><input type="text" data-f="pied" value="${esc(l.pied)}" aria-label="Pied" autocomplete="off" data-suggest="dlPied"></td>
-        <td class="more" data-l="Pad dB"><input type="text" inputmode="numeric" data-f="pad" value="${l.pad ? "-" + Math.abs(l.pad) : ""}" placeholder="0" aria-label="Pad en dB" style="min-width:64px"></td>
-        <td class="col-48 more" data-l="48V"><input type="checkbox" data-f="p48"${l.p48 ? " checked" : ""} aria-label="48V"></td>
+        <td class="more c-pied" data-l="Pied"><input type="text" data-f="pied" value="${esc(l.pied)}" aria-label="Pied" autocomplete="off" data-suggest="dlPied"></td>
+        <td class="more c-pad${l.pad || hasPad(l.micro) ? "" : " nopad"}" data-l="Pad dB"><input type="text" inputmode="numeric" data-f="pad" value="${l.pad ? "-" + Math.abs(l.pad) : ""}" placeholder="${hasPad(l.micro) ? "0" : ""}" aria-label="Pad en dB" title="${hasPad(l.micro) || l.pad ? "Pad en dB" : "Ce micro n'a pas de pad (tu peux quand même en saisir un)"}" style="min-width:64px"></td>
+        <td class="col-48 more c-48" data-l="48V"><label class="p48"><input type="checkbox" data-f="p48"${l.p48 ? " checked" : ""} aria-label="48V"><span>48V</span></label></td>
         <td class="wide" data-l="Boîtier → entrée"><select class="addr${l.box ? "" : " empty"}" data-f="box" aria-label="Boîtier et entrée">${boxOptions(l, occ)}</select></td>
         ${cols.map((c) => `<td data-l="${esc(c.label)}"><select class="addr${lineSr(l, c.k) ? "" : " empty"}" data-f="sr" data-col="${esc(c.k)}" aria-label="${esc(c.label)}">${rackOptions(l, c.k, occ)}</select></td>`).join("")}
-        <td class="more" data-l="Provenance"><input type="text" data-f="prov" value="${esc(l.prov)}" aria-label="Provenance" autocomplete="off" data-suggest="dlProv" placeholder="—"></td>
-        <td class="wide more" data-l="Notes"><input type="text" data-f="notes" value="${esc(l.notes)}" aria-label="Notes"></td>
-        <td class="more" data-l=""><button class="btn small danger" type="button" tabindex="-1" data-del="${l.id}" title="Supprimer la ligne">Suppr.</button></td>
+        <td class="more c-prov" data-l="Provenance"><input type="text" data-f="prov" value="${esc(l.prov)}" aria-label="Provenance" autocomplete="off" data-suggest="dlProv" placeholder="—"></td>
+        <td class="wide more c-notes" data-l="Notes"><input type="text" data-f="notes" value="${esc(l.notes)}" aria-label="Notes"></td>
+        <td class="more" data-l=""><button class="btn small danger xdel" type="button" tabindex="-1" data-del="${l.id}" title="Supprimer la ligne (clic droit sur la ligne aussi)" aria-label="Supprimer la ligne">×</button></td>
       </tr>`;
   }
   function renderMaster() {
@@ -1916,7 +2061,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     state.lignes.forEach((l, idx) => {
       const hit = matches(l, query);
       if (hit) hits++;
-      h += masterRow(l, idx, occ, cols, hit, "", "");
+      h += masterRow(l, idx, occ, cols, hit, "", idx && (l.musicien || "") !== (state.lignes[idx - 1].musicien || "") ? "grp" : "");
     });
     h += "</tbody>";
     const keep = focusInfo(document.activeElement);
@@ -2160,7 +2305,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (!btn) return;
     const id = btn.dataset.del;
     if (armedDel !== id) {
-      document.querySelectorAll("button.armed").forEach((b) => { b.classList.remove("armed"); b.textContent = "Suppr."; });
+      document.querySelectorAll("button.armed").forEach((b) => { b.classList.remove("armed"); b.textContent = b.classList.contains("xdel") ? "×" : "Suppr."; });
       armedDel = id; btn.classList.add("armed"); btn.textContent = "Confirmer";
       return;
     }
@@ -2203,7 +2348,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td class="more" data-l="Émetteur"><input type="text" data-f="tx" value="${esc(o.tx)}" aria-label="Émetteur" autocomplete="off" data-suggest="dlTx"></td>
         <td class="more" data-l="Récepteur / enceinte"><input type="text" data-f="rx" value="${esc(o.rx)}" aria-label="Récepteur ou enceinte" autocomplete="off" data-suggest="dlRx"></td>
         <td class="wide more" data-l="Notes"><input type="text" data-f="notes" value="${esc(o.notes)}" aria-label="Notes"></td>
-        <td class="more" data-l=""><button class="btn small danger" type="button" tabindex="-1" data-del="${o.id}" title="Supprimer la sortie">Suppr.</button></td>
+        <td class="more" data-l=""><button class="btn small danger xdel" type="button" tabindex="-1" data-del="${o.id}" title="Supprimer la sortie (clic droit sur la ligne aussi)" aria-label="Supprimer la sortie">×</button></td>
       </tr>`;;
   }
   function renderOut() {
@@ -2296,6 +2441,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           const hit = l && !isOut(l) && matches(l, query);
           li += l
             ? `<li class="${hit ? "hit" : ""}"><span class="n">${i}</span><button type="button" data-goto="${l.id}"><span class="s">${esc(label(l))}</span><span class="m">${isOut(l) ? "OUT · " + esc(l.type) : esc(l.micro)}</span></button></li>`
+            : isHs(`${b.id}:${i}`) ? `<li class="hs"><span class="n">${i}</span><span class="s">HS</span><button type="button" class="unhs" data-unhs="${b.id}:${i}" title="Entrée réparée : la remettre en service">réparée</button></li>`
             : `<li class="free"><span class="n">${i}</span><span class="s">libre</span></li>`;
         }
         return `<div class="box" data-bid="${b.id}"><h3><span>${esc(boxTitle(b))}</span><span class="used">${used}/${n}${used ? ` <button type="button" class="unb" data-unbox="${b.id}" aria-expanded="${unboxOpen === b.id}" title="Dépatcher des entrées de ce boîtier">Dépatcher…</button>` : ""}</span></h3>${unboxOpen === b.id ? `<form class="unbform" data-unbf="${b.id}">Entrées <input type="number" min="1" max="${n}" value="1" data-unf="from" aria-label="De l'entrée" inputmode="numeric"> à <input type="number" min="1" max="${n}" value="${n}" data-unf="to" aria-label="À l'entrée" inputmode="numeric"> <button class="btn small danger" type="submit">Dépatcher</button> <button class="btn small" type="button" data-unbcancel>Annuler</button></form>` : ""}<ol>${li}</ol></div>`;
@@ -2546,7 +2692,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td style="min-width:124px"><select data-rf="fmt" aria-label="Format des entrées">${FMT.map(([v, t]) => `<option value="${v}"${f === v ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         ${nums}
         <td style="min-width:110px"><select data-rf="loop" aria-label="Loop">${[["", "Hors loop"], ...loops().map((L) => [L.id, L.nom])].map(([v, t]) => `<option value="${esc(v)}"${(rackLoop(r) ? rackLoop(r).id : "") === v ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></td>
-        <td><button class="btn small danger" type="button" data-delrack="${r.id}">${usedRack(r) ? "Suppr. (utilisé)" : "Suppr."}</button></td>
+        <td><button class="btn small danger xdel" type="button" data-delrack="${r.id}" title="${usedRack(r) ? "Supprimer (ses entrées utilisées seront libérées)" : "Supprimer"} · clic droit sur la ligne aussi" aria-label="Supprimer">×</button></td>
       </tr>${ports}`;
     }).join("")}</tbody>`;
     const usedBox = (b) => state.lignes.some((l) => l.box && l.box.b === b.id);
@@ -2557,7 +2703,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td><input type="text" data-bf="nom" value="${esc(b.nom)}" aria-label="Nom du boîtier"></td>
         <td><select data-bf="cote" aria-label="Côté de scène">${[["Jardin", "Jardin"], ["Cour", "Cour"], ["", "—"]].map(([v, t]) => `<option value="${v}"${(b.cote || "") === v ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td style="width:76px"><input type="number" min="1" max="64" data-bf="n" value="${boxSize(b)}" aria-label="Nombre d'entrées"></td>
-        <td><button class="btn small danger" type="button" data-delbox="${b.id}">${usedBox(b) ? "Suppr. (utilisé)" : "Suppr."}</button></td>
+        <td><button class="btn small danger xdel" type="button" data-delbox="${b.id}" title="${usedBox(b) ? "Supprimer (ses entrées utilisées seront libérées)" : "Supprimer"} · clic droit sur la ligne aussi" aria-label="Supprimer">×</button></td>
       </tr>`).join("")}</tbody>`;
     labelCells($("#racksTbl")); labelCells($("#boxesTbl"));
     // Infobulle : adresse, puis ce qui est patché (source ou mix) et câblé (boîtier, émetteur, récepteur)
@@ -2680,7 +2826,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const dr = e.target.closest("button[data-delrack]"), db = e.target.closest("button[data-delbox]");
     const btn = dr || db; if (!btn) return;
     const id = dr ? dr.dataset.delrack : db.dataset.delbox;
-    if (armedSetup !== id) { armedSetup = id; btn.classList.add("armed"); btn.textContent = "Confirmer : libère ses entrées"; return; }
+    const inUse = dr ? state.lignes.some((l) => Object.values(l.sr || {}).some((a) => a && a.r === id)) : state.lignes.some((l) => l.box && l.box.b === id);
+    if (armedSetup !== id) { armedSetup = id; btn.classList.add("armed"); btn.textContent = inUse ? "Confirmer : libère ses entrées" : "Confirmer"; return; }
     armedSetup = null;
     if (dr) {
       state.racks = state.racks.filter((r) => r.id !== id);
@@ -3182,7 +3329,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td style="width:76px"><input type="number" min="0" data-mf="qte" value="${Number(x.qte) || 0}" aria-label="Quantité"></td>
         <td style="min-width:120px"><input type="text" data-mf="cat" value="${esc(x.cat)}" aria-label="Catégorie" autocomplete="off" data-suggest="dlCat"></td>
         <td style="min-width:160px"><input type="text" data-mf="notes" value="${esc(x.notes)}" aria-label="Notes"></td>
-        <td><button class="btn small danger" type="button" data-delman="${x.id}">Suppr.</button></td>
+        <td><button class="btn small danger xdel" type="button" data-delman="${x.id}" title="Supprimer" aria-label="Supprimer">×</button></td>
       </tr>`).join("") || `<tr><td colspan="5" class="hint">Rien pour l'instant.</td></tr>`}</tbody>`;
     labelCells($("#manTbl"));
     const count = (f) => { const m = new Map(); state.lignes.forEach((l) => { const v = (l[f] || "").trim(); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); };
@@ -3193,6 +3340,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#piedLegend").innerHTML = used.length ? used.map((k) => `<div><b>${esc(k)}</b> = ${esc(PIEDS_LEGENDE[k])}</div>`).join("") : "";
   }
 
+  function renderInfos() {
+    const hfN = hfState().reduce((n, g) => n + g.rows.length, 0);
+    const it = [["Sources", state.lignes.length], ["Sorties", (state.sorties || []).length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ["Appareils HF", hfN], ["Changements au journal", state.journal.length]];
+    $("#infoStats").innerHTML = it.map(([t, n]) => `<div><b class="mono">${n}</b><span>${esc(t)}</span></div>`).join("");
+  }
   function renderJournal() {
     const items = [...state.journal].reverse();
     $("#journalList").innerHTML = items.length ? items.map((j) => `<li><span class="when">${esc(j.t.replace("T", " ").slice(0, 16))}${j.lieu ? "<br>" + esc(j.lieu) : ""}</span><span>${esc(j.txt)}</span></li>`).join("") : `<li><span></span><span class="hint">Aucun changement noté pour l'instant.</span></li>`;
@@ -3327,6 +3479,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (view === "materiel") renderSetup();
     if (view === "liste") renderListe();
     if (view === "journal") renderJournal();
+    if (view === "infos") renderInfos();
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
     if (sc.some(Boolean)) document.querySelectorAll("section:not([hidden]) .table-wrap, section:not([hidden]) .hftw, section:not([hidden]) .kb").forEach((w, i) => { if (sc[i]) w.scrollLeft = sc[i]; });
@@ -3350,7 +3503,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const undo = () => travel(undoStack, redoStack), redo = () => travel(redoStack, undoStack);
   function commit(rerender) { record(); persist(); if (rerender) render(); else renderHeader(); dbxDirty(); }
   // Hauteur des onglets collants, pour placer les barres de sélection juste dessous
-  function syncNavH() { const n = document.querySelector("nav.tabs"); if (n) { document.documentElement.style.setProperty("--navh", Math.max(0, n.getBoundingClientRect().bottom) + "px"); document.documentElement.style.setProperty("--navstick", n.offsetHeight + "px"); } }
+  function syncNavH() { const n = document.querySelector(".navs"); if (n) { document.documentElement.style.setProperty("--navh", Math.max(0, n.getBoundingClientRect().bottom) + "px"); document.documentElement.style.setProperty("--navstick", n.offsetHeight + "px"); } }
   addEventListener("scroll", syncNavH, { passive: true }); addEventListener("resize", syncNavH);
   // Les tableaux défilent en largeur dans leur cadre : on fait descendre leurs titres sous les onglets pendant le défilement vertical
   function stickHeads() {
@@ -3377,15 +3530,23 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
+  // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
+  const SPACES = { patch: ["master", "sorties", "boites"], hf: ["hf"], regie: ["racks", "syn"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "materiel", "journal"] };
+  const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
+  const lastIn = {};
   function setView(v, fromHistory) {
     if (v === "master" && !showMaster) v = "racks";
     if (!fromHistory && view && v !== view) { try { history.pushState({ v }, ""); } catch (e) { /* ignore */ } }
     view = v;
     $('nav.tabs button[data-v="master"]').hidden = !showMaster; $("nav.tabs").classList.toggle("nomaster", !showMaster); $("#showMaster").checked = showMaster;
     document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
+    const sp = spaceOf(v); lastIn[sp] = v;
+    document.querySelectorAll("nav.spaces button").forEach((b) => b.setAttribute("aria-selected", b.dataset.s === sp ? "true" : "false"));
+    document.querySelectorAll("nav.tabs button").forEach((b) => { if (b.dataset.v !== "master" || showMaster) b.hidden = !SPACES[sp].includes(b.dataset.v); });
+    $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "boites", "racks", "materiel", "liste", "plan", "syn", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "boites", "racks", "materiel", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
@@ -3812,6 +3973,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (k === "y" || e.shiftKey) redo(); else undo();
     });
     document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
+    document.querySelectorAll("nav.spaces button").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.s, first = SPACES[k].find((x) => x !== "master" || showMaster); setView(lastIn[k] && (lastIn[k] !== "master" || showMaster) ? lastIn[k] : first); }));
     $("#showMaster").addEventListener("change", (e) => { showMaster = e.target.checked; try { localStorage.setItem("patch-live-showmaster", showMaster ? "1" : "0"); } catch (err) { /* ignore */ } setView(view); notice(showMaster ? "L'onglet Master patch est de nouveau affiché." : "Onglet Master patch masqué : les sources s'ajoutent et se modifient dans Racks et I/O (recherche, + Source, Affecter une plage). Réaffiche-le ici quand tu veux."); });
     $("#docName").addEventListener("change", (e) => { state.dossier.nom = e.target.value.trim() || "Dossier sans nom"; commit(false); });
     $("#docType").addEventListener("change", (e) => { state.dossier.type = e.target.value; commit(false); });
@@ -4267,7 +4429,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (!DBX_ON) return;
     if (st) dbx.status = st;
     const b = $("#dbxBtn"), s = $("#dbxState"); if (!b) return;
-    b.hidden = false; document.body.classList.add("dbx");
+    b.hidden = false; document.body.classList.add("dbx"); document.body.classList.toggle("dbxfile", !!(dbx.tok && dbx.file));
     if (!dbx.tok) { s.hidden = true; return; }
     s.hidden = !dbx.file;
     if (dbx.file) {
@@ -4399,11 +4561,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#coverImg").addEventListener("pointerup", () => { drag = null; });
   }
   // Thème clair / sombre choisi à la main (sinon il suit l'appareil) ; gardé dans ce navigateur
-  const THEMES = [["", "◐", "automatique (suit l'appareil)"], ["light", "☀", "clair"], ["dark", "☾", "sombre"]];
+  const ICO = {
+    auto: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/></svg>',
+    sun: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 1.5v2.3M10 16.2v2.3M1.5 10h2.3M16.2 10h2.3M4 4l1.6 1.6M14.4 14.4L16 16M4 16l1.6-1.6M14.4 5.6L16 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    moon: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
+    regie: '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z" fill="currentColor"/></svg>'
+  };
+  const THEMES = [["", ICO.auto, "automatique (suit l'appareil)"], ["light", ICO.sun, "clair"], ["dark", ICO.moon, "sombre"], ["regie", ICO.regie, "régie (très sombre, n'éblouit pas)"]];
   function applyTheme(t) {
     if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
     const th = THEMES.find((x) => x[0] === t) || THEMES[0], b = $("#themeBtn");
-    b.textContent = th[1]; b.title = "Thème : " + th[2] + " · clic pour changer"; b.setAttribute("aria-label", "Thème : " + th[2]);
+    b.innerHTML = th[1]; b.title = "Thème : " + th[2] + " · clic pour changer"; b.setAttribute("aria-label", "Thème : " + th[2]);
   }
   let theme = ""; try { theme = localStorage.getItem("patch-live-theme") || ""; } catch (e) { /* ignore */ }
   applyTheme(theme);
@@ -4412,6 +4580,104 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     try { localStorage.setItem("patch-live-theme", theme); } catch (e) { /* ignore */ }
     applyTheme(theme);
     notice(`Thème ${(THEMES.find((x) => x[0] === theme) || THEMES[0])[2]}.`);
+  });
+  // ---------- Interface : menu, affichage, recherche globale, clic droit ----------
+  // iPhone : Safari zoome sur un champ dont le texte fait moins de 16 px. On bloque ce zoom automatique (le zoom à deux doigts reste possible sur iOS).
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) {
+    const m = document.querySelector('meta[name="viewport"]');
+    if (m && !/maximum-scale/.test(m.content)) m.content += ",maximum-scale=1";
+    else if (!m) { const n = document.createElement("meta"); n.name = "viewport"; n.content = "width=device-width,initial-scale=1,maximum-scale=1"; document.head.appendChild(n); }
+  }
+  const pref = (k, d) => { try { const v = localStorage.getItem("patch-live-" + k); return v == null ? d : v; } catch (e) { return d; } };
+  const setPref = (k, v) => { try { localStorage.setItem("patch-live-" + k, v); } catch (e) { /* ignore */ } };
+  // Menu « … » de l'en-tête
+  function closeMenus() { $("#appMenu").hidden = true; $("#menuBtn").setAttribute("aria-expanded", "false"); $("#ctxMenu").hidden = true; }
+  function placeMenu(m, x, y) { m.hidden = false; m.style.top = Math.max(8, Math.min(y, innerHeight - m.offsetHeight - 8)) + "px"; m.style.left = Math.max(8, Math.min(x, innerWidth - m.offsetWidth - 8)) + "px"; }
+  $("#menuBtn").addEventListener("click", (e) => {
+    e.stopPropagation(); const m = $("#appMenu"); if (!m.hidden) { closeMenus(); return; }
+    $("#exportBtn").hidden = !(DBX_ON && dbx.file);
+    $("#densBtn").setAttribute("aria-checked", document.body.classList.contains("dense") ? "true" : "false");
+    const r = e.currentTarget.getBoundingClientRect(); placeMenu(m, r.right - 290, r.bottom + 4); m.style.width = "290px";
+    $("#menuBtn").setAttribute("aria-expanded", "true");
+  });
+  document.addEventListener("click", (e) => { if (!e.composedPath().some((n) => n.id === "appMenu" || n.id === "ctxMenu")) closeMenus(); });
+  $("#selPanne").addEventListener("click", (e) => { e.stopPropagation(); const l = state.lignes.find((x) => selection.has(x.id)); const r = e.currentTarget.getBoundingClientRect(); if (l) panneMenu(l, r.left, r.bottom + 4); });
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-unhs]"); if (!b || !state.hs) return; delete state.hs[b.dataset.unhs]; const [bid, i] = b.dataset.unhs.split(":"), bx = boxById(bid); log(`${bx ? boxName(bx) : "Boîtier"} → ${i} réparée, remise en service.`); commit(true); });
+  $("#appMenu").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTimeout(() => { if (!(b.id === "newBtn" && b.classList.contains("armed"))) closeMenus(); }, 0); });
+  $("#exportBtn").addEventListener("click", () => save());
+  $("#themeMi").addEventListener("click", () => $("#themeBtn").click());
+  // Lignes serrées (ordinateur) : plus de lignes à l'écran
+  if (pref("dense", "0") === "1") document.body.classList.add("dense");
+  $("#densBtn").addEventListener("click", () => { const on = document.body.classList.toggle("dense"); setPref("dense", on ? "1" : "0"); stickHeads(); });
+  // Colonnes à afficher dans le master et les racks : chacun choisit selon son poste
+  const HIDEABLE = [["mus", "Musicien"], ["pied", "Pied"], ["pad", "Pad dB"], ["48", "48V"], ["prov", "Provenance"], ["notes", "Notes"]];
+  const hiddenCols = new Set(pref("hidecols", "").split(",").filter(Boolean));
+  const paintCols = () => HIDEABLE.forEach(([k]) => document.body.classList.toggle("hide-" + k, hiddenCols.has(k)));
+  paintCols();
+  $("#colsBtn").addEventListener("click", (e) => {
+    e.stopPropagation(); const m = $("#ctxMenu");
+    m.innerHTML = `<p class="mh">Colonnes du master et des racks</p>` + HIDEABLE.map(([k, t]) => `<label class="mi"><input type="checkbox" data-hc="${k}"${hiddenCols.has(k) ? "" : " checked"}> ${esc(t)}</label>`).join("");
+    const r = $("#menuBtn").getBoundingClientRect(); $("#appMenu").hidden = true; placeMenu(m, r.right - 260, r.bottom + 4);
+  });
+  $("#ctxMenu").addEventListener("change", (e) => { const k = e.target.dataset.hc; if (!k) return; if (e.target.checked) hiddenCols.delete(k); else hiddenCols.add(k); setPref("hidecols", [...hiddenCols].join(",")); paintCols(); });
+  // Clic droit sur une ligne : supprimer (avec confirmation), dupliquer quand c'est possible
+  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel]";
+  document.addEventListener("contextmenu", (e) => {
+    // Maj+clic droit, ou du texte sélectionné dans un champ : menu habituel (copier, coller)
+    const t = e.target; if (e.shiftKey || t.matches("textarea") || (t.matches("input[type=text], input[type=search]") && t.selectionStart !== t.selectionEnd)) return;
+    const tr = e.target.closest("tr"); const del = tr && tr.querySelector(DEL_SEL); if (!del) return;
+    e.preventDefault();
+    const m = $("#ctxMenu"), name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
+    const line = tr.dataset.id && state.lignes.find((x) => x.id === tr.dataset.id);
+    m.innerHTML = `<p class="mh">${esc(name || "Cette ligne")}</p>${line && line.box ? `<button type="button" data-cx="panne">Panne sur ${esc(boxAddr(line.box))}…</button>` : ""}<button type="button" data-cx="del" class="dangerish">Supprimer…</button>`;
+    m._del = del; m._line = line; m._xy = [e.clientX, e.clientY]; placeMenu(m, e.clientX, e.clientY);
+  });
+  $("#ctxMenu").addEventListener("click", (e) => {
+    const pb = e.target.closest("[data-panne]");
+    if (pb) { const m = $("#ctxMenu"), l = m._line; m.hidden = true; if (l) doPanne(l, Number(pb.dataset.panne)); return; }
+    const b = e.target.closest("[data-cx]"), m = $("#ctxMenu"); if (!b) return;
+    if (b.dataset.cx === "panne") { e.stopPropagation(); panneMenu(m._line, m._xy[0], m._xy[1]); return; }
+    if (b.dataset.cx === "del") { b.dataset.cx = "ok"; b.textContent = "Confirmer la suppression"; b.classList.add("armed"); return; }
+    if (b.dataset.cx === "ok") {
+      const d = m._del; m.hidden = true; if (!d || !d.isConnected) return;
+      d.click(); if (d.isConnected && d.classList.contains("armed")) d.click();
+    }
+  });
+  // Recherche globale : Ctrl+K ou « / » depuis n'importe quel onglet
+  function gsItems() {
+    const out = [], cols = srCols();
+    state.lignes.forEach((l, i) => out.push({ k: "Source", t: l.source || "(sans nom)", d: [i + 1, l.musicien, l.micro, boxAddr(l.box), ...cols.map((c) => rackAddr(lineSr(l, c.k)))].filter(Boolean).join(" · "), go: () => gotoRow(showMaster ? "master" : "racks", l.id) }));
+    (state.sorties || []).forEach((o) => out.push({ k: "Sortie", t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, boxAddr(o.box), rackAddr(o.out)].filter(Boolean).join(" · "), go: () => gotoRow("sorties", o.id) }));
+    hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
+    state.racks.forEach((r) => out.push({ k: "Rack / I/O", t: rackTitle(r), d: `${rackInputs(r).length} in / ${rackOutputs(r).length} out`, go: () => { setView("racks"); const d = document.querySelector(`details[data-rd="${r.id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } }));
+    state.boites.forEach((b) => out.push({ k: "Boîtier", t: boxTitle(b), d: b.cote || "", go: () => { setView("boites"); const d = document.querySelector(`[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); d.classList.remove("flashbox"); void d.offsetWidth; d.classList.add("flashbox"); } } }));
+    return out;
+  }
+  function flash(tr) { tr.classList.remove("flash"); void tr.offsetWidth; tr.classList.add("flash"); }
+  function gotoRow(v, id) { setView(v); const tr = document.querySelector(`section:not([hidden]) tr[data-id="${id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } }
+  let gsList = [], gsIdx = 0;
+  function gsOpen() { const d = $("#gsDlg"); if (d.open) return; $("#gsIn").value = ""; gsPaint(); try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } $("#gsIn").focus(); }
+  function gsPaint() {
+    const q = $("#gsIn").value.trim().toLowerCase(), all = gsItems();
+    const words = q.split(/\s+/).filter(Boolean);
+    gsList = (words.length ? all.filter((x) => { const h = (x.t + " " + x.d + " " + x.k).toLowerCase(); return words.every((w) => h.includes(w)); }) : all).slice(0, 60);
+    gsIdx = 0;
+    $("#gsRes").innerHTML = gsList.length ? gsList.map((x, i) => `<li data-gi="${i}"${i === 0 ? ' class="on"' : ""}><span class="gk">${esc(x.k)}</span><b>${esc(x.t)}</b><span class="gd">${esc(x.d)}</span></li>`).join("") : `<li class="none">Rien trouvé</li>`;
+  }
+  function gsGo(i) { const x = gsList[i]; if (!x) return; $("#gsDlg").close(); x.go(); }
+  $("#findBtn").addEventListener("click", gsOpen);
+  $("#gsIn").addEventListener("input", gsPaint);
+  $("#gsIn").addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); gsIdx = Math.max(0, Math.min(gsList.length - 1, gsIdx + (e.key === "ArrowDown" ? 1 : -1))); document.querySelectorAll("#gsRes li").forEach((li, i) => li.classList.toggle("on", i === gsIdx)); const on = $("#gsRes li.on"); if (on) on.scrollIntoView({ block: "nearest" }); }
+    if (e.key === "Enter") { e.preventDefault(); gsGo(gsIdx); }
+  });
+  $("#gsRes").addEventListener("click", (e) => { const li = e.target.closest("li[data-gi]"); if (li) gsGo(Number(li.dataset.gi)); });
+  $("#gsDlg").addEventListener("click", (e) => { if (e.target.id === "gsDlg") $("#gsDlg").close(); });
+  document.addEventListener("keydown", (e) => {
+    const typing = /INPUT|SELECT|TEXTAREA/.test((document.activeElement || {}).tagName || "");
+    if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) { e.preventDefault(); gsOpen(); }
+    else if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); gsOpen(); }
+    else if (e.key === "Escape") closeMenus();
   });
   loadLib();
   state = restore() || exemple();
