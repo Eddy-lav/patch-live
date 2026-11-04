@@ -412,6 +412,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 #synSvg .lkh { cursor: crosshair; }
 #synSvg .zrs { cursor: nwse-resize; }
 #synSvg .nd:active { cursor: grabbing; }
+#synSvg g.nd.on > rect.box { stroke: #111827; stroke-width: 2.5; }
 .synh { font-size: 16px; margin: 18px 0 6px; }
 .clkm { margin: 4px 0; }
 .clktbl td.clkw { white-space: normal; min-width: 260px; font-size: 13px; }
@@ -3225,7 +3226,25 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     pied: { t: "Pied micro", w: 0.3, h: 0.3, fill: "#fff", stroke: "#111827", round: true },
     texte: { t: "Texte", w: 1.6, h: 0.4, fill: "none", stroke: "none" }
   };
+  // Sélection au lasso (plan de scène, synoptique) : glisser sur le fond à la souris ; Maj ou Cmd (Ctrl sur PC) + clic ajoute ou retire un élément
+  const isMod = (e) => e.shiftKey || e.metaKey || (e.ctrlKey && !/Mac/i.test(navigator.platform || ""));
+  const boxHit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  function marqRect(d, p, parent, sw) {
+    const r = { x: Math.min(d.x0, p.x), y: Math.min(d.y0, p.y), w: Math.abs(p.x - d.x0), h: Math.abs(p.y - d.y0) };
+    if (!d.el || !d.el.isConnected) {
+      d.el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      [["fill", "rgba(59,130,246,0.12)"], ["stroke", "#3b82f6"], ["stroke-width", sw], ["stroke-dasharray", `${sw * 4} ${sw * 3}`], ["pointer-events", "none"], ["class", "marq"]].forEach(([k, v]) => d.el.setAttribute(k, v));
+      parent.appendChild(d.el);
+    }
+    d.el.setAttribute("x", r.x); d.el.setAttribute("y", r.y); d.el.setAttribute("width", r.w); d.el.setAttribute("height", r.h);
+    return r;
+  }
   let planSel = null, planDrag = null;
+  const planMulti = new Set();
+  const planIds = () => (planMulti.size ? [...planMulti] : planSel ? [planSel] : []);
+  function planSetSel(ids) { planMulti.clear(); if (ids.length === 1) planSel = ids[0]; else { planSel = null; ids.forEach((i) => planMulti.add(i)); } }
+  // Encombrement d'un élément pivoté
+  function planBox(it) { const a = ((it.rot || 0) * Math.PI) / 180, c = Math.abs(Math.cos(a)), s = Math.abs(Math.sin(a)), w = it.w * c + it.h * s, h = it.w * s + it.h * c; return { x: it.x + it.w / 2 - w / 2, y: it.y + it.h / 2 - h / 2, w, h }; }
   const ZOOMS = [1, 1.5, 2, 3];
   let planZoom = matchMedia("(max-width: 760px)").matches ? 2 : 1;
   function planState() { if (!state.plan) state.plan = { w: 12, d: 8, items: [] }; return state.plan; }
@@ -3270,7 +3289,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       } else {
         txt = `<text ${back} x="${cx}" y="${it.h + tf * 0.95}" text-anchor="middle" font-size="${tf * 0.85}" font-weight="600" ${font}>${esc(lab)}</text>`;
       }
-      return `<g class="it${planSel === it.id && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}${txt}</g>`;
+      return `<g class="it${(planSel === it.id || planMulti.has(it.id)) && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}${txt}</g>`;
     }).join("");
     const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"${forExport ? ` width="${Math.round(W * 100)}" height="${Math.round(H * 100)}"` : ""}><rect width="${W}" height="${H}" fill="#ffffff"/>${title}
@@ -3283,6 +3302,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function renderPlan() {
     const P = planState();
+    if (planMulti.size) { [...planMulti].forEach((id) => { if (!P.items.some((i) => i.id === id)) planMulti.delete(id); }); if (planMulti.size < 2) planSetSel([...planMulti]); }
     $("#planW").value = P.w; $("#planD").value = P.d;
     $("#planAdd").innerHTML = planAddOptions();
     const wrap = $("#planSvg").parentNode, pxW = Math.max(200, (wrap.clientWidth - 12) * planZoom);
@@ -3292,9 +3312,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function renderPlanSide() {
     const side = $("#planSide"), it = planState().items.find((i) => i.id === planSel);
+    if (planMulti.size) {
+      side.innerHTML = `<h3>${planMulti.size} éléments sélectionnés</h3><p class="hint">Fais glisser l'un d'eux pour déplacer tout le groupe. Flèches : ajuster de 25 cm (Maj : 1 m). Maj+clic ou Cmd+clic : ajouter ou retirer un élément. Échap : désélectionner.</p>
+        <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-pmrot>Pivoter de 90°</button> <button class="btn small" type="button" data-pmclear>Désélectionner</button> <button class="btn small danger" type="button" data-pmdel>Retirer du plan</button></div>`;
+      return;
+    }
     if (!it) {
       const n = planState().items.length;
-      side.innerHTML = `<h3>${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Choisis un élément dans la liste du haut puis « + Placer ». Touche un élément du plan pour le régler.</p>`;
+      side.innerHTML = `<h3>${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Choisis un élément dans la liste du haut puis « + Placer ». Touche un élément du plan pour le régler. À la souris, cliquer-glisser sur le fond sélectionne plusieurs éléments.</p>`;
       return;
     }
     const K = PLAN_KINDS[it.kind];
@@ -3325,23 +3350,53 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     host.addEventListener("pointerdown", (e) => { if (e.button === 2) return; // clic droit : menu, pas de glisser
       const g = e.target.closest("#planSvg g.it");
       if (!e.target.closest("#planSvg")) return;
-      if (!g) { if (planSel) { planSel = null; renderPlan(); } return; }
-      const it = planState().items.find((i) => i.id === g.dataset.pid); if (!it) return;
-      const p = planPoint(e);
-      planDrag = { it, dx: p.x - it.x, dy: p.y - it.y, moved: false, g };
-      if (planSel !== it.id) { planSel = it.id; document.querySelectorAll("#planSvg g.it.on").forEach((x) => x.classList.remove("on")); g.classList.add("on"); renderPlanSide(); }
+      const P = planState(), p = planPoint(e);
+      if (!g) {
+        // Souris sur le fond : cadre de sélection. Au doigt, le fond fait défiler le plan.
+        if (e.pointerType === "mouse") { planDrag = { marq: true, x0: p.x, y0: p.y, add: isMod(e), base: planIds(), moved: false }; const sv = $("#planSvg"); sv.setPointerCapture && sv.setPointerCapture(e.pointerId); e.preventDefault(); return; }
+        if (planSel || planMulti.size) { planSel = null; planMulti.clear(); renderPlan(); } return;
+      }
+      const it = P.items.find((i) => i.id === g.dataset.pid); if (!it) return;
+      if (isMod(e)) { const ids = planIds(), k = ids.indexOf(it.id); if (k < 0) ids.push(it.id); else ids.splice(k, 1); planSetSel(ids); renderPlan(); e.preventDefault(); return; }
+      if (planMulti.has(it.id)) {
+        planDrag = { grp: P.items.filter((i) => planMulti.has(i.id)).map((i) => ({ i, x: i.x, y: i.y, g: document.querySelector(`#planSvg g.it[data-pid="${i.id}"]`) })), x0: p.x, y0: p.y, moved: false };
+      } else {
+        planDrag = { it, dx: p.x - it.x, dy: p.y - it.y, moved: false, g };
+        if (planSel !== it.id || planMulti.size) { planMulti.clear(); planSel = it.id; document.querySelectorAll("#planSvg g.it.on").forEach((x) => x.classList.remove("on")); g.classList.add("on"); renderPlanSide(); }
+      }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
     host.addEventListener("pointermove", (e) => {
       if (!planDrag) return;
-      const P = planState(), p = planPoint(e), it = planDrag.it;
+      const P = planState(), p = planPoint(e);
+      if (planDrag.marq) {
+        const d = planDrag; if (!d.moved && Math.hypot(p.x - d.x0, p.y - d.y0) < 0.08) return; d.moved = true;
+        d.r = marqRect(d, p, $("#planSvg > g"), 0.03); const hit = new Set(P.items.filter((i) => boxHit(d.r, planBox(i))).map((i) => i.id));
+        document.querySelectorAll("#planSvg g.it").forEach((x) => x.classList.toggle("on", hit.has(x.dataset.pid) || (d.add && d.base.includes(x.dataset.pid))));
+        return;
+      }
+      if (planDrag.grp) {
+        const d = planDrag, dx = snap(p.x - d.x0), dy = snap(p.y - d.y0);
+        d.grp.forEach((q) => { q.i.x = Math.max(-1, Math.min(P.w + 1 - q.i.w, q.x + dx)); q.i.y = Math.max(-1, Math.min(P.d + 1 - q.i.h, q.y + dy)); if (q.g) q.g.setAttribute("transform", `translate(${q.i.x} ${q.i.y}) rotate(${q.i.rot || 0} ${q.i.w / 2} ${q.i.h / 2})`); });
+        d.moved = d.moved || !!(dx || dy); return;
+      }
+      const it = planDrag.it;
       it.x = Math.max(-1, Math.min(P.w + 1 - it.w, snap(p.x - planDrag.dx)));
       it.y = Math.max(-1, Math.min(P.d + 1 - it.h, snap(p.y - planDrag.dy)));
       planDrag.moved = true;
       planDrag.g.setAttribute("transform", `translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${it.w / 2} ${it.h / 2})`);
     });
-    const end = () => { if (!planDrag) return; const moved = planDrag.moved; planDrag = null; if (moved) commit(false); };
+    const end = () => {
+      if (!planDrag) return; const d = planDrag; planDrag = null;
+      if (d.marq) {
+        if (d.el) d.el.remove();
+        if (!d.moved || !d.r) { if (!d.add && (planSel || planMulti.size)) { planSel = null; planMulti.clear(); renderPlan(); } return; }
+        const hits = planState().items.filter((i) => boxHit(d.r, planBox(i))).map((i) => i.id);
+        planSetSel(d.add ? [...new Set([...d.base, ...hits])] : hits); renderPlan(); return;
+      }
+      if (d.moved) commit(false);
+    };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
     $("#planAddBtn").addEventListener("click", () => {
       const [kind, ref] = $("#planAdd").value.split("|"); if (!kind) return;
@@ -3367,14 +3422,30 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       commit(true);
     });
     $("#planSide").addEventListener("click", (e) => {
+      if (planMulti.size) {
+        const P = planState();
+        if (e.target.closest("[data-pmclear]")) { planMulti.clear(); renderPlan(); }
+        if (e.target.closest("[data-pmrot]")) { P.items.forEach((i) => { if (planMulti.has(i.id)) i.rot = ((i.rot || 0) + 90) % 360; }); commit(true); }
+        if (e.target.closest("[data-pmdel]")) { P.items = P.items.filter((i) => !planMulti.has(i.id)); planMulti.clear(); commit(true); }
+        return;
+      }
       const P = planState(), it = P.items.find((i) => i.id === planSel); if (!it) return;
       if (e.target.closest("[data-pdel]")) { P.items = P.items.filter((i) => i !== it); planSel = null; commit(true); }
       if (e.target.closest("[data-pdup]")) { const c = { ...it, id: nid(), x: it.x + 0.5, y: it.y + 0.5 }; if (c.kind === "boite" || c.kind === "rack") { c.kind = "texte"; c.label = planItemLabel(it); delete c.ref; } P.items.push(c); planSel = c.id; commit(true); }
     });
     document.addEventListener("keydown", (e) => {
-      if (view !== "plan" || !planSel) return;
+      if (view !== "plan") return;
       const tag = (document.activeElement && document.activeElement.tagName) || "";
       if (/INPUT|SELECT|TEXTAREA/.test(tag)) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a" && planState().items.length) { e.preventDefault(); planSetSel(planState().items.map((i) => i.id)); renderPlan(); return; }
+      if (planMulti.size) {
+        const P = planState(), st = e.shiftKey ? 1 : 0.25, mv = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[e.key];
+        if (mv) { e.preventDefault(); P.items.forEach((i) => { if (planMulti.has(i.id)) { i.x = snap(i.x + mv[0]); i.y = snap(i.y + mv[1]); } }); commit(true); return; }
+        if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); P.items = P.items.filter((i) => !planMulti.has(i.id)); planMulti.clear(); commit(true); return; }
+        if (e.key === "Escape") { planMulti.clear(); renderPlan(); }
+        return;
+      }
+      if (!planSel) return;
       const P = planState(), it = P.items.find((i) => i.id === planSel); if (!it) return;
       const st = e.shiftKey ? 1 : 0.25, mv = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[e.key];
       if (mv) { e.preventDefault(); it.x = snap(it.x + mv[0]); it.y = snap(it.y + mv[1]); commit(true); return; }
@@ -3794,7 +3865,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return ring + links + wc + labels;
   }
   function synNodeMarkup(n, forExport) {
-    const con = n.kind === "console", on = !forExport && synSel === n.id;
+    const con = n.kind === "console", on = !forExport && (synSel === n.id || synMulti.has(n.id));
     const fill = con ? "#373737" : n.kind === "extra" ? "#f3f6f7" : "#ffffff", ink = con ? "#fce694" : "#111827", sub = con ? "#d1d5db" : "#6b7280";
     const ports = n.ports.map((p, k) => {
       const y = SYN_TOP + k * SYN_ROW, P = PROTOS[p.proto] || PROTOS.Autre;
@@ -3843,10 +3914,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const all = synNodes(), t = (id) => (all.find((x) => x.id === id) || {}).title || "?";
     notice(`Liaison ${esc(t(a))} → ${esc(t(b))} ajoutée. Ports, protocole et câble se règlent dans le tableau Liaisons.`);
   }
+  const synMulti = new Set();
+  const synIds = () => (synMulti.size ? [...synMulti] : synSel && !synSel.startsWith("z:") ? [synSel] : []);
+  function synSetSel(ids) { synMulti.clear(); if (ids.length === 1) synSel = ids[0]; else { synSel = null; ids.forEach((i) => synMulti.add(i)); } }
   let synSel = null, synDrag = null, synZoom = matchMedia("(max-width: 760px)").matches ? 0.75 : 1;
   const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
   function renderSyn() {
     const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
+    if (synMulti.size) { const have = new Set(nodes.map((q) => q.id)); [...synMulti].forEach((id) => { if (!have.has(id)) synMulti.delete(id); }); if (synMulti.size < 2) synSetSel([...synMulti]); }
     if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Ajoute tes stage racks et I/O dans « Réglages racks » : le synoptique se dessine tout seul à partir d'eux.</div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
     stage.innerHTML = synSvg(false).replace("<svg ", `<svg id="synSvg" role="img" aria-label="Synoptique" `);
     $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
@@ -3866,12 +3941,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function renderSynSide(nodes) {
     const side = $("#synSide");
+    if (synMulti.size) {
+      side.innerHTML = `<h3>${synMulti.size} appareils sélectionnés</h3><p class="hint">Fais glisser l'un d'eux pour déplacer tout le groupe. Maj+clic ou Cmd+clic : ajouter ou retirer un appareil. Échap : désélectionner.</p>
+        <div class="actions" style="flex-wrap:wrap;gap:4px;margin-top:10px"><button class="btn small" type="button" data-smzone>Zone autour</button><button class="btn small" type="button" data-smauto>Remettre en place</button><button class="btn small" type="button" data-smclear>Désélectionner</button></div>`;
+      return;
+    }
     if (synSel && synSel.startsWith("z:")) {
       const z = (synState().zones || []).find((q) => "z:" + q.id === synSel);
       if (z) { side.innerHTML = `<h3>Zone</h3><label>Nom<input type="text" data-sp="znom" value="${esc(z.nom || "")}" list="dlZone"></label><datalist id="dlZone">${ZONE_PRESETS.map((v) => `<option value="${esc(v)}">`).join("")}</datalist><div class="actions" style="flex-wrap:wrap;gap:4px;margin:6px 0">${ZONE_PRESETS.slice(0, 3).map((v) => `<button class="btn small" type="button" data-zpre="${esc(v)}">${esc(v)}</button>`).join("")}</div><p class="hint" style="margin:6px 0">Fais glisser le cadre pour le déplacer, avec les appareils qui sont dedans. Le carré noir en bas à droite le redimensionne.</p><div class="actions"><button class="btn small danger" type="button" data-zdel>Supprimer la zone</button></div>`; return; }
     }
     const n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
-    if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place. Le bouton + qui apparaît à côté de l'appareil tire une liaison vers un autre. « + Zone » encadre une partie du schéma (FOH, Monitor, Stage…).</p>`; return; }
+    if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place. Le bouton + qui apparaît à côté de l'appareil tire une liaison vers un autre. À la souris, cliquer-glisser sur le fond sélectionne plusieurs appareils. « + Zone » encadre une partie du schéma (FOH, Monitor, Stage…).</p>`; return; }
     const S = synState(), ls = S.links.filter((l) => (l.a || {}).n === n.id || (l.b || {}).n === n.id);
     const all = synNodes(), name = (id) => (all.find((x) => x.id === id) || {}).title || "?";
     const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
@@ -3904,6 +3984,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const zr = e.target.closest("rect.zrs");
       if (zr) { const z = (synState().zones || []).find((q) => q.id === zr.closest("g.zn").dataset.zid); if (!z) return; synDrag = { resize: z, g: zr.closest("g.zn"), moved: false }; e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); e.preventDefault(); return; }
       const g = e.target.closest("g.nd");
+      // Souris sur le fond (ou sur une zone avec Maj / Cmd) : cadre de sélection
+      if (!g && !synPick && e.pointerType === "mouse" && (!e.target.closest("g.zn") || isMod(e))) {
+        const p = synPoint(e), sv = $("#synSvg");
+        synDrag = { marq: true, x0: p.x, y0: p.y, add: isMod(e), base: synIds(), nodes: synPlace(synNodes()), moved: false };
+        sv.setPointerCapture && sv.setPointerCapture(e.pointerId); e.preventDefault(); return;
+      }
+      if (g && !synPick && isMod(e)) { const ids = synIds(), k = ids.indexOf(g.dataset.nid); if (k < 0) ids.push(g.dataset.nid); else ids.splice(k, 1); synSetSel(ids); renderSyn(); e.preventDefault(); return; }
       if (g && synPick) { const from = synPick; synPick = null; if (from !== g.dataset.nid) { synMakeLink(from, g.dataset.nid); e.preventDefault(); return; } }
       if (!g) {
         synPick = null;
@@ -3913,20 +4000,27 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           const nodes = synPlace(synNodes()), inside = nodes.filter((n) => { const [cx, cy] = synCenter(n); return cx > z.x && cx < z.x + z.w && cy > z.y && cy < z.y + z.h; });
           const p = synPoint(e);
           synDrag = { zone: z, g: zg, nodes, inside: inside.map((n) => ({ n, x: n.x, y: n.y })), zx: z.x, zy: z.y, px: p.x, py: p.y, moved: false };
-          if (synSel !== "z:" + z.id) { synSel = "z:" + z.id; renderSyn(); synDrag.g = document.querySelector(`#synSvg g.zn[data-zid="${z.id}"]`); }
+          if (synSel !== "z:" + z.id || synMulti.size) { synMulti.clear(); synSel = "z:" + z.id; renderSyn(); synDrag.g = document.querySelector(`#synSvg g.zn[data-zid="${z.id}"]`); }
           zg.setPointerCapture && zg.setPointerCapture(e.pointerId); e.preventDefault(); return;
         }
-        if (synSel) { synSel = null; renderSyn(); } return;
+        if (synSel || synMulti.size) { synSel = null; synMulti.clear(); renderSyn(); } return;
       }
       const nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === g.dataset.nid); if (!n) return;
       const p = synPoint(e);
-      synDrag = { n, nodes, dx: p.x - n.x, dy: p.y - n.y, moved: false, g };
-      if (synSel !== n.id) { synSel = n.id; document.querySelectorAll("#synSvg g.nd.on").forEach((x) => x.classList.remove("on")); renderSynSide(nodes); }
+      const grp = synMulti.has(n.id) ? nodes.filter((q) => synMulti.has(q.id) && q !== n).map((q) => ({ n: q, x: q.x, y: q.y, g: document.querySelector(`#synSvg g.nd[data-nid="${CSS.escape(q.id)}"]`) })) : null;
+      synDrag = { n, nodes, dx: p.x - n.x, dy: p.y - n.y, moved: false, g, grp, nx: n.x, ny: n.y };
+      if (!grp && (synSel !== n.id || synMulti.size)) { synMulti.clear(); synSel = n.id; document.querySelectorAll("#synSvg g.nd.on").forEach((x) => x.classList.remove("on")); renderSynSide(nodes); }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
     host.addEventListener("pointermove", (e) => {
       if (!synDrag) return;
+      if (synDrag.marq) {
+        const d = synDrag, p = synPoint(e); if (!d.moved && Math.hypot(p.x - d.x0, p.y - d.y0) < 6) return; d.moved = true;
+        d.r = marqRect(d, p, $("#synSvg"), 1.5); const hit = new Set(d.nodes.filter((q) => boxHit(d.r, q)).map((q) => q.id));
+        document.querySelectorAll("#synSvg g.nd").forEach((x) => x.classList.toggle("on", hit.has(x.dataset.nid) || (d.add && d.base.includes(x.dataset.nid))));
+        return;
+      }
       if (synDrag.link) { const p = synPoint(e); synDrag.line.setAttribute("x2", p.x); synDrag.line.setAttribute("y2", p.y); synDrag.moved = true; return; }
       if (synDrag.resize) {
         const p = synPoint(e), z = synDrag.resize;
@@ -3945,10 +4039,16 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       n.x = Math.round((p.x - synDrag.dx) / 10) * 10; n.y = Math.round((p.y - synDrag.dy) / 10) * 10;
       synDrag.moved = true;
       synDrag.g.setAttribute("transform", `translate(${n.x} ${n.y})`);
+      if (synDrag.grp) { const dx = n.x - synDrag.nx, dy = n.y - synDrag.ny; synDrag.grp.forEach((q) => { q.n.x = q.x + dx; q.n.y = q.y + dy; if (q.g) q.g.setAttribute("transform", `translate(${q.n.x} ${q.n.y})`); }); }
       $("#synEdges").innerHTML = synEdges(synDrag.nodes);
     });
     const end = (e) => {
       if (!synDrag) return;
+      if (synDrag.marq) {
+        const d = synDrag; synDrag = null; if (d.el) d.el.remove();
+        if (!d.moved || !d.r) { if (!d.add && (synSel || synMulti.size)) { synSel = null; synMulti.clear(); renderSyn(); } return; }
+        const hits = d.nodes.filter((q) => boxHit(d.r, q)).map((q) => q.id); synSetSel(d.add ? [...new Set([...d.base, ...hits])] : hits); renderSyn(); return;
+      }
       if (synDrag.link) {
         const { link, line, moved } = synDrag; synDrag = null; line.remove();
         const t = moved && e && e.clientX !== undefined ? document.elementFromPoint(e.clientX, e.clientY) : null, g = t && t.closest && t.closest("g.nd");
@@ -3957,20 +4057,26 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         return;
       }
       if (synDrag.resize || synDrag.zone) { const d = synDrag; synDrag = null; if (d.moved) { const S = synState(); (d.inside || []).forEach((q) => { S.pos[q.n.id] = { x: q.n.x, y: q.n.y }; }); commit(true); } return; }
-      const { n, moved } = synDrag; synDrag = null;
-      if (moved) { synState().pos[n.id] = { x: n.x, y: n.y }; commit(true); } else renderSyn();
+      const { n, moved, grp } = synDrag; synDrag = null;
+      if (moved) { const S = synState(); S.pos[n.id] = { x: n.x, y: n.y }; (grp || []).forEach((q) => { S.pos[q.n.id] = { x: q.n.x, y: q.n.y }; }); commit(true); } else renderSyn();
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
     host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#synSvg g.nd, #synSvg g.zn")) e.preventDefault(); }, { passive: false });
+    document.addEventListener("keydown", (e) => {
+      if (view !== "syn" || !$("#synSvg") || /INPUT|SELECT|TEXTAREA/.test((document.activeElement && document.activeElement.tagName) || "")) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") { e.preventDefault(); synSetSel(synPlace(synNodes()).map((q) => q.id)); renderSyn(); }
+      else if (e.key === "Escape" && (synMulti.size || synSel)) { synMulti.clear(); synSel = null; renderSyn(); }
+    });
     const addLink = (from) => { const S = synState(); S.links.push({ id: nid(), a: { n: from || "", p: "" }, b: { n: "", p: "" }, proto: "", cable: "" }); commit(true); const tr = $("#synLinks tbody tr:last-child"); if (tr) { tr.scrollIntoView({ block: "nearest" }); const f = tr.querySelector(from ? '[data-sl="ap"]' : '[data-sl="an"]'); if (f) f.focus(); } };
     $("#synAddLink").addEventListener("click", () => addLink(synSel && !synSel.startsWith("z:") ? synSel : ""));
     $("#synAddZone").addEventListener("click", () => {
       const S = synState(); S.zones = S.zones || [];
       const nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === synSel), used = new Set(S.zones.map((z) => z.nom));
       const nom = ZONE_PRESETS.find((v) => !used.has(v)) || "Zone";
-      const z = n ? { x: n.x - 30, y: n.y - 50, w: n.w + 60, h: n.h + 80 } : { x: Math.min(...nodes.map((q) => q.x)) - 30, y: Math.min(...nodes.map((q) => q.y)) - 50, w: 420, h: 260 };
+      const ms = nodes.filter((q) => synMulti.has(q.id)), mx = ms.length ? Math.min(...ms.map((q) => q.x)) : 0, my = ms.length ? Math.min(...ms.map((q) => q.y)) : 0;
+      const z = ms.length ? { x: mx - 30, y: my - 50, w: Math.max(...ms.map((q) => q.x + q.w)) - mx + 60, h: Math.max(...ms.map((q) => q.y + q.h)) - my + 80 } : n ? { x: n.x - 30, y: n.y - 50, w: n.w + 60, h: n.h + 80 } : { x: Math.min(...nodes.map((q) => q.x)) - 30, y: Math.min(...nodes.map((q) => q.y)) - 50, w: 420, h: 260 };
       Object.keys(z).forEach((k) => { z[k] = Math.round(z[k] / 10) * 10; });
-      const id = nid(); S.zones.push({ id, nom, ...z }); synSel = "z:" + id; commit(true);
+      const id = nid(); S.zones.push({ id, nom, ...z }); synMulti.clear(); synSel = "z:" + id; commit(true);
       const i = $('#synSide [data-sp="znom"]'); if (i) { i.focus(); i.select(); }
     });
     $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
@@ -4019,6 +4125,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     $("#synSide").addEventListener("click", (e) => {
       const S = synState();
+      if (e.target.closest("[data-smclear]")) { synMulti.clear(); renderSyn(); return; }
+      if (e.target.closest("[data-smzone]")) { $("#synAddZone").click(); return; }
+      if (e.target.closest("[data-smauto]")) { synMulti.forEach((id) => { delete S.pos[id]; }); commit(true); return; }
       if (e.target.closest("[data-splink]")) addLink(synSel);
       const zp = e.target.closest("[data-zpre]"), zd = e.target.closest("[data-zdel]");
       if (zp || zd) { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (!z) return; if (zp) z.nom = zp.dataset.zpre; else { S.zones = S.zones.filter((q) => q !== z); synSel = null; } commit(true); return; }
@@ -5661,8 +5770,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const P = planState(), gi = t.closest("#planSvg g.it");
     if (gi) {
       const it = P.items.find((i) => i.id === gi.dataset.pid); if (!it) return null;
-      planSel = it.id; renderPlan();
+      if (planMulti.has(it.id)) {
+        const ids = new Set(planMulti);
+        return [`${ids.size} éléments`, [
+          { t: "Pivoter de 90°", fn: () => { P.items.forEach((i) => { if (ids.has(i.id)) i.rot = ((i.rot || 0) + 90) % 360; }); commit(true); } },
+          { t: "Retirer celui-ci de la sélection", fn: () => { planMulti.delete(it.id); planSetSel([...planMulti]); renderPlan(); } },
+          { t: "Désélectionner", fn: () => { planMulti.clear(); renderPlan(); } },
+          "-", { t: `Retirer les ${ids.size} du plan`, danger: true, fn: () => { P.items = P.items.filter((i) => !ids.has(i.id)); planMulti.clear(); commit(true); } }]];
+      }
+      const prev = planIds(); planMulti.clear(); planSel = it.id; renderPlan();
       return [planItemLabel(it), [
+        prev.length && !prev.includes(it.id) && { t: "Ajouter à la sélection", fn: () => { planSetSel([...prev, it.id]); renderPlan(); } },
         { t: "Pivoter de 90°", fn: () => { it.rot = ((it.rot || 0) + 90) % 360; commit(true); } },
         { t: "Dupliquer", fn: () => { const b = $("#planSide [data-pdup]"); if (b) b.click(); } },
         { t: "Passer au premier plan", fn: () => { P.items = P.items.filter((i) => i !== it).concat(it); commit(true); } },
@@ -5671,7 +5789,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         "-", { t: "Retirer du plan", fn: () => { P.items = P.items.filter((i) => i !== it); planSel = null; commit(true); } }]];
     }
     const p = planPoint(e);
-    return ["Plan de scène", [{ t: "Placer ici", sub: () => optItems(planAddOptions(), (v) => {
+    return ["Plan de scène", [P.items.length && { t: "Tout sélectionner", fn: () => { planSetSel(P.items.map((i) => i.id)); renderPlan(); } }, { t: "Placer ici", sub: () => optItems(planAddOptions(), (v) => {
       $("#planAdd").value = v; $("#planAddBtn").click();
       const it = planState().items.find((i) => i.id === planSel); if (it) { it.x = snap(p.x - it.w / 2); it.y = snap(p.y - it.h / 2); commit(true); }
     }) }]];
@@ -5680,9 +5798,18 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const S = synState(), gn = t.closest("#synSvg g.nd"), gz = t.closest("#synSvg g.zn");
     if (gn) {
       const id = gn.dataset.nid, n = synNodes().find((x) => x.id === id); if (!n) return null;
-      synSel = id; renderSyn();
+      if (synMulti.has(id)) {
+        const ids = [...synMulti];
+        return [`${ids.length} appareils`, [
+          { t: "Ajouter une zone autour", fn: () => $("#synAddZone").click() },
+          { t: "Remettre en place", fn: () => { ids.forEach((q) => { delete S.pos[q]; }); commit(true); } },
+          { t: "Retirer celui-ci de la sélection", fn: () => { synMulti.delete(id); synSetSel([...synMulti]); renderSyn(); } },
+          { t: "Désélectionner", fn: () => { synMulti.clear(); renderSyn(); } }]];
+      }
+      const prev = synIds(); synMulti.clear(); synSel = id; renderSyn();
       const x = n.kind === "extra" ? S.nodes.find((q) => q.id === id) : null;
       return [n.title, [
+        prev.length && !prev.includes(id) && { t: "Ajouter à la sélection", fn: () => { synSetSel([...prev, id]); renderSyn(); } },
         { t: "Relier à un autre appareil…", fn: () => { synPick = id; notice("Touche maintenant l'appareil d'arrivée de la liaison (ailleurs pour annuler)."); } },
         { t: "Ajouter une zone autour", fn: () => $("#synAddZone").click() },
         n.kind === "console" && { t: "Modèle de la console…", fn: () => { const i = $('#synSide [data-sp="cmodel"]'); if (i) { i.focus(); i.select(); } } },
@@ -5704,6 +5831,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const p = synPoint(e), r10 = (v) => Math.round(v / 10) * 10;
     const addAt = (x) => { S.nodes.push(x); S.pos[x.id] = { x: r10(p.x - 90), y: r10(p.y - 30) }; synSel = x.id; commit(true); };
     return ["Synoptique", [
+      { t: "Tout sélectionner", fn: () => { synSetSel(synPlace(synNodes()).map((q) => q.id)); renderSyn(); } },
       { t: "Ajouter un élément ici (switch, ordinateur…)", fn: () => { addAt({ id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } } },
       { t: "Ajouter une horloge ici", fn: () => addAt({ id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }) },
       { t: "Ajouter une zone ici", fn: () => { const used = new Set(S.zones.map((z) => z.nom)); const id = nid(); S.zones.push({ id, nom: ZONE_PRESETS.find((v) => !used.has(v)) || "Zone", x: r10(p.x - 20), y: r10(p.y - 20), w: 420, h: 260 }); synSel = "z:" + id; commit(true); } },
