@@ -280,6 +280,10 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
 .pmix { display: flex; align-items: center; gap: 6px; }
 .pmix input { flex: 1 1 auto; min-width: 0; }
 .pmix.pr { padding-left: 10px; }
+#outTbl td.pspan { display: none; }
+#outTbl td.rsp { vertical-align: middle; }
+#outTbl td.rsp.src input { text-align: center; font-weight: 700; }
+#outTbl tr.pm1 > td:not(.rsp) { border-bottom-style: dashed; }
 #outTbl tr.pr2 :is([data-f="dest"], [data-f="type"], [data-f="tx"], [data-f="rx"]) { color: var(--muted); }
 .pmix .lr { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink); }
 .pair { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
@@ -310,6 +314,7 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
   body:not(.rows) table.master td.ch::before { content: none; }
   body:not(.rows) table.master td.src, body:not(.rows) table.master td.wide { grid-column: 2 / -1; }
   body:not(.rows) table.master td.src::before { content: none; }
+  body:not(.rows) #outTbl td.pspan { display: flex; }
   body:not(.rows) table.master td.src input { font-size: 16px; }
   body:not(.rows) table.master tr:not(.open) td.more { display: none; }
   body:not(.rows) table.rack td.ent { grid-column: 1; grid-row: 1; align-items: center; text-align: center; font-size: 12px; font-weight: 600; color: var(--accent); padding-top: 4px; white-space: normal; word-break: break-word; }
@@ -2504,11 +2509,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       ? `<input type="text" data-f="mix" value="${esc(o.mix)}" aria-label="Mix">`
       : firstOf ? `<span class="pmix"><input type="text" data-f="mixpair" value="${esc(base)}" aria-label="Mix stéréo" title="Paire stéréo : le nom s'écrit une fois (${esc(o.mix)} / ${esc(partner.mix)})"><b class="lr">${esc(((o.mix || "").match(LR) || [, "L"])[1].toUpperCase())}</b></span>`
       : `<span class="pmix pr" title="${esc(o.mix)} : même nom, destinataire, type, émetteur et récepteur que la ligne au-dessus"><b class="lr">${esc(((o.mix || "").match(LR) || [, "R"])[1].toUpperCase())}</b></span>`;
-    return `<tr data-id="${o.id}" class="${openRows.has(o.id) ? "open" : ""}${partner && base != null && !firstOf ? " pr2" : ""}${extraCls ? " " + extraCls : ""}">
-        <td class="ch" data-l="N°">${idx + 1}${partner ? ` <span class="pair" title="Paire stéréo avec ${esc(partner.mix)}">st</span>` : ""}${moreBtn(o.id)}</td>${pre}
-        <td class="src" data-l="Mix">${mixCell}</td>
-        <td data-l="Destinataire"><input type="text" data-f="dest" value="${esc(o.dest)}" aria-label="Destinataire" autocomplete="off" data-suggest="dlMus"></td>
-        <td data-l="Type"><select data-f="type" aria-label="Type de sortie">${OUT_TYPES.map((t) => `<option${o.type === t ? " selected" : ""}>${t}</option>`).join("")}</select></td>
+    // Onglet Sorties : une paire stéréo voisine a une seule case pour le nom, le destinataire et le type, fusionnée sur ses deux lignes
+    const merged = !pre && partner && base != null && Math.abs(outs.indexOf(partner) - outs.indexOf(o)) === 1;
+    const sp = merged ? (firstOf ? ' rowspan="2"' : "") : "", cl = (c) => (merged ? (firstOf ? `${c} rsp` : `${c} pspan`) : c).trim();
+    const mixTd = merged && firstOf ? `<input type="text" data-f="mixpair" value="${esc(base)}" aria-label="Mix stéréo" title="Paire stéréo : ${esc(o.mix)} / ${esc(partner.mix)}">` : mixCell;
+    return `<tr data-id="${o.id}" class="${openRows.has(o.id) ? "open" : ""}${partner && base != null && !firstOf ? " pr2" : ""}${merged ? (firstOf ? " pm1" : " pm2") : ""}${extraCls ? " " + extraCls : ""}">
+        <td class="ch" data-l="N°">${idx + 1}${partner && !merged ? ` <span class="pair" title="Paire stéréo avec ${esc(partner.mix)}">st</span>` : ""}${moreBtn(o.id)}</td>${pre}
+        <td class="${cl("src")}"${sp} data-l="Mix">${mixTd}</td>
+        <td class="${cl("")}"${sp} data-l="Destinataire"><input type="text" data-f="dest" value="${esc(o.dest)}" aria-label="Destinataire" autocomplete="off" data-suggest="dlMus"></td>
+        <td class="${cl("")}"${sp} data-l="Type"><select data-f="type" aria-label="Type de sortie">${OUT_TYPES.map((t) => `<option${o.type === t ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td data-l="Départ (from)"><select class="addr${o.out ? "" : " empty"}" data-f="out" aria-label="Départ : sortie d'un rack ou d'un appareil">${outOptions(o, occ)}</select></td>
         <td class="wide" data-l="Arrivée (to)"><span class="tocell"><select class="addr${o.box || o.to ? "" : " empty"}" data-f="box" aria-label="Boîtier et liaison, ou appareil">${boxOptions(o, occ)}</select>${o.to ? `<span class="toin">${o.to.r || o.to.t ? "" : `<input type="text" data-f="toT" value="" placeholder="Nom de l'appareil" aria-label="Nom de l'appareil" autocomplete="off">`}<input type="text" data-f="toIn" value="${esc(o.to.in || "")}" placeholder="in" title="Entrée de l'appareil" aria-label="Entrée de l'appareil" autocomplete="off"></span>` : ""}</span></td>
         <td class="more" data-l="Émetteur"><input type="text" data-f="tx" value="${esc(o.tx)}" aria-label="Émetteur" autocomplete="off" data-suggest="dlTx"></td>
@@ -4763,10 +4772,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     so.addRow([`Sorties · ${titre}`]).font = { bold: true, size: 14 };
     styleHead(so.addRow(["N°", "Mix", "Destinataire", "Type", "Départ (from)", "Arrivée (to)", "Émetteur", "Récepteur / enceinte", "Notes"]));
     [6, 22, 18, 12, 16, 18, 14, 18, 28].forEach((w, i) => { so.getColumn(i + 1).width = w; });
-    (state.sorties || []).forEach((o, i) => {
-      const row = so.addRow([i + 1, o.mix, o.dest, o.type, outAddr(o.out), outDest(o), o.tx, o.rx, o.notes]);
+    // Paire stéréo : nom, destinataire et type dans une case fusionnée sur les deux lignes
+    const SO = state.sorties || [];
+    SO.forEach((o, i) => {
+      const prev = SO[i - 1], nx = SO[i + 1];
+      const first = nx && o.pair === nx.id && outPairBase(o, nx) != null, second = prev && o.pair === prev.id && outPairBase(prev, o) != null;
+      const row = so.addRow([i + 1, first ? outPairBase(o, nx) : second ? "" : o.mix, second ? "" : o.dest, second ? "" : o.type, outAddr(o.out), outDest(o), o.tx, o.rx, o.notes]);
       row.eachCell({ includeEmpty: true }, (c) => { c.border = BORDER; });
       row.getCell(2).font = { bold: true };
+      if (second) [2, 3, 4].forEach((c) => { so.mergeCells(row.number - 1, c, row.number, c); so.getCell(row.number - 1, c).alignment = { vertical: "middle", horizontal: c === 2 ? "center" : "left" }; });
     });
     page(so, true);
 
