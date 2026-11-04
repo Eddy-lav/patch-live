@@ -414,7 +414,8 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 #planSvg .it { cursor: grab; }
 #planSvg .it.on > .shape { stroke: #373737; stroke-width: 0.06; }
 .plan-side h3 { margin: 0 0 8px; font-size: 16px; }
-.rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(420px * var(--rpz, 1))), 1fr)); gap: 14px; align-items: start; }
+.rpcases.zin .rpsvg { width: calc(100% * var(--rpzi, 1)); max-width: none; }
 .rpcase { padding: 10px; margin: 0; }
 .rpcase.rpwide { grid-column: 1 / -1; }
 .rphead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -1092,7 +1093,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
 </section>
 
 <section id="v-rackplan" hidden>
-  <div class="toolbar planbar"><button id="rpAddCase" class="btn small primary" type="button">+ Flight rack</button><span class="hint">Vue de face, U numérotés depuis le haut. Les appareils viennent de Racks et I/O et du synoptique.</span></div>
+  <div class="toolbar planbar"><button id="rpAddCase" class="btn small primary" type="button">+ Flight rack</button><span class="zoom"><button id="rpZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="rpZoomVal" class="mono">100 %</span><button id="rpZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span><span class="hint">Vue de face, U numérotés depuis le haut. Les appareils viennent de Racks et I/O et du synoptique.</span></div>
   <div class="plan-wrap rp-wrap">
     <div id="rpCases" class="rpcases"></div>
     <aside class="panel plan-side" id="rpSide"></aside>
@@ -3138,7 +3139,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return "sd";
   }
   // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm) ; la marque est écrite en texte (pas de logo copié)
-  const DEV_H = { hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  const DEV_H = { sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3277,6 +3278,26 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         let s = R(2, 2, 479, 40.45, "#fff7ed", 6, ' stroke="#e0700b" stroke-width="2" stroke-dasharray="7 5"');
         s += C(34, 22.2, 12, "none", ' stroke="#e0700b" stroke-width="3"') + C(34, 22.2, 4, "#e0700b") + R(46, 21, 30, 2.4, "#e0700b") + "<path d=\"M74 16 L84 22.2 L74 28.4 Z\" fill=\"#e0700b\"/>";
         s += T(100, 20, "ENVOI CONSOLE SUR LA LOOP", 11, "#9a3412", 800, 0.8) + T(100, 34, "logiciel de la console, sans boîtier", 9, "#b45309", 400);
+        return s;
+      }
+      // SD-Rack côté ventilation (10 U) : en haut 4 grilles hexagonales sur les alimentations, en bas la plaque du ventilateur,
+      // « DO NOT RESTRICT AIRFLOW », la marque et « 192 KHz » écrites en texte, l'étiquette à gauche et « SD-Rack » à droite
+      case "sdback": {
+        let s = ears("#3a3f44") + face("#1a1c1e") + R(14, 2, 455, 124, "#202326", 2) + R(14, 128, 455, 315, "#1d1f22", 2);
+        const hex = (x0, y0, w, h) => { let g = R(x0, y0, w, h, "#0e0f10", 3); for (let yy = 0; yy * 7 < h - 4; yy++) for (let xx = 0; xx * 8 < w - 6; xx++) g += C(x0 + 5 + xx * 8 + (yy % 2) * 4, y0 + 5 + yy * 7, 2.6, "#2b2f33"); return g; };
+        [[22, 14], [129, 14], [236, 14], [343, 14]].forEach(([x, y], k) => {
+          s += hex(x, y, 100, 92);
+          s += k === 1 || k === 2 ? R(x + 18, y + 18, 64, 40, "#1e6b43", 2, ' opacity="0.55"') + R(x + 18, y + 60, 64, 26, "#9aa3ab", 2, ' opacity="0.35"') : [0, 1, 2, 3, 4].map((j) => R(x + 30 + j * 8, y + 22 + (j % 2) * 4, 4, 40, ["#f59e0b", "#ef4444", "#3b82f6", "#22c55e", "#a855f7"][j], 2, ' opacity="0.45"')).join("");
+        });
+        s += Array.from({ length: 10 }, (_, k) => C(26 + k * 48, 116, 1.8, "#4b5258")).join("");
+        s += R(100, 148, 283, 165, "#25282c", 3, ' stroke="#33373b" stroke-width="1"');
+        s += [[110, 158], [373, 158], [110, 303], [373, 303], [205, 160], [278, 160], [205, 300], [278, 300]].map(([x, y]) => C(x, y, 2.4, "#4b5258")).join("");
+        s += C(241.5, 230, 64, "#0c0d0e") + C(241.5, 230, 58, "none", ' stroke="#3a3f44" stroke-width="2"') + C(241.5, 230, 40, "none", ' stroke="#3a3f44" stroke-width="2"') + C(241.5, 230, 22, "none", ' stroke="#3a3f44" stroke-width="2"');
+        s += `<path d="M183.5 172 L299.5 288 M299.5 172 L183.5 288" stroke="#3a3f44" stroke-width="2"/>` + C(241.5, 230, 9, "#202326");
+        s += T(241.5, 325, "DO NOT RESTRICT AIRFLOW", 6, "#c9ced3", 700, 0.3, "middle");
+        s += T(241.5, 375, "DiGiCo", 42, "#f3f4f6", 800, 0.5, "middle") + T(241.5, 412, "192 KHz", 28, "#f3f4f6", 800, 0.5, "middle");
+        s += R(50, 412, 64, 12, "none", 0, ' stroke="#c9ced3" stroke-width="0.8"') + T(82, 410, "SD-RACK", 4.5, "#c9ced3", 700, 0.3, "middle");
+        s += T(436, 422, "SD-Rack", 9, "#f3f4f6", 800, 0.2, "end");
         return s;
       }
       // Récepteur HF générique (1 U) : antennes BNC aux extrémités, un écran et un bargraphe par voie, sans marque
@@ -3735,6 +3756,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       P.items.push(it); planSel = it.id; commit(true);
     });
     $("#planZoomIn").addEventListener("click", () => { planZoom = ZOOMS[Math.min(ZOOMS.length - 1, ZOOMS.indexOf(planZoom) + 1)]; renderPlan(); });
+    $("#rpZoomOut").addEventListener("click", () => rpSetZoom(-1)); $("#rpZoomIn").addEventListener("click", () => rpSetZoom(1));
     $("#planZoomOut").addEventListener("click", () => { planZoom = ZOOMS[Math.max(0, ZOOMS.indexOf(planZoom) - 1)]; renderPlan(); });
     // Au doigt : un élément se déplace, le fond fait défiler le plan
     host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#planSvg g.it")) e.preventDefault(); }, { passive: false });
@@ -3842,7 +3864,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function rpItemArt(it) {
     const H = it.h * RP_UH;
-    if (it.kind === "rack") return devImg({ kind: "rack", id: it.ref }, 483, H, 0, 0);
+    if (it.kind === "rack") {
+      const r = rackById(it.ref);
+      if (r && !r.photo && it.face !== "conn" && devType({ kind: "rack", id: it.ref }) === "sd") return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 445" preserveAspectRatio="none">${devArt("sdback")}</svg>`;
+      return devImg({ kind: "rack", id: it.ref }, 483, H, 0, 0);
+    }
     if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, 483, H, 0, 0); }
     if (it.kind === "hf") return devImg({ kind: "hf", ref: hfDevById(it.ref) || {} }, 483, H, 0, 0);
     return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 ${H}">${rpFreeArt(it, H)}</svg>`;
@@ -3880,8 +3906,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const top = forExport ? 40 : 0;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : n > 1 ? ` style="min-width:${n * 260}px"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
   }
+  const RP_ZOOMS = [0.4, 0.55, 0.75, 1, 1.5, 2];
+  let rpZoom = (() => { try { const z = Number(localStorage.getItem("patch-live-rpzoom")); return RP_ZOOMS.includes(z) ? z : 1; } catch (e) { return 1; } })();
+  function rpSetZoom(d) { rpZoom = RP_ZOOMS[Math.max(0, Math.min(RP_ZOOMS.length - 1, RP_ZOOMS.indexOf(rpZoom) + d))]; try { localStorage.setItem("patch-live-rpzoom", String(rpZoom)); } catch (e) { /* ignore */ } renderRackplan(); }
   function renderRackplan() {
     const P = rpState(), free = rpAddOptions();
+    // Zoom : en dessous de 100 %, les racks sont plus petits et se rangent à plusieurs par ligne ; au-dessus, ils grandissent et défilent
+    const cs = $("#rpCases"); cs.style.setProperty("--rpz", Math.min(1, rpZoom)); cs.style.setProperty("--rpzi", Math.max(1, rpZoom)); cs.classList.toggle("zin", rpZoom > 1); $("#rpZoomVal").textContent = Math.round(rpZoom * 100) + " %";
     $("#rpCases").innerHTML = P.cases.length ? P.cases.map((c) => {
       const used = c.items.reduce((n, i) => n + i.h, 0);
       return `<div class="panel rpcase${rpCols(c) > 1 ? " rpwide" : ""}" data-rpc="${c.id}">
@@ -3908,6 +3939,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       <label>Position<select data-rpf="at">${pos.map((u) => `<option value="${u}"${u === it.at ? " selected" : ""}>U${u}${it.h > 1 ? "–" + (u + it.h - 1) : ""}</option>`).join("")}</select></label></div>
       ${n > 1 ? `<label>Colonne<select data-rpf="col">${RP_COLN[n].map((t, k) => `<option value="${k}"${rpCol(it) === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>` : ""}
       ${P.cases.length > 1 ? `<label>Rack<select data-rpf="case">${P.cases.map((x) => `<option value="${x.id}"${x === c ? " selected" : ""}>${esc(x.nom || "Rack")}</option>`).join("")}</select></label>` : ""}
+      ${it.kind === "rack" && devType({ kind: "rack", id: it.ref }) === "sd" ? `<label>Côté vers l'avant du rack<select data-rpf="face"><option value="">Ventilation (DiGiCo 192 KHz)</option><option value="conn"${it.face === "conn" ? " selected" : ""}>Connecteurs (cartes)</option></select></label>` : ""}
       <label>Notes<input type="text" data-rpf="notes" value="${esc(it.notes || "")}" placeholder="ex. face arrière, alim 16 A"></label>
       <p class="hint" id="rpMsg" style="min-height:1em;margin:0"></p>
       <div class="actions" style="margin-top:8px"><button class="btn small danger" type="button" data-rpdel>Retirer du rack</button></div>`;
@@ -3942,6 +3974,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const f = rpSel && rpFind(rpSel), k = t.dataset.rpf; if (!f || !k) return;
       const { c, it } = f, msg = (m) => { const x = $("#rpMsg"); if (x) x.textContent = m; };
       if (k === "label" || k === "notes") it[k] = t.value.trim();
+      else if (k === "face") { if (t.value) it.face = t.value; else delete it.face; }
       else if (k === "at") it.at = Number(t.value) || it.at;
       else if (k === "col") { const col = Number(t.value) || 0, at = rpNearest(c, it, it.at, col); if (!at) { t.value = rpCol(it); msg(`Pas ${it.h} U libres dans cette colonne.`); return; } it.col = col; it.at = at; }
       else if (k === "h") {
