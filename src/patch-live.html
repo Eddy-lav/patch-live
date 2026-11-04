@@ -3510,7 +3510,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       [[l.a, l.b], [l.b, l.a]].forEach(([me, other]) => {
         const N = byId.get((me || {}).n), O = byId.get((other || {}).n), r = N && N.kind === "rack" && rackById(N.id);
         if (!r || r.model !== "spectera" || !O) return;
-        const op = O.ports.find((p) => portKey(p.nom) === portKey((other || {}).p)), max = op ? Math.max(0, ...String(op.n || "").split("/").map(Number).filter((x) => x > 0)) : 0;
+        // Un MADI à 96 kHz ne transporte que 32 canaux, quoi qu'on ait déclaré sur le port
+        const OR = O.kind === "rack" && rackById(O.id), op = O.ports.find((p) => portKey(p.nom) === portKey((other || {}).p)), decl = op ? Math.max(0, ...String(op.n || "").split("/").map(Number).filter((x) => x > 0)) : 0;
+        const max = OR && is96(OR) ? Math.min(32, decl) : decl;
         if (max > 32) out.push({ id: l.id, node: N.id, t: `${O.title} · ${other.p} déclare ${max} canaux, ${N.title} n'a que 32 entrées et 32 sorties MADI : au-delà de 32 canaux, le reste ne passe pas.` });
       });
     });
