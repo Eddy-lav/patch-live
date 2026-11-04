@@ -5068,10 +5068,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#fileIn").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) openFile(f); e.target.value = ""; });
     let armedNew = false;
     $("#newBtn").addEventListener("click", (e) => {
-      if (!armedNew) { armedNew = true; e.target.textContent = "Confirmer : tout effacer"; e.target.classList.add("danger", "armed"); setTimeout(() => { armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed"); }, 4000); return; }
+      if (!armedNew) { armedNew = true; e.target.textContent = DBX_ON && dbx.file ? "Confirmer : nouveau dossier (l'actuel reste dans Dropbox)" : "Confirmer : tout effacer (enregistre d'abord en Excel si besoin)"; e.target.classList.add("danger", "armed"); setTimeout(() => { armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed"); }, 4000); return; }
       armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed");
+      const was = DBX_ON && dbx.file ? (state.dossier && state.dossier.nom) || "le dossier" : "";
       dbxDetach(); state = vide(); record(); persist(); setView("materiel");
-      notice("Dossier vide créé. Commence par tes stage racks et tes boîtiers, puis passe au master patch.");
+      notice(`Dossier vide créé.${was ? ` « ${esc(was)} » est intact dans Dropbox : « Ouvrir depuis Dropbox » pour y revenir.` : ""} Commence par tes stage racks et tes boîtiers, puis passe au master patch.`);
     });
   }
   function focusLastIn(tbl, n, f) {
