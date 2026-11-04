@@ -418,6 +418,15 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .loopsum { font-family: var(--font-mono); font-size: 14px; padding: 4px 8px; border-radius: 4px; background: var(--surface-2); }
 .loopsum.over { background: var(--danger-soft, #fde2e1); color: var(--danger, #b42318); }
 .prov { display: block; font-size: 12px; color: var(--muted); }
+.devimg { display: inline-block; vertical-align: middle; flex: none; }
+.rackd > summary h2 .devimg { margin-right: 8px; vertical-align: -3px; }
+.devcell { width: 74px; white-space: nowrap; }
+.devpick { cursor: pointer; display: inline-flex; border-radius: 4px; padding: 2px; }
+.devpick:hover { outline: 2px solid var(--accent); }
+.devcell .xdel { margin-left: 2px; }
+.consm { display: flex; flex-direction: column; gap: 6px; }
+.consm label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.consm input { flex: 1 1 auto; max-width: 280px; font-weight: 400; }
 .tocell { display: flex; gap: 4px; align-items: center; }
 table.master .tocell > select { flex: 1 1 auto; min-width: 130px; width: auto; }
 .toin { display: flex; gap: 4px; flex: 0 1 auto; }
@@ -950,6 +959,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       <h2>Stage racks et I/O</h2>
       <p class="hint">Stage racks, mais aussi DD4MR, Orange Box ou tout équipement de la loop : choisis le format « Ports nommés » pour décrire ses ports (MADI 1, Dante, DMI…) avec leur nombre de canaux. Rattache chaque équipement à sa console. Si les consoles (FOH, monitor, broadcast ou autre) ne partagent pas les stages, le master affiche une colonne de stage rack par console ; « Partagé » sert à toutes.</p>
       <div class="tbl"><table id="racksTbl" class="cards"></table></div>
+      <div id="consModels"></div>
       <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">Stage rack (cartes de 8)</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
     </div>
   </div>
@@ -2759,24 +2769,73 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     out.innerHTML = racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
       const cons = (split ? ` · ${r.console === "Partagé" ? "Partagé" : "Console " + consLabel(r.console)}` : "") + (rackLoop(r) ? (loops().length > 1 ? ` · ${rackLoop(r).nom}` : "") : " · hors loop");
-      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${r.model === "spectera" ? `${outs.length} entrées (ears) / ${ins.length} sorties (micros)` : `${ins.length} in / ${outs.length} out`}</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
+      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${devImg({ kind: "rack", id: r.id }, 44, 18)}${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${r.model === "spectera" ? `${outs.length} entrées (ears) / ${ins.length} sorties (micros)` : `${ins.length} in / ${outs.length} out`}</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
     }).join("") + unpatchedTable(occ);
     const hits = query ? state.lignes.filter((l) => matches(l, query)).length : 0;
     $("#searchHint").textContent = query ? (hits ? `${hits} ligne${hits > 1 ? "s" : ""} trouvée${hits > 1 ? "s" : ""}` : "Aucune entrée trouvée") : "";
   }
 
+
+  // ---------- Visuels d'appareils ----------
+  // Pictogrammes dessinés pour l'appli (pas de photos de fabricant) ; une photo perso peut les remplacer appareil par appareil
+  const CONS_MODELS = ["DiGiCo SD5", "DiGiCo SD7", "DiGiCo SD7 Quantum", "DiGiCo SD10", "DiGiCo SD12", "DiGiCo Quantum 225", "DiGiCo Quantum 338", "DiGiCo Quantum 5", "DiGiCo Quantum 7", "DiGiCo Quantum 852", "Yamaha Rivage PM10", "Yamaha Rivage PM7", "Yamaha Rivage PM5", "Yamaha Rivage PM3", "Yamaha CL5", "Avid S6L-24D", "Avid S6L-32D", "Avid S6L-48D", "Midas Heritage-D HD96-24", "Midas Pro X", "Allen & Heath dLive S7000", "Allen & Heath dLive S5000", "SSL L550 Plus", "SSL L650", "Lawo mc²56"];
+  function devType(n) {
+    if (!n) return "box";
+    if (n.kind === "console") return "console";
+    if (n.kind === "extra") { const x = n.ref || {}; return x.gen ? "clock" : x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
+    const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
+    if (r.model === "orange") return "orange"; if (r.model === "spectera") return "spectera"; if (r.model === "m8") return "m8";
+    if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
+    return r.ports ? "io" : r.flat ? "num" : "sd";
+  }
+  function devArt(type) {
+    const body = (y, h, c) => `<rect x="2" y="${y}" width="92" height="${h}" rx="2" fill="${c || "#2b2f33"}"/><rect x="0" y="${y}" width="4" height="${h}" rx="1" fill="#7c858d"/><rect x="92" y="${y}" width="4" height="${h}" rx="1" fill="#7c858d"/>`;
+    const dots = (x0, y, n, dx, r, c) => Array.from({ length: n }, (_, i) => `<circle cx="${x0 + i * dx}" cy="${y}" r="${r}" fill="${c || "#c9d1d8"}"/>`).join("");
+    const led = (x, y, c) => `<circle cx="${x}" cy="${y}" r="1.4" fill="${c}"/>`;
+    switch (type) {
+      case "sd": return body(2, 36) + Array.from({ length: 8 }, (_, i) => `<rect x="${8 + i * 10.4}" y="6" width="8.6" height="28" rx="1" fill="#3a3f45"/>${dots(12.3 + i * 10.4, 11, 1, 0, 2.2)}${dots(12.3 + i * 10.4, 19, 1, 0, 2.2)}${dots(12.3 + i * 10.4, 27, 1, 0, 2.2)}`).join("") + led(88, 6, "#4ade80");
+      case "num": return body(4, 32) + dots(12, 13, 12, 6.6, 2.1) + dots(12, 26, 12, 6.6, 2.1) + `<rect x="8" y="31" width="22" height="2" fill="#e0700b"/>`;
+      case "dd4mr": return body(12, 16) + `<rect x="9" y="16" width="16" height="8" rx="1" fill="#e0700b"/>` + dots(36, 20, 4, 8, 2.4, "#d4b06a") + `<rect x="72" y="16.5" width="8" height="7" rx="1" fill="#6b9bd2"/>` + led(86, 17, "#4ade80") + led(86, 23, "#facc15");
+      case "orange": return body(12, 16, "#3a3a3a") + `<rect x="6" y="12" width="5" height="16" fill="#f97316"/><rect x="18" y="15" width="30" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/><rect x="54" y="15" width="30" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/>` + led(88, 20, "#4ade80");
+      case "m8": return body(12, 16) + dots(12, 17, 8, 8.4, 1.8, "#d4b06a") + dots(12, 23.5, 8, 8.4, 1.8, "#d4b06a") + `<rect x="82" y="15" width="6" height="10" rx="1" fill="#e0700b"/>`;
+      case "spectera": return body(12, 16, "#24282c") + `<rect x="10" y="15" width="24" height="10" rx="1" fill="#0ea5e9" opacity=".85"/><rect x="38" y="16" width="20" height="2" fill="#7c858d"/><rect x="38" y="21" width="14" height="2" fill="#7c858d"/>` + dots(68, 20, 2, 12, 3, "#c9d1d8") + `<circle cx="68" cy="20" r="1.2" fill="#2b2f33"/><circle cx="80" cy="20" r="1.2" fill="#2b2f33"/>`;
+      case "switch": return body(13, 14, "#30353a") + Array.from({ length: 12 }, (_, i) => `<rect x="${9 + i * 6.3}" y="${i % 2 ? 21 : 16}" width="4.8" height="4" rx=".5" fill="#9aa3ab"/>`).join("") + led(88, 20, "#4ade80");
+      case "clock": return body(12, 16) + `<rect x="8" y="15" width="22" height="10" rx="1" fill="#111" /><text x="19" y="22.5" font-size="6.5" text-anchor="middle" fill="#f87171" font-family="ui-monospace, Menlo, monospace">96k</text>` + dots(38, 20, 7, 7.4, 2.1, "#d4b06a");
+      case "console": return `<path d="M6 34 L14 8 H82 L90 34 Z" fill="#2b2f33"/><rect x="22" y="10" width="22" height="9" rx="1" fill="#0ea5e9" opacity=".85"/><rect x="52" y="10" width="22" height="9" rx="1" fill="#0ea5e9" opacity=".85"/>` + Array.from({ length: 12 }, (_, i) => `<rect x="${14 + i * 5.8}" y="22" width="1.2" height="10" fill="#7c858d"/><rect x="${12.8 + i * 5.8}" y="${25 + (i * 7) % 5}" width="3.6" height="2.4" fill="#e5e7eb"/>`).join("") + `<rect x="4" y="34" width="88" height="3" rx="1" fill="#1f2326"/>`;
+      case "io": return body(10, 20) + dots(14, 20, 3, 9, 2.6, "#d4b06a") + `<rect x="44" y="15" width="18" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/>` + led(84, 16, "#4ade80") + led(84, 24, "#facc15");
+      default: return body(10, 20) + led(84, 20, "#4ade80");
+    }
+  }
+  // Une image d'appareil à la taille demandée (svg imbriqué : marche dans une page comme dans le synoptique)
+  function devImg(n, w, h, x, y) {
+    const pos = x !== undefined ? ` x="${x}" y="${y}"` : "";
+    const r = n && n.kind === "rack" ? rackById(n.id) : n && n.kind === "extra" ? n.ref : n && n.kind === "console" ? synState().cons[n.cons] || {} : n;
+    const ph = r && r.photo;
+    if (ph) return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 96 40" class="devimg" aria-hidden="true"><image href="${ph}" x="0" y="0" width="96" height="40" preserveAspectRatio="xMidYMid meet"/></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 96 40" class="devimg" aria-hidden="true">${devArt(devType(n))}</svg>`;
+  }
+  // Photo perso : réduite (240 px) et gardée dans le dossier
+  function readPhoto(file) {
+    return new Promise((resolve) => {
+      if (!file || !/^image\//.test(file.type)) return resolve(null);
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => { const k = Math.min(1, 240 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); resolve(c.toDataURL("image/jpeg", 0.8)); };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
   // ---------- Réglages racks et boîtiers ----------
   function renderSetup() {
     const occ = occupancy();
     const usedRack = (r) => state.lignes.some((l) => Object.values(l.sr || {}).some((a) => a && a.r === r.id));
     const FMT = [["cartes", "Cartes de 8"], ["num", "Numérotées"], ["ports", "Ports nommés"]];
-    $("#racksTbl").innerHTML = `<thead><tr><th>ID</th><th>Nom</th><th>Console</th><th>Format</th><th>Entrées</th><th>Sorties</th><th title="Loop sur laquelle l'appareil est compté">Loop</th><th></th></tr></thead><tbody>${state.racks.map((r) => {
+    $("#racksTbl").innerHTML = `<thead><tr><th></th><th>ID</th><th>Nom</th><th>Console</th><th>Format</th><th>Entrées</th><th>Sorties</th><th title="Loop sur laquelle l'appareil est compté">Loop</th><th></th></tr></thead><tbody>${state.racks.map((r) => {
       const f = rFmt(r), cartes = f === "cartes";
       const nums = r.ports
         ? `<td class="tot">${rackInputs(r).length}</td><td class="tot">${rackOutputs(r).length}</td>`
         : `<td style="width:90px"><input type="number" min="1" max="64" data-rf="n" value="${r.n}" aria-label="${cartes ? "Nombre de cartes d'entrée" : "Nombre d'entrées"}" title="${cartes ? "Nombre de cartes d'entrée" : "Nombre d'entrées"}"></td>
         <td style="width:90px"><input type="number" min="0" max="64" data-rf="out" value="${Number(r.out) || 0}" aria-label="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}" title="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}"></td>`;
-      const ports = r.ports ? `<tr class="ports" data-rid="${r.id}"><td></td><td colspan="7"><div class="portlist">${r.ports.map((p, k) => `
+      const ports = r.ports ? `<tr class="ports" data-rid="${r.id}"><td></td><td></td><td colspan="7"><div class="portlist">${r.ports.map((p, k) => `
           <div class="port" data-pi="${k}">${r.model === "orange" || r.model === "spectera" || p.card ? `<select data-pf="card" aria-label="Interface du port"><option value="">Interface : manuel</option>${Object.entries(DMI).filter(([, d]) => (d.m || "orange") === (r.model === "spectera" ? "spectera" : "orange")).map(([v, d]) => `<option value="${v}"${p.card === v ? " selected" : ""}>${esc(d.t)}</option>`).join("")}</select>` : ""}<input type="text" data-pf="nom" value="${esc(p.nom)}" aria-label="Nom du port" placeholder="MADI 1">
           <label${r.model === "spectera" ? ' title="Sorties de la base : micros HF vers la console"' : ""}>${r.model === "spectera" ? "Micros" : "In"} <input type="number" min="0" max="512" data-pf="in" value="${portN(p, "in", r)}" aria-label="Entrées du port"${p.card ? " disabled" : ""}></label>
           <label${r.model === "spectera" ? ' title="Entrées de la base : mix ears envoyés par la console"' : ""}>${r.model === "spectera" ? "Ears" : "Out"} <input type="number" min="0" max="512" data-pf="out" value="${portN(p, "out", r)}" aria-label="Sorties du port"${p.card ? " disabled" : ""}></label>
@@ -2784,6 +2843,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           <button class="btn small" type="button" data-addport="${r.id}">+ Port</button></div></td></tr>` : "";
       return `
       <tr data-rid="${r.id}">
+        <td class="devcell" data-l="Visuel"><label class="devpick" title="${r.photo ? "Changer la photo" : "Ajouter une photo de l'appareil (facultatif)"}">${devImg({ kind: "rack", id: r.id }, 60, 25)}<input type="file" accept="image/*" data-rphoto hidden></label>${r.photo ? `<button class="btn small xdel" type="button" data-rphotodel title="Revenir au pictogramme" aria-label="Retirer la photo">×</button>` : ""}</td>
         <td style="width:70px"><input type="text" data-rf="num" value="${esc(r.num)}" aria-label="ID" placeholder="—" title="ID facultatif (ex. ID Optocore)"></td>
         <td style="min-width:120px"><input type="text" data-rf="nom" value="${esc(r.nom)}" aria-label="Nom"></td>
         <td style="min-width:110px">${consoleSelect(r)}</td>
@@ -2793,6 +2853,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td><button class="btn small danger xdel" type="button" data-delrack="${r.id}" title="${usedRack(r) ? "Supprimer (ses entrées utilisées seront libérées)" : "Supprimer"} · clic droit sur la ligne aussi" aria-label="Supprimer">×</button></td>
       </tr>${ports}`;
     }).join("")}</tbody>`;
+    { const ks = consoleKeys(), S = synState(), list = ks.length ? ks : ["ALL"];
+      $("#consModels").innerHTML = `<h3 style="margin:16px 0 6px">Consoles</h3><div class="consm">${list.map((k) => `<label>${devImg({ kind: "console", cons: k, id: "c:" + k }, 48, 20)} ${esc(k === "ALL" ? "Console" : "Console " + consLabel(k))}<input type="text" data-cmodel="${esc(k)}" value="${esc((S.cons[k] || {}).model || "")}" placeholder="Modèle (ex. DiGiCo SD7)" list="dlConsModel" autocomplete="off"></label>`).join("")}</div><datalist id="dlConsModel">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>`; }
     const usedBox = (b) => state.lignes.some((l) => l.box && l.box.b === b.id);
     $("#boxesTbl").innerHTML = `<thead><tr><th>Multi</th><th>N°</th><th>Nom</th><th>Côté</th><th>Entrées</th><th></th></tr></thead><tbody>${state.boites.map((b) => `
       <tr data-bid="${b.id}">
@@ -2847,6 +2909,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function onSetupChange(e) {
     const t = e.target;
+    if (t.dataset.rphoto !== undefined) { const r = rackById(t.closest("tr[data-rid]").dataset.rid); readPhoto(t.files && t.files[0]).then((d) => { if (d && r) { r.photo = d; commit(true); } else if (!d) notice("Image illisible : choisis une photo JPEG ou PNG.", true); }); return; }
+    if (t.dataset.cmodel !== undefined) { const S = synState(), k = t.dataset.cmodel; S.cons[k] = { ...(S.cons[k] || {}), model: t.value.trim() }; commit(true); return; }
     const rr = t.closest("tr[data-rid]"), br = t.closest("tr[data-bid]");
     if (rr) {
       const r = rackById(rr.dataset.rid); const f = t.dataset.rf;
@@ -2907,6 +2971,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     commit(true);
   }
   function onSetupClick(e) {
+    const pd = e.target.closest("[data-rphotodel]");
+    if (pd) { const r = rackById(pd.closest("tr[data-rid]").dataset.rid); if (r) { delete r.photo; commit(true); } return; }
     const ap = e.target.closest("button[data-addport]"), dp = e.target.closest("button[data-delport]");
     if (ap) { const r = rackById(ap.dataset.addport); let k = r.ports.length + 1; while (r.ports.some((p) => p.nom === `Port ${k}`)) k++; r.ports.push({ nom: `Port ${k}`, in: 64, out: 64 }); commit(true); return; }
     if (dp) {
@@ -3135,7 +3201,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     Autre: { c: "#9ca3af", w: 2, d: "" },
     "Word clock": { c: "#0f172a", w: 1.6, d: "2 3" }
   };
-  const SYN_W = 200, SYN_ROW = 18, SYN_TOP = 46, SYN_FONT = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"`;
+  const SYN_IX = 60; // le texte commence après le visuel de l'appareil
+  const SYN_W = 220, SYN_ROW = 18, SYN_TOP = 46, SYN_FONT = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"`;
   function protoOfName(s) {
     s = String(s || "");
     if (/opto|loop/i.test(s)) return "Optocore";
@@ -3191,7 +3258,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function synNodes() {
     const S = synState(), out = [];
     const ks = consoleKeys();
-    (ks.length ? ks : state.racks.length ? ["ALL"] : []).forEach((k) => out.push({ id: "c:" + k, kind: "console", title: k === "ALL" ? "Console" : "Console " + consLabel(k), sub: "", ports: [], loop: consLoop(k), cons: k }));
+    (ks.length ? ks : state.racks.length ? ["ALL"] : []).forEach((k) => out.push({ id: "c:" + k, kind: "console", title: k === "ALL" ? "Console" : "Console " + consLabel(k), sub: (S.cons[k] || {}).model || "", ports: [], loop: consLoop(k), cons: k }));
     [...state.racks].sort(byRackId).forEach((r) => {
       const ports = r.ports ? r.ports.map((p) => ({ nom: p.nom || "Port", proto: portProto(p), n: `${portN(p, "in", r)}/${portN(p, "out", r)}` })) : [];
       const sub = (r.model === "spectera" ? `${rackOutputs(r).length} in (ears) / ${rackInputs(r).length} out (micros)` : r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
@@ -3203,7 +3270,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
       n.ports.push({ nom: e.p.trim(), proto: l.proto || protoOfName(e.p) || "Autre", n: "", added: true });
     }));
-    out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(320, Math.ceil(Math.max(synTextW(n.title, 14, 700) + 12 + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 28)))); n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
+    out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16)))); n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
     return out;
   }
   // Disposition auto : chaque loop en ellipse, les appareils hors loop en rangées dessous ; un appareil déplacé garde sa place
@@ -3291,13 +3358,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       return `<rect x="0" y="${y}" width="${n.w}" height="${SYN_ROW}" fill="${k % 2 ? "none" : con ? "#424242" : "#f6f8f9"}"/><rect x="0" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/><rect x="${n.w - 5}" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/>
         <text x="12" y="${y + 13}" font-size="12" fill="${ink}">${esc(p.nom)}</text><text x="${n.w - 12}" y="${y + 13}" font-size="11" text-anchor="end" fill="${sub}">${esc([p.proto !== "Autre" && !portKey(p.nom).includes(portKey(p.proto)) ? p.proto : "", p.n].filter(Boolean).join(" · "))}</text>`;
     }).join("");
-    const title = synFit(n.title, n.w - 12 - (n.loop ? 82 : 66), 14, 700), s = synFit(n.sub, n.w - 24, 11, 400);
+    const title = synFit(n.title, n.w - SYN_IX - (n.loop ? 82 : 66), 14, 700), s = synFit(n.sub, n.w - SYN_IX - 12, 11, 400);
     return `<g class="nd${on ? " on" : ""}" data-nid="${esc(n.id)}" transform="translate(${n.x} ${n.y})" ${SYN_FONT}>
       <rect class="box" width="${n.w}" height="${n.h}" rx="8" fill="${fill}" stroke="${on ? "#111827" : con ? "#373737" : "#a7b4bb"}" stroke-width="${on ? 2.5 : 1.2}"/>
       ${n.loop ? `<circle cx="${n.w - 13}" cy="15" r="5" fill="${PROTOS.Optocore.c}"><title>Sur ${esc(n.loop.nom || "la loop")}</title></circle>` : ""}
       ${(() => { const c = clkOf(n), t = CLK_SHORT[c.src] || "?"; return `<text x="${n.w - (n.loop ? 24 : 10)}" y="19" font-size="9" text-anchor="end" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="${c.src ? (con ? "#d1d5db" : "#6b7280") : "#b91c1c"}">⏱ ${t}</text>`; })()}
-      <text x="12" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
-      ${s ? `<text x="12" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}
+      ${con ? `<rect x="6" y="10" width="50" height="24" rx="4" fill="#5b6167"/>` : ""}${devImg(n, 44, 18.3, 9, 13)}
+      <text x="${SYN_IX}" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
+      ${s ? `<text x="${SYN_IX}" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}
       ${on ? `<g class="lkh" transform="translate(${n.w + 6} ${Math.min(n.h / 2, 26) - 13})"><circle cx="13" cy="13" r="13" fill="#111827"/><path d="M13 7v12M7 13h12" stroke="#fce694" stroke-width="2.4" stroke-linecap="round"/><title>Tirer une liaison vers un autre appareil (ou toucher puis toucher l'appareil d'arrivée)</title></g>` : ""}</g>`;
   }
   // Zones : cadre en pointillé avec un titre (FOH, Monitor, Stage…), dessiné sous les appareils
@@ -3366,7 +3434,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
     side.innerHTML = `<h3>${esc(n.title)}</h3>${n.sub ? `<p class="hint" style="margin:0 0 8px">${esc(n.sub)}</p>` : ""}
       ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}`}` : ""}
-      ${n.kind === "console" ? loopSel(n.loop) : ""}
+      ${n.kind === "console" ? `<label>Modèle<input type="text" data-sp="cmodel" value="${esc((S.cons[n.cons] || {}).model || "")}" placeholder="ex. DiGiCo SD7" list="dlConsModelSyn" autocomplete="off"></label><datalist id="dlConsModelSyn">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>` + loopSel(n.loop) : ""}
       ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
       ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}${synLinkWarn(all).filter((w) => w.node === n.id).map((w) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(w.t)}</p>`).join("")}`; })()}
@@ -3497,7 +3565,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#synSide").addEventListener("change", (e) => {
       const S = synState(), f = e.target.dataset.sp; if (!f || !synSel) return;
       if (f === "znom") { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (z) { z.nom = e.target.value.trim(); commit(true); } return; }
-      if (synSel.startsWith("c:")) { if (f === "loop") { const k = synSel.slice(2); S.cons[k] = { ...(S.cons[k] || {}), loopId: e.target.value }; commit(true); } return; }
+      if (synSel.startsWith("c:")) { if (f === "cmodel") { const k = synSel.slice(2); S.cons[k] = { ...(S.cons[k] || {}), model: e.target.value.trim() }; commit(true); return; } if (f === "loop") { const k = synSel.slice(2); S.cons[k] = { ...(S.cons[k] || {}), loopId: e.target.value }; commit(true); } return; }
       const x = S.nodes.find((q) => q.id === synSel); if (!x) return;
       if (f === "loop") x.loopId = e.target.value;
       else if (f === "gmodel") { const g = CLK_GENS.find((q) => q[0] === e.target.value); x.gen.model = e.target.value; if (g) { x.gen.outs = g[2]; if (!x.nom || CLK_GENS.some((q) => q[1].endsWith(x.nom))) x.nom = g[1].replace("Rosendahl ", "").replace("Autre générateur", "Horloge"); } }
