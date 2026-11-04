@@ -215,6 +215,13 @@ nav.spaces button:hover { color: var(--ink); }
 nav.spaces button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 nav.tabs { display: flex; gap: 6px; padding: 8px 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
 nav.tabs::-webkit-scrollbar { display: none; }
+.spacepop { position: fixed; z-index: 80; display: flex; flex-direction: column; min-width: 190px; padding: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgb(0 0 0 / 0.14); }
+.spacepop[hidden] { display: none; }
+.spacepop button { text-align: left; border: 0; background: transparent; padding: 8px 12px; border-radius: 7px; font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.spacepop button:hover { background: var(--accent-soft); }
+.spacepop button.on { color: var(--accent-ink); background: var(--accent); }
+.spacepop .count { margin-left: 6px; font-weight: 500; opacity: 0.7; }
+@media print { .spacepop { display: none !important; } }
 @media (max-width: 760px) {
   header.top { gap: 8px; padding-bottom: 8px; }
   .doc-fields { display: grid; grid-template-columns: minmax(0, 1fr) 118px; gap: 8px; width: 100%; align-items: end; }
@@ -553,6 +560,19 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hfdev td input:focus { border-color: var(--accent); background: var(--surface); }
 .hfdev td.x button { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 4px 6px; font-size: 15px; }
 .hfdev td.x button.armed { color: var(--danger, #b3261e); font-size: 12px; font-weight: 700; }
+.hfdev tr[data-hd]:not(.hdfq) td { border-bottom: 0; }
+.hfdev tr.hdfq td { padding: 0 2px 6px; }
+.hdfqs { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 13px; }
+.hdfqs > .hint { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.hdf { display: inline-flex; align-items: center; gap: 4px; }
+.hdf b { font-weight: 600; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.hfdev .hdf input { width: 82px; font-variant-numeric: tabular-nums; border-color: var(--line); padding: 3px 5px; }
+.hdf.warn input { border-color: #c2410c; background: #fff4ec; }
+.hdf .hdw { color: #c2410c; font-weight: 700; }
+.hdf .hint { font-size: 12px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdlk { display: inline-flex; align-items: center; gap: 4px; }
+.hdlk input { width: 44px !important; }
+.hdlk .hint { font-size: 11px; white-space: nowrap; }
 .spxres h3 { margin: 0 0 8px; font-size: 16px; }
 details.spxres > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 details.spxres > summary::-webkit-details-marker { display: none; }
@@ -1164,31 +1184,66 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Récepteurs (micros HF) et émetteurs (ears) en rack. Leurs voies servent de provenance au master, d'arrivée aux sorties,
   // et ils se rangent dans les plans de rack. n = voies audio (sorties d'un récepteur, entrées d'un émetteur)
   const HFDEV_MODELS = [["EM 6000", "rx", 2, "Sennheiser EM 6000"], ["EM 9046", "rx", 8, "Sennheiser EM 9046"], ["EW-DX EM 4 Dante", "rx", 4, "Sennheiser EW-DX EM 4 Dante"], ["EW-DX EM 2", "rx", 2, "Sennheiser EW-DX EM 2"], ["AD4Q", "rx", 4, "Shure Axient AD4Q"], ["AD4D", "rx", 2, "Shure Axient AD4D"], ["ULXD4Q", "rx", 4, "Shure ULX-D ULXD4Q"], ["ULXD4D", "rx", 2, "Shure ULX-D ULXD4D"], ["Récepteur", "rx", 2, "Autre récepteur"],
-    ["SR 2050 IEM", "tx", 4, "Sennheiser SR 2050 IEM (2 émetteurs stéréo)"], ["P10T", "tx", 2, "Shure PSM1000 P10T (stéréo)"], ["SR IEM G4", "tx", 2, "Sennheiser SR IEM G4 (stéréo)"], ["MTK952", "tx", 4, "Wisycom MTK952"], ["Émetteur", "tx", 2, "Autre émetteur"]];
+    ["SR 2050 IEM", "tx", 4, "Sennheiser SR 2050 IEM"], ["P10T", "tx", 4, "Shure PSM1000 P10T"], ["SR IEM G4", "tx", 2, "Sennheiser SR IEM G4"], ["MTK952", "tx", 4, "Wisycom MTK952"], ["Émetteur", "tx", 2, "Autre émetteur"]];
+  // Plages des récepteurs et émetteurs en rack (mêmes plages que les packs qui vont avec)
+  const BANDS_G4 = [["A1", "470–516 MHz"], ["A", "516–558 MHz"], ["AS", "520–558 MHz"], ["G", "566–608 MHz"], ["GB", "606–648 MHz"], ["B", "626–668 MHz"], ["C", "734–776 MHz"], ["D", "780–822 MHz"], ["E", "823–865 MHz"]];
+  const HFDEV_BANDS = () => ({ "EM6000": BANDS_D6000, "EM9046": BANDS_D9000, "EW-DXEM4DANTE": BANDS_EWDX, "EW-DXEM2": BANDS_EWDX, "AD4Q": BANDS_AXD, "AD4D": BANDS_AXD, "P10T": BANDS_PSM1000, "SR2050IEM": BANDS_EK2000, "SRIEMG4": BANDS_G4, "MTK952": [["0W2", "470–798 MHz"]] });
   const HFDEV_KIND = { rx: "Récepteur micros", tx: "Émetteur ears" };
-  const hfDevs = () => (state.hfdev = Array.isArray(state.hfdev) ? state.hfdev : []);
+  const hfDevs = () => {
+    state.hfdev = Array.isArray(state.hfdev) ? state.hfdev : [];
+    // Un émetteur d'ears se compte en liaisons stéréo (L + R). Les P10T des premières versions n'avaient qu'une liaison
+    state.hfdev.forEach((d) => { if (d.kind === "tx" && !d.st) { if (normModel(d.model) === "P10T" && d.n === 2) d.n = 4; if (d.n % 2) d.n++; d.st = 1; } });
+    return state.hfdev;
+  };
   const hfDevById = (id) => hfDevs().find((d) => d.id === id) || null;
-  const hfVoie = (d, i) => `${d.nom} · ${i}`;
+  // Voie d'un récepteur : « EM 6000 #1 · 2 » ; entrée d'un émetteur : « P10T #1 · 2 L » (liaison 2, gauche)
+  const hfLink = (i) => `${Math.ceil(i / 2)} ${i % 2 ? "L" : "R"}`;
+  const hfVoie = (d, i) => `${d.nom} · ${d.kind === "tx" ? hfLink(+i) : i}`;
+  // Fréquences : une par voie de récepteur, une par liaison d'émetteur
+  const hfSlots = (d) => (d.kind === "tx" ? Math.ceil(d.n / 2) : d.n);
+  const fmtMHz = (v) => { const t = String(v || "").trim().replace(",", "."); if (!t) return ""; const x = parseFloat(t); return isFinite(x) && /^\d+(\.\d*)?$/.test(t) ? x.toFixed(3) : t; };
+  function hfBandRange(model, band) {
+    const b = String(band || "").trim(); if (!b) return null;
+    const known = (HFDEV_BANDS()[normModel(model)] || []).find(([c]) => c.toLowerCase() === b.toLowerCase());
+    const nums = ((known ? known[1] : b).replace(/(\d),(\d)/g, "$1.$2").match(/\d{3,4}(\.\d+)?/g) || []).map(Number);
+    return nums.length >= 2 ? [Math.min(...nums), Math.max(...nums)] : null;
+  }
+  // Problèmes du plan : fréquence hors de la plage de l'appareil, ou même fréquence ailleurs
+  function hfFreqWarn() {
+    const seen = new Map(), w = new Map();
+    hfDevs().forEach((d) => Object.entries(d.freqs || {}).forEach(([k, f]) => { if (!f || +k > hfSlots(d)) return; const x = parseFloat(f); if (!isFinite(x)) return; const key = x.toFixed(3); (seen.get(key) || seen.set(key, []).get(key)).push([d, k]); const rg = hfBandRange(d.model, d.band); if (rg && (x < rg[0] || x > rg[1])) w.set(`${d.id}:${k}`, `Hors de la plage ${d.band} (${rg[0]}–${rg[1]} MHz)`); }));
+    seen.forEach((L) => { if (L.length > 1) L.forEach(([d, k]) => { const o = L.filter((x) => x[0] !== d || x[1] !== k).map(([d2, k2]) => `${d2.nom} ${d2.kind === "tx" ? "liaison " : "voie "}${k2}`); w.set(`${d.id}:${k}`, `Même fréquence que ${o.join(", ")}`); }); });
+    return w;
+  }
+  // Qui utilise la voie (récepteur) ou la liaison (émetteur)
+  function hfSlotWho(d, k) {
+    if (d.kind === "tx") { const u = hfTxUsed(), a = u.get(`${d.id}:${2 * k - 1}`), b = u.get(`${d.id}:${2 * k}`); if (a && b && a.pair === b.id) return outPairBase(a, b) || a.mix; return [a && a.mix, b && b.mix].filter(Boolean).join(" / "); }
+    const v = hfVoie(d, k).toLowerCase(), l = state.lignes.find((x) => (x.prov || "").trim().toLowerCase() === v); return l ? l.source || "" : "";
+  }
   // Voies d'émetteur prises par les sorties (arrivée directe)
   function hfTxUsed() { const m = new Map(); (state.sorties || []).forEach((o) => { if (o.to && o.to.h && o.to.in) m.set(`${o.to.h}:${o.to.in}`, o); }); return m; }
+  const hfVoiesTxt = (d) => (d.kind === "tx" ? `${d.n / 2} liaison${d.n > 2 ? "s" : ""} stéréo` : `${d.n} voie${d.n > 1 ? "s" : ""}`);
+  const hfFreqTxt = (d) => Array.from({ length: hfSlots(d) }, (_, j) => ((d.freqs || {})[j + 1] ? `${j + 1} : ${d.freqs[j + 1]}` : "")).filter(Boolean).join(" · ");
   function hfDevUsed(d) {
     if (d.kind === "tx") { const u = hfTxUsed(); let k = 0; for (let i = 1; i <= d.n; i++) if (u.has(`${d.id}:${i}`)) k++; return k; }
     const prov = new Set(state.lignes.map((l) => (l.prov || "").trim().toLowerCase())); let k = 0;
     for (let i = 1; i <= d.n; i++) if (prov.has(hfVoie(d, i).toLowerCase())) k++; return k;
   }
   function hfDevHtml() {
-    const D = hfDevs();
-    const opt = (kk) => HFDEV_MODELS.map(([m, k, n, t], i) => (k === kk ? `<option value="${i}"${String(i) === hfDevPick ? " selected" : ""}>${esc(t)} · ${n} voie${n > 1 ? "s" : ""}</option>` : "")).join("");
+    const D = hfDevs(), FW = hfFreqWarn();
+    const opt = (kk) => HFDEV_MODELS.map(([m, k, n, t], i) => (k === kk ? `<option value="${i}"${String(i) === hfDevPick ? " selected" : ""}>${esc(t)} · ${k === "tx" ? `${n / 2} liaison${n > 2 ? "s" : ""} stéréo` : `${n} voie${n > 1 ? "s" : ""}`}</option>` : "")).join("");
     return `<div class="hfcol hfwide hfdevw"><div class="hfdev"><h3>Récepteurs et émetteurs en rack</h3>
-      <p class="hint" style="margin:0 0 6px">Déclare ici les récepteurs (micros HF) et les émetteurs (ears). Chaque voie devient une provenance au master (« EM 6000 #1 · 2 »), une arrivée dans Sorties, et l'appareil se range dans les plans de rack.</p>
-      ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Type</th><th>Modèle</th><th>Nom</th><th>Voies</th><th>Utilisées</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
+      <p class="hint" style="margin:0 0 6px">Déclare ici les récepteurs (micros HF) et les émetteurs (ears). Chaque voie de récepteur devient une provenance au master (« EM 6000 #1 · 2 »), chaque liaison stéréo d'émetteur une arrivée dans Sorties (« P10T #1 · 2 L » et « 2 R »), et l'appareil se range dans les plans de rack. Sous chaque appareil, note sa plage et ses fréquences : ⚠ si une fréquence sort de la plage ou sert deux fois.</p>
+      ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Type</th><th>Modèle</th><th>Nom</th><th>Plage</th><th>Voies / liaisons</th><th>Utilisées</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
         <td><select data-hdf="kind" aria-label="Type">${Object.entries(HFDEV_KIND).map(([k, t]) => `<option value="${k}"${d.kind === k ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" list="dlHfDevModel" autocomplete="off"></td>
         <td><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
-        <td style="width:64px"><input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric"></td>
+        <td style="width:110px"><input type="text" data-hdf="band" value="${esc(d.band || "")}" aria-label="Plage de fréquences" placeholder="${esc(((HFDEV_BANDS()[normModel(d.model)] || [])[0] || ["plage"])[0])}" autocomplete="off" data-suggest="dlHdBand_${d.id}"${hfBandRange(d.model, d.band) ? ` title="${hfBandRange(d.model, d.band).join("–")} MHz"` : ""}><datalist id="dlHdBand_${d.id}">${(HFDEV_BANDS()[normModel(d.model)] || []).map(([c, rg]) => `<option value="${esc(c)}" label="${esc(rg)}">`).join("")}</datalist></td>
+        <td style="width:${d.kind === "tx" ? 120 : 64}px">${d.kind === "tx" ? `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">liaison${d.n > 2 ? "s" : ""} stéréo</span></span>` : `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">`}</td>
         <td class="hint" style="white-space:nowrap">${hfDevUsed(d)}/${d.n}</td>
         <td><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
-        <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+        <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>
+        <tr class="hdfq" data-hd="${d.id}"><td colspan="8"><div class="hdfqs"><span class="hint">Fréquences (MHz)</span>${Array.from({ length: hfSlots(d) }, (_, j) => { const k = j + 1, f = (d.freqs || {})[k] || "", w = FW.get(`${d.id}:${k}`), who = hfSlotWho(d, k); return `<label class="hdf${w ? " warn" : ""}"${w ? ` title="${esc(w)}"` : ""}><b>${d.kind === "tx" ? "Liaison " + k : "Voie " + k}</b><input type="text" data-hdq="${k}" value="${esc(f)}" placeholder="000.000" inputmode="decimal" autocomplete="off" aria-label="Fréquence ${d.kind === "tx" ? "liaison" : "voie"} ${k}">${w ? `<span class="hdw">⚠</span>` : ""}${who ? `<span class="hint">${esc(who)}</span>` : ""}</label>`; }).join("")}</div></td></tr>`).join("")}</tbody></table></div>` : ""}
       <div class="actions" style="margin-top:8px"><select id="hfDevAddModel" aria-label="Appareil à ajouter"><optgroup label="Récepteurs (micros HF)">${opt("rx")}</optgroup><optgroup label="Émetteurs (ears)">${opt("tx")}</optgroup></select><input type="number" id="hfDevAddN" min="1" max="24" value="1" style="width:56px" aria-label="Combien" title="Combien d'appareils ajouter"><button class="btn small" type="button" data-hdadd>+ Ajouter</button></div>
       <datalist id="dlHfDevModel">${[...new Set(HFDEV_MODELS.map((x) => x[0]))].map((m) => `<option value="${esc(m)}">`).join("")}</datalist></div></div>`;
   }
@@ -1196,19 +1251,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function hfDevAdd() {
     hfDevPick = $("#hfDevAddModel").value;
     const [m, k, n] = HFDEV_MODELS[+$("#hfDevAddModel").value] || HFDEV_MODELS[0], q = Math.max(1, Math.min(24, parseInt($("#hfDevAddN").value, 10) || 1)), D = hfDevs();
-    for (let j = 0; j < q; j++) { let k2 = D.filter((d) => d.model === m).length + 1; while (D.some((d) => d.nom === `${m} #${k2}`)) k2++; D.push({ id: nid(), kind: k, model: m, nom: `${m} #${k2}`, n, notes: "" }); }
+    for (let j = 0; j < q; j++) { let k2 = D.filter((d) => d.model === m).length + 1; while (D.some((d) => d.nom === `${m} #${k2}`)) k2++; D.push({ id: nid(), kind: k, model: m, nom: `${m} #${k2}`, n, notes: "", ...(k === "tx" ? { st: 1 } : {}) }); }
     commit(true);
   }
   function hfDevDel(id) {
     const d = hfDevById(id); if (!d) return;
     state.hfdev = hfDevs().filter((x) => x !== d);
-    (state.sorties || []).forEach((o) => { if (o.to && o.to.h === id) { log(`${o.mix} : ${d.nom}${o.to.in ? " · " + o.to.in : ""} supprimé.`); o.to = null; } });
+    (state.sorties || []).forEach((o) => { if (o.to && o.to.h === id) { log(`${o.mix} : ${o.to.in ? hfVoie(d, o.to.in) : d.nom} supprimé.`); o.to = null; } });
     rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "hf" && i.ref === id)); });
     commit(true);
   }
   function hfDevChange(t) {
     const d = hfDevById(t.closest("tr[data-hd]").dataset.hd), f = t.dataset.hdf; if (!d) return;
-    if (f === "n") { d.n = Math.max(1, Math.min(32, parseInt(t.value, 10) || d.n)); }
+    if (t.dataset.hdq) { d.freqs = d.freqs || {}; const v = fmtMHz(t.value); if (v) d.freqs[t.dataset.hdq] = v; else delete d.freqs[t.dataset.hdq]; commit(true); return; }
+    if (f === "n") { d.n = d.kind === "tx" ? 2 * Math.max(1, Math.min(16, parseInt(t.value, 10) || d.n / 2)) : Math.max(1, Math.min(32, parseInt(t.value, 10) || d.n)); }
+    else if (f === "kind") { d.kind = t.value; if (d.kind === "tx") { if (d.n % 2) d.n++; d.st = 1; } }
     else if (f === "nom") {
       const old = d.nom, nv = t.value.trim() || old;
       // Les provenances du master qui pointaient vers l'ancien nom suivent
@@ -1651,7 +1708,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function hfBind() {
     const out = $("#hfOut");
     // Récepteurs et émetteurs en rack (avant les écouteurs des groupes HF)
-    out.addEventListener("change", (e) => { const t = e.target; if (t.dataset && t.dataset.hdf) { e.stopImmediatePropagation(); hfDevChange(t); } else if (t.id === "hfDevAddModel" || t.id === "hfDevAddN") e.stopImmediatePropagation(); });
+    out.addEventListener("change", (e) => { const t = e.target; if (t.dataset && (t.dataset.hdf || t.dataset.hdq)) { e.stopImmediatePropagation(); hfDevChange(t); } else if (t.id === "hfDevAddModel" || t.id === "hfDevAddN") e.stopImmediatePropagation(); });
     out.addEventListener("click", (e) => {
       if (e.target.closest("[data-hdadd]")) { e.stopImmediatePropagation(); hfDevAdd(); return; }
       const del = e.target.closest("[data-hddel]"); if (!del) return; e.stopImmediatePropagation();
@@ -2061,7 +2118,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     devs.forEach((r) => { h += `<option value="dvr:${r.id}"${cur.r === r.id ? " selected" : ""}>→ ${esc(rackTitle(r))}</option>`; });
     return h + `<option value="__dvt">→ Autre appareil…</option></optgroup>` + hh;
   }
-  const toAddr = (o) => { const t = o && o.to; if (!t) return ""; const r = t.r && rackById(t.r), d = t.h && hfDevById(t.h); return "→ " + (r ? rackTitle(r) : d ? d.nom : t.t || "appareil") + (t.in ? " · " + t.in : ""); };
+  const toAddr = (o) => { const t = o && o.to; if (!t) return ""; const r = t.r && rackById(t.r), d = t.h && hfDevById(t.h); return "→ " + (r ? rackTitle(r) : d ? (t.in ? hfVoie(d, t.in) : d.nom) : (t.t || "appareil") + (t.in ? " · " + t.in : "")); };
   const outDest = (o) => boxAddr(o.box) || toAddr(o);
   // Sélection de lignes : clic sur le N°, Maj+clic pour une plage, Cmd/Ctrl+clic pour ajouter ou retirer une ligne
   const selection = new Set();
@@ -2608,7 +2665,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td class="${cl("")}"${sp} data-l="Destinataire"><input type="text" data-f="dest" value="${esc(o.dest)}" aria-label="Destinataire" autocomplete="off" data-suggest="dlMus"></td>
         <td class="${cl("")}"${sp} data-l="Type"><select data-f="type" aria-label="Type de sortie">${OUT_TYPES.map((t) => `<option${o.type === t ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td data-l="Départ (from)"><select class="addr${o.out ? "" : " empty"}" data-f="out" aria-label="Départ : sortie d'un rack ou d'un appareil">${outOptions(o, occ)}</select></td>
-        <td class="wide" data-l="Arrivée (to)"><span class="tocell"><select class="addr${o.box || o.to ? "" : " empty"}" data-f="box" aria-label="Boîtier et liaison, ou appareil">${boxOptions(o, occ)}</select>${o.to ? `<span class="toin">${o.to.r || o.to.t || o.to.h ? "" : `<input type="text" data-f="toT" value="" placeholder="Nom de l'appareil" aria-label="Nom de l'appareil" autocomplete="off">`}<input type="text" data-f="toIn" value="${esc(o.to.in || "")}" placeholder="in" title="Entrée de l'appareil" aria-label="Entrée de l'appareil" autocomplete="off"></span>` : ""}</span></td>
+        <td class="wide" data-l="Arrivée (to)"><span class="tocell"><select class="addr${o.box || o.to ? "" : " empty"}" data-f="box" aria-label="Boîtier et liaison, ou appareil">${boxOptions(o, occ)}</select>${o.to && !o.to.h ? `<span class="toin">${o.to.r || o.to.t ? "" : `<input type="text" data-f="toT" value="" placeholder="Nom de l'appareil" aria-label="Nom de l'appareil" autocomplete="off">`}<input type="text" data-f="toIn" value="${esc(o.to.in || "")}" placeholder="in" title="Entrée de l'appareil" aria-label="Entrée de l'appareil" autocomplete="off"></span>` : ""}</span></td>
         <td class="more" data-l="Émetteur"><input type="text" data-f="tx" value="${esc(o.tx)}" aria-label="Émetteur" autocomplete="off" data-suggest="dlTx"></td>
         <td class="more" data-l="Récepteur / enceinte"><input type="text" data-f="rx" value="${esc(o.rx)}" aria-label="Récepteur ou enceinte" autocomplete="off" data-suggest="dlRx"></td>
         <td class="wide more" data-l="Notes"><input type="text" data-f="notes" value="${esc(o.notes)}" aria-label="Notes"></td>
@@ -4610,7 +4667,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (r.ports) return r.ports.map((p) => (p.card && DMI[p.card] ? DMI[p.card].t.split(" (")[0] : `${p.nom} ${portN(p, "in", r)}/${portN(p, "out", r)}`)).join(" + ");
     return r.flat ? `${r.n} in / ${Number(r.out) || 0} out` : `${r.n} cartes in / ${Number(r.out) || 0} cartes out`;
   }
-  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); hfDevs().forEach((d) => { const k = `${d.model || "Appareil HF"}\u0000${HFDEV_KIND[d.kind] || "HF"} · ${d.n} voie${d.n > 1 ? "s" : ""}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
+  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); hfDevs().forEach((d) => { const k = `${d.model || "Appareil HF"}\u0000${HFDEV_KIND[d.kind] || "HF"} · ${hfVoiesTxt(d)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
   function countMultis() { const m = new Map(); state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()]; }
   const MAN_CATS = ["Câblage", "Réseau", "HF", "Ears", "Console", "Rack", "Accessoires", "Divers"];
   // En cartes sur téléphone : chaque cellule reprend le titre de sa colonne
@@ -4701,7 +4758,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     master: () => { renderMaster(); return printTables($("#masterTbl").parentNode); },
     sorties: () => { if (!(state.sorties || []).length) return ""; renderOut(); return printTables($("#outTbl").parentNode); },
     hf: () => {
-      const devs = hfDevs().length ? `<div class="blk"><h3>Récepteurs et émetteurs en rack</h3><table><thead><tr><th>Nom</th><th>Type</th><th>Modèle</th><th>Voies</th><th>Utilisées</th><th>Notes</th></tr></thead><tbody>${hfDevs().map((d) => `<tr><td>${esc(d.nom)}</td><td>${esc(HFDEV_KIND[d.kind] || "")}</td><td>${esc(d.model)}</td><td>${d.n}</td><td>${hfDevUsed(d)}</td><td>${esc(d.notes || "")}</td></tr>`).join("")}</tbody></table></div>` : "";
+      const devs = hfDevs().length ? `<div class="blk"><h3>Récepteurs et émetteurs en rack</h3><table><thead><tr><th>Nom</th><th>Type</th><th>Modèle</th><th>Plage</th><th>Voies</th><th>Utilisées</th><th>Fréquences (MHz)</th><th>Notes</th></tr></thead><tbody>${hfDevs().map((d) => `<tr><td>${esc(d.nom)}</td><td>${esc(HFDEV_KIND[d.kind] || "")}</td><td>${esc(d.model)}</td><td>${esc(d.band || "")}</td><td>${hfVoiesTxt(d)}</td><td>${hfDevUsed(d)}</td><td>${esc(hfFreqTxt(d))}</td><td>${esc(d.notes || "")}</td></tr>`).join("")}</tbody></table></div>` : "";
       if (!hfState().length) return devs;
       const usage = hfState().some((g) => g.kind === "spx" || g.kind === "spxm") && spxBases().length ? `<div class="blk"><h3>Ressources Spectera</h3><table><thead><tr>${SPX_USAGE_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${spxUsageRows().map((r) => `<tr>${r.map((v) => `<td>${esc(String(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : "";
       return devs + usage + `<div class="cols wide">${hfState().map((g) => { const K = HF_KINDS[g.kind] || HF_KINDS.tx; return `<div class="blk"><h3>${esc(g.model)} <span class="muted">· ${esc(K.t)} · ${g.rows.length}</span></h3><table><thead><tr><th>N°</th>${hfCols(g).map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${g.rows.map((r, k) => `<tr><td>${k + 1}</td>${hfCols(g).map(([f]) => `<td>${esc(hfCell(g, r, f))}</td>`).join("")}</tr>`).join("")}</tbody></table>${g.notes ? `<p>${esc(g.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
@@ -5028,9 +5085,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       });
       // Récepteurs et émetteurs en rack
       if (hfDevs().length) {
-        ["Racks HF", "Type", "Modèle", "Voies", "Utilisées", "Notes"].forEach((v, j) => { const c = hs.getCell(3, col + j); c.value = v; c.fill = HEAD_FILL; c.font = HEAD_FONT; c.border = BORDER; });
-        hfDevs().forEach((d, k) => [d.nom, HFDEV_KIND[d.kind] || "", d.model, d.n, hfDevUsed(d), d.notes || ""].forEach((v, j) => { const c = hs.getCell(4 + k, col + j); c.value = v; c.border = BORDER; }));
-        [16, 16, 16, 7, 9, 22].forEach((w, j) => { hs.getColumn(col + j).width = w; });
+        ["Racks HF", "Type", "Modèle", "Plage", "Voies", "Utilisées", "Fréquences (MHz)", "Notes"].forEach((v, j) => { const c = hs.getCell(3, col + j); c.value = v; c.fill = HEAD_FILL; c.font = HEAD_FONT; c.border = BORDER; });
+        hfDevs().forEach((d, k) => [d.nom, HFDEV_KIND[d.kind] || "", d.model, d.band || "", hfVoiesTxt(d), hfDevUsed(d), hfFreqTxt(d), d.notes || ""].forEach((v, j) => { const c = hs.getCell(4 + k, col + j); c.value = v; c.border = BORDER; }));
+        [16, 16, 16, 9, 12, 9, 34, 22].forEach((w, j) => { hs.getColumn(col + j).width = w; });
       }
       page(hs, true);
     }
@@ -5315,6 +5372,29 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
     document.querySelectorAll("nav.spaces button").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.s, first = SPACES[k].find((x) => x !== "master" || showMaster); setView(lastIn[k] && (lastIn[k] !== "master" || showMaster) ? lastIn[k] : first); }));
+    // Ordinateur : au survol d'un espace, ses onglets s'affichent dessous, un clic suffit pour y aller
+    if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      const pop = document.createElement("div"); pop.className = "spacepop"; pop.hidden = true; pop.setAttribute("role", "menu"); document.body.append(pop);
+      let hideT = 0, showT = 0, cur = null;
+      const hide = () => { clearTimeout(showT); clearTimeout(hideT); hideT = setTimeout(() => { pop.hidden = true; cur = null; }, 180); };
+      const show = (b) => {
+        const k = b.dataset.s, tabs = SPACES[k].filter((x) => x !== "master" || showMaster); clearTimeout(hideT);
+        if (tabs.length < 2) { pop.hidden = true; cur = null; return; }
+        if (cur !== k) pop.innerHTML = tabs.map((v) => { const t = document.querySelector(`nav.tabs button[data-v="${v}"]`); return `<button type="button" role="menuitem" data-pv="${v}"${v === view ? ' class="on"' : ""}>${t ? t.innerHTML : v}</button>`; }).join("");
+        else pop.querySelectorAll("[data-pv]").forEach((x) => x.classList.toggle("on", x.dataset.pv === view));
+        cur = k; const r = b.getBoundingClientRect(); pop.hidden = false;
+        pop.style.left = Math.max(8, Math.min(r.left, innerWidth - pop.offsetWidth - 8)) + "px"; pop.style.top = r.bottom + 2 + "px";
+      };
+      document.querySelectorAll("nav.spaces button").forEach((b) => {
+        b.addEventListener("mouseenter", () => { clearTimeout(hideT); clearTimeout(showT); showT = setTimeout(() => show(b), pop.hidden ? 120 : 0); });
+        b.addEventListener("mouseleave", hide);
+        b.addEventListener("click", () => { if (cur === b.dataset.s) setTimeout(() => show(b), 0); });
+      });
+      pop.addEventListener("mouseenter", () => clearTimeout(hideT));
+      pop.addEventListener("mouseleave", hide);
+      pop.addEventListener("click", (e) => { const x = e.target.closest("[data-pv]"); if (!x) return; pop.hidden = true; cur = null; setView(x.dataset.pv); });
+      addEventListener("scroll", () => { if (!pop.hidden) { pop.hidden = true; cur = null; } }, { passive: true });
+    }
     $("#showMaster").addEventListener("change", (e) => { showMaster = e.target.checked; try { localStorage.setItem("patch-live-showmaster", showMaster ? "1" : "0"); } catch (err) { /* ignore */ } setView(view); notice(showMaster ? "L'onglet Master patch est de nouveau affiché." : "Onglet Master patch masqué : les sources s'ajoutent et se modifient dans Racks et I/O (recherche, + Source, Affecter une plage). Réaffiche-le ici quand tu veux."); });
     $("#docName").addEventListener("change", (e) => { state.dossier.nom = e.target.value.trim() || "Dossier sans nom"; commit(false); });
     $("#docType").addEventListener("change", (e) => { state.dossier.type = e.target.value; commit(false); });
