@@ -400,6 +400,12 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 #synSvg .nd { cursor: grab; }
 #synSvg .nd:active { cursor: grabbing; }
 .synh { font-size: 16px; margin: 18px 0 6px; }
+.clkm { margin: 4px 0; }
+.clktbl td.clkw { white-space: normal; min-width: 260px; font-size: 13px; }
+.clktbl td.clkw span { display: block; color: var(--danger); }
+.clktbl td.clkw span.ok { color: var(--ok); }
+.clktbl tr.warnrow td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.clktbl select { max-width: 220px; }
 .synsw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .syntbl td { white-space: nowrap; }
 .syntbl select { max-width: 190px; }
@@ -412,6 +418,9 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .loopline { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .loopline input[data-lf="nom"] { width: 130px; font-weight: 600; }
 .loopline input[data-lf="max"] { width: 76px; }
+.loophow { width: 100%; margin-top: 2px; }
+.loophow summary { cursor: pointer; width: max-content; max-width: 100%; }
+.loophow p { margin: 6px 0; max-width: 90ch; }
 .loopsum { font-family: var(--font-mono); font-size: 14px; padding: 4px 8px; border-radius: 4px; background: var(--surface-2); }
 .loopsum.over { background: var(--danger-soft, #fde2e1); color: var(--danger, #b42318); }
 .prov { display: block; font-size: 12px; color: var(--muted); }
@@ -990,6 +999,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <div class="toolbar planbar">
     <button id="synAddLink" class="btn small primary" type="button">+ Liaison</button>
     <button id="synAddNode" class="btn small" type="button" title="Switch, ordinateur record, processeur… tout ce qui n'est pas dans Racks et I/O">+ Élément</button>
+    <button id="synAddClk" class="btn small" type="button" title="Rosendahl Nanoclocks, Nanosyncs HD ou autre générateur de word clock">+ Horloge</button>
     <button id="synAuto" class="btn small" type="button">Disposition auto</button>
     <span class="zoom"><button id="synZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="synZoomVal" class="mono">100 %</span><button id="synZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
   </div>
@@ -999,6 +1009,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   </div>
   <h2 class="synh">Liaisons</h2>
   <div id="synLinks"></div>
+  <h2 class="synh">Horloge</h2>
+  <div id="synClock"></div>
 </section>
 
 <section id="v-journal" hidden>
@@ -1625,11 +1637,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       v: 1, exemple: true, sorties,
       syn: (() => {
         const sw = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }, dd = racks.find((x) => x.nom === "DD4MR"), spx = racks.find((x) => x.model === "spectera"), dl = racks[0];
-        return { nodes: [sw], pos: {}, cons: {}, links: [
+        spx.clk = { src: "wc", from: dd.id };
+        racks[0].clk = { src: "aes", from: "" }; racks[1].clk = { src: "aes", from: "" };
+        return { nodes: [sw], pos: {}, cons: { FOH: { clk: { src: "madi", from: "" } } }, links: [
           { id: nid(), a: { n: dd.id, p: "MADI 2" }, b: { n: "c:FOH", p: "MADI A" }, proto: "", cable: "Coax BNC 50 m" },
           { id: nid(), a: { n: spx.id, p: "DANTE" }, b: { n: sw.id, p: "Port 1" }, proto: "Dante", cable: "Cat6 · primaire" },
           { id: nid(), a: { n: sw.id, p: "Port 2" }, b: { n: "c:MON", p: "Dante" }, proto: "Dante", cable: "Cat6" },
-          { id: nid(), a: { n: dl.id, p: "" }, b: { n: "c:FOH", p: "" }, proto: "Analogique", cable: "Multi 24 paires" }
+          { id: nid(), a: { n: dl.id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 1" }, proto: "AES", cable: "Cat5e blindé" },
+          { id: nid(), a: { n: racks[1].id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 2" }, proto: "AES", cable: "Cat5e blindé" }
         ] };
       })(),
       loops: [{ id: "L1", nom: "Loop Optocore", freq: "96", max: 504 }],
@@ -1707,6 +1722,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const L = loops();
     if (r.loopId === undefined) return (r.loop != null ? !!r.loop : !r.flat) ? L[0] : null;
     return L.find((x) => x.id === r.loopId) || null;
+  }
+  // Comptage des canaux d'une loop : un canal compte là où il entre sur la fibre (voir l'aide « Comment les canaux de la loop sont comptés »)
+  const LOOP_KINDS = [["digico", "DiGiCo SD"], ["opto", "Optocore natif"]];
+  function loopUse(L) {
+    const lr = state.racks.filter((r) => rackLoop(r) === L);
+    const inj = lr.reduce((n, r) => n + rackInputs(r).length, 0), outs = lr.reduce((n, r) => n + rackOutputs(r).length, 0);
+    const ids = new Set(lr.map((r) => r.id)), sends = (state.sorties || []).filter((o) => o.out && ids.has(o.out.r)).length;
+    const tot = inj + ((L.kind || "digico") === "opto" ? sends : outs);
+    return { inj, outs, sends, tot, n: lr.length };
   }
   const is96 = (r) => String(((r && rackLoop(r)) || loops()[0]).freq || "48") === "96";
   const portN = (p, kind, r) => (p.card && DMI[p.card] ? DMI[p.card][kind][is96(r) ? 1 : 0] : Number(p[kind]) || 0);
@@ -2663,15 +2687,23 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#groupCons").checked = groupCons; $("#groupCons").closest("label").hidden = !split;
     const racks = [...state.racks].sort((a, b) => (split && groupCons ? ord(a.console) - ord(b.console) : 0) || byRackId(a, b));
     $("#loopList").innerHTML = loops().map((L) => {
-      const lr = racks.filter((r) => rackLoop(r) === L);
-      const totIn = lr.reduce((n, r) => n + rackInputs(r).length, 0), totOut = lr.reduce((n, r) => n + rackOutputs(r).length, 0);
-      const max = Number(L.max) || 0, tot = totIn + totOut;
+      const u = loopUse(L), max = Number(L.max) || 0, tot = u.tot;
+      const kindSel = `<select data-lf="kind" aria-label="Type de réseau" title="Change la façon de compter les canaux">${LOOP_KINDS.map(([k, t]) => `<option value="${k}"${(L.kind || "digico") === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+      const how = (L.kind || "digico") === "opto"
+        ? `<b>${u.inj}</b> entrées + <b>${u.sends}</b> envois console = <b>${tot}</b>`
+        : `<b>${u.inj}</b> in + <b>${u.outs}</b> out = <b>${tot}</b>`;
       return `<div class="loopline" data-lid="${L.id}"><input type="text" data-lf="nom" value="${esc(L.nom)}" aria-label="Nom de la loop">
         <select data-lf="freq" aria-label="Fréquence de la loop"><option value="48"${L.freq === "96" ? "" : " selected"}>48 kHz</option><option value="96"${L.freq === "96" ? " selected" : ""}>96 kHz</option></select>
-        <label class="inl">Capacité <input type="number" data-lf="max" min="0" max="4096" inputmode="numeric" value="${max || ""}" aria-label="Capacité en canaux"></label>
-        <span class="loopsum${max && tot > max ? " over" : ""}"><b>${totIn}</b> in + <b>${totOut}</b> out = <b>${tot}</b>${max ? ` / ${max} · ${tot > max ? `<b>${tot - max} de trop</b>` : `reste ${max - tot}`}` : ""} <span class="hint">(${lr.length} appareil${lr.length > 1 ? "s" : ""})</span></span>
+        ${kindSel}
+        <label class="inl">Capacité <input type="number" data-lf="max" min="0" max="4096" inputmode="numeric" value="${max || ""}" aria-label="Capacité en canaux" list="dlLoopMax"></label>
+        <span class="loopsum${max && tot > max ? " over" : ""}">${how}${max ? ` / ${max} · ${tot > max ? `<b>${tot - max} de trop</b>` : `reste ${max - tot}`}` : ""} <span class="hint">(${u.n} appareil${u.n > 1 ? "s" : ""})</span></span>
         ${loops().length > 1 ? `<button class="btn small danger" type="button" data-dellp="${L.id}" title="Supprimer cette loop (ses appareils passent hors loop)">×</button>` : ""}</div>`;
-    }).join("");
+    }).join("") + `<datalist id="dlLoopMax"><option value="504">DiGiCo SD, 2 Gb (48 ou 96 kHz)</option><option value="224">DiGiCo SD, fibre 1 Gb à 96 kHz</option><option value="1024">Optocore 2 Gb natif à 48 kHz</option><option value="512">Optocore 2 Gb natif à 96 kHz</option></datalist>
+      <details class="hint loophow"><summary>Comment les canaux de la loop sont comptés</summary>
+      <p>Sur une loop Optocore, un canal compte <b>une seule fois, là où il entre sur la fibre</b>. Les sorties ne prennent pas de place : n'importe quel appareil peut lire un canal déjà sur la loop (FAQ Optocore : « Outputs do not use space on the fibre »). Mais une sortie de stage rack doit être alimentée par un canal que la console envoie sur la loop, et cet envoi, lui, compte.</p>
+      <p><b>Mode DiGiCo</b> (par défaut) : entrées des appareils + sorties des appareils, car la console réserve un canal d'envoi pour chaque sortie de rack ou de port allouée. Capacité DiGiCo : 504 canaux par loop à 48 comme à 96 kHz, 14 SD Racks maximum ; 224 canaux seulement à 96 kHz si la fibre est réglée en 1 Gb.</p>
+      <p><b>Mode Optocore natif</b> : entrées des appareils + envois réellement patchés depuis les consoles (une sortie de l'onglet Sorties = un envoi, même si elle part sur plusieurs sorties). Capacité 2 Gb : 1024 entrées à 48 kHz, 512 à 96 kHz, sorties illimitées.</p>
+      <p>Sources : <a href="https://optocore.com/index.php/support/faq" target="_blank" rel="noopener">FAQ Optocore</a> · <a href="https://www.manualsdir.com/manuals/460224/digico-sd-series.html?page=109" target="_blank" rel="noopener">manuel DiGiCo SD, loops Optocore</a> · <a href="https://www.manualsdir.com/manuals/460233/digico-sd-rack.html?page=11" target="_blank" rel="noopener">manuel SD Rack, ID et vitesse de fibre</a></p></details>`;
     out.innerHTML = racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
       const cons = (split ? ` · ${r.console === "Partagé" ? "Partagé" : "Console " + consLabel(r.console)}` : "") + (rackLoop(r) ? (loops().length > 1 ? ` · ${rackLoop(r).nom}` : "") : " · hors loop");
@@ -3048,7 +3080,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     SoundGrid: { c: "#5d9b0f", w: 3, d: "6 3" },
     Analogique: { c: "#4b5563", w: 2.5, d: "1.5 4" },
     "Réseau": { c: "#0891b2", w: 2, d: "4 3" },
-    Autre: { c: "#9ca3af", w: 2, d: "" }
+    Autre: { c: "#9ca3af", w: 2, d: "" },
+    "Word clock": { c: "#0f172a", w: 1.6, d: "2 3" }
   };
   const SYN_W = 200, SYN_ROW = 18, SYN_TOP = 46, SYN_FONT = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"`;
   function protoOfName(s) {
@@ -3100,7 +3133,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const sub = (r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
       out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
     });
-    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.type || "", ports: [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
+    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || "", ports: [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
     // Les ports nommés dans les liaisons apparaissent sur l'appareil, pour y accrocher le câble
     S.links.forEach((l) => [l.a, l.b].forEach((e) => {
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
@@ -3155,7 +3188,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         const pairs = ns.length === 2 ? [[ns[0], ns[1]]] : ns.map((n, i) => [n, ns[(i + 1) % ns.length]]);
         pairs.forEach(([a, b]) => { const [bx, by] = synCenter(b), [ax, ay] = synCenter(a), p = synClip(a, bx, by), q = synClip(b, ax, ay); ring += `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Optocore")}/>`; });
       }
-      const lr = state.racks.filter((r) => rackLoop(r) === lp), tot = lr.reduce((t, r) => t + rackInputs(r).length + rackOutputs(r).length, 0), max = Number(lp.max) || 0;
+      const tot = loopUse(lp).tot, max = Number(lp.max) || 0;
       const cx = ns.reduce((t, n) => t + synCenter(n)[0], 0) / ns.length, cy = ns.reduce((t, n) => t + synCenter(n)[1], 0) / ns.length;
       if (ns.length > 2) labels += `<g ${SYN_FONT} text-anchor="middle"><text x="${cx.toFixed(1)}" y="${(cy - 4).toFixed(1)}" font-size="15" font-weight="700" fill="#b45309">${esc(lp.nom || "Loop")}</text><text x="${cx.toFixed(1)}" y="${(cy + 14).toFixed(1)}" font-size="12" fill="#6b7280">Optocore · ${lp.freq === "96" ? "96" : "48"} kHz · ${tot}${max ? " / " + max : ""} canaux</text></g>`;
     });
@@ -3168,7 +3201,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const lab = [pr === "Autre" ? "" : pr, l.cable].filter(Boolean).join(" · ");
       return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}/>${lab ? synLabel(mx, my + 4, lab, P.c) : ""}</g>`;
     }).join("");
-    return ring + links + labels;
+    const wc = synClock(nodes).edges.map(({ from, to }) => { const [tx, ty] = synCenter(to), [fx, fy] = synCenter(from), p = synClip(from, tx, ty), q = synClip(to, fx, fy); return `<g class="wc"><line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Word clock")} marker-end="url(#wcArrow)"/>${synLabel((p[0] + q[0]) / 2, (p[1] + q[1]) / 2 + 4, "WC", "#0f172a")}</g>`; }).join("");
+    return ring + links + wc + labels;
   }
   function synNodeMarkup(n, forExport) {
     const con = n.kind === "console", on = !forExport && synSel === n.id;
@@ -3182,6 +3216,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return `<g class="nd${on ? " on" : ""}" data-nid="${esc(n.id)}" transform="translate(${n.x} ${n.y})" ${SYN_FONT}>
       <rect class="box" width="${n.w}" height="${n.h}" rx="8" fill="${fill}" stroke="${on ? "#111827" : con ? "#373737" : "#a7b4bb"}" stroke-width="${on ? 2.5 : 1.2}"/>
       ${n.loop ? `<circle cx="${n.w - 13}" cy="15" r="5" fill="${PROTOS.Optocore.c}"><title>Sur ${esc(n.loop.nom || "la loop")}</title></circle>` : ""}
+      ${(() => { const c = clkOf(n), t = CLK_SHORT[c.src] || "?"; return `<text x="${n.w - (n.loop ? 24 : 10)}" y="19" font-size="9" text-anchor="end" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="${c.src ? (con ? "#d1d5db" : "#6b7280") : "#b91c1c"}">⏱ ${t}</text>`; })()}
       <text x="12" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
       ${s ? `<text x="12" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}</g>`;
   }
@@ -3193,13 +3228,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const used = new Set(); nodes.forEach((n) => n.ports.forEach((p) => used.add(p.proto)));
     if (loops().some((lp) => nodes.filter((n) => n.loop === lp).length > 1)) used.add("Optocore");
     synState().links.forEach((l) => used.add(synLinkProto(l, nodes)));
+    if (synClock(nodes).edges.length) used.add("Word clock");
     const leg = Object.keys(PROTOS).filter((k) => used.has(k));
     const ly = Math.min(...nodes.map((n) => n.y)) - 40, top = ly - 18;
     let lx = x0 + pad;
     const legend = leg.map((k) => { const s = `<line x1="${lx}" y1="${ly}" x2="${lx + 30}" y2="${ly}" ${synStroke(k)}/><text x="${lx + 36}" y="${ly + 4}" font-size="12" fill="#374151" ${SYN_FONT}>${esc(k)}</text>`; lx += 52 + k.length * 7; return s; }).join("");
     const W = Math.max(x1 - x0, lx - x0), H = y1 - top;
     const size = forExport ? `width="${Math.round(W * 1.5)}" height="${Math.round(H * 1.5)}"` : `width="${Math.round(W * synZoom)}" height="${Math.round(H * synZoom)}"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker></defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
   }
   const SYN_ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
   let synSel = null, synDrag = null, synZoom = matchMedia("(max-width: 760px)").matches ? 0.75 : 1;
@@ -3218,6 +3254,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
     }).join("")}</tbody></table></div>` : `<p class="hint">Pas encore de liaison. « + Liaison » relie deux appareils (MADI, Dante, AES, analogique…) : la loop Optocore, elle, se dessine toute seule.</p>`);
     renderSynSide(nodes);
+    renderSynClock(nodes);
   }
   function renderSynSide(nodes) {
     const side = $("#synSide"), n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
@@ -3226,10 +3263,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const all = synNodes(), name = (id) => (all.find((x) => x.id === id) || {}).title || "?";
     const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
     side.innerHTML = `<h3>${esc(n.title)}</h3>${n.sub ? `<p class="hint" style="margin:0 0 8px">${esc(n.sub)}</p>` : ""}
-      ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label><label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}` : ""}
+      ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}`}` : ""}
       ${n.kind === "console" ? loopSel(n.loop) : ""}
       ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks et boîtiers ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
+      ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}`; })()}
       <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; return `<li>${esc(me.p || "—")} → ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
       <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
   }
@@ -3268,6 +3306,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#synAddLink").addEventListener("click", () => addLink(synSel));
     $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
     $("#synAuto").addEventListener("click", () => { synState().pos = {}; commit(true); });
+    $("#synAddClk").addEventListener("click", () => { const x = { id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }; synState().nodes.push(x); synSel = x.id; commit(true); });
+    $("#synClock").addEventListener("change", (e) => {
+      const tr = e.target.closest("tr[data-ck]"), f = e.target.dataset.ckf; if (!tr || !f) return;
+      const n = synNodes().map((q) => (q.loop = q.loop, q)).find((q) => q.id === tr.dataset.ck); if (!n) return;
+      const c = { ...clkOf(n) }; c[f] = e.target.value; if (f === "src" && c.src !== "wc") c.from = "";
+      setClk(n.id, c); commit(true);
+    });
     $("#synZoomIn").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.min(SYN_ZOOMS.length - 1, SYN_ZOOMS.indexOf(synZoom) + 1)]; renderSyn(); });
     $("#synZoomOut").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.max(0, SYN_ZOOMS.indexOf(synZoom) - 1)]; renderSyn(); });
     $("#synLinks").addEventListener("change", (e) => {
@@ -3286,7 +3331,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const S = synState(), f = e.target.dataset.sp; if (!f || !synSel) return;
       if (synSel.startsWith("c:")) { if (f === "loop") { S.cons[synSel.slice(2)] = { loopId: e.target.value }; commit(true); } return; }
       const x = S.nodes.find((q) => q.id === synSel); if (!x) return;
-      if (f === "loop") x.loopId = e.target.value; else x[f] = e.target.value.trim();
+      if (f === "loop") x.loopId = e.target.value;
+      else if (f === "gmodel") { const g = CLK_GENS.find((q) => q[0] === e.target.value); x.gen.model = e.target.value; if (g) { x.gen.outs = g[2]; if (!x.nom || CLK_GENS.some((q) => q[1].endsWith(x.nom))) x.nom = g[1].replace("Rosendahl ", "").replace("Autre générateur", "Horloge"); } }
+      else if (f === "gfreq") x.gen.freq = e.target.value;
+      else if (f === "gouts") x.gen.outs = Math.max(1, Number(e.target.value) || 1);
+      else x[f] = e.target.value.trim();
       commit(true);
     });
     $("#synSide").addEventListener("click", (e) => {
@@ -3310,6 +3359,81 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), l.cable || ""]);
   }
   const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Câble / notes"];
+  const CLK_HEAD = ["Appareil", "Horloge", "Word clock depuis", "Vérification"];
+  // ---------- Horloge (word clock) ----------
+  // Chaque appareil numérique a une source d'horloge. Sur une loop Optocore, tout se cale sur la loop : le maître est l'appareil d'ID le plus bas
+  // (en DiGiCo, une console), sauf si un word clock extérieur arrive sur un appareil de la loop (note DiGiCo TN300, FAQ Optocore).
+  const CLK_SRC = [["", "— à choisir"], ["loop", "Loop Optocore"], ["int", "Interne (maître)"], ["wc", "Word clock depuis…"], ["madi", "MADI entrant"], ["aes", "AES / AES50 entrant"], ["dante", "Réseau Dante"], ["none", "Sans horloge (switch, analogique)"]];
+  const CLK_SHORT = { "": "?", loop: "OPTO", int: "INT", wc: "WC", madi: "MADI", aes: "AES", dante: "DANTE", none: "—" };
+  // Générateurs d'horloge : sorties word clock vérifiées sur les fiches des fabricants
+  const CLK_GENS = [["nanoclocks", "Rosendahl Nanoclocks", 12], ["nanosyncs", "Rosendahl Nanosyncs HD", 8], ["autre", "Autre générateur", 8]];
+  const isGen = (n) => n.kind === "extra" && n.ref && n.ref.gen;
+  function clkOf(n) {
+    const S = synState();
+    const c = n.kind === "rack" ? (rackById(n.id) || {}).clk : n.kind === "console" ? (S.cons[n.cons] || {}).clk : n.ref && n.ref.clk;
+    if (c && c.src !== undefined) return c;
+    return { src: isGen(n) ? "int" : n.loop ? "loop" : n.kind === "extra" && n.ref && (n.ref.type === "Réseau" || /switch/i.test(n.ref.nom || "")) ? "none" : "", from: "" };
+  }
+  function setClk(id, c) {
+    const S = synState();
+    if (id.startsWith("c:")) { const k = id.slice(2); S.cons[k] = { ...(S.cons[k] || {}), clk: c }; return; }
+    const r = rackById(id); if (r) { r.clk = c; return; }
+    const x = S.nodes.find((q) => q.id === id); if (x) x.clk = c;
+  }
+  const nodeFreq = (n) => (isGen(n) ? String(n.ref.gen.freq || "48") : n.loop ? String(n.loop.freq || "48") : n.kind === "rack" && rackById(n.id) ? (is96(rackById(n.id)) ? "96" : "48") : String(loops()[0].freq || "48"));
+  function synClock(nodes) {
+    const byId = new Map(nodes.map((n) => [n.id, n])), warn = new Map(), edges = [], masters = new Map();
+    const add = (id, t) => { if (!warn.has(id)) warn.set(id, []); warn.get(id).push(t); };
+    const S = synState();
+    const talks = (a, b) => S.links.some((l) => ((l.a || {}).n === a && (l.b || {}).n === b) || ((l.a || {}).n === b && (l.b || {}).n === a));
+    nodes.forEach((n) => {
+      const c = clkOf(n), F = c.from && byId.get(c.from);
+      if (c.src === "wc") {
+        if (!F) add(n.id, "Choisis l'appareil qui envoie le word clock.");
+        else {
+          edges.push({ from: F, to: n });
+          const fc = clkOf(F);
+          if (!fc.src) add(n.id, `${F.title} n'a pas de source d'horloge.`);
+          if (nodeFreq(F) !== nodeFreq(n)) add(n.id, `Fréquence différente : ${F.title} est à ${nodeFreq(F)} kHz, cet appareil à ${nodeFreq(n)} kHz.`);
+        }
+      }
+      if (!c.src) add(n.id, "Source d'horloge à choisir.");
+      const want = { madi: "MADI", aes: "AES", dante: "Dante" }[c.src];
+      if (want && !S.links.some((l) => ((l.a || {}).n === n.id || (l.b || {}).n === n.id) && synLinkProto(l, nodes) === want)) add(n.id, `Aucune liaison ${want} n'arrive sur cet appareil dans le synoptique : ajoute-la, sinon il n'a rien sur quoi se caler.`);
+      if (c.src === "loop" && !n.loop) add(n.id, "Cet appareil n'est sur aucune loop.");
+      if (n.loop && c.src === "int") add(n.id, "Sur la loop, mets « Loop Optocore » : c'est l'appareil d'ID le plus bas qui est maître (note DiGiCo TN300).");
+      if (n.loop && (c.src === "madi" || c.src === "aes")) add(n.id, "Une loop Optocore ne se cale pas sur du MADI ou de l'AES (FAQ Optocore) : passe par le word clock.");
+      if (!n.loop && c.src === "int" && !isGen(n)) { const peer = nodes.find((o) => o !== n && talks(n.id, o.id)); if (peer) add(n.id, `En interne alors qu'il échange de l'audio avec ${peer.title} : risque de clics. Cale-le sur un word clock ou sur le flux qui arrive.`); }
+    });
+    // Générateurs : pas plus de départs que de sorties word clock
+    nodes.filter(isGen).forEach((g) => { const used = edges.filter((e) => e.from === g).length, outs = Number(g.ref.gen.outs) || 0; g.wcUsed = used; if (outs && used > outs) add(g.id, `${used} départs word clock pour ${outs} sorties.`); });
+    // Maître de chaque loop : word clock extérieur sur un appareil de la loop, sinon l'ID le plus bas (les consoles d'abord)
+    loops().forEach((lp) => {
+      const ns = nodes.filter((n) => n.loop === lp); if (!ns.length) return;
+      const ext = ns.filter((n) => clkOf(n).src === "wc" && byId.get(clkOf(n).from));
+      const srcs = new Set(ext.map((n) => clkOf(n).from));
+      if (srcs.size > 1) ext.forEach((n) => add(n.id, "Plusieurs word clocks extérieurs sur la même loop : seul celui de l'appareil d'ID le plus bas compte."));
+      if (ext.length) { const n = ext[0], F = byId.get(clkOf(n).from); masters.set(lp.id, { node: F, why: `word clock sur ${n.title}` }); return; }
+      const cons = ns.find((n) => n.kind === "console");
+      const lowest = cons || [...ns].filter((n) => n.kind === "rack").sort((a, b) => (Number((rackById(a.id) || {}).num) || 99) - (Number((rackById(b.id) || {}).num) || 99))[0] || ns[0];
+      masters.set(lp.id, { node: lowest, why: cons ? "console, ID le plus bas" : "ID le plus bas" });
+    });
+    return { warn, edges, masters };
+  }
+  function renderSynClock(nodes) {
+    const { warn, masters } = synClock(nodes);
+    const head = loops().filter((lp) => masters.has(lp.id)).map((lp) => { const m = masters.get(lp.id); return `<p class="clkm"><b>${esc(lp.nom)}</b> · maître d'horloge : <b>${esc(m.node.title)}</b> <span class="hint">(${esc(m.why)}) · ${lp.freq === "96" ? "96" : "48"} kHz</span></p>`; }).join("");
+    const opts = (cur) => CLK_SRC.map(([k, t]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(t)}</option>`).join("");
+    const from = (n, cur) => `<option value="">—</option>` + nodes.filter((o) => o !== n).map((o) => `<option value="${esc(o.id)}"${cur === o.id ? " selected" : ""}>${esc(o.title)}</option>`).join("");
+    const rows = nodes.map((n) => { const c = clkOf(n), w = warn.get(n.id) || []; return `<tr data-ck="${esc(n.id)}"${w.length ? ' class="warnrow"' : ""}><td><b>${esc(n.title)}</b>${isGen(n) ? ` <span class="hint">${esc(n.ref.gen.freq || "48")} kHz</span>` : ""}</td><td><select data-ckf="src" aria-label="Source d'horloge">${opts(c.src)}</select></td><td>${c.src === "wc" ? `<select data-ckf="from" aria-label="Word clock depuis">${from(n, c.from)}</select>` : ""}</td><td class="clkw">${w.map((t) => `<span>⚠ ${esc(t)}</span>`).join("") || '<span class="ok">✓</span>'}</td></tr>`; }).join("");
+    $("#synClock").innerHTML = head + `<div class="table-wrap"><table class="master clktbl"><thead><tr><th>Appareil</th><th>Horloge</th><th>Depuis</th><th>Vérification</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <details class="hint loophow"><summary>Les règles appliquées</summary><p>Sur une loop Optocore, tous les appareils se calent sur la loop. Le maître est l'appareil d'ID le plus bas (en DiGiCo, la console d'ID 1, puis 2 si elle disparaît). Un word clock extérieur branché sur une console ou un rack de la loop devient le maître de toute la loop. La loop ne peut pas se caler sur du MADI ou de l'AES.</p><p>Hors loop, chaque appareil qui échange de l'audio numérique doit être calé sur la même horloge : word clock (BNC), le flux MADI ou AES qui arrive, ou le réseau Dante. Une base Spectera ne renvoie pas son horloge interne sur sa sortie word clock, seulement un word clock reçu.</p><p>Sources : <a href="https://digico.biz/wp-content/uploads/2020/02/TN300-SDoptocoreClockOps.pdf" target="_blank" rel="noopener">note DiGiCo TN300</a> · <a href="https://optocore.com/index.php/support/faq" target="_blank" rel="noopener">FAQ Optocore</a> · <a href="https://www.manualsdir.com/manuals/460233/digico-sd-rack.html?page=11" target="_blank" rel="noopener">SD Rack, sources de synchro</a> · <a href="https://docs.cloud.sennheiser.com/en-us/spectera/spectera/base-station-word-clock.html" target="_blank" rel="noopener">Spectera, word clock</a></p></details>`;
+  }
+  function synClockRows() {
+    const nodes = synNodes(), { warn } = synClock(nodes), byId = new Map(nodes.map((n) => [n.id, n]));
+    return nodes.map((n) => { const c = clkOf(n), F = byId.get(c.from); return [n.title, (CLK_SRC.find((x) => x[0] === c.src) || CLK_SRC[0])[1].replace("…", ""), c.src === "wc" && F ? F.title : "", (warn.get(n.id) || []).join(" ")]; });
+  }
+
 
   // ---------- Micros et pieds ----------
   // Racks et I/O regroupés par nom et configuration, boîtiers par type de multi
@@ -3422,7 +3546,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
-    syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`; },
+    syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
   function printHtml(parts) {
@@ -3588,7 +3712,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     info.columns = [{ width: 18 }, { width: 50 }];
     info.addRow([d.nom]).font = { bold: true, size: 16 };
     info.addRow([]);
-    [["Type", d.type], ["Version", d.version], ["Enregistré le", new Date().toLocaleString("fr-FR")], ["Sources", state.lignes.length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ...loops().map((L) => [L.nom, `${L.freq === "96" ? "96" : "48"} kHz · capacité ${Number(L.max) || "?"} canaux`])].forEach((r) => { const row = info.addRow(r); row.getCell(1).font = { bold: true }; });
+    [["Type", d.type], ["Version", d.version], ["Enregistré le", new Date().toLocaleString("fr-FR")], ["Sources", state.lignes.length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ...loops().map((L) => [L.nom, `${L.freq === "96" ? "96" : "48"} kHz · ${(LOOP_KINDS.find((k) => k[0] === (L.kind || "digico")) || [, ""])[1]} · ${loopUse(L).tot} canaux utilisés sur ${Number(L.max) || "?"}`])].forEach((r) => { const row = info.addRow(r); row.getCell(1).font = { bold: true }; });
     info.addRow([]);
     info.addRow(["Fichier créé par l'appli Patch Live. Il se lit et s'imprime sans l'appli. Dans le master patch, tu peux corriger les textes et les entrées ; l'appli vérifie tout à la réouverture."]).getCell(1).alignment = { wrapText: true };
     info.mergeCells(`A${info.rowCount}:B${info.rowCount}`);
@@ -3736,6 +3860,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       sy.addRow([`Synoptique · ${titre}`]).font = { bold: true, size: 14 };
       const rows = synLinkRows();
       if (rows.length) { styleHead(sy.addRow(SYN_HEAD)); rows.forEach((r) => sy.addRow(r)); }
+      sy.addRow([]); sy.addRow(["Horloge"]).font = { bold: true }; styleHead(sy.addRow(CLK_HEAD)); synClockRows().forEach((r) => sy.addRow(r));
       [26, 16, 26, 16, 14, 30].forEach((w, i) => { sy.getColumn(i + 1).width = w; });
       const id = wb.addImage({ base64: sp.data, extension: "png" }), scale = Math.min(1, 1100 / sp.w);
       sy.addImage(id, { tl: { col: 0, row: sy.rowCount + 1 }, ext: { width: sp.w * scale, height: sp.h * scale } });
@@ -4047,6 +4172,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const L = loops().find((x) => x.id === line.dataset.lid); if (!L) return;
       if (f === "nom") L.nom = e.target.value.trim() || L.nom;
       else if (f === "max") L.max = Math.max(0, Number(e.target.value) || 0);
+      else if (f === "kind") L.kind = e.target.value;
       else if (f === "freq") {
         // Une carte Dante passe à 32 canaux en 96k : refuse si des canaux occupés disparaissent
         const old = L.freq; L.freq = e.target.value;
