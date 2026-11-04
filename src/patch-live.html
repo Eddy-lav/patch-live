@@ -393,7 +393,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .clktbl td.clkw { white-space: normal; min-width: 260px; font-size: 13px; }
 .clktbl td.clkw span { display: block; color: var(--danger); }
 .clktbl td.clkw span.ok { color: var(--ok); }
-.clktbl tr.warnrow td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.clktbl tr.warnrow td:first-child, .syntbl tr.warnrow td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
 .clktbl select { max-width: 220px; }
 .synsw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .syntbl td { white-space: nowrap; }
@@ -3325,6 +3325,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const [an, ap] = synEnd(l.a), [bn, bp] = synEnd(l.b), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
       return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><select data-sl="dir" aria-label="Sens">${SYN_DIRS.map(([k, t]) => `<option value="${k}"${(l.dir || "") === k ? " selected" : ""}>${t}</option>`).join("")}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
     }).join("")}</tbody></table></div>` : `<p class="hint">Pas encore de liaison. « + Liaison » relie deux appareils (MADI, Dante, AES, analogique…) : la loop Optocore, elle, se dessine toute seule.</p>`);
+    const lw = synLinkWarn(nodes);
+    if (lw.length) $("#synLinks").insertAdjacentHTML("beforeend", lw.map((w) => `<p class="hint warn" style="margin:4px 0">⚠ ${esc(w.t)}</p>`).join(""));
+    lw.forEach((w) => { const tr = $(`#synLinks tr[data-lk="${w.id}"]`); if (tr) tr.classList.add("warnrow"); });
     renderSynSide(nodes);
     renderSynClock(nodes);
   }
@@ -3344,7 +3347,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       ${n.kind === "console" ? loopSel(n.loop) : ""}
       ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
-      ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}`; })()}
+      ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}${synLinkWarn(all).filter((w) => w.node === n.id).map((w) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(w.t)}</p>`).join("")}`; })()}
       <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; const ar = !l.dir ? "⇄" : synRecv(l, n.id) ? "←" : "→"; return `<li>${esc(me.p || "—")} ${ar} ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
       <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
   }
@@ -3498,6 +3501,20 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       img.onerror = () => resolve(null);
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     });
+  }
+  // Une base Spectera ne lit et n'envoie que 32 canaux en MADI (fiche produit Sennheiser) : au-delà, les canaux ne passent pas
+  function synLinkWarn(nodes) {
+    const byId = new Map(nodes.map((n) => [n.id, n])), out = [];
+    synState().links.forEach((l) => {
+      if (synLinkProto(l, nodes) !== "MADI") return;
+      [[l.a, l.b], [l.b, l.a]].forEach(([me, other]) => {
+        const N = byId.get((me || {}).n), O = byId.get((other || {}).n), r = N && N.kind === "rack" && rackById(N.id);
+        if (!r || r.model !== "spectera" || !O) return;
+        const op = O.ports.find((p) => portKey(p.nom) === portKey((other || {}).p)), max = op ? Math.max(0, ...String(op.n || "").split("/").map(Number).filter((x) => x > 0)) : 0;
+        if (max > 32) out.push({ id: l.id, node: N.id, t: `${O.title} · ${other.p} déclare ${max} canaux, ${N.title} n'a que 32 entrées et 32 sorties MADI : au-delà de 32 canaux, le reste ne passe pas.` });
+      });
+    });
+    return out;
   }
   function synLinkRows() {
     const nodes = synNodes(), name = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
