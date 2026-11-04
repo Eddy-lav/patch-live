@@ -424,6 +424,11 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .loopsum { font-family: var(--font-mono); font-size: 14px; padding: 4px 8px; border-radius: 4px; background: var(--surface-2); }
 .loopsum.over { background: var(--danger-soft, #fde2e1); color: var(--danger, #b42318); }
 .prov { display: block; font-size: 12px; color: var(--muted); }
+.tocell { display: flex; gap: 4px; align-items: center; }
+table.master .tocell > select { flex: 1 1 auto; min-width: 130px; width: auto; }
+.toin { display: flex; gap: 4px; flex: 0 1 auto; }
+.toin input { min-width: 0; width: 110px; font-size: 12px; padding: 2px 5px; }
+.toin input[data-f="toIn"] { width: 46px; }
 .port select { max-width: 170px; }
 tr.ports td { border-top: 0; padding-top: 0; }
 .portlist { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1629,6 +1634,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     [["DRUM", "Batterie", "MTK952 #1"], ["BASS", "Basse", "MTK952 #1"], ["GTR JAR", "Guitare jardin", "MTK952 #2"], ["GTR COUR", "Guitare cour", "MTK952 #2"], ["KEYS", "Claviers", "MTK952 #3"], ["LEAD", "Chant", "MTK952 #3"]].forEach(([mix, dest, tx], k) => {
       const a = O(`IEM ${mix} L`, dest, "Ear HF", tx, "MPR50", 2, Math.floor((2 * k) / 8) + 1, ((2 * k) % 8) + 1);
       const z = O(`IEM ${mix} R`, dest, "Ear HF", tx, "MPR50", 2, Math.floor((2 * k + 1) / 8) + 1, ((2 * k + 1) % 8) + 1);
+      a.to = { t: tx, in: String((k % 2) * 2 + 1) }; z.to = { t: tx, in: String((k % 2) * 2 + 2) };
       a.pair = z.id; z.pair = a.id; sorties.push(a, z);
     });
     sorties.push(O("SUB DRUM", "Batterie", "Sub", "", "SB18", 3, 1, 1, { b: boites[0].id, i: 12 }));
@@ -1868,8 +1874,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }
       if (opts) h += `<optgroup label="${esc(boxTitle(b))}">${opts}</optgroup>`;
     });
+    if (isOut(l)) h += toOptions(l);
     return h + `<option value="__new">+ Nouveau boîtier…</option>`;
   }
+  // Sortie câblée directement dans un appareil (émetteur d'ears racké avec le SD Rack, base Spectera…) : pas de boîtier de scène
+  function toOptions(o) {
+    const cur = o.to || {}, devs = state.racks.filter((r) => !o.out || r.id !== o.out.r);
+    const txs = [...new Set((state.sorties || []).map((x) => (x.tx || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+    if (cur.t && !txs.includes(cur.t)) txs.unshift(cur.t);
+    let h = `<optgroup label="Direct dans un appareil (sans boîtier)">`;
+    txs.forEach((t) => { h += `<option value="dvt:${esc(t)}"${cur.t === t ? " selected" : ""}>→ ${esc(t)}</option>`; });
+    devs.forEach((r) => { h += `<option value="dvr:${r.id}"${cur.r === r.id ? " selected" : ""}>→ ${esc(rackTitle(r))}</option>`; });
+    return h + `<option value="__dvt">→ Autre appareil…</option></optgroup>`;
+  }
+  const toAddr = (o) => { const t = o && o.to; if (!t) return ""; const r = t.r && rackById(t.r); return "→ " + (r ? rackTitle(r) : t.t || "appareil") + (t.in ? " · " + t.in : ""); };
+  const outDest = (o) => boxAddr(o.box) || toAddr(o);
   // Sélection de lignes : clic sur le N°, Maj+clic pour une plage, Cmd/Ctrl+clic pour ajouter ou retirer une ligne
   const selection = new Set();
   let selAnchor = null;
@@ -2375,7 +2394,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     return h;
   }
-  function outHead(pre = "") { return `<tr><th>N°</th>${pre}<th class="col-src"><span>Mix</span></th><th class="col-mus">Destinataire</th><th class="col-type">Type</th><th class="col-sr">Sortie stage rack</th><th class="col-box">Boîtier → liaison</th><th class="col-mic">Émetteur</th><th class="col-mic">Récepteur / enceinte</th><th class="col-notes">Notes</th><th></th></tr>`; }
+  function outHead(pre = "") { return `<tr><th>N°</th>${pre}<th class="col-src"><span>Mix</span></th><th class="col-mus">Destinataire</th><th class="col-type">Type</th><th class="col-sr">Sortie stage rack</th><th class="col-box">Boîtier / appareil</th><th class="col-mic">Émetteur</th><th class="col-mic">Récepteur / enceinte</th><th class="col-notes">Notes</th><th></th></tr>`; }
   function outRow(o, idx, occ, pre = "", extraCls) {
     const outs = state.sorties;
     const partner = o.pair ? outs.find((x) => x.id === o.pair) : null;
@@ -2385,7 +2404,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td data-l="Destinataire"><input type="text" data-f="dest" value="${esc(o.dest)}" aria-label="Destinataire" autocomplete="off" data-suggest="dlMus"></td>
         <td data-l="Type"><select data-f="type" aria-label="Type de sortie">${OUT_TYPES.map((t) => `<option${o.type === t ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td data-l="Sortie stage rack"><select class="addr${o.out ? "" : " empty"}" data-f="out" aria-label="Sortie du stage rack">${outOptions(o, occ)}</select></td>
-        <td class="wide" data-l="Boîtier → liaison"><select class="addr${o.box ? "" : " empty"}" data-f="box" aria-label="Boîtier et liaison">${boxOptions(o, occ)}</select></td>
+        <td class="wide" data-l="Boîtier / appareil"><span class="tocell"><select class="addr${o.box || o.to ? "" : " empty"}" data-f="box" aria-label="Boîtier et liaison, ou appareil">${boxOptions(o, occ)}</select>${o.to ? `<span class="toin">${o.to.r || o.to.t ? "" : `<input type="text" data-f="toT" value="" placeholder="Nom de l'appareil" aria-label="Nom de l'appareil" autocomplete="off">`}<input type="text" data-f="toIn" value="${esc(o.to.in || "")}" placeholder="in" title="Entrée de l'appareil" aria-label="Entrée de l'appareil" autocomplete="off"></span>` : ""}</span></td>
         <td class="more" data-l="Émetteur"><input type="text" data-f="tx" value="${esc(o.tx)}" aria-label="Émetteur" autocomplete="off" data-suggest="dlTx"></td>
         <td class="more" data-l="Récepteur / enceinte"><input type="text" data-f="rx" value="${esc(o.rx)}" aria-label="Récepteur ou enceinte" autocomplete="off" data-suggest="dlRx"></td>
         <td class="wide more" data-l="Notes"><input type="text" data-f="notes" value="${esc(o.notes)}" aria-label="Notes"></td>
@@ -2421,6 +2440,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const b = boxById(o.box.b); const nk = `${o.box.b}:${o.box.i + 1}`;
       if (b && o.box.i + 1 <= boxSize(b) && !occ.box.get(nk)) p.box = { b: o.box.b, i: o.box.i + 1 };
     }
+    if (kind === "to" && o.to && !p.box && !p.to) p.to = { ...o.to, in: /^\d+$/.test(o.to.in || "") ? String(+o.to.in + 1) : "" };
     if (kind === "out" && o.out && !p.out) {
       const r = rackById(o.out.r); const ins = rackOutputs(r);
       const pos = ins.findIndex((x) => x.c === o.out.c && x.i === o.out.i); const nx = ins[pos + 1];
@@ -2432,7 +2452,18 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const o = state.sorties.find((x) => x.id === tr.dataset.id); if (!o) return;
     const f = t.dataset.f;
     if (f === "box" && t.value === "__new") { t.value = o.box ? kBox(o.box) : ""; openNewBox(o.id); return; }
-    if (f === "box") { if (setBox(o, t.value, occupancy())) followOutPair(o, "box"); commit(true); return; }
+    if (f === "box" && (t.value.startsWith("dv") || t.value === "__dvt")) {
+      const before = outDest(o), v = t.value;
+      o.box = null; o.to = { ...(v.startsWith("dvr:") ? { r: v.slice(4) } : v.startsWith("dvt:") ? { t: v.slice(4) } : { t: "" }), in: (o.to && o.to.in) || "" };
+      if (o.to.t && !o.tx) o.tx = o.to.t;
+      followOutPair(o, "to");
+      if (before && before !== outDest(o)) log(`${o.mix} : ${before} déplacé vers ${outDest(o)}.`);
+      commit(true);
+      if (v === "__dvt") setTimeout(() => { const i = document.querySelector(`#outTbl tr[data-id="${o.id}"] input[data-f="toT"]`); if (i) i.focus(); }, 0);
+      return;
+    }
+    if (f === "toT" || f === "toIn") { if (!o.to) return; if (f === "toT") { o.to.t = t.value.trim(); if (o.to.t && !o.tx) o.tx = o.to.t; } else o.to.in = t.value.trim(); commit(true); return; }
+    if (f === "box") { const hadTo = o.to; if (setBox(o, t.value, occupancy())) { if (hadTo) { if (t.value) log(`${o.mix} : ${toAddr({ to: hadTo })} déplacé vers ${boxAddr(o.box)}.`); o.to = null; } followOutPair(o, "box"); } commit(true); return; }
     if (f === "out") {
       const before = outAddr(o.out);
       if (!t.value) o.out = null;
@@ -2757,7 +2788,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     labelCells($("#racksTbl")); labelCells($("#boxesTbl"));
     // Infobulle : adresse, puis ce qui est patché (source ou mix) et câblé (boîtier, émetteur, récepteur)
     const tipIn = (r, c, i, l) => `<span class="a">${esc(rackTitle(r))} · entrée ${esc(rackShort(r, c, i))}</span><br>` + (l ? `<b>${esc(l.source || "Sans nom")}</b>${[l.musicien, l.micro, l.pied].filter(Boolean).length ? "<br>" + esc([l.musicien, l.micro, l.pied].filter(Boolean).join(" · ")) : ""}${l.box ? "<br>Câblé : " + esc(boxAddr(l.box)) : ""}${l.pad ? "<br>Pad -" + esc(l.pad) + " dB" : ""}${l.p48 ? " · 48V" : ""}` : `<span class="free">libre</span>`);
-    const tipOut = (r, c, i, o) => `<span class="a">${esc(rackTitle(r))} · sortie ${esc(rackShort(r, c, i))}</span><br>` + (o ? `<b>${esc(o.mix || "Sans nom")}</b>${[o.dest, o.type].filter(Boolean).length ? "<br>" + esc([o.dest, o.type].filter(Boolean).join(" · ")) : ""}${o.box ? "<br>Câblé : " + esc(boxAddr(o.box)) : ""}${o.tx ? "<br>Émetteur : " + esc(o.tx) : ""}${o.rx ? "<br>Récepteur : " + esc(o.rx) : ""}` : `<span class="free">libre</span>`);
+    const tipOut = (r, c, i, o) => `<span class="a">${esc(rackTitle(r))} · sortie ${esc(rackShort(r, c, i))}</span><br>` + (o ? `<b>${esc(o.mix || "Sans nom")}</b>${[o.dest, o.type].filter(Boolean).length ? "<br>" + esc([o.dest, o.type].filter(Boolean).join(" · ")) : ""}${outDest(o) ? "<br>Câblé : " + esc(outDest(o)) : ""}${o.tx ? "<br>Émetteur : " + esc(o.tx) : ""}${o.rx ? "<br>Récepteur : " + esc(o.rx) : ""}` : `<span class="free">libre</span>`);
     const grid = (r, cellsAll, get, out) => {
       let rows = "";
       const groups = new Map(); cellsAll.forEach((a) => { if (!groups.has(a.c)) groups.set(a.c, []); groups.get(a.c).push(a); });
@@ -2881,7 +2912,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (dr) {
       state.racks = state.racks.filter((r) => r.id !== id);
       state.lignes.forEach((l) => { Object.keys(l.sr || {}).forEach((k) => { if (l.sr[k] && l.sr[k].r === id) l.sr[k] = null; }); });
-      state.sorties.forEach((o) => { if (o.out && o.out.r === id) o.out = null; });
+      state.sorties.forEach((o) => { if (o.out && o.out.r === id) o.out = null; if (o.to && o.to.r === id) o.to = null; });
     } else {
       state.boites = state.boites.filter((b) => b.id !== id);
       state.lignes.forEach((l) => { if (l.box && l.box.b === id) l.box = null; });
@@ -3743,10 +3774,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     // Grilles : trois boîtiers par bande, une colonne de 12 (ou 20) par boîtier, comme PATCH 12N
     const so = wb.addWorksheet("Sorties", { views: [{ state: "frozen", ySplit: 2 }] });
     so.addRow([`Sorties · ${titre}`]).font = { bold: true, size: 14 };
-    styleHead(so.addRow(["N°", "Mix", "Destinataire", "Type", "Sortie stage rack", "Boîtier → liaison", "Émetteur", "Récepteur / enceinte", "Notes"]));
+    styleHead(so.addRow(["N°", "Mix", "Destinataire", "Type", "Sortie stage rack", "Boîtier / appareil", "Émetteur", "Récepteur / enceinte", "Notes"]));
     [6, 22, 18, 12, 16, 18, 14, 18, 28].forEach((w, i) => { so.getColumn(i + 1).width = w; });
     (state.sorties || []).forEach((o, i) => {
-      const row = so.addRow([i + 1, o.mix, o.dest, o.type, outAddr(o.out), boxAddr(o.box), o.tx, o.rx, o.notes]);
+      const row = so.addRow([i + 1, o.mix, o.dest, o.type, outAddr(o.out), outDest(o), o.tx, o.rx, o.notes]);
       row.eachCell({ includeEmpty: true }, (c) => { c.border = BORDER; });
       row.getCell(2).font = { bold: true };
     });
@@ -4790,7 +4821,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function gsItems() {
     const out = [], cols = srCols();
     state.lignes.forEach((l, i) => out.push({ k: "Source", t: l.source || "(sans nom)", d: [i + 1, l.musicien, l.micro, boxAddr(l.box), ...cols.map((c) => rackAddr(lineSr(l, c.k)))].filter(Boolean).join(" · "), go: () => gotoRow(showMaster ? "master" : "racks", l.id) }));
-    (state.sorties || []).forEach((o) => out.push({ k: "Sortie", t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, boxAddr(o.box), rackAddr(o.out)].filter(Boolean).join(" · "), go: () => gotoRow("sorties", o.id) }));
+    (state.sorties || []).forEach((o) => out.push({ k: "Sortie", t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, outDest(o), rackAddr(o.out)].filter(Boolean).join(" · "), go: () => gotoRow("sorties", o.id) }));
     hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
     state.racks.forEach((r) => out.push({ k: "Rack / I/O", t: rackTitle(r), d: `${rackInputs(r).length} in / ${rackOutputs(r).length} out`, go: () => { setView("racks"); const d = document.querySelector(`details[data-rd="${r.id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } }));
     state.boites.forEach((b) => out.push({ k: "Boîtier", t: boxTitle(b), d: b.cote || "", go: () => { setView("boites"); const d = document.querySelector(`[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); d.classList.remove("flashbox"); void d.offsetWidth; d.classList.add("flashbox"); } } }));
