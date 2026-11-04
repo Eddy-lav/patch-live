@@ -384,7 +384,9 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .plan-side ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
 .syn-stage { max-height: 70vh; }
 #synSvg { display: block; max-width: none; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; }
-#synSvg .nd { cursor: grab; }
+#synSvg .nd, #synSvg .zn { cursor: grab; }
+#synSvg .lkh { cursor: crosshair; }
+#synSvg .zrs { cursor: nwse-resize; }
 #synSvg .nd:active { cursor: grabbing; }
 .synh { font-size: 16px; margin: 18px 0 6px; }
 .clkm { margin: 4px 0; }
@@ -994,6 +996,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <div class="toolbar planbar">
     <button id="synAddLink" class="btn small primary" type="button">+ Liaison</button>
     <button id="synAddNode" class="btn small" type="button" title="Switch, ordinateur record, processeur… tout ce qui n'est pas dans Racks et I/O">+ Élément</button>
+    <button id="synAddZone" class="btn small" type="button" title="Encadrer une partie du schéma : FOH, Monitor, Stage…">+ Zone</button>
     <button id="synAddClk" class="btn small" type="button" title="Rosendahl Nanoclocks, Nanosyncs HD ou autre générateur de word clock">+ Horloge</button>
     <button id="synAuto" class="btn small" type="button">Disposition auto</button>
     <span class="zoom"><button id="synZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="synZoomVal" class="mono">100 %</span><button id="synZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
@@ -3127,6 +3130,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const S = state.syn;
     if (!Array.isArray(S.links)) S.links = [];
     if (!Array.isArray(S.nodes)) S.nodes = [];
+    if (!Array.isArray(S.zones)) S.zones = [];
     if (!S.pos || typeof S.pos !== "object") S.pos = {};
     if (!S.cons || typeof S.cons !== "object") S.cons = {};
     return S;
@@ -3145,6 +3149,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const find = (end) => { const n = nodes && nodes.find((x) => x.id === end.n); const p = n && n.ports.find((q) => portKey(q.nom) === portKey(end.p)); return p && p.proto !== "Autre" ? p.proto : protoOfName(end.p); };
     return find(l.a || {}) || find(l.b || {}) || "Autre";
   }
+  // Largeur réelle d'un texte, pour que le nom ne passe jamais sous le badge d'horloge
+  let synCtx = null;
+  function synTextW(t, size, weight) {
+    try { synCtx = synCtx || document.createElement("canvas").getContext("2d"); synCtx.font = `${weight || 400} ${size}px -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif`; return synCtx.measureText(String(t || "")).width; }
+    catch (e) { return String(t || "").length * size * 0.6; }
+  }
+  function synFit(t, max, size, weight) {
+    t = String(t || ""); if (synTextW(t, size, weight) <= max) return t;
+    while (t.length > 1 && synTextW(t + "…", size, weight) > max) t = t.slice(0, -1);
+    return t + "…";
+  }
   function synNodes() {
     const S = synState(), out = [];
     const ks = consoleKeys();
@@ -3160,7 +3175,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
       n.ports.push({ nom: e.p.trim(), proto: l.proto || protoOfName(e.p) || "Autre", n: "", added: true });
     }));
-    out.forEach((n) => { n.w = SYN_W; n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
+    out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(320, Math.ceil(Math.max(synTextW(n.title, 14, 700) + 12 + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 28)))); n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
     return out;
   }
   // Disposition auto : chaque loop en ellipse, les appareils hors loop en rangées dessous ; un appareil déplacé garde sa place
@@ -3170,14 +3185,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     loops().forEach((lp) => {
       const ns = nodes.filter((n) => n.loop === lp); if (!ns.length) return;
       const k = ns.length, rx = k < 2 ? 0 : Math.max(210, k * 64), ry = k < 2 ? 0 : Math.max(130, k * 36), tall = Math.max(...ns.map((n) => n.h));
-      ns.forEach((n, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / k; auto[n.id] = { x: x0 + rx + rx * Math.cos(a), y: tall / 2 + ry + ry * Math.sin(a) - n.h / 2 }; });
-      x0 += 2 * rx + SYN_W + 90; hLoops = Math.max(hLoops, 2 * ry + tall);
+      const wide = Math.max(...ns.map((n) => n.w));
+      ns.forEach((n, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / k; auto[n.id] = { x: x0 + rx + rx * Math.cos(a) + (wide - n.w) / 2, y: tall / 2 + ry + ry * Math.sin(a) - n.h / 2 }; });
+      x0 += 2 * rx + wide + 90; hLoops = Math.max(hLoops, 2 * ry + tall);
     });
-    const rest = nodes.filter((n) => !n.loop), per = Math.max(3, Math.floor(Math.max(x0 - 90, 900) / (SYN_W + 40)));
+    const rest = nodes.filter((n) => !n.loop), RW = Math.max(SYN_W, ...rest.map((n) => n.w)), per = Math.max(3, Math.floor(Math.max(x0 - 90, 900) / (RW + 40)));
     let y = hLoops ? hLoops + 90 : 0;
     for (let i = 0; i < rest.length; i += per) {
       const row = rest.slice(i, i + per);
-      row.forEach((n, j) => { auto[n.id] = { x: j * (SYN_W + 40), y }; });
+      row.forEach((n, j) => { auto[n.id] = { x: j * (RW + 40), y }; });
       y += Math.max(...row.map((n) => n.h)) + 50;
     }
     nodes.forEach((n) => { const p = S.pos[n.id] || auto[n.id] || { x: 0, y: 0 }; n.x = p.x; n.y = p.y; });
@@ -3233,32 +3249,47 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       return `<rect x="0" y="${y}" width="${n.w}" height="${SYN_ROW}" fill="${k % 2 ? "none" : con ? "#424242" : "#f6f8f9"}"/><rect x="0" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/><rect x="${n.w - 5}" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/>
         <text x="12" y="${y + 13}" font-size="12" fill="${ink}">${esc(p.nom)}</text><text x="${n.w - 12}" y="${y + 13}" font-size="11" text-anchor="end" fill="${sub}">${esc([p.proto !== "Autre" && !portKey(p.nom).includes(portKey(p.proto)) ? p.proto : "", p.n].filter(Boolean).join(" · "))}</text>`;
     }).join("");
-    const title = n.title.length > 26 ? n.title.slice(0, 25) + "…" : n.title, s = n.sub.length > 36 ? n.sub.slice(0, 35) + "…" : n.sub;
+    const title = synFit(n.title, n.w - 12 - (n.loop ? 82 : 66), 14, 700), s = synFit(n.sub, n.w - 24, 11, 400);
     return `<g class="nd${on ? " on" : ""}" data-nid="${esc(n.id)}" transform="translate(${n.x} ${n.y})" ${SYN_FONT}>
       <rect class="box" width="${n.w}" height="${n.h}" rx="8" fill="${fill}" stroke="${on ? "#111827" : con ? "#373737" : "#a7b4bb"}" stroke-width="${on ? 2.5 : 1.2}"/>
       ${n.loop ? `<circle cx="${n.w - 13}" cy="15" r="5" fill="${PROTOS.Optocore.c}"><title>Sur ${esc(n.loop.nom || "la loop")}</title></circle>` : ""}
       ${(() => { const c = clkOf(n), t = CLK_SHORT[c.src] || "?"; return `<text x="${n.w - (n.loop ? 24 : 10)}" y="19" font-size="9" text-anchor="end" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="${c.src ? (con ? "#d1d5db" : "#6b7280") : "#b91c1c"}">⏱ ${t}</text>`; })()}
       <text x="12" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
-      ${s ? `<text x="12" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}</g>`;
+      ${s ? `<text x="12" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}
+      ${on ? `<g class="lkh" transform="translate(${n.w + 6} ${Math.min(n.h / 2, 26) - 13})"><circle cx="13" cy="13" r="13" fill="#111827"/><path d="M13 7v12M7 13h12" stroke="#fce694" stroke-width="2.4" stroke-linecap="round"/><title>Tirer une liaison vers un autre appareil (ou toucher puis toucher l'appareil d'arrivée)</title></g>` : ""}</g>`;
+  }
+  // Zones : cadre en pointillé avec un titre (FOH, Monitor, Stage…), dessiné sous les appareils
+  const ZONE_PRESETS = ["FOH", "Monitor", "Stage", "Plateau jardin", "Plateau cour", "Régie HF", "Car régie"];
+  function synZoneMarkup(z, forExport) {
+    const on = !forExport && synSel === "z:" + z.id;
+    return `<g class="zn${on ? " on" : ""}" data-zid="${esc(z.id)}" transform="translate(${z.x} ${z.y})"><rect width="${z.w}" height="${z.h}" rx="14" fill="#64748b" fill-opacity="0.05" stroke="${on ? "#111827" : "#64748b"}" stroke-width="${on ? 2 : 1.5}" stroke-dasharray="9 6"/><text x="16" y="26" font-size="15" font-weight="800" letter-spacing="1.5" fill="#475569" ${SYN_FONT}>${esc(String(z.nom || "Zone").toUpperCase())}</text>${on ? `<rect class="zrs" x="${z.w - 16}" y="${z.h - 16}" width="16" height="16" rx="4" fill="#111827"><title>Glisser pour redimensionner</title></rect>` : ""}</g>`;
   }
   function synSvg(forExport) {
     const nodes = synPlace(synNodes()); if (!nodes.length) return "";
-    const pad = 24, x0 = Math.min(...nodes.map((n) => n.x)) - pad, x1 = Math.max(...nodes.map((n) => n.x + n.w)) + pad;
-    const y1 = Math.max(...nodes.map((n) => n.y + n.h)) + pad;
+    const zones = synState().zones || [], boxes = [...nodes, ...zones];
+    const pad = 24, x0 = Math.min(...boxes.map((n) => n.x)) - pad, x1 = Math.max(...boxes.map((n) => n.x + n.w)) + pad;
+    const y1 = Math.max(...boxes.map((n) => n.y + n.h)) + pad;
     // Légende : seulement les protocoles présents
     const used = new Set(); nodes.forEach((n) => n.ports.forEach((p) => used.add(p.proto)));
     if (loops().some((lp) => nodes.filter((n) => n.loop === lp).length > 1)) used.add("Optocore");
     synState().links.forEach((l) => used.add(synLinkProto(l, nodes)));
     if (synClock(nodes).edges.length) used.add("Word clock");
     const leg = Object.keys(PROTOS).filter((k) => used.has(k));
-    const ly = Math.min(...nodes.map((n) => n.y)) - 40, top = ly - 18;
+    const ly = Math.min(...boxes.map((n) => n.y)) - 40, top = ly - 18;
     let lx = x0 + pad;
     const legend = leg.map((k) => { const s = `<line x1="${lx}" y1="${ly}" x2="${lx + 30}" y2="${ly}" ${synStroke(k)}/><text x="${lx + 36}" y="${ly + 4}" font-size="12" fill="#374151" ${SYN_FONT}>${esc(k)}</text>`; lx += 52 + k.length * 7; return s; }).join("");
     const W = Math.max(x1 - x0, lx - x0), H = y1 - top;
     const size = forExport ? `width="${Math.round(W * 1.5)}" height="${Math.round(H * 1.5)}"` : `width="${Math.round(W * synZoom)}" height="${Math.round(H * synZoom)}"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker></defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker></defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synZones">${zones.map((z) => synZoneMarkup(z, forExport)).join("")}</g><g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
   }
   const SYN_ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  let synPick = null;
+  function synMakeLink(a, b) {
+    const S = synState(); S.links.push({ id: nid(), a: { n: a, p: "" }, b: { n: b, p: "" }, proto: "", cable: "" });
+    synSel = a; commit(true);
+    const all = synNodes(), t = (id) => (all.find((x) => x.id === id) || {}).title || "?";
+    notice(`Liaison ${esc(t(a))} → ${esc(t(b))} ajoutée. Ports, protocole et câble se règlent dans le tableau Liaisons.`);
+  }
   let synSel = null, synDrag = null, synZoom = matchMedia("(max-width: 760px)").matches ? 0.75 : 1;
   const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
   function renderSyn() {
@@ -3278,8 +3309,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     renderSynClock(nodes);
   }
   function renderSynSide(nodes) {
-    const side = $("#synSide"), n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
-    if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place.</p>`; return; }
+    const side = $("#synSide");
+    if (synSel && synSel.startsWith("z:")) {
+      const z = (synState().zones || []).find((q) => "z:" + q.id === synSel);
+      if (z) { side.innerHTML = `<h3>Zone</h3><label>Nom<input type="text" data-sp="znom" value="${esc(z.nom || "")}" list="dlZone"></label><datalist id="dlZone">${ZONE_PRESETS.map((v) => `<option value="${esc(v)}">`).join("")}</datalist><div class="actions" style="flex-wrap:wrap;gap:4px;margin:6px 0">${ZONE_PRESETS.slice(0, 3).map((v) => `<button class="btn small" type="button" data-zpre="${esc(v)}">${esc(v)}</button>`).join("")}</div><p class="hint" style="margin:6px 0">Fais glisser le cadre pour le déplacer, avec les appareils qui sont dedans. Le carré noir en bas à droite le redimensionne.</p><div class="actions"><button class="btn small danger" type="button" data-zdel>Supprimer la zone</button></div>`; return; }
+    }
+    const n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
+    if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place. Le bouton + qui apparaît à côté de l'appareil tire une liaison vers un autre. « + Zone » encadre une partie du schéma (FOH, Monitor, Stage…).</p>`; return; }
     const S = synState(), ls = S.links.filter((l) => (l.a || {}).n === n.id || (l.b || {}).n === n.id);
     const all = synNodes(), name = (id) => (all.find((x) => x.id === id) || {}).title || "?";
     const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
@@ -3300,8 +3336,32 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const host = $("#v-syn");
     host.addEventListener("pointerdown", (e) => {
       if (!e.target.closest("#synSvg")) return;
+      const lk = e.target.closest("g.lkh");
+      if (lk) {
+        const from = lk.closest("g.nd").dataset.nid, nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === from); if (!n) return;
+        const [cx, cy] = synCenter(n), ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        ln.setAttribute("x1", cx); ln.setAttribute("y1", cy); ln.setAttribute("x2", cx); ln.setAttribute("y2", cy); ln.setAttribute("stroke", "#111827"); ln.setAttribute("stroke-width", "2"); ln.setAttribute("stroke-dasharray", "6 4"); ln.setAttribute("pointer-events", "none");
+        $("#synSvg").appendChild(ln);
+        synDrag = { link: from, line: ln, moved: false };
+        e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); e.preventDefault(); return;
+      }
+      const zr = e.target.closest("rect.zrs");
+      if (zr) { const z = (synState().zones || []).find((q) => q.id === zr.closest("g.zn").dataset.zid); if (!z) return; synDrag = { resize: z, g: zr.closest("g.zn"), moved: false }; e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); e.preventDefault(); return; }
       const g = e.target.closest("g.nd");
-      if (!g) { if (synSel) { synSel = null; renderSyn(); } return; }
+      if (g && synPick) { const from = synPick; synPick = null; if (from !== g.dataset.nid) { synMakeLink(from, g.dataset.nid); e.preventDefault(); return; } }
+      if (!g) {
+        synPick = null;
+        const zg = e.target.closest("g.zn");
+        if (zg) {
+          const z = (synState().zones || []).find((q) => q.id === zg.dataset.zid); if (!z) return;
+          const nodes = synPlace(synNodes()), inside = nodes.filter((n) => { const [cx, cy] = synCenter(n); return cx > z.x && cx < z.x + z.w && cy > z.y && cy < z.y + z.h; });
+          const p = synPoint(e);
+          synDrag = { zone: z, g: zg, nodes, inside: inside.map((n) => ({ n, x: n.x, y: n.y })), zx: z.x, zy: z.y, px: p.x, py: p.y, moved: false };
+          if (synSel !== "z:" + z.id) { synSel = "z:" + z.id; renderSyn(); synDrag.g = document.querySelector(`#synSvg g.zn[data-zid="${z.id}"]`); }
+          zg.setPointerCapture && zg.setPointerCapture(e.pointerId); e.preventDefault(); return;
+        }
+        if (synSel) { synSel = null; renderSyn(); } return;
+      }
       const nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === g.dataset.nid); if (!n) return;
       const p = synPoint(e);
       synDrag = { n, nodes, dx: p.x - n.x, dy: p.y - n.y, moved: false, g };
@@ -3311,20 +3371,52 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     host.addEventListener("pointermove", (e) => {
       if (!synDrag) return;
+      if (synDrag.link) { const p = synPoint(e); synDrag.line.setAttribute("x2", p.x); synDrag.line.setAttribute("y2", p.y); synDrag.moved = true; return; }
+      if (synDrag.resize) {
+        const p = synPoint(e), z = synDrag.resize;
+        z.w = Math.max(160, Math.round((p.x - z.x) / 10) * 10); z.h = Math.max(90, Math.round((p.y - z.y) / 10) * 10); synDrag.moved = true;
+        const r = synDrag.g.querySelector("rect"), h = synDrag.g.querySelector("rect.zrs"); r.setAttribute("width", z.w); r.setAttribute("height", z.h); h.setAttribute("x", z.w - 16); h.setAttribute("y", z.h - 16); return;
+      }
+      if (synDrag.zone) {
+        const p = synPoint(e), d = synDrag, dx = Math.round((p.x - d.px) / 10) * 10, dy = Math.round((p.y - d.py) / 10) * 10;
+        d.zone.x = d.zx + dx; d.zone.y = d.zy + dy; d.moved = d.moved || dx || dy;
+        d.g.setAttribute("transform", `translate(${d.zone.x} ${d.zone.y})`);
+        d.inside.forEach((q) => { q.n.x = q.x + dx; q.n.y = q.y + dy; const ng = document.querySelector(`#synSvg g.nd[data-nid="${CSS.escape(q.n.id)}"]`); if (ng) ng.setAttribute("transform", `translate(${q.n.x} ${q.n.y})`); });
+        if (d.inside.length) $("#synEdges").innerHTML = synEdges(d.nodes);
+        return;
+      }
       const p = synPoint(e), n = synDrag.n;
       n.x = Math.round((p.x - synDrag.dx) / 10) * 10; n.y = Math.round((p.y - synDrag.dy) / 10) * 10;
       synDrag.moved = true;
       synDrag.g.setAttribute("transform", `translate(${n.x} ${n.y})`);
       $("#synEdges").innerHTML = synEdges(synDrag.nodes);
     });
-    const end = () => {
-      if (!synDrag) return; const { n, moved } = synDrag; synDrag = null;
+    const end = (e) => {
+      if (!synDrag) return;
+      if (synDrag.link) {
+        const { link, line, moved } = synDrag; synDrag = null; line.remove();
+        const t = moved && e && e.clientX !== undefined ? document.elementFromPoint(e.clientX, e.clientY) : null, g = t && t.closest && t.closest("g.nd");
+        if (g && g.dataset.nid !== link) synMakeLink(link, g.dataset.nid);
+        else { synPick = link; notice("Touche maintenant l'appareil d'arrivée de la liaison (ailleurs pour annuler)."); }
+        return;
+      }
+      if (synDrag.resize || synDrag.zone) { const d = synDrag; synDrag = null; if (d.moved) { const S = synState(); (d.inside || []).forEach((q) => { S.pos[q.n.id] = { x: q.n.x, y: q.n.y }; }); commit(true); } return; }
+      const { n, moved } = synDrag; synDrag = null;
       if (moved) { synState().pos[n.id] = { x: n.x, y: n.y }; commit(true); } else renderSyn();
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
-    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#synSvg g.nd")) e.preventDefault(); }, { passive: false });
+    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#synSvg g.nd, #synSvg g.zn")) e.preventDefault(); }, { passive: false });
     const addLink = (from) => { const S = synState(); S.links.push({ id: nid(), a: { n: from || "", p: "" }, b: { n: "", p: "" }, proto: "", cable: "" }); commit(true); const tr = $("#synLinks tbody tr:last-child"); if (tr) { tr.scrollIntoView({ block: "nearest" }); const f = tr.querySelector(from ? '[data-sl="ap"]' : '[data-sl="an"]'); if (f) f.focus(); } };
-    $("#synAddLink").addEventListener("click", () => addLink(synSel));
+    $("#synAddLink").addEventListener("click", () => addLink(synSel && !synSel.startsWith("z:") ? synSel : ""));
+    $("#synAddZone").addEventListener("click", () => {
+      const S = synState(); S.zones = S.zones || [];
+      const nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === synSel), used = new Set(S.zones.map((z) => z.nom));
+      const nom = ZONE_PRESETS.find((v) => !used.has(v)) || "Zone";
+      const z = n ? { x: n.x - 30, y: n.y - 50, w: n.w + 60, h: n.h + 80 } : { x: Math.min(...nodes.map((q) => q.x)) - 30, y: Math.min(...nodes.map((q) => q.y)) - 50, w: 420, h: 260 };
+      Object.keys(z).forEach((k) => { z[k] = Math.round(z[k] / 10) * 10; });
+      const id = nid(); S.zones.push({ id, nom, ...z }); synSel = "z:" + id; commit(true);
+      const i = $('#synSide [data-sp="znom"]'); if (i) { i.focus(); i.select(); }
+    });
     $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
     $("#synAuto").addEventListener("click", () => { synState().pos = {}; commit(true); });
     $("#synAddClk").addEventListener("click", () => { const x = { id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }; synState().nodes.push(x); synSel = x.id; commit(true); });
@@ -3350,7 +3442,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     $("#synSide").addEventListener("change", (e) => {
       const S = synState(), f = e.target.dataset.sp; if (!f || !synSel) return;
-      if (synSel.startsWith("c:")) { if (f === "loop") { S.cons[synSel.slice(2)] = { loopId: e.target.value }; commit(true); } return; }
+      if (f === "znom") { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (z) { z.nom = e.target.value.trim(); commit(true); } return; }
+      if (synSel.startsWith("c:")) { if (f === "loop") { const k = synSel.slice(2); S.cons[k] = { ...(S.cons[k] || {}), loopId: e.target.value }; commit(true); } return; }
       const x = S.nodes.find((q) => q.id === synSel); if (!x) return;
       if (f === "loop") x.loopId = e.target.value;
       else if (f === "gmodel") { const g = CLK_GENS.find((q) => q[0] === e.target.value); x.gen.model = e.target.value; if (g) { x.gen.outs = g[2]; if (!x.nom || CLK_GENS.some((q) => q[1].endsWith(x.nom))) x.nom = g[1].replace("Rosendahl ", "").replace("Autre générateur", "Horloge"); } }
@@ -3362,6 +3455,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#synSide").addEventListener("click", (e) => {
       const S = synState();
       if (e.target.closest("[data-splink]")) addLink(synSel);
+      const zp = e.target.closest("[data-zpre]"), zd = e.target.closest("[data-zdel]");
+      if (zp || zd) { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (!z) return; if (zp) z.nom = zp.dataset.zpre; else { S.zones = S.zones.filter((q) => q !== z); synSel = null; } commit(true); return; }
       if (e.target.closest("[data-spauto]")) { delete S.pos[synSel]; commit(true); }
       if (e.target.closest("[data-spdel]")) { const id = synSel; S.nodes = S.nodes.filter((x) => x.id !== id); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); }
     });
