@@ -385,6 +385,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .plan-side h3 { margin: 0 0 8px; font-size: 16px; }
 .rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
 .rpcase { padding: 10px; margin: 0; }
+.rpcase.rpwide { grid-column: 1 / -1; }
 .rphead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .rphead input[data-rpcf="nom"] { flex: 1 1 120px; font-weight: 700; min-width: 0; }
 .rphead input[data-rpcf="u"] { width: 56px; }
@@ -392,7 +393,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .rpadd { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
 .rpadd select { max-width: 100%; }
 .rpadd .hint.warn { color: var(--danger, #b91c1c); }
-.rpstage { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+.rpstage { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .rpsvg { width: 100%; height: auto; display: block; touch-action: pan-y; }
 .rpsvg g.rpit { cursor: grab; }
 .rpsvg g.rpit.bad { opacity: 0.45; }
@@ -3321,9 +3322,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return it.label || (RP_FREE.find((f) => f[0] === it.free) || RP_FREE[5])[1];
   }
   function rpDefaultU(kind, ref) { if (kind !== "rack") return 1; const t = devType({ kind: "rack", id: ref }); return t === "sd" ? 10 : t === "num" ? 6 : t === "orange" ? 2 : 1; }
-  function rpBusy(c, skip) { const s = new Set(); c.items.forEach((it) => { if (it !== skip) for (let k = it.at; k < it.at + it.h; k++) s.add(k); }); return s; }
-  function rpFits(c, it, at) { if (at < 1 || at + it.h - 1 > c.u) return false; const b = rpBusy(c, it); for (let k = at; k < at + it.h; k++) if (b.has(k)) return false; return true; }
-  function rpNearest(c, it, at) { for (let d = 0; d <= c.u; d++) { if (rpFits(c, it, at - d)) return at - d; if (rpFits(c, it, at + d)) return at + d; } return 0; }
+  // Rack simple, double ou triple : chaque colonne a ses U
+  const rpCol = (it) => it.col || 0, rpCols = (c) => Math.max(1, Math.min(3, c.cols || 1));
+  const RP_COLN = { 2: ["Gauche", "Droite"], 3: ["Gauche", "Milieu", "Droite"] };
+  function rpBusy(c, skip, col) { const s = new Set(); c.items.forEach((it) => { if (it !== skip && rpCol(it) === col) for (let k = it.at; k < it.at + it.h; k++) s.add(k); }); return s; }
+  function rpFits(c, it, at, col = rpCol(it)) { if (at < 1 || at + it.h - 1 > c.u || col >= rpCols(c)) return false; const b = rpBusy(c, it, col); for (let k = at; k < at + it.h; k++) if (b.has(k)) return false; return true; }
+  function rpNearest(c, it, at, col = rpCol(it)) { for (let d = 0; d <= c.u; d++) { if (rpFits(c, it, at - d, col)) return at - d; if (rpFits(c, it, at + d, col)) return at + d; } return 0; }
+  // Place libre dans le rack : d'abord dans la colonne de l'élément, sinon dans les autres ; renvoie [colonne, U] ou null
+  function rpPlace(c, it, at) { const n = rpCols(c), first = Math.min(rpCol(it), n - 1); for (const col of [first, ...Array.from({ length: n }, (_, k) => k).filter((k) => k !== first)]) { const a = rpNearest(c, it, at, col); if (a) return [col, a]; } return null; }
   const rpFind = (id) => { for (const c of rpState().cases) { const it = c.items.find((i) => i.id === id); if (it) return { c, it }; } return null; };
   const rpPlaced = () => new Set(rpState().cases.flatMap((c) => c.items.filter((i) => i.ref).map((i) => i.kind + ":" + i.ref)));
   function rpAddOptions() {
@@ -3355,38 +3361,50 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, 483, H, 0, 0); }
     return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 ${H}">${rpFreeArt(it, H)}</svg>`;
   }
+  const RP_GAP = 18, RP_CW = 483 + RP_SIDE * 2, rpX = (col) => col * (RP_CW + RP_GAP);
   function rpCaseSvg(c, forExport) {
-    const W = RP_SIDE * 2 + 483 + RP_LW, IH = c.u * RP_UH, H = RP_TOP * 2 + IH, F = `font-family="Arial, Helvetica, sans-serif"`;
-    let s = `<rect x="0" y="0" width="${483 + RP_SIDE * 2}" height="${H}" rx="8" fill="#3a3f45"/><rect x="4" y="4" width="${483 + RP_SIDE * 2 - 8}" height="${H - 8}" rx="6" fill="#2b2f33"/>`;
-    s += `<rect x="${RP_SIDE}" y="${RP_TOP}" width="483" height="${IH}" fill="#0c0e10"/>`;
-    for (let u = 0; u < c.u; u++) {
-      const y = RP_TOP + u * RP_UH;
-      s += `<line x1="${RP_SIDE + 14}" y1="${y}" x2="${RP_SIDE + 469}" y2="${y}" stroke="#1d2125" stroke-width="1"/>`;
-      [8, 22.2, 36.4].forEach((d) => { s += `<rect x="${RP_SIDE + 3}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/><rect x="${RP_SIDE + 475}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/>`; });
-      s += `<text x="${RP_SIDE / 2}" y="${y + RP_UH / 2 + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#aab3bb" ${F}>${u + 1}</text>`;
+    const n = rpCols(c), CW = n * RP_CW + (n - 1) * RP_GAP, W = CW + (n === 1 ? RP_LW : 0), IH = c.u * RP_UH, H = RP_TOP * 2 + IH, F = `font-family="Arial, Helvetica, sans-serif"`;
+    let s = `<rect x="0" y="0" width="${CW}" height="${H}" rx="8" fill="#3a3f45"/><rect x="4" y="4" width="${CW - 8}" height="${H - 8}" rx="6" fill="#2b2f33"/>`;
+    for (let k = 0; k < n; k++) {
+      const X = rpX(k);
+      if (k) s += `<rect x="${X - RP_GAP - 2}" y="4" width="${RP_GAP + 4}" height="${H - 8}" fill="#3a3f45"/>`;
+      s += `<rect x="${X + RP_SIDE}" y="${RP_TOP}" width="483" height="${IH}" fill="#0c0e10"/>`;
+      for (let u = 0; u < c.u; u++) {
+        const y = RP_TOP + u * RP_UH;
+        s += `<line x1="${X + RP_SIDE + 14}" y1="${y}" x2="${X + RP_SIDE + 469}" y2="${y}" stroke="#1d2125" stroke-width="1"/>`;
+        [8, 22.2, 36.4].forEach((d) => { s += `<rect x="${X + RP_SIDE + 3}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/><rect x="${X + RP_SIDE + 475}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/>`; });
+        s += `<text x="${X + RP_SIDE / 2}" y="${y + RP_UH / 2 + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#aab3bb" ${F}>${u + 1}</text>`;
+      }
+      s += `<rect x="${X + RP_SIDE}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/><rect x="${X + RP_SIDE + 469}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/>`;
+      if (n > 1) s += `<text x="${X + RP_CW / 2}" y="${RP_TOP - 7}" text-anchor="middle" font-size="14" font-weight="700" fill="#aab3bb" ${F}>${RP_COLN[n][k].toUpperCase()}</text>`;
     }
-    s += `<rect x="${RP_SIDE}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/><rect x="${RP_SIDE + 469}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/>`;
     const items = [...c.items].sort((a, b) => a.at - b.at).map((it) => {
-      const y = RP_TOP + (it.at - 1) * RP_UH, hh = it.h * RP_UH, on = !forExport && rpSel === it.id, cy = y + hh / 2, lx = RP_SIDE * 2 + 483 + 14;
+      const y = RP_TOP + (it.at - 1) * RP_UH, hh = it.h * RP_UH, on = !forExport && rpSel === it.id, cy = y + hh / 2, lx = RP_CW + 14, X = rpX(Math.min(rpCol(it), n - 1));
       const pos = it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`;
-      return `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${RP_SIDE} ${y})">${rpItemArt(it)}<rect class="rpsel" x="1" y="1" width="481" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>
+      // Rack multiple : le nom est écrit sur l'appareil (pastille), sinon dans la marge à droite
+      const chipT = `${pos} ${rpLabel(it)}`.slice(0, 24), cw = chipT.length * 11 + 16;
+      const chip = n > 1 ? `<rect x="${470 - cw}" y="${hh / 2 - 15}" width="${cw}" height="30" rx="6" fill="#111827" fill-opacity="0.85"/><text x="${462}" y="${hh / 2 + 7}" text-anchor="end" font-size="20" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text>` : "";
+      const g = `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${X + RP_SIDE} ${y})">${rpItemArt(it)}${chip}<rect class="rpsel" x="1" y="1" width="481" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>`;
+      if (n > 1) return g;
+      return `${g}
         <line x1="${RP_SIDE + 486}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
         ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${it.notes ? " · " + esc(it.notes.slice(0, 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(rpLabel(it).slice(0, 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
     }).join("");
-    const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
+    const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${n > 1 ? (n === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
     const top = forExport ? 40 : 0;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : n > 1 ? ` style="min-width:${n * 260}px"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
   }
   function renderRackplan() {
     const P = rpState(), free = rpAddOptions();
     $("#rpCases").innerHTML = P.cases.length ? P.cases.map((c) => {
       const used = c.items.reduce((n, i) => n + i.h, 0);
-      return `<div class="panel rpcase" data-rpc="${c.id}">
+      return `<div class="panel rpcase${rpCols(c) > 1 ? " rpwide" : ""}" data-rpc="${c.id}">
         <div class="rphead"><input type="text" data-rpcf="nom" value="${esc(c.nom || "")}" aria-label="Nom du rack" placeholder="Nom du rack">
         <label class="inl"><input type="number" min="1" max="48" data-rpcf="u" value="${c.u}" inputmode="numeric" aria-label="Hauteur en U"> U</label>
+        <select data-rpcf="cols" aria-label="Colonnes">${[[1, "Simple"], [2, "Double"], [3, "Triple"]].map(([v, t]) => `<option value="${v}"${rpCols(c) === v ? " selected" : ""}>${t}</option>`).join("")}</select>
         <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" list="dlRpLieu" class="rplieu">
         <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
-        <div class="rpadd"><select data-rpadd aria-label="Ajouter dans ce rack">${free}</select><span class="hint">${used}/${c.u} U occupés</span></div>
+        <div class="rpadd"><select data-rpadd aria-label="Ajouter dans ce rack">${free}</select><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
         <div class="rpstage">${rpCaseSvg(c)}</div></div>`;
     }).join("") : `<div class="panel"><p class="hint" style="margin:0">Aucun rack pour l'instant. « + Flight rack » en crée un ; ajoute ensuite tes appareils dedans.</p></div>`;
     renderRackplanSide();
@@ -3396,10 +3414,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (!f) { const P = rpState(), n = P.cases.reduce((k, c) => k + c.items.length, 0); side.innerHTML = `<h3>${P.cases.length} rack${P.cases.length > 1 ? "s" : ""} · ${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Ajoute un appareil avec la liste de chaque rack : il se met à la première place libre. Fais-le glisser à la souris ou au doigt pour changer d'U, ou touche-le pour le régler ici.</p>`; return; }
     const { c, it } = f, P = rpState(), linked = it.kind !== "free";
     const pos = []; for (let u = 1; u + it.h - 1 <= c.u; u++) if (rpFits(c, it, u)) pos.push(u);
+    const n = rpCols(c);
     side.innerHTML = `<h3>${esc(rpLabel(it))}</h3>
       ${linked ? `<p class="hint" style="margin:0 0 8px">${it.kind === "rack" ? "Appareil de Racks et I/O : son nom se change dans Réglages racks." : "Élément du synoptique."}</p>` : `<label>Nom<input type="text" data-rpf="label" value="${esc(it.label || "")}" placeholder="${esc(rpLabel({ free: it.free }))}"></label>`}
       <div class="row2"><label>Hauteur (U)<input type="number" min="1" max="20" data-rpf="h" value="${it.h}" inputmode="numeric"></label>
       <label>Position<select data-rpf="at">${pos.map((u) => `<option value="${u}"${u === it.at ? " selected" : ""}>U${u}${it.h > 1 ? "–" + (u + it.h - 1) : ""}</option>`).join("")}</select></label></div>
+      ${n > 1 ? `<label>Colonne<select data-rpf="col">${RP_COLN[n].map((t, k) => `<option value="${k}"${rpCol(it) === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>` : ""}
       ${P.cases.length > 1 ? `<label>Rack<select data-rpf="case">${P.cases.map((x) => `<option value="${x.id}"${x === c ? " selected" : ""}>${esc(x.nom || "Rack")}</option>`).join("")}</select></label>` : ""}
       <label>Notes<input type="text" data-rpf="notes" value="${esc(it.notes || "")}" placeholder="ex. face arrière, alim 16 A"></label>
       <p class="hint" id="rpMsg" style="min-height:1em;margin:0"></p>
@@ -3414,6 +3434,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (card && t.dataset.rpcf) {
         const c = P.cases.find((x) => x.id === card.dataset.rpc); if (!c) return;
         if (t.dataset.rpcf === "u") { const min = Math.max(1, ...c.items.map((i) => i.at + i.h - 1)); c.u = Math.max(min, Math.min(48, Math.round(Number(t.value)) || c.u)); }
+        else if (t.dataset.rpcf === "cols") {
+          const n = Math.max(1, Math.min(3, Number(t.value) || 1)), old = rpCols(c), keep = c.items.map((i) => [i, i.col, i.at]);
+          c.cols = n;
+          // Les éléments des colonnes retirées se rangent dans celles qui restent, s'il y a la place
+          for (const it of c.items.filter((i) => rpCol(i) >= n)) { it.col = n - 1; const pl = rpPlace(c, it, it.at); if (!pl) { c.cols = old; keep.forEach(([i, cl, a]) => { i.col = cl; i.at = a; }); t.value = old; const h = card.querySelector(".rpadd .hint"); h.textContent = "Pas assez de place : vide d'abord la colonne à retirer."; h.classList.add("warn"); return; } [it.col, it.at] = pl; }
+          if (n === 1) c.items.forEach((i) => { delete i.col; });
+        }
         else c[t.dataset.rpcf] = t.value.trim();
         commit(true); return;
       }
@@ -3421,7 +3448,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         const c = P.cases.find((x) => x.id === card.dataset.rpc), [kind, ref] = t.value.split("|"); if (!c || !kind) return;
         const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
         if (kind === "free") it.free = ref; else it.ref = ref;
-        it.at = rpNearest(c, it, 1);
+        const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; } else it.at = 0;
         if (!it.at) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = `Plus de place pour ${it.h} U : agrandis le rack ou libère des U.`; h.classList.add("warn"); return; }
         c.items.push(it); rpSel = it.id; commit(true); return;
       }
@@ -3429,13 +3456,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const { c, it } = f, msg = (m) => { const x = $("#rpMsg"); if (x) x.textContent = m; };
       if (k === "label" || k === "notes") it[k] = t.value.trim();
       else if (k === "at") it.at = Number(t.value) || it.at;
+      else if (k === "col") { const col = Number(t.value) || 0, at = rpNearest(c, it, it.at, col); if (!at) { t.value = rpCol(it); msg(`Pas ${it.h} U libres dans cette colonne.`); return; } it.col = col; it.at = at; }
       else if (k === "h") {
         const h = Math.max(1, Math.min(20, Math.round(Number(t.value)) || it.h)), old = it.h; it.h = h;
         const at = rpNearest(c, it, it.at); if (!at) { it.h = old; t.value = old; msg(`Pas ${h} U libres d'affilée dans ce rack.`); return; } it.at = at;
       } else if (k === "case") {
         const to = P.cases.find((x) => x.id === t.value); if (!to || to === c) return;
-        const at = rpNearest(to, { ...it, id: "_" }, 1); if (!at) { t.value = c.id; msg(`Pas ${it.h} U libres dans ${to.nom || "ce rack"}.`); return; }
-        c.items = c.items.filter((i) => i !== it); it.at = at; to.items.push(it);
+        const pl = rpPlace(to, { ...it, id: "_", col: 0 }, 1); if (!pl) { t.value = c.id; msg(`Pas ${it.h} U libres dans ${to.nom || "ce rack"}.`); return; }
+        c.items = c.items.filter((i) => i !== it); it.at = pl[1]; if (pl[0]) it.col = pl[0]; else delete it.col; to.items.push(it);
       }
       commit(true);
     });
@@ -3451,7 +3479,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (!g) { if (rpSel) { rpSel = null; renderRackplan(); } return; }
       const f = rpFind(g.dataset.rpi); if (!f) return;
       const p = rpPoint(svg, e);
-      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, moved: false };
+      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), moved: false };
       if (rpSel !== f.it.id) { rpSel = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -3460,13 +3488,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (!rpDrag) return;
       const { c, it, svg, g } = rpDrag, p = rpPoint(svg, e);
       const at = Math.max(1, Math.min(c.u - it.h + 1, Math.round((p.y - rpDrag.dy - RP_TOP) / RP_UH) + 1));
-      if (at !== rpDrag.at) { rpDrag.at = at; rpDrag.moved = true; g.setAttribute("transform", `translate(${RP_SIDE} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at)); }
+      const col = Math.max(0, Math.min(rpCols(c) - 1, Math.floor(p.x / (RP_CW + RP_GAP))));
+      if (at !== rpDrag.at || col !== rpDrag.col) { rpDrag.at = at; rpDrag.col = col; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at, col)); }
     });
     const end = () => {
-      if (!rpDrag) return; const { c, it, at, moved } = rpDrag; rpDrag = null;
+      if (!rpDrag) return; const { c, it, at, col, moved } = rpDrag; rpDrag = null;
       if (!moved) return;
-      const ok = rpFits(c, it, at) ? at : 0;
-      if (ok) it.at = ok;
+      if (rpFits(c, it, at, col)) { it.at = at; if (col) it.col = col; else delete it.col; }
       commit(true);
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
@@ -3482,10 +3510,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   // Liste des U d'un rack, pour l'Excel et l'impression (les U libres regroupés)
   function rpRows(c) {
-    const rows = [], items = [...c.items].sort((a, b) => a.at - b.at); let u = 1;
-    const gap = (to) => { if (to > u) rows.push([to - 1 > u ? `U${u}–${to - 1}` : `U${u}`, "libre", to - u, ""]); };
-    items.forEach((it) => { gap(it.at); rows.push([it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`, rpLabel(it), it.h, it.notes || ""]); u = it.at + it.h; });
-    gap(c.u + 1);
+    const rows = [], n = rpCols(c);
+    for (let col = 0; col < n; col++) {
+      const pre = n > 1 ? RP_COLN[n][col] + " · " : "", items = c.items.filter((i) => Math.min(rpCol(i), n - 1) === col).sort((a, b) => a.at - b.at); let u = 1;
+      const gap = (to) => { if (to > u) rows.push([pre + (to - 1 > u ? `U${u}–${to - 1}` : `U${u}`), "libre", to - u, ""]); };
+      items.forEach((it) => { gap(it.at); rows.push([pre + (it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`), rpLabel(it), it.h, it.notes || ""]); u = it.at + it.h; });
+      gap(c.u + 1);
+    }
     return rows;
   }
   const RP_HEAD = ["U", "Élément", "Hauteur (U)", "Notes"];
@@ -4011,7 +4042,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (r.ports) return r.ports.map((p) => (p.card && DMI[p.card] ? DMI[p.card].t.split(" (")[0] : `${p.nom} ${portN(p, "in", r)}/${portN(p, "out", r)}`)).join(" + ");
     return r.flat ? `${r.n} in / ${Number(r.out) || 0} out` : `${r.n} cartes in / ${Number(r.out) || 0} cartes out`;
   }
-  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
+  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
   function countMultis() { const m = new Map(); state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()]; }
   const MAN_CATS = ["Câblage", "Réseau", "HF", "Ears", "Console", "Rack", "Accessoires", "Divers"];
   // En cartes sur téléphone : chaque cellule reprend le titre de sa colonne
@@ -4437,10 +4468,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       [14, 34, 12, 30].forEach((w, i) => { rs.getColumn(i + 1).width = w; });
       for (const c of rpState().cases) {
         rs.addRow([]); const r0 = rs.rowCount;
-        rs.addRow([`${c.nom || "Rack"} · ${c.u} U${c.lieu ? " · " + c.lieu : ""}`]).font = { bold: true, size: 12 };
+        rs.addRow([`${c.nom || "Rack"} · ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U${c.lieu ? " · " + c.lieu : ""}`]).font = { bold: true, size: 12 };
         styleHead(rs.addRow(RP_HEAD)); rpRows(c).forEach((r) => { const row = rs.addRow(r); if (r[1] === "libre") row.font = { color: { argb: "FF9AA3AD" } }; });
         const png = await rpPng(c);
-        if (png) { const id = wb.addImage({ base64: png.data, extension: "png" }), k = Math.min(1, 420 / png.w); rs.addImage(id, { tl: { col: 5, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20); while (rs.rowCount < r0 + need) rs.addRow([]); }
+        if (png) { const id = wb.addImage({ base64: png.data, extension: "png" }), k = Math.min(1, (rpCols(c) > 1 ? 720 : 420) / png.w); rs.addImage(id, { tl: { col: 5, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20); while (rs.rowCount < r0 + need) rs.addRow([]); }
       }
       page(rs, false);
     }
