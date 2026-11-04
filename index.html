@@ -457,8 +457,10 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .devpick:hover { outline: 2px solid var(--accent); }
 .devcell .xdel { margin-left: 2px; }
 .consm { display: flex; flex-direction: column; gap: 6px; }
-.consm label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.consm input { flex: 1 1 auto; max-width: 280px; font-weight: 400; }
+.consrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--line, #e5e7eb); }
+.consrow b { min-width: 170px; }
+.consrow input { flex: 0 1 260px; min-width: 160px; }
+.consrow .hint { margin: 0; flex: 1 1 auto; }
 .tocell { display: flex; gap: 4px; align-items: center; }
 table.master .tocell > select { flex: 1 1 auto; min-width: 130px; width: auto; }
 .toin { display: flex; gap: 4px; flex: 0 1 auto; }
@@ -992,8 +994,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       <h2>Stage racks et I/O</h2>
       <p class="hint">Stage racks, mais aussi DD4MR, Orange Box ou tout équipement de la loop : choisis le format « Ports nommés » pour décrire ses ports (MADI 1, Dante, DMI…) avec leur nombre de canaux. Rattache chaque équipement à sa console. Si les consoles (FOH, monitor, broadcast ou autre) ne partagent pas les stages, le master affiche une colonne de stage rack par console ; « Partagé » sert à toutes.</p>
       <div class="tbl"><table id="racksTbl" class="cards"></table></div>
+      <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">Stage rack (cartes de 8)</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="osend">Envoi Optocore d'une console DiGiCo (Opto Send)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
       <div id="consModels"></div>
-      <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">Stage rack (cartes de 8)</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
     </div>
   </div>
   <div class="panel" style="margin-top:18px">
@@ -1822,7 +1824,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const consLabel = (k) => (STD_CONS.find((x) => x[0] === k) || [, k])[1];
   function consoleKeys() {
     const rank = (c) => { const i = STD_CONS.findIndex((x) => x[0] === c); return i < 0 ? 9 : i; };
-    return [...new Set(state.racks.map((r) => r.console).filter((c) => c && c !== "Partagé"))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, "fr"));
+    const C = (state.syn && state.syn.cons) || {}, added = Object.keys(C).filter((k) => k !== "ALL" && C[k] && C[k].added);
+    return [...new Set([...state.racks.map((r) => r.console), ...added].filter((c) => c && c !== "Partagé"))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, "fr"));
   }
   function srCols() {
     const ks = consoleKeys();
@@ -2821,6 +2824,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // ---------- Visuels d'appareils ----------
   // Pictogrammes dessinés pour l'appli (pas de photos de fabricant) ; une photo perso peut les remplacer appareil par appareil
   const CONS_MODELS = ["DiGiCo SD5", "DiGiCo SD7", "DiGiCo SD7 Quantum", "DiGiCo SD10", "DiGiCo SD12", "DiGiCo Quantum 225", "DiGiCo Quantum 338", "DiGiCo Quantum 5", "DiGiCo Quantum 7", "DiGiCo Quantum 852", "Yamaha Rivage PM10", "Yamaha Rivage PM7", "Yamaha Rivage PM5", "Yamaha Rivage PM3", "Yamaha CL5", "Avid S6L-24D", "Avid S6L-32D", "Avid S6L-48D", "Midas Heritage-D HD96-24", "Midas Pro X", "Allen & Heath dLive S7000", "Allen & Heath dLive S5000", "SSL L550 Plus", "SSL L650", "Lawo mc²56"];
+  // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
+  const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   function devType(n) {
     if (!n) return "box";
     if (n.kind === "console") return "console";
@@ -2828,10 +2833,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
     if (r.model === "orange") return "orange"; if (r.model === "spectera") return "spectera"; if (r.model === "m8") return "m8";
     if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
-    return r.ports ? "io" : r.flat ? "num" : "sd";
+    if (isOsend(r)) return "osend";
+    if (r.ports) return "io";
+    // Le dessin du DL431 seulement pour un DL431 (ou un Midas) ; les autres boîtiers à entrées numérotées ont une façade neutre
+    if (r.flat) return /dl\s*-?\s*\d{3}|midas/i.test((r.nom || "") + " " + (r.model || "")) ? "num" : "numg";
+    return "sd";
   }
   // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm) ; la marque est écrite en texte (pas de logo copié)
-  const DEV_H = { sd: 445, num: 267, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  const DEV_H = { sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -2957,6 +2966,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         for (let b = 0; b < 3; b++) for (let f = 0; f < 12; f++) { const x = 22 + b * 152 + f * 11.5; s += R(x + 3, 98, 2, 92, "#0b0d0f") + R(x, 120 + ((f * 13 + b * 7) % 50), 8, 12, "#e5e7eb", 1.5) + led(x + 4, 92, f % 4 ? "#3f4549" : "#facc15", 2); }
         return s;
       }
+      // Boîtier de scène générique à entrées numérotées : 2 U, sans marque, 16 XLR femelles et 8 mâles
+      case "numg": {
+        let s = ears() + face("#2b3035") + R(24, 14, 54, 20, "#0b0d0f", 2) + R(29, 19, 30, 3, "#38bdf8") + led(32, 46, "#22c55e", 2) + led(42, 46, "#3f4549", 2) + led(52, 46, "#3f4549", 2);
+        s += R(22, 62, 60, 14, "#1d2125", 2) + T(52, 72, "STAGE BOX", 6, "#9aa3ab", 700, 0.6, "middle");
+        for (let i = 0; i < 16; i++) s += xlrF(110 + (i % 8) * 31, 26 + Math.floor(i / 8) * 38, 1.05);
+        for (let i = 0; i < 8; i++) s += xlrM(370 + (i % 4) * 25, 26 + Math.floor(i / 4) * 38, 0.95);
+        return s + R(358, 8, 1.2, 72, "#4b5258");
+      }
+      // Envoi Optocore d'une console (Opto Send) : pas de matériel, un cadre pointillé avec la fibre
+      case "osend": {
+        let s = R(2, 2, 479, 40.45, "#fff7ed", 6, ' stroke="#e0700b" stroke-width="2" stroke-dasharray="7 5"');
+        s += C(34, 22.2, 12, "none", ' stroke="#e0700b" stroke-width="3"') + C(34, 22.2, 4, "#e0700b") + R(46, 21, 30, 2.4, "#e0700b") + "<path d=\"M74 16 L84 22.2 L74 28.4 Z\" fill=\"#e0700b\"/>";
+        s += T(100, 20, "ENVOI CONSOLE SUR LA LOOP", 11, "#9a3412", 800, 0.8) + T(100, 34, "logiciel de la console, sans boîtier", 9, "#b45309", 400);
+        return s;
+      }
       // Interface 1 U générique
       default: {
         let s = ears() + face("#1c1f22") + [0, 1, 2, 3].map((i) => bnc(60 + i * 26, 22, 8)).join("") + R(200, 12, 80, 20, "#0b0d0f", 2) + R(206, 18, 40, 3, "#38bdf8");
@@ -3013,7 +3037,22 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       </tr>${ports}`;
     }).join("")}</tbody>`;
     { const ks = consoleKeys(), S = synState(), list = ks.length ? ks : ["ALL"];
-      $("#consModels").innerHTML = `<h3 style="margin:16px 0 6px">Consoles</h3><div class="consm">${list.map((k) => `<label>${devImg({ kind: "console", cons: k, id: "c:" + k }, 66, 30)} ${esc(k === "ALL" ? "Console" : "Console " + consLabel(k))}<input type="text" data-cmodel="${esc(k)}" value="${esc((S.cons[k] || {}).model || "")}" placeholder="Modèle (ex. DiGiCo SD7)" list="dlConsModel" autocomplete="off"></label>`).join("")}</div><datalist id="dlConsModel">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>`; }
+      const nR = (k) => state.racks.filter((r) => r.console === k).length, nSh = state.racks.filter((r) => r.console === "Partagé").length;
+      const CHOICES = [["FOH", "FOH"], ["MON", "Monitor"], ["BC", "Broadcast"], ["__autre", "Autre (nom libre)…"]];
+      const free = CHOICES.filter(([v]) => v === "__autre" || !ks.includes(v));
+      const row = (k) => {
+        const own = k === "ALL" ? state.racks.length : nR(k), what = k === "ALL" ? `${own} appareil${own > 1 ? "s" : ""}` : `${own ? `${own} appareil${own > 1 ? "s" : ""} à elle` : "aucun appareil à elle"}${nSh ? ` + ${nSh} partagé${nSh > 1 ? "s" : ""}` : ""}`;
+        return `<div class="consrow">${devImg({ kind: "console", cons: k, id: "c:" + k }, 66, 30)}
+          <b>${esc(k === "ALL" ? "Console" : "Console " + consLabel(k))}</b>
+          <input type="text" data-cmodel="${esc(k)}" value="${esc((S.cons[k] || {}).model || "")}" placeholder="Modèle (ex. DiGiCo SD7)" list="dlConsModel" autocomplete="off" aria-label="Modèle de la console">
+          <span class="hint">${what}</span>
+          ${k === "ALL" ? "" : `<button class="btn small danger xdel" type="button" data-cdel="${esc(k)}" title="Retirer cette console" aria-label="Retirer la console ${esc(consLabel(k))}">×</button>`}</div>`;
+      };
+      $("#consModels").innerHTML = `<h3 style="margin:18px 0 4px">Consoles</h3>
+        <p class="hint" style="margin:0 0 8px">Chaque console a sa colonne de stage rack dans le master. Dans le tableau au-dessus, la colonne « Console » dit à qui est chaque appareil ; « Partagé » sert à toutes les consoles.</p>
+        <div class="consm">${list.map(row).join("")}</div>
+        <div class="actions" style="margin-top:8px"><select id="consAddSel" aria-label="Console à ajouter">${free.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select><input type="text" id="consAddName" placeholder="Nom (ex. Broadcast 2)" aria-label="Nom de la console" ${free[0][0] === "__autre" ? "" : "hidden"}><button class="btn small" type="button" data-cadd>+ Ajouter une console</button></div>
+        <datalist id="dlConsModel">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>`; }
     const usedBox = (b) => state.lignes.some((l) => l.box && l.box.b === b.id);
     $("#boxesTbl").innerHTML = `<thead><tr><th>Multi</th><th>N°</th><th>Nom</th><th>Côté</th><th>Entrées</th><th></th></tr></thead><tbody>${state.boites.map((b) => `
       <tr data-bid="${b.id}">
@@ -3051,7 +3090,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   let armedSetup = null;
   function consoleSelect(r) {
-    const std = [["FOH", "FOH"], ["MON", "Monitor"], ["BC", "Broadcast"], ["Partagé", "Partagé (toutes)"]], custom = r.console && !std.some(([v]) => v === r.console);
+    const std = [["FOH", "FOH"], ["MON", "Monitor"], ["BC", "Broadcast"], ...consoleKeys().filter((k) => !STD_CONS.some((x) => x[0] === k) && k !== r.console).map((k) => [k, k]), ["Partagé", "Partagé (toutes)"]], custom = r.console && !std.some(([v]) => v === r.console);
     return `<select data-rf="console" aria-label="Console">${std.map(([v, t]) => `<option value="${v}"${r.console === v ? " selected" : ""}>${t}</option>`).join("")}<option value="__autre"${custom ? " selected" : ""}>Autre…</option></select>${custom ? `<input type="text" data-rf="consname" value="${esc(r.console)}" aria-label="Nom de la console" placeholder="Nom de la console" style="margin-top:4px">` : ""}`;
   }
   // Change la console d'un rack et range les entrées des sources sous la bonne colonne du master
@@ -3069,6 +3108,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function onSetupChange(e) {
     const t = e.target;
     if (t.dataset.rphoto !== undefined) { const r = rackById(t.closest("tr[data-rid]").dataset.rid); readPhoto(t.files && t.files[0]).then((d) => { if (d && r) { r.photo = d; commit(true); } else if (!d) notice("Image illisible : choisis une photo JPEG ou PNG.", true); }); return; }
+    if (t.id === "consAddName") return;
+    if (t.id === "consAddSel") { $("#consAddName").hidden = t.value !== "__autre"; if (t.value === "__autre") $("#consAddName").focus(); return; }
     if (t.dataset.cmodel !== undefined) { const S = synState(), k = t.dataset.cmodel; S.cons[k] = { ...(S.cons[k] || {}), model: t.value.trim() }; commit(true); return; }
     const rr = t.closest("tr[data-rid]"), br = t.closest("tr[data-bid]");
     if (rr) {
@@ -3130,6 +3171,25 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     commit(true);
   }
   function onSetupClick(e) {
+    if (e.target.closest("[data-cadd]")) {
+      const sel = $("#consAddSel"), v = sel ? sel.value : "", k = v === "__autre" ? ($("#consAddName").value || "").trim() : v;
+      if (!k) { notice("Donne un nom à la console.", true); $("#consAddName").focus(); return; }
+      if (k === "Partagé" || k === "ALL" || consoleKeys().includes(k)) { notice(`La console ${esc(consLabel(k))} existe déjà.`, true); return; }
+      const S = synState(), first = !consoleKeys().length;
+      // La toute première console nommée reprend le modèle déjà saisi pour « Console »
+      S.cons[k] = { ...(first && S.cons.ALL ? S.cons.ALL : {}), ...(S.cons[k] || {}), added: true };
+      if (first) delete S.cons.ALL;
+      rebuildSr(); commit(true); notice(`Console ${esc(consLabel(k))} ajoutée. Mets-lui ses appareils dans la colonne « Console » du tableau, ou laisse-les « Partagé ».`);
+      return;
+    }
+    const cd = e.target.closest("[data-cdel]");
+    if (cd) {
+      const k = cd.dataset.cdel, n = state.racks.filter((r) => r.console === k).length;
+      if (n) { notice(`Impossible : ${n} appareil${n > 1 ? "s sont" : " est"} sur la console ${esc(consLabel(k))}. Passe-le${n > 1 ? "s" : ""} sur une autre console ou en « Partagé » d'abord.`, true); return; }
+      const S = synState(), id = "c:" + k; delete S.cons[k]; delete S.pos[id];
+      S.links = S.links.filter((l) => l.a.n !== id && l.b.n !== id);
+      rebuildSr(); commit(true); return;
+    }
     const pd = e.target.closest("[data-rphotodel]");
     if (pd) { const r = rackById(pd.closest("tr[data-rid]").dataset.rid); if (r) { delete r.photo; commit(true); } return; }
     const ap = e.target.closest("button[data-addport]"), dp = e.target.closest("button[data-delport]");
@@ -3359,7 +3419,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (it.kind === "extra") { const x = rpExtra(it.ref); return x ? x.nom || "Élément" : it.label || "Élément supprimé"; }
     return it.label || (RP_FREE.find((f) => f[0] === it.free) || RP_FREE[5])[1];
   }
-  function rpDefaultU(kind, ref) { if (kind !== "rack") return 1; const t = devType({ kind: "rack", id: ref }); return t === "sd" ? 10 : t === "num" ? 6 : t === "orange" ? 2 : 1; }
+  function rpDefaultU(kind, ref) { if (kind !== "rack") return 1; const t = devType({ kind: "rack", id: ref }); return t === "sd" ? 10 : t === "num" ? 6 : t === "orange" || t === "numg" ? 2 : 1; }
   // Rack simple, double ou triple : chaque colonne a ses U
   const rpCol = (it) => it.col || 0, rpCols = (c) => Math.max(1, Math.min(3, c.cols || 1));
   const RP_COLN = { 2: ["Gauche", "Droite"], 3: ["Gauche", "Milieu", "Droite"] };
@@ -3373,7 +3433,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function rpAddOptions() {
     const placed = rpPlaced();
     let h = `<option value="">Ajouter…</option>`;
-    const rs = state.racks.filter((r) => !placed.has("rack:" + r.id));
+    const rs = state.racks.filter((r) => !placed.has("rack:" + r.id) && !isOsend(r));
     if (rs.length) h += `<optgroup label="Racks et I/O">${rs.map((r) => `<option value="rack|${r.id}">${esc(rackTitle(r))} · ${rpDefaultU("rack", r.id)} U</option>`).join("")}</optgroup>`;
     const xs = synState().nodes.filter((x) => !placed.has("extra:" + x.id));
     if (xs.length) h += `<optgroup label="Synoptique">${xs.map((x) => `<option value="extra|${x.id}">${esc(x.nom || "Élément")}</option>`).join("")}</optgroup>`;
@@ -3627,7 +3687,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function consLoop(k) {
     const c = synState().cons[k];
     if (c && c.loopId !== undefined) return loopById(c.loopId);
-    const r = state.racks.find((x) => (k === "ALL" || x.console === k) && rackLoop(x));
+    const r = state.racks.find((x) => (k === "ALL" || x.console === k) && rackLoop(x)) || state.racks.find((x) => x.console === "Partagé" && rackLoop(x));
     return r ? rackLoop(r) : null;
   }
   const portKey = (s) => String(s || "").trim().toLowerCase();
@@ -4884,6 +4944,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const P = {
         sd: { nom: "SD Rack", flat: false, n: 6, out: 2 },
         num: { nom: "DL431", flat: true, n: 24, out: 8, loopId: "" },
+        osend: { nom: "Opto Send", model: "osend", flat: true, n: 16, out: 0 },
         dd4mr: { nom: "DD4MR", flat: false, ports: [{ nom: "MADI 1", in: 64, out: 64 }, { nom: "MADI 2", in: 64, out: 64 }] },
         orange: { nom: "Orange Box", model: "orange", flat: false, ports: [{ nom: "Optocore (loop)", card: "OPTO", in: 0, out: 0 }, { nom: "MADI", card: "MADI-B", in: 64, out: 64 }] },
         spectera: { nom: "Spectera", model: "spectera", flat: false, loopId: "", ports: [{ nom: "DANTE", card: "SPX_DANTE", in: 32, out: 32 }] },
@@ -4892,6 +4953,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }[$("#addRackType").value];
       const R = JSON.parse(JSON.stringify(P));
       // Une base Spectera n'est pas sur la loop : pas d'ID, un nom numéroté
+      // Un Opto Send vit sur la loop (il y prend des canaux) et suit l'horloge de la loop
+      if (R.model === "osend") { const L = loops()[0]; if (L) { R.loopId = L.id; R.clk = { src: "loop", from: "" }; } }
       if (R.model === "spectera") { num = ""; R.nom = `Spectera ${state.racks.filter((r) => r.model === "spectera").length + 1}`; }
       state.racks.push({ id: nid(), num, console: "Partagé", n: 0, out: 0, ...R });
       commit(true);
@@ -5472,6 +5535,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     notice(`${esc(rpLabel(it))} rangé dans ${esc(c.nom || "le rack")}, U${it.at}.`);
   }
   function rpPutItem(kind, ref) {
+    if (kind === "rack" && isOsend(rackById(ref))) return null;
     const P = rpState(), c = P.cases.find((x) => x.items.some((i) => i.kind === kind && i.ref === ref));
     if (c) return { t: `Voir dans le plan « ${c.nom || "Rack"} »`, fn: () => { rpSel = c.items.find((i) => i.kind === kind && i.ref === ref).id; setView("rackplan"); } };
     return { t: "Ranger dans un plan de rack", sub: () => [...P.cases.map((x) => ({ t: x.nom || "Rack", fn: () => rpPut(x, kind, ref) })), "-", { t: "+ Nouveau flight rack", fn: () => { const x = { id: nid(), nom: "Rack " + (P.cases.length + 1), u: 12, lieu: "", items: [] }; P.cases.push(x); rpPut(x, kind, ref); } }] };
