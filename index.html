@@ -277,6 +277,11 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
 table.master tr.flash td { animation: flash 1.6s ease-out; }
 @keyframes flash { from { background: var(--accent); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { table.master tr.flash td { animation: none; background: var(--accent-soft); } }
+.pmix { display: flex; align-items: center; gap: 6px; }
+.pmix input { flex: 1 1 auto; min-width: 0; }
+.pmix.pr { padding-left: 10px; }
+#outTbl tr.pr2 :is([data-f="dest"], [data-f="type"], [data-f="tx"], [data-f="rx"]) { color: var(--muted); }
+.pmix .lr { font-family: var(--font-mono); font-size: 11px; padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--ink); }
 .pair { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .col-src { min-width: 150px; } .col-mus { min-width: 100px; } .col-mic { min-width: 120px; } .col-pied { min-width: 130px; }
 .col-type { min-width: 124px; } .col-pad { width: 84px; min-width: 84px; } .col-48 { width: 44px; text-align: center; } .col-box { min-width: 160px; } .col-sr { min-width: 130px; } .col-notes { min-width: 140px; } .col-prov { min-width: 130px; } .col-acc { min-width: 130px; }
@@ -943,8 +948,25 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <div class="toolbar">
     <button id="addOut" class="btn" type="button">+ Sortie</button>
     <button id="addOutStereo" class="btn" type="button">+ Sortie stéréo</button>
-    <span class="hint">Ears HF ou filaires, wedges, subs, sides, envois FOH… Les listes ne proposent que les sorties et les liaisons libres.</span>
+    <span class="hint">Ears HF ou filaires, wedges, subs, sides, envois FOH… Les listes ne proposent que les sorties et les liaisons libres. Clic sur le N° pour sélectionner (Maj+clic : une plage), puis « Patcher dans l'ordre ».</span>
   </div>
+  <div class="selbar" id="outSelBar" hidden>
+    <strong id="outSelCount"></strong>
+    <button id="outSelPatch" class="btn small primary" type="button">Patcher dans l'ordre…</button>
+    <span class="selmus"><select id="outSelField" aria-label="Colonne à remplir pour la sélection"><option value="dest">Destinataire</option><option value="type">Type</option><option value="tx">Émetteur</option><option value="rx">Récepteur / enceinte</option><option value="notes">Notes</option></select><input type="text" id="outSelVal" placeholder="Destinataire (vide = effacer)" aria-label="Valeur pour la sélection" autocomplete="off" data-suggest="dlMus"><select id="outSelType" aria-label="Type pour la sélection" hidden><option>Ear HF</option><option>Ear filaire</option><option>Wedge</option><option>Sub</option><option>Side</option><option>Envoi FOH</option><option>Autre</option></select><button id="outSelGo" class="btn small" type="button">Affecter</button></span>
+    <button id="outSelUnpatch" class="btn small" type="button" title="Libère le départ (stage rack) et l'arrivée (boîtier, appareil) des sorties sélectionnées">Dépatcher</button>
+    <button id="outSelClear" class="btn small" type="button">Désélectionner</button>
+  </div>
+  <form id="outRangeForm" class="newbox" hidden>
+    <strong>Patcher les sorties dans l'ordre</strong>
+    <span class="field"><span>Sorties</span><b id="orSelTxt" style="padding:5px 0"></b></span>
+    <label class="field"><span>Vers</span><select id="orTarget"></select></label>
+    <label class="field"><span>À partir de</span><select id="orStart" class="mono"></select></label>
+    <label class="field" style="flex-direction:row;gap:6px;align-items:center"><input id="orSkip" type="checkbox" checked><span style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)">Sauter les occupées</span></label>
+    <button class="btn primary" type="submit">Patcher</button>
+    <button class="btn" type="button" id="orCancel">Annuler</button>
+    <span class="hint" id="orPreview" style="width:100%"></span>
+  </form>
   <div class="table-wrap"><table class="master" id="outTbl"></table></div>
 </section>
 
@@ -1967,6 +1989,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const one = n === 1 ? state.lignes.find((l) => selection.has(l.id)) : null;
     $("#selPanne").hidden = !(one && one.box);
     if (n) $("#selCount").textContent = `${n} ligne${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""} (N° ${compactNums(selectedLines().map(canal))})`;
+    { const last = n ? afterPair(state.lignes, Math.max(...selectedLines().map((l) => state.lignes.indexOf(l))) + 1) : 0, mid = last && last < state.lignes.length;
+      $("#addLine").textContent = mid ? `+ Source après le N° ${last}` : "+ Source";
+      $("#addStereo").innerHTML = mid ? `+ Stéréo après le N° ${last}` : `+ <span class="lg">Source </span>stéréo`; }
     $("#rangeBtn").innerHTML = n ? `<span class="lg">Affecter la sélection </span><span class="sm">Affecter </span>(${n})` : `<span class="lg">Affecter une plage</span><span class="sm">Plage…</span>`;
   }
   function onRowSelect(e) {
@@ -2470,9 +2495,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function outRow(o, idx, occ, pre = "", extraCls) {
     const outs = state.sorties;
     const partner = o.pair ? outs.find((x) => x.id === o.pair) : null;
-    return `<tr data-id="${o.id}" class="${openRows.has(o.id) ? "open" : ""}${extraCls ? " " + extraCls : ""}">
+    const base = partner && outPairBase(o, partner), firstOf = partner && outs.indexOf(partner) > outs.indexOf(o);
+    const mixCell = base === null || base === undefined || !partner
+      ? `<input type="text" data-f="mix" value="${esc(o.mix)}" aria-label="Mix">`
+      : firstOf ? `<span class="pmix"><input type="text" data-f="mixpair" value="${esc(base)}" aria-label="Mix stéréo" title="Paire stéréo : le nom s'écrit une fois (${esc(o.mix)} / ${esc(partner.mix)})"><b class="lr">${esc(((o.mix || "").match(LR) || [, "L"])[1].toUpperCase())}</b></span>`
+      : `<span class="pmix pr" title="${esc(o.mix)} : même nom, destinataire, type, émetteur et récepteur que la ligne au-dessus"><b class="lr">${esc(((o.mix || "").match(LR) || [, "R"])[1].toUpperCase())}</b></span>`;
+    return `<tr data-id="${o.id}" class="${openRows.has(o.id) ? "open" : ""}${partner && base != null && !firstOf ? " pr2" : ""}${extraCls ? " " + extraCls : ""}">
         <td class="ch" data-l="N°">${idx + 1}${partner ? ` <span class="pair" title="Paire stéréo avec ${esc(partner.mix)}">st</span>` : ""}${moreBtn(o.id)}</td>${pre}
-        <td class="src" data-l="Mix"><input type="text" data-f="mix" value="${esc(o.mix)}" aria-label="Mix"></td>
+        <td class="src" data-l="Mix">${mixCell}</td>
         <td data-l="Destinataire"><input type="text" data-f="dest" value="${esc(o.dest)}" aria-label="Destinataire" autocomplete="off" data-suggest="dlMus"></td>
         <td data-l="Type"><select data-f="type" aria-label="Type de sortie">${OUT_TYPES.map((t) => `<option${o.type === t ? " selected" : ""}>${t}</option>`).join("")}</select></td>
         <td data-l="Départ (from)"><select class="addr${o.out ? "" : " empty"}" data-f="out" aria-label="Départ : sortie d'un rack ou d'un appareil">${outOptions(o, occ)}</select></td>
@@ -2498,6 +2528,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const keep = focusInfo(document.activeElement);
     tbl.innerHTML = h;
     if (keep) focusField(keep.id, keep.sel, false, keep.rk);
+    paintOutSel();
     const uniq = (f) => [...new Set(outs.map((o) => o[f]).filter(Boolean))].sort();
     let dl = document.getElementById("dlsOut");
     if (!dl) { dl = document.createElement("div"); dl.id = "dlsOut"; dl.hidden = true; document.body.appendChild(dl); }
@@ -2519,6 +2550,129 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (nx) { const na = { r: o.out.r, c: nx.c, i: nx.i }; if (!occ.out.get(kRack(na))) p.out = na; }
     }
   }
+  // Paire stéréo : « IEM DRUMS L » + « IEM DRUMS R » s'écrit une fois, « IEM DRUMS »
+  const LR = /\s*[-_ ]?\s*\b(L|R|G|D)$/i;
+  function outPairBase(a, b) {
+    const ma = (a.mix || "").match(LR), mb = (b.mix || "").match(LR);
+    if (!ma || !mb) return a.mix === b.mix ? a.mix || "" : null;
+    const ba = a.mix.slice(0, ma.index), bb = b.mix.slice(0, mb.index);
+    return ba === bb ? ba : null;
+  }
+  const PAIR_LINK = ["dest", "type", "tx", "rx"];
+  // Sélection de sorties, comme au master : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter
+  const outSel = new Set(); let outAnchor = null;
+  const selectedOuts = () => (state.sorties || []).filter((o) => outSel.has(o.id));
+  function paintOutSel() {
+    const S = state.sorties || [];
+    for (const id of [...outSel]) if (!S.some((o) => o.id === id)) outSel.delete(id);
+    document.querySelectorAll("#outTbl tr[data-id]").forEach((tr) => tr.classList.toggle("sel", outSel.has(tr.dataset.id)));
+    const n = outSel.size, ss = selectedOuts(), last = n ? afterPair(S, Math.max(...ss.map((o) => S.indexOf(o))) + 1) : 0;
+    $("#outSelBar").hidden = !n; syncNavH();
+    if (n) $("#outSelCount").textContent = `${n} sortie${n > 1 ? "s" : ""} sélectionnée${n > 1 ? "s" : ""} (N° ${compactNums(ss.map((o) => S.indexOf(o) + 1))})`;
+    $("#addOut").textContent = last && last < S.length ? `+ Sortie après le N° ${last}` : "+ Sortie";
+    $("#addOutStereo").textContent = last && last < S.length ? `+ Stéréo après le N° ${last}` : "+ Sortie stéréo";
+    if (!n) $("#outRangeForm").hidden = true; else if (!$("#outRangeForm").hidden) fillOutStart();
+  }
+  function onOutSelect(e) {
+    const td = e.target.closest("#outTbl td.ch"); if (!td) return false;
+    const id = td.closest("tr").dataset.id, ids = [...$("#outTbl").querySelectorAll("tr[data-id]")].map((tr) => tr.dataset.id);
+    if (e.shiftKey && outAnchor && ids.includes(outAnchor)) {
+      const a = ids.indexOf(outAnchor), z = ids.indexOf(id);
+      if (!(e.metaKey || e.ctrlKey)) outSel.clear();
+      ids.slice(Math.min(a, z), Math.max(a, z) + 1).forEach((x) => outSel.add(x));
+    } else if (e.metaKey || e.ctrlKey || coarse) { outSel.has(id) ? outSel.delete(id) : outSel.add(id); outAnchor = id; }
+    else { const only = outSel.size === 1 && outSel.has(id); outSel.clear(); if (!only) outSel.add(id); outAnchor = id; }
+    paintOutSel();
+    return true;
+  }
+  // Position d'insertion : juste après la sélection, sans couper une paire stéréo
+  function afterPair(list, at) { return at > 0 && at < list.length && list[at - 1].pair && list[at].id === list[at - 1].pair ? at + 1 : at; }
+  const outInsertAt = () => { const ss = selectedOuts(), S = state.sorties; return ss.length ? afterPair(S, Math.max(...ss.map((o) => S.indexOf(o))) + 1) : S.length; };
+  function addOuts(stereo) {
+    const S = state.sorties, at = outInsertAt(), mid = at < S.length;
+    let add;
+    if (stereo) { const a = newOut("SORTIE L"), z = newOut("SORTIE R"); a.pair = z.id; z.pair = a.id; add = [a, z]; } else add = [newOut("NOUVELLE SORTIE")];
+    S.splice(at, 0, ...add);
+    outSel.clear(); if (mid) { outSel.add(add[add.length - 1].id); outAnchor = add[add.length - 1].id; }
+    commit(true); focusRow(add[0].id, stereo ? "mixpair" : "mix");
+  }
+  // Patch dans l'ordre : les sorties sélectionnées prennent à la suite les sorties d'un stage rack (départ) ou les liaisons d'un boîtier (arrivée)
+  function outTargets() {
+    const t = [];
+    state.racks.forEach((r) => { if (rackOutputs(r).length) t.push({ v: "o:" + r.id, label: `${rackTitle(r)} (sorties)`, group: "Départ : sorties de stage rack" }); });
+    state.boites.forEach((b) => t.push({ v: "b:" + b.id, label: boxTitle(b), group: "Arrivée : liaisons de boîtier" }));
+    return t;
+  }
+  function outTargetSlots(v) {
+    if (v.startsWith("b:")) { const b = boxById(v.slice(2)); if (!b) return []; return Array.from({ length: boxSize(b) }, (_, k) => ({ key: `${b.id}:${k + 1}`, a: { b: b.id, i: k + 1 }, label: `${boxName(b)} → ${k + 1}` })); }
+    const r = rackById(v.slice(2)); if (!r) return [];
+    return rackOutputs(r).map(({ c, i }) => ({ key: `${r.id}:${c}:${i}`, a: { r: r.id, c, i }, label: `${rackTag(r)} out ${rackShort(r, c, i)}` }));
+  }
+  const outSlotWho = (v, occ, key) => (v.startsWith("b:") ? occ.box.get(key) : occ.out.get(key));
+  function openOutRange() {
+    const ss = selectedOuts(); if (!ss.length) return;
+    const groups = {}; outTargets().forEach((t) => { (groups[t.group] = groups[t.group] || []).push(t); });
+    if (!Object.keys(groups).length) { notice("Aucun stage rack avec des sorties ni boîtier : règle d'abord les sorties de tes racks (Réglages racks).", true); return; }
+    const keep = $("#orTarget").value;
+    $("#orTarget").innerHTML = Object.entries(groups).map(([g, ts]) => `<optgroup label="${esc(g)}">${ts.map((t) => `<option value="${esc(t.v)}">${esc(t.label)}</option>`).join("")}</optgroup>`).join("");
+    if (keep && [...$("#orTarget").options].some((o) => o.value === keep)) $("#orTarget").value = keep;
+    $("#outRangeForm").hidden = false; fillOutStart(); $("#outRangeForm").scrollIntoView({ block: "nearest" }); $("#orTarget").focus();
+  }
+  function fillOutStart() {
+    const v = $("#orTarget").value, occ = occupancy(), sel = new Set(selectedOuts()), S = state.sorties;
+    $("#orSelTxt").textContent = `${sel.size} (N° ${compactNums([...sel].map((o) => S.indexOf(o) + 1))})`;
+    $("#orStart").innerHTML = outTargetSlots(v).map((x) => { const who = outSlotWho(v, occ, x.key), busy = who && !sel.has(who); return `<option value="${esc(x.key)}">${esc(x.label)}${busy ? " (" + esc(label(who)) + ")" : ""}</option>`; }).join("");
+    const firstFree = [...$("#orStart").options].find((o) => !o.textContent.includes("(")); if (firstFree) $("#orStart").value = firstFree.value;
+    previewOutRange();
+  }
+  function planOutRange() {
+    const v = $("#orTarget").value, outs = selectedOuts(), skip = $("#orSkip").checked, ins = outTargetSlots(v), occ = occupancy(), sel = new Set(outs);
+    const plan = []; let k = Math.max(0, ins.findIndex((x) => x.key === $("#orStart").value)), blocked = null;
+    for (const o of outs) {
+      while (k < ins.length) { const who = outSlotWho(v, occ, ins[k].key); if (who && !sel.has(who)) { if (skip) { k++; continue; } blocked = { at: ins[k], who }; } break; }
+      if (blocked || k >= ins.length) break;
+      plan.push({ o, x: ins[k] }); k++;
+    }
+    return { v, outs, plan, blocked };
+  }
+  function previewOutRange() {
+    const { outs, plan, blocked } = planOutRange(), f = plan[0], z = plan[plan.length - 1];
+    let t = plan.length ? `${plan.length} sortie${plan.length > 1 ? "s" : ""} : ${f.o.mix} sur ${f.x.label}${plan.length > 1 ? ` … ${z.o.mix} sur ${z.x.label}` : ""}.` : "Rien de libre à partir de là.";
+    if (blocked) t += ` Arrêt sur ${blocked.at.label}, occupée par ${label(blocked.who)}.`;
+    else if (plan.length < outs.length) t += ` ${outs.length - plan.length} sans place.`;
+    $("#orPreview").textContent = t;
+  }
+  function applyOutRange(e) {
+    e.preventDefault();
+    const { v, outs, plan, blocked } = planOutRange(); if (!plan.length) { previewOutRange(); return; }
+    const isBox = v.startsWith("b:"), addr = (o) => (isBox ? (o.box ? boxAddr(o.box) : o.to ? toAddr(o) : "") : outAddr(o.out));
+    const before = new Map(plan.map(({ o }) => [o.id, addr(o)]));
+    plan.forEach(({ o }) => { if (isBox) o.box = null; else o.out = null; });
+    plan.forEach(({ o, x }) => { if (isBox) { o.box = x.a; o.to = null; } else o.out = x.a; });
+    const moved = plan.filter(({ o, x }) => before.get(o.id) && before.get(o.id) !== x.label);
+    if (moved.length) log(`Sorties repatchées : ${moved.map(({ o, x }) => `${o.mix} ${before.get(o.id)} vers ${x.label}`).join(", ")}.`);
+    $("#outRangeForm").hidden = true; outSel.clear(); commit(true);
+    let msg = `${plan.length} sortie${plan.length > 1 ? "s" : ""} patchée${plan.length > 1 ? "s" : ""}, de ${esc(plan[0].x.label)} à ${esc(plan[plan.length - 1].x.label)}.`;
+    if (blocked) msg += ` Arrêt sur ${esc(blocked.at.label)}, occupée par ${esc(label(blocked.who))}.`; else if (plan.length < outs.length) msg += ` ${outs.length - plan.length} sans place.`;
+    notice(msg, plan.length < outs.length);
+  }
+  function outSelFieldUi() {
+    const f = $("#outSelField").value, i = $("#outSelVal"), isT = f === "type";
+    $("#outSelType").hidden = !isT; i.hidden = isT;
+    i.placeholder = { dest: "Destinataire", tx: "Émetteur", rx: "Récepteur / enceinte", notes: "Notes" }[f] + " (vide = effacer)";
+    i.dataset.suggest = f === "dest" ? "dlMus" : f === "tx" ? "dlTx" : f === "rx" ? "dlRx" : "";
+  }
+  function outSelFill() {
+    const f = $("#outSelField").value, v = f === "type" ? $("#outSelType").value : $("#outSelVal").value.trim(), ss = selectedOuts(); if (!ss.length) return;
+    ss.forEach((o) => { o[f] = v; const p = o.pair && PAIR_LINK.includes(f) && state.sorties.find((x) => x.id === o.pair); if (p) p[f] = v; });
+    if (f === "dest" && v) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(v)) state.musiciens.push(v); }
+    $("#outSelVal").value = ""; commit(true);
+  }
+  function outSelUnpatch() {
+    const ss = selectedOuts().filter((o) => o.out || o.box || o.to); if (!ss.length) { notice("Aucune sortie sélectionnée n'est patchée."); return; }
+    ss.forEach((o) => { const w = [o.out && outAddr(o.out), o.box && boxAddr(o.box), o.to && toAddr(o)].filter(Boolean).join(", "); log(`${o.mix} : ${w} dépatché.`); o.out = null; o.box = null; o.to = null; });
+    commit(true);
+  }
   function onOutChange(e) {
     const t = e.target; const tr = t.closest("tr[data-id]"); if (!tr) return;
     const o = state.sorties.find((x) => x.id === tr.dataset.id); if (!o) return;
@@ -2533,6 +2687,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       commit(true);
       if (v === "__dvt") setTimeout(() => { const i = document.querySelector(`#outTbl tr[data-id="${o.id}"] input[data-f="toT"]`); if (i) i.focus(); }, 0);
       return;
+    }
+    if (f === "mixpair") {
+      const p = state.sorties.find((x) => x.id === o.pair), base = t.value.trim(); if (!p) return;
+      const sa = (o.mix || "").match(LR), sb = (p.mix || "").match(LR);
+      o.mix = `${base} ${sa ? sa[1].toUpperCase() : "L"}`; p.mix = `${base} ${sb ? sb[1].toUpperCase() : "R"}`; commit(false); return;
     }
     if (f === "toT" || f === "toIn") { if (!o.to) return; if (f === "toT") { o.to.t = t.value.trim(); if (o.to.t && !o.tx) o.tx = o.to.t; } else o.to.in = t.value.trim(); commit(true); return; }
     if (f === "box") { const hadTo = o.to; if (setBox(o, t.value, occupancy())) { if (hadTo) { if (t.value) log(`${o.mix} : ${toAddr({ to: hadTo })} déplacé vers ${boxAddr(o.box)}.`); o.to = null; } followOutPair(o, "box"); } commit(true); return; }
@@ -2551,12 +2710,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       commit(true); return;
     }
     o[f] = t.value.trim();
+    // Une paire stéréo partage destinataire, type, émetteur et récepteur
+    if (o.pair && PAIR_LINK.includes(f)) { const p = state.sorties.find((x) => x.id === o.pair); if (p) p[f] = o[f]; if (p) { commit(true); if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); } return; } }
     if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); }
     commit(f === "type");
   }
   let armedOutDel = null;
   function onOutClick(e) {
     if (onMoreBtn(e)) return;
+    if (onOutSelect(e)) return;
     const btn = e.target.closest("button[data-del]"); if (!btn) return;
     const id = btn.dataset.del;
     if (armedOutDel !== id) { armedOutDel = id; btn.classList.add("armed"); btn.textContent = "Confirmer"; return; }
@@ -4964,8 +5126,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#outTbl").addEventListener("change", onOutChange);
     $("#outTbl").addEventListener("click", (e) => { if (e.target.id === "loadExample") { state = exemple(); learnDossier(state); record(); persist(); render(); return; } onOutClick(e); });
     $("#outTbl").addEventListener("keydown", onMasterKey);
-    $("#addOut").addEventListener("click", () => { state.sorties.push(newOut("NOUVELLE SORTIE")); commit(true); focusLastIn("#outTbl", 1, "mix"); });
-    $("#addOutStereo").addEventListener("click", () => { const a = newOut("SORTIE L"), z = newOut("SORTIE R"); a.pair = z.id; z.pair = a.id; state.sorties.push(a, z); commit(true); focusLastIn("#outTbl", 2, "mix"); });
+    $("#addOut").addEventListener("click", () => addOuts(false));
+    $("#outSelPatch").addEventListener("click", openOutRange);
+    $("#outRangeForm").addEventListener("submit", applyOutRange);
+    $("#orCancel").addEventListener("click", () => { $("#outRangeForm").hidden = true; });
+    $("#orTarget").addEventListener("change", fillOutStart); $("#orStart").addEventListener("change", previewOutRange); $("#orSkip").addEventListener("change", previewOutRange);
+    $("#outSelField").addEventListener("change", () => { outSelFieldUi(); ($("#outSelField").value === "type" ? $("#outSelType") : $("#outSelVal")).focus(); });
+    $("#outSelGo").addEventListener("click", outSelFill);
+    $("#outSelVal").addEventListener("keydown", (e) => { if (e.key === "Enter" && !sug.input) { e.preventDefault(); outSelFill(); } });
+    $("#outSelUnpatch").addEventListener("click", outSelUnpatch);
+    $("#outSelClear").addEventListener("click", () => { outSel.clear(); paintOutSel(); });
+    $("#addOutStereo").addEventListener("click", () => addOuts(true));
     $("#rangeBtn").addEventListener("click", openRange);
     $("#selAssign").addEventListener("click", openRange);
     $("#selMusGo").addEventListener("click", assignField);
@@ -5100,12 +5271,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (stereo) { const a = newLine("SOURCE L"), z = newLine("SOURCE R"); a.pair = z.id; z.pair = a.id; added.push(a, z); }
       else added.push(newLine("NOUVELLE SOURCE"));
     }
-    state.lignes.push(...added);
+    // Avec une sélection au master, les nouvelles sources s'insèrent juste après elle
+    const sl = view === "master" ? selectedLines() : [], at = sl.length ? afterPair(state.lignes, Math.max(...sl.map((l) => state.lignes.indexOf(l))) + 1) : state.lignes.length, mid = at < state.lignes.length;
+    state.lignes.splice(at, 0, ...added);
     $("#addN").value = 1;
     selection.clear();
-    if (added.length > 1) { added.forEach((l) => selection.add(l.id)); selAnchor = added[0].id; }
+    if (added.length > 1 || mid) { added.forEach((l) => selection.add(l.id)); selAnchor = added[0].id; }
     commit(true);
-    focusLast(added.length);
+    if (mid) focusRow(added[0].id, "source"); else focusLast(added.length);
   }
   function focusLast(n = 1) {
     const rows = document.querySelectorAll(view === "racks" ? '#rackOut table[data-rk="unp"] tr[data-id]' : "#masterTbl tr[data-id]");
@@ -5688,6 +5861,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       "-", { t: "Supprimer la ligne…", danger: true, fn: () => delLines([l]) }]];
   }
   function ctxOut(o) {
+    if (view === "sorties" && outSel.has(o.id) && outSel.size > 1) {
+      const ss = selectedOuts();
+      return [`${ss.length} sorties`, [
+        { t: "Patcher dans l'ordre…", fn: openOutRange },
+        { t: "Insérer une sortie après", fn: () => addOuts(false) },
+        { t: "Dépatcher", fn: outSelUnpatch },
+        { t: "Désélectionner", fn: () => { outSel.clear(); paintOutSel(); } },
+        "-", { t: `Supprimer les ${ss.length} sorties…`, danger: true, fn: () => { outSel.clear(); delOuts(ss); } }]];
+    }
     const S = state.sorties, i = S.indexOf(o), p = o.pair && S.find((z) => z.id === o.pair), nx = S[i + 1];
     const ins = (at) => { const n = newOut("NOUVELLE SORTIE"); S.splice(at, 0, n); commit(true); focusRow(n.id, "mix"); };
     return [o.mix || "Sortie", [
