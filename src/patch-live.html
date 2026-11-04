@@ -304,6 +304,16 @@ table.rack tr.hit td { background: var(--accent-soft); }
 .plan-side input, .plan-side select { width: 100%; }
 .plan-side .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .plan-side ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+.syn-stage { max-height: 70vh; }
+#synSvg { display: block; max-width: none; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; }
+#synSvg .nd { cursor: grab; }
+#synSvg .nd:active { cursor: grabbing; }
+.synh { font-size: 16px; margin: 18px 0 6px; }
+.synsw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.syntbl td { white-space: nowrap; }
+.syntbl select { max-width: 190px; }
+.syntbl input[data-sl="ap"], .syntbl input[data-sl="bp"] { width: 110px; }
+.syntbl input[data-sl="cable"] { width: 170px; }
 .loopbar { gap: 14px; }
 .loopbar .inl { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
 .loopbar input[type="number"] { width: 76px; }
@@ -700,6 +710,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <button role="tab" data-v="materiel" aria-selected="false">Réglages racks et boîtiers</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
+  <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
 </nav>
 
@@ -842,6 +853,21 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     <aside class="panel plan-side" id="planSide"></aside>
   </div>
   <p class="hint">Fais glisser les éléments à la souris ou au doigt (aimanté tous les 25 cm). Un élément sélectionné se déplace aussi avec les flèches, Suppr l'efface. Vue de dessus, public en bas : jardin à gauche, cour à droite.</p>
+</section>
+
+<section id="v-syn" hidden>
+  <div class="toolbar planbar">
+    <button id="synAddLink" class="btn small primary" type="button">+ Liaison</button>
+    <button id="synAddNode" class="btn small" type="button" title="Switch, ordinateur record, processeur… tout ce qui n'est pas dans Racks et I/O">+ Élément</button>
+    <button id="synAuto" class="btn small" type="button">Disposition auto</button>
+    <span class="zoom"><button id="synZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="synZoomVal" class="mono">100 %</span><button id="synZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
+  </div>
+  <div class="plan-wrap">
+    <div class="plan-stage syn-stage" id="synStage"></div>
+    <aside class="panel plan-side" id="synSide"></aside>
+  </div>
+  <h2 class="synh">Liaisons</h2>
+  <div id="synLinks"></div>
 </section>
 
 <section id="v-journal" hidden>
@@ -1462,6 +1488,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     sorties[sorties.length - 2].pair = sorties[sorties.length - 1].id; sorties[sorties.length - 1].pair = sorties[sorties.length - 2].id;
     return {
       v: 1, exemple: true, sorties,
+      syn: (() => {
+        const sw = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }, dd = racks.find((x) => x.nom === "DD4MR"), spx = racks.find((x) => x.model === "spectera"), dl = racks[0];
+        return { nodes: [sw], pos: {}, cons: {}, links: [
+          { id: nid(), a: { n: dd.id, p: "MADI 2" }, b: { n: "c:FOH", p: "MADI A" }, proto: "", cable: "Coax BNC 50 m" },
+          { id: nid(), a: { n: spx.id, p: "DANTE" }, b: { n: sw.id, p: "Port 1" }, proto: "Dante", cable: "Cat6 · primaire" },
+          { id: nid(), a: { n: sw.id, p: "Port 2" }, b: { n: "c:MON", p: "Dante" }, proto: "Dante", cable: "Cat6" },
+          { id: nid(), a: { n: dl.id, p: "" }, b: { n: "c:FOH", p: "" }, proto: "Analogique", cable: "Multi 24 paires" }
+        ] };
+      })(),
       loops: [{ id: "L1", nom: "Loop Optocore", freq: "96", max: 504 }],
       plan: { w: 12, d: 8, items: [
         { id: nid(), kind: "riser", label: "Praticable batterie 2×2", x: 5, y: 1, w: 2, h: 2, rot: 0 },
@@ -2840,6 +2875,281 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
   }
 
+  // ---------- Synoptique ----------
+  // Construit depuis Racks et I/O : chaque loop est un anneau (dans l'ordre des ID), chaque appareil montre ses ports colorés par protocole.
+  // Les autres liaisons (MADI, Dante, AES, analogique…) s'ajoutent dans le tableau sous le schéma. Couleur + trait différents : lisible aussi imprimé en noir et blanc.
+  const PROTOS = {
+    Optocore: { c: "#e0700b", w: 5, d: "" },
+    MADI: { c: "#2563eb", w: 3, d: "" },
+    Dante: { c: "#d0245e", w: 3, d: "9 5" },
+    AES: { c: "#7c3aed", w: 2.5, d: "3 4" },
+    AVB: { c: "#0f8f84", w: 3, d: "12 4 3 4" },
+    SoundGrid: { c: "#5d9b0f", w: 3, d: "6 3" },
+    Analogique: { c: "#4b5563", w: 2.5, d: "1.5 4" },
+    "Réseau": { c: "#0891b2", w: 2, d: "4 3" },
+    Autre: { c: "#9ca3af", w: 2, d: "" }
+  };
+  const SYN_W = 200, SYN_ROW = 18, SYN_TOP = 46, SYN_FONT = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"`;
+  function protoOfName(s) {
+    s = String(s || "");
+    if (/opto|loop/i.test(s)) return "Optocore";
+    if (/madi/i.test(s)) return "MADI";
+    if (/dante/i.test(s)) return "Dante";
+    if (/aes/i.test(s)) return "AES";
+    if (/avb|milan/i.test(s)) return "AVB";
+    if (/sound ?grid|waves/i.test(s)) return "SoundGrid";
+    if (/analog|xlr|ligne|line|mic|adc|dac/i.test(s)) return "Analogique";
+    if (/eth|r[ée]seau|lan|switch|rj ?45|wifi/i.test(s)) return "Réseau";
+    return "";
+  }
+  function portProto(p) {
+    const k = p && p.card;
+    if (k) { if (k === "OPTO") return "Optocore"; if (/MADI/.test(k)) return "MADI"; if (/DANTE/.test(k)) return "Dante"; if (k === "AES") return "AES"; if (k === "AVB") return "AVB"; if (k === "WAVES") return "SoundGrid"; if (/MIC|ADC|DAC/.test(k)) return "Analogique"; }
+    return protoOfName(p && p.nom) || "Autre";
+  }
+  function synState() {
+    if (!state.syn) state.syn = {};
+    const S = state.syn;
+    if (!Array.isArray(S.links)) S.links = [];
+    if (!Array.isArray(S.nodes)) S.nodes = [];
+    if (!S.pos || typeof S.pos !== "object") S.pos = {};
+    if (!S.cons || typeof S.cons !== "object") S.cons = {};
+    return S;
+  }
+  const loopById = (id) => loops().find((L) => L.id === id) || null;
+  // Une console est sur la loop de ses stages, sauf réglage contraire
+  function consLoop(k) {
+    const c = synState().cons[k];
+    if (c && c.loopId !== undefined) return loopById(c.loopId);
+    const r = state.racks.find((x) => (k === "ALL" || x.console === k) && rackLoop(x));
+    return r ? rackLoop(r) : null;
+  }
+  const portKey = (s) => String(s || "").trim().toLowerCase();
+  function synLinkProto(l, nodes) {
+    if (l.proto) return l.proto;
+    const find = (end) => { const n = nodes && nodes.find((x) => x.id === end.n); const p = n && n.ports.find((q) => portKey(q.nom) === portKey(end.p)); return p && p.proto !== "Autre" ? p.proto : protoOfName(end.p); };
+    return find(l.a || {}) || find(l.b || {}) || "Autre";
+  }
+  function synNodes() {
+    const S = synState(), out = [];
+    const ks = consoleKeys();
+    (ks.length ? ks : state.racks.length ? ["ALL"] : []).forEach((k) => out.push({ id: "c:" + k, kind: "console", title: k === "ALL" ? "Console" : "Console " + consLabel(k), sub: "", ports: [], loop: consLoop(k), cons: k }));
+    [...state.racks].sort(byRackId).forEach((r) => {
+      const ports = r.ports ? r.ports.map((p) => ({ nom: p.nom || "Port", proto: portProto(p), n: `${portN(p, "in", r)}/${portN(p, "out", r)}` })) : [];
+      const sub = (r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
+      out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
+    });
+    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.type || "", ports: [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
+    // Les ports nommés dans les liaisons apparaissent sur l'appareil, pour y accrocher le câble
+    S.links.forEach((l) => [l.a, l.b].forEach((e) => {
+      if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
+      n.ports.push({ nom: e.p.trim(), proto: l.proto || protoOfName(e.p) || "Autre", n: "", added: true });
+    }));
+    out.forEach((n) => { n.w = SYN_W; n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
+    return out;
+  }
+  // Disposition auto : chaque loop en ellipse, les appareils hors loop en rangées dessous ; un appareil déplacé garde sa place
+  function synPlace(nodes) {
+    const S = synState(), auto = {};
+    let x0 = 0, hLoops = 0;
+    loops().forEach((lp) => {
+      const ns = nodes.filter((n) => n.loop === lp); if (!ns.length) return;
+      const k = ns.length, rx = k < 2 ? 0 : Math.max(210, k * 64), ry = k < 2 ? 0 : Math.max(130, k * 36), tall = Math.max(...ns.map((n) => n.h));
+      ns.forEach((n, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / k; auto[n.id] = { x: x0 + rx + rx * Math.cos(a), y: tall / 2 + ry + ry * Math.sin(a) - n.h / 2 }; });
+      x0 += 2 * rx + SYN_W + 90; hLoops = Math.max(hLoops, 2 * ry + tall);
+    });
+    const rest = nodes.filter((n) => !n.loop), per = Math.max(3, Math.floor(Math.max(x0 - 90, 900) / (SYN_W + 40)));
+    let y = hLoops ? hLoops + 90 : 0;
+    for (let i = 0; i < rest.length; i += per) {
+      const row = rest.slice(i, i + per);
+      row.forEach((n, j) => { auto[n.id] = { x: j * (SYN_W + 40), y }; });
+      y += Math.max(...row.map((n) => n.h)) + 50;
+    }
+    nodes.forEach((n) => { const p = S.pos[n.id] || auto[n.id] || { x: 0, y: 0 }; n.x = p.x; n.y = p.y; });
+    return nodes;
+  }
+  const synCenter = (n) => [n.x + n.w / 2, n.y + n.h / 2];
+  function synClip(n, tx, ty) {
+    const [cx, cy] = synCenter(n), dx = tx - cx, dy = ty - cy;
+    if (!dx && !dy) return [cx, cy];
+    const s = Math.min(dx ? Math.abs(n.w / 2 / dx) : Infinity, dy ? Math.abs(n.h / 2 / dy) : Infinity);
+    return [cx + dx * s, cy + dy * s];
+  }
+  // Point d'accroche : sur le port s'il est nommé (côté de l'autre appareil), sinon au bord de la boîte
+  function synAnchor(n, port, other) {
+    const k = port ? n.ports.findIndex((p) => portKey(p.nom) === portKey(port)) : -1;
+    const [ox, oy] = synCenter(other);
+    if (k < 0) { const [x, y] = synClip(n, ox, oy); return { x, y, dir: 0 }; }
+    const right = ox >= n.x + n.w / 2;
+    return { x: right ? n.x + n.w : n.x, y: n.y + SYN_TOP + k * SYN_ROW + SYN_ROW / 2, dir: right ? 1 : -1 };
+  }
+  const synStroke = (proto, extra) => { const P = PROTOS[proto] || PROTOS.Autre; return `stroke="${P.c}" stroke-width="${P.w + (extra || 0)}"${P.d ? ` stroke-dasharray="${P.d}"` : ""} fill="none" stroke-linecap="round"`; };
+  const synLabel = (x, y, t, col) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" ${SYN_FONT} fill="${col || "#374151"}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${esc(t)}</text>`;
+  function synEdges(nodes, forExport) {
+    const S = synState(), byId = new Map(nodes.map((n) => [n.id, n])), sel = forExport ? null : synSel;
+    let ring = "", labels = "";
+    loops().forEach((lp) => {
+      const ns = nodes.filter((n) => n.loop === lp); if (!ns.length) return;
+      if (ns.length > 1) {
+        const pairs = ns.length === 2 ? [[ns[0], ns[1]]] : ns.map((n, i) => [n, ns[(i + 1) % ns.length]]);
+        pairs.forEach(([a, b]) => { const [bx, by] = synCenter(b), [ax, ay] = synCenter(a), p = synClip(a, bx, by), q = synClip(b, ax, ay); ring += `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Optocore")}/>`; });
+      }
+      const lr = state.racks.filter((r) => rackLoop(r) === lp), tot = lr.reduce((t, r) => t + rackInputs(r).length + rackOutputs(r).length, 0), max = Number(lp.max) || 0;
+      const cx = ns.reduce((t, n) => t + synCenter(n)[0], 0) / ns.length, cy = ns.reduce((t, n) => t + synCenter(n)[1], 0) / ns.length;
+      if (ns.length > 2) labels += `<g ${SYN_FONT} text-anchor="middle"><text x="${cx.toFixed(1)}" y="${(cy - 4).toFixed(1)}" font-size="15" font-weight="700" fill="#b45309">${esc(lp.nom || "Loop")}</text><text x="${cx.toFixed(1)}" y="${(cy + 14).toFixed(1)}" font-size="12" fill="#6b7280">Optocore · ${lp.freq === "96" ? "96" : "48"} kHz · ${tot}${max ? " / " + max : ""} canaux</text></g>`;
+    });
+    const links = S.links.map((l) => {
+      const A = byId.get((l.a || {}).n), B = byId.get((l.b || {}).n); if (!A || !B || A === B) return "";
+      const pa = synAnchor(A, l.a.p, B), pb = synAnchor(B, l.b.p, A), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
+      const d = Math.max(50, Math.abs(pb.x - pa.x) / 3), c1 = [pa.x + pa.dir * d, pa.y], c2 = [pb.x + pb.dir * d, pb.y];
+      const mx = (pa.x + 3 * c1[0] + 3 * c2[0] + pb.x) / 8, my = (pa.y + 3 * c1[1] + 3 * c2[1] + pb.y) / 8;
+      const hot = sel && (sel === A.id || sel === B.id);
+      const lab = [pr === "Autre" ? "" : pr, l.cable].filter(Boolean).join(" · ");
+      return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}/>${lab ? synLabel(mx, my + 4, lab, P.c) : ""}</g>`;
+    }).join("");
+    return ring + links + labels;
+  }
+  function synNodeMarkup(n, forExport) {
+    const con = n.kind === "console", on = !forExport && synSel === n.id;
+    const fill = con ? "#373737" : n.kind === "extra" ? "#f3f6f7" : "#ffffff", ink = con ? "#fce694" : "#111827", sub = con ? "#d1d5db" : "#6b7280";
+    const ports = n.ports.map((p, k) => {
+      const y = SYN_TOP + k * SYN_ROW, P = PROTOS[p.proto] || PROTOS.Autre;
+      return `<rect x="0" y="${y}" width="${n.w}" height="${SYN_ROW}" fill="${k % 2 ? "none" : con ? "#424242" : "#f6f8f9"}"/><rect x="0" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/><rect x="${n.w - 5}" y="${y + 3}" width="5" height="${SYN_ROW - 6}" fill="${P.c}"/>
+        <text x="12" y="${y + 13}" font-size="12" fill="${ink}">${esc(p.nom)}</text><text x="${n.w - 12}" y="${y + 13}" font-size="11" text-anchor="end" fill="${sub}">${esc([p.proto !== "Autre" && !portKey(p.nom).includes(portKey(p.proto)) ? p.proto : "", p.n].filter(Boolean).join(" · "))}</text>`;
+    }).join("");
+    const title = n.title.length > 26 ? n.title.slice(0, 25) + "…" : n.title, s = n.sub.length > 36 ? n.sub.slice(0, 35) + "…" : n.sub;
+    return `<g class="nd${on ? " on" : ""}" data-nid="${esc(n.id)}" transform="translate(${n.x} ${n.y})" ${SYN_FONT}>
+      <rect class="box" width="${n.w}" height="${n.h}" rx="8" fill="${fill}" stroke="${on ? "#111827" : con ? "#373737" : "#a7b4bb"}" stroke-width="${on ? 2.5 : 1.2}"/>
+      ${n.loop ? `<circle cx="${n.w - 13}" cy="15" r="5" fill="${PROTOS.Optocore.c}"><title>Sur ${esc(n.loop.nom || "la loop")}</title></circle>` : ""}
+      <text x="12" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
+      ${s ? `<text x="12" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}</g>`;
+  }
+  function synSvg(forExport) {
+    const nodes = synPlace(synNodes()); if (!nodes.length) return "";
+    const pad = 24, x0 = Math.min(...nodes.map((n) => n.x)) - pad, x1 = Math.max(...nodes.map((n) => n.x + n.w)) + pad;
+    const y1 = Math.max(...nodes.map((n) => n.y + n.h)) + pad;
+    // Légende : seulement les protocoles présents
+    const used = new Set(); nodes.forEach((n) => n.ports.forEach((p) => used.add(p.proto)));
+    if (loops().some((lp) => nodes.filter((n) => n.loop === lp).length > 1)) used.add("Optocore");
+    synState().links.forEach((l) => used.add(synLinkProto(l, nodes)));
+    const leg = Object.keys(PROTOS).filter((k) => used.has(k));
+    const ly = Math.min(...nodes.map((n) => n.y)) - 40, top = ly - 18;
+    let lx = x0 + pad;
+    const legend = leg.map((k) => { const s = `<line x1="${lx}" y1="${ly}" x2="${lx + 30}" y2="${ly}" ${synStroke(k)}/><text x="${lx + 36}" y="${ly + 4}" font-size="12" fill="#374151" ${SYN_FONT}>${esc(k)}</text>`; lx += 52 + k.length * 7; return s; }).join("");
+    const W = Math.max(x1 - x0, lx - x0), H = y1 - top;
+    const size = forExport ? `width="${Math.round(W * 1.5)}" height="${Math.round(H * 1.5)}"` : `width="${Math.round(W * synZoom)}" height="${Math.round(H * synZoom)}"`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
+  }
+  const SYN_ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  let synSel = null, synDrag = null, synZoom = matchMedia("(max-width: 760px)").matches ? 0.75 : 1;
+  const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
+  function renderSyn() {
+    const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
+    if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Ajoute tes stage racks et I/O dans « Réglages racks et boîtiers » : le synoptique se dessine tout seul à partir d'eux.</div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
+    stage.innerHTML = synSvg(false).replace("<svg ", `<svg id="synSvg" role="img" aria-label="Synoptique" `);
+    $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
+    const opts = (cur) => `<option value="">—</option>` + nodes.map((n) => `<option value="${esc(n.id)}"${n.id === cur ? " selected" : ""}>${esc(n.title)}</option>`).join("");
+    const protoOpts = (l) => `<option value="">Auto (${esc(synLinkProto({ ...l, proto: "" }, nodes))})</option>` + Object.keys(PROTOS).map((k) => `<option${l.proto === k ? " selected" : ""}>${esc(k)}</option>`).join("");
+    const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${n.ports.filter((p) => !p.added).map((p) => `<option value="${esc(p.nom)}">`).join("")}</datalist>`).join("");
+    const dlFor = (id) => { const i = nodes.findIndex((n) => n.id === id); return i < 0 ? "" : ` data-suggest="dlSynP_${i}"`; };
+    $("#synLinks").innerHTML = dls + (S.links.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Câble / notes</th><th></th></tr></thead><tbody>${S.links.map((l) => {
+      const [an, ap] = synEnd(l.a), [bn, bp] = synEnd(l.b), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
+      return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
+    }).join("")}</tbody></table></div>` : `<p class="hint">Pas encore de liaison. « + Liaison » relie deux appareils (MADI, Dante, AES, analogique…) : la loop Optocore, elle, se dessine toute seule.</p>`);
+    renderSynSide(nodes);
+  }
+  function renderSynSide(nodes) {
+    const side = $("#synSide"), n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
+    if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place.</p>`; return; }
+    const S = synState(), ls = S.links.filter((l) => (l.a || {}).n === n.id || (l.b || {}).n === n.id);
+    const all = synNodes(), name = (id) => (all.find((x) => x.id === id) || {}).title || "?";
+    const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
+    side.innerHTML = `<h3>${esc(n.title)}</h3>${n.sub ? `<p class="hint" style="margin:0 0 8px">${esc(n.sub)}</p>` : ""}
+      ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label><label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}` : ""}
+      ${n.kind === "console" ? loopSel(n.loop) : ""}
+      ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks et boîtiers ».</p>` : ""}
+      ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
+      <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; return `<li>${esc(me.p || "—")} → ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
+      <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
+  }
+  function synPoint(e) {
+    const svg = $("#synSvg"), pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function synBind() {
+    const host = $("#v-syn");
+    host.addEventListener("pointerdown", (e) => {
+      if (!e.target.closest("#synSvg")) return;
+      const g = e.target.closest("g.nd");
+      if (!g) { if (synSel) { synSel = null; renderSyn(); } return; }
+      const nodes = synPlace(synNodes()), n = nodes.find((x) => x.id === g.dataset.nid); if (!n) return;
+      const p = synPoint(e);
+      synDrag = { n, nodes, dx: p.x - n.x, dy: p.y - n.y, moved: false, g };
+      if (synSel !== n.id) { synSel = n.id; document.querySelectorAll("#synSvg g.nd.on").forEach((x) => x.classList.remove("on")); renderSynSide(nodes); }
+      g.setPointerCapture && g.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    host.addEventListener("pointermove", (e) => {
+      if (!synDrag) return;
+      const p = synPoint(e), n = synDrag.n;
+      n.x = Math.round((p.x - synDrag.dx) / 10) * 10; n.y = Math.round((p.y - synDrag.dy) / 10) * 10;
+      synDrag.moved = true;
+      synDrag.g.setAttribute("transform", `translate(${n.x} ${n.y})`);
+      $("#synEdges").innerHTML = synEdges(synDrag.nodes);
+    });
+    const end = () => {
+      if (!synDrag) return; const { n, moved } = synDrag; synDrag = null;
+      if (moved) { synState().pos[n.id] = { x: n.x, y: n.y }; commit(true); } else renderSyn();
+    };
+    host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
+    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#synSvg g.nd")) e.preventDefault(); }, { passive: false });
+    const addLink = (from) => { const S = synState(); S.links.push({ id: nid(), a: { n: from || "", p: "" }, b: { n: "", p: "" }, proto: "", cable: "" }); commit(true); const tr = $("#synLinks tbody tr:last-child"); if (tr) { tr.scrollIntoView({ block: "nearest" }); const f = tr.querySelector(from ? '[data-sl="ap"]' : '[data-sl="an"]'); if (f) f.focus(); } };
+    $("#synAddLink").addEventListener("click", () => addLink(synSel));
+    $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
+    $("#synAuto").addEventListener("click", () => { synState().pos = {}; commit(true); });
+    $("#synZoomIn").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.min(SYN_ZOOMS.length - 1, SYN_ZOOMS.indexOf(synZoom) + 1)]; renderSyn(); });
+    $("#synZoomOut").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.max(0, SYN_ZOOMS.indexOf(synZoom) - 1)]; renderSyn(); });
+    $("#synLinks").addEventListener("change", (e) => {
+      const tr = e.target.closest("tr[data-lk]"), f = e.target.dataset.sl; if (!tr || !f) return;
+      const l = synState().links.find((x) => x.id === tr.dataset.lk); if (!l) return;
+      l.a = l.a || { n: "", p: "" }; l.b = l.b || { n: "", p: "" };
+      const v = e.target.value;
+      if (f === "an") l.a.n = v; else if (f === "ap") l.a.p = v.trim(); else if (f === "bn") l.b.n = v; else if (f === "bp") l.b.p = v.trim(); else if (f === "proto") l.proto = v; else if (f === "cable") l.cable = v.trim();
+      commit(true);
+    });
+    $("#synLinks").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-sldel]"); if (!b) return;
+      const S = synState(), id = b.closest("tr").dataset.lk; S.links = S.links.filter((x) => x.id !== id); commit(true);
+    });
+    $("#synSide").addEventListener("change", (e) => {
+      const S = synState(), f = e.target.dataset.sp; if (!f || !synSel) return;
+      if (synSel.startsWith("c:")) { if (f === "loop") { S.cons[synSel.slice(2)] = { loopId: e.target.value }; commit(true); } return; }
+      const x = S.nodes.find((q) => q.id === synSel); if (!x) return;
+      if (f === "loop") x.loopId = e.target.value; else x[f] = e.target.value.trim();
+      commit(true);
+    });
+    $("#synSide").addEventListener("click", (e) => {
+      const S = synState();
+      if (e.target.closest("[data-splink]")) addLink(synSel);
+      if (e.target.closest("[data-spauto]")) { delete S.pos[synSel]; commit(true); }
+      if (e.target.closest("[data-spdel]")) { const id = synSel; S.nodes = S.nodes.filter((x) => x.id !== id); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); }
+    });
+  }
+  function synPng() {
+    return new Promise((resolve) => {
+      const svg = synSvg(true); if (!svg) return resolve(null);
+      const img = new Image();
+      img.onload = () => { try { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; c.getContext("2d").drawImage(img, 0, 0); resolve({ data: c.toDataURL("image/png"), w: img.width, h: img.height }); } catch (err) { resolve(null); } };
+      img.onerror = () => resolve(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
+  function synLinkRows() {
+    const nodes = synNodes(), name = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
+    return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), l.cable || ""]);
+  }
+  const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Câble / notes"];
+
   // ---------- Micros et pieds ----------
   // Racks et I/O regroupés par nom et configuration, boîtiers par type de multi
   function ioDetail(r) {
@@ -2889,7 +3199,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .pr { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #111; font-size: 9.5pt; }
@@ -2946,6 +3256,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
+    syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`; },
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
   function printHtml(parts) {
@@ -3017,6 +3328,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (view === "liste") renderListe();
     if (view === "journal") renderJournal();
     if (view === "plan") renderPlan();
+    if (view === "syn") renderSyn();
     if (sc.some(Boolean)) document.querySelectorAll("section:not([hidden]) .table-wrap, section:not([hidden]) .hftw, section:not([hidden]) .kb").forEach((w, i) => { if (sc[i]) w.scrollLeft = sc[i]; });
   }
   // Historique : chaque modification enregistrée peut être annulée puis rétablie
@@ -3073,7 +3385,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "boites", "racks", "materiel", "liste", "plan", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "boites", "racks", "materiel", "liste", "plan", "syn", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
@@ -3242,6 +3554,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const scale = Math.min(1, 1000 / png.w);
       pl.addImage(id, { tl: { col: 0, row: 1 }, ext: { width: png.w * scale, height: png.h * scale } });
       page(pl, true);
+    }
+    const sp = state.racks.length > 1 || synState().links.length ? await synPng() : null;
+    if (sp) {
+      const sy = wb.addWorksheet("Synoptique");
+      sy.addRow([`Synoptique · ${titre}`]).font = { bold: true, size: 14 };
+      const rows = synLinkRows();
+      if (rows.length) { styleHead(sy.addRow(SYN_HEAD)); rows.forEach((r) => sy.addRow(r)); }
+      [26, 16, 26, 16, 14, 30].forEach((w, i) => { sy.getColumn(i + 1).width = w; });
+      const id = wb.addImage({ base64: sp.data, extension: "png" }), scale = Math.min(1, 1100 / sp.w);
+      sy.addImage(id, { tl: { col: 0, row: sy.rowCount + 1 }, ext: { width: sp.w * scale, height: sp.h * scale } });
+      page(sy, true);
     }
     const jr = wb.addWorksheet("Journal");
     styleHead(jr.addRow(["Date", "Salle", "Changement"]));
@@ -3578,6 +3901,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
     planBind();
+    synBind();
     hfBind(); kbBind(); spxPatchBind();
     const setup = $("#v-materiel");
     setup.addEventListener("change", onSetupChange);
