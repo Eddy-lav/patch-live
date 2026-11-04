@@ -698,6 +698,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   body.rows table.master tr.hit { --row-bg: var(--accent-soft); }
   body.rows table.master th:first-child { position: sticky; left: 0; z-index: 7; background: var(--surface-2); }
   body.rows table.master th:nth-child(2) { position: sticky; left: 40px; z-index: 7; background: var(--surface-2); }
+  /* En-tête « Source » : même effet que les lignes, seul le mot reste figé */
+  body.rows table.master:not(.rack) th.col-src { position: sticky; left: 40px; z-index: 7; background: transparent; width: 1px; min-width: 0; padding: 0; }
+  body.rows table.master:not(.rack) th.col-src span { display: inline-block; padding: 2px 6px; background: var(--surface-2); box-shadow: 6px 0 6px -5px rgb(0 0 0 / 0.3); }
   /* Vue racks : c'est l'entrée du rack qui reste à gauche avec le N° */
   body.rows table.rack td.src { position: static; width: auto; }
   body.rows table.rack td.src input { box-shadow: none; background: transparent; }
@@ -2066,7 +2069,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const PAD_RE = /\bDI\b|\bD\.I\b|J ?48|J ?33|JDI|RNDI|PRO ?D[12I]|PRO ?48|BSS|AR ?133|COUNTRYMAN|RADIAL|BAGGS|PALMER|KLARK|DN ?100|SB-?[12]\b|C ?414|C ?451|C ?535|C ?1000|C ?3000|C ?4000|C ?214|U ?87|U ?89|TLM ?170|SM ?81|SM ?27|BETA ?27|KSM ?(32|44|137|141|353)|PGA ?27|AT ?40(33|40|41|47|50)|MKH ?(40|50|8040|8050)|E ?914|NT ?2|C ?391|MC ?(930|840)|ADX ?51|SE ?4400/i;
   const hasPad = (m) => !!m && (PAD_RE.test(m) || state.lignes.some((l) => l.pad && l.micro === m));
   function masterHead(cols, pre = "") {
-    return `<tr><th>N°</th>${pre}<th class="col-src">Source</th><th class="col-mus c-mus">Musicien</th><th class="col-mic">Micro / DI</th><th class="col-pied c-pied">Pied</th><th class="col-pad c-pad">Pad dB</th><th class="col-48 c-48">48V</th><th class="col-box">Boîtier → entrée</th>${cols.map((c) => `<th class="col-sr">${esc(c.label)}</th>`).join("")}<th class="col-prov c-prov" title="D'où arrive le signal quand ce n'est pas un micro : Ferrofish in 9, base HF 2, séquence…">Provenance</th><th class="col-notes c-notes">Notes</th><th></th></tr>`;
+    return `<tr><th>N°</th>${pre}<th class="col-src"><span>Source</span></th><th class="col-mus c-mus">Musicien</th><th class="col-mic">Micro / DI</th><th class="col-pied c-pied">Pied</th><th class="col-pad c-pad">Pad dB</th><th class="col-48 c-48">48V</th><th class="col-box">Boîtier → entrée</th>${cols.map((c) => `<th class="col-sr">${esc(c.label)}</th>`).join("")}<th class="col-prov c-prov" title="D'où arrive le signal quand ce n'est pas un micro : Ferrofish in 9, base HF 2, séquence…">Provenance</th><th class="col-notes c-notes">Notes</th><th></th></tr>`;
   }
   function masterRow(l, idx, occ, cols, hit, pre = "", extraCls) {
     const partner = l.pair ? state.lignes.find((x) => x.id === l.pair) : null;
@@ -2372,7 +2375,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     });
     return h;
   }
-  function outHead(pre = "") { return `<tr><th>N°</th>${pre}<th class="col-src">Mix</th><th class="col-mus">Destinataire</th><th class="col-type">Type</th><th class="col-sr">Sortie stage rack</th><th class="col-box">Boîtier → liaison</th><th class="col-mic">Émetteur</th><th class="col-mic">Récepteur / enceinte</th><th class="col-notes">Notes</th><th></th></tr>`; }
+  function outHead(pre = "") { return `<tr><th>N°</th>${pre}<th class="col-src"><span>Mix</span></th><th class="col-mus">Destinataire</th><th class="col-type">Type</th><th class="col-sr">Sortie stage rack</th><th class="col-box">Boîtier → liaison</th><th class="col-mic">Émetteur</th><th class="col-mic">Récepteur / enceinte</th><th class="col-notes">Notes</th><th></th></tr>`; }
   function outRow(o, idx, occ, pre = "", extraCls) {
     const outs = state.sorties;
     const partner = o.pair ? outs.find((x) => x.id === o.pair) : null;
