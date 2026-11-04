@@ -396,6 +396,20 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 #planSvg .it { cursor: grab; }
 #planSvg .it.on > .shape { stroke: #373737; stroke-width: 0.06; }
 .plan-side h3 { margin: 0 0 8px; font-size: 16px; }
+.rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.rpcase { padding: 10px; margin: 0; }
+.rphead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rphead input[data-rpcf="nom"] { flex: 1 1 120px; font-weight: 700; min-width: 0; }
+.rphead input[data-rpcf="u"] { width: 56px; }
+.rphead .rplieu { flex: 1 1 100px; min-width: 0; }
+.rpadd { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.rpadd select { max-width: 100%; }
+.rpadd .hint.warn { color: var(--danger, #b91c1c); }
+.rpstage { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+.rpsvg { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.rpsvg g.rpit { cursor: grab; }
+.rpsvg g.rpit.bad { opacity: 0.45; }
+:root[data-theme="regie"] .rpstage { filter: brightness(0.6); }
 .plan-side label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 .plan-side input, .plan-side select { width: 100%; }
 .plan-side .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -859,6 +873,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <button role="tab" data-v="racks" aria-selected="false">Racks et I/O<span class="count" id="cRacks"></span></button>
   <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
   <button role="tab" data-v="materiel" aria-selected="false">Réglages racks</button>
+  <button role="tab" data-v="rackplan" aria-selected="false">Plans de rack</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
@@ -1025,6 +1040,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     <aside class="panel plan-side" id="planSide"></aside>
   </div>
   <p class="hint">Fais glisser les éléments à la souris ou au doigt (aimanté tous les 25 cm). Un élément sélectionné se déplace aussi avec les flèches, Suppr l'efface. Vue de dessus, public en bas : jardin à gauche, cour à droite.</p>
+</section>
+
+<section id="v-rackplan" hidden>
+  <div class="toolbar planbar"><button id="rpAddCase" class="btn small primary" type="button">+ Flight rack</button><span class="hint">Vue de face, U numérotés depuis le haut. Les appareils viennent de Racks et I/O et du synoptique.</span></div>
+  <div class="plan-wrap rp-wrap">
+    <div id="rpCases" class="rpcases"></div>
+    <aside class="panel plan-side" id="rpSide"></aside>
+  </div>
+  <datalist id="dlRpLieu"><option value="FOH"><option value="Monitor"><option value="Plateau"><option value="Jardin"><option value="Cour"><option value="HF"><option value="Régie"></datalist>
 </section>
 
 <section id="v-syn" hidden>
@@ -3106,6 +3130,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       state.racks = state.racks.filter((r) => r.id !== id);
       state.lignes.forEach((l) => { Object.keys(l.sr || {}).forEach((k) => { if (l.sr[k] && l.sr[k].r === id) l.sr[k] = null; }); });
       state.sorties.forEach((o) => { if (o.out && o.out.r === id) o.out = null; if (o.to && o.to.r === id) o.to = null; });
+      rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "rack" && i.ref === id)); });
     } else {
       state.boites = state.boites.filter((b) => b.id !== id);
       state.lignes.forEach((l) => { if (l.box && l.box.b === id) l.box = null; });
@@ -3292,6 +3317,197 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       img.onload = () => { try { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; c.getContext("2d").drawImage(img, 0, 0); resolve({ data: c.toDataURL("image/png"), w: img.width, h: img.height }); } catch (err) { resolve(null); } };
       img.onerror = () => resolve(null);
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
+
+  // ---------- Plans de rack ----------
+  // Des flight racks comptés en U (numérotés depuis le haut). On y range les appareils de Racks et I/O, les éléments du synoptique
+  // et des éléments libres (tiroir, distribution…). Chaque appareil garde sa façade dessinée (ou la photo perso).
+  const RP_FREE = [["vide", "Panneau vide", 1], ["tiroir", "Tiroir", 2], ["distro", "Distribution électrique", 1], ["passe", "Passe-câbles", 1], ["patch", "Patch panel", 1], ["autre", "Autre élément", 1]];
+  const RP_UH = 44.45, RP_SIDE = 30, RP_TOP = 24, RP_LW = 390;
+  let rpSel = null, rpDrag = null;
+  function rpState() { if (!state.rackplan || typeof state.rackplan !== "object") state.rackplan = {}; if (!Array.isArray(state.rackplan.cases)) state.rackplan.cases = []; return state.rackplan; }
+  const rpExtra = (id) => synState().nodes.find((x) => x.id === id) || null;
+  function rpLabel(it) {
+    if (it.kind === "rack") { const r = rackById(it.ref); return r ? rackTitle(r) : it.label || "Appareil supprimé"; }
+    if (it.kind === "extra") { const x = rpExtra(it.ref); return x ? x.nom || "Élément" : it.label || "Élément supprimé"; }
+    return it.label || (RP_FREE.find((f) => f[0] === it.free) || RP_FREE[5])[1];
+  }
+  function rpDefaultU(kind, ref) { if (kind !== "rack") return 1; const t = devType({ kind: "rack", id: ref }); return t === "sd" ? 10 : t === "num" ? 6 : t === "orange" ? 2 : 1; }
+  function rpBusy(c, skip) { const s = new Set(); c.items.forEach((it) => { if (it !== skip) for (let k = it.at; k < it.at + it.h; k++) s.add(k); }); return s; }
+  function rpFits(c, it, at) { if (at < 1 || at + it.h - 1 > c.u) return false; const b = rpBusy(c, it); for (let k = at; k < at + it.h; k++) if (b.has(k)) return false; return true; }
+  function rpNearest(c, it, at) { for (let d = 0; d <= c.u; d++) { if (rpFits(c, it, at - d)) return at - d; if (rpFits(c, it, at + d)) return at + d; } return 0; }
+  const rpFind = (id) => { for (const c of rpState().cases) { const it = c.items.find((i) => i.id === id); if (it) return { c, it }; } return null; };
+  const rpPlaced = () => new Set(rpState().cases.flatMap((c) => c.items.filter((i) => i.ref).map((i) => i.kind + ":" + i.ref)));
+  function rpAddOptions() {
+    const placed = rpPlaced();
+    let h = `<option value="">Ajouter…</option>`;
+    const rs = state.racks.filter((r) => !placed.has("rack:" + r.id));
+    if (rs.length) h += `<optgroup label="Racks et I/O">${rs.map((r) => `<option value="rack|${r.id}">${esc(rackTitle(r))} · ${rpDefaultU("rack", r.id)} U</option>`).join("")}</optgroup>`;
+    const xs = synState().nodes.filter((x) => !placed.has("extra:" + x.id));
+    if (xs.length) h += `<optgroup label="Synoptique">${xs.map((x) => `<option value="extra|${x.id}">${esc(x.nom || "Élément")}</option>`).join("")}</optgroup>`;
+    h += `<optgroup label="Autres">${RP_FREE.map(([k, t, u]) => `<option value="free|${k}">${t} · ${u} U</option>`).join("")}</optgroup>`;
+    return h;
+  }
+  // Façades des éléments libres
+  function rpFreeArt(it, H) {
+    const R = (x, y, w, h, c, rx) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"/>`, C = (x, y, r, c) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
+    let s = R(0, 0, 483, H, "#2a2e33", 2) + R(11, 1, 461, H - 2, "#1d2125", 1.5);
+    for (let u = 0; u < H / RP_UH - 0.01; u++) s += C(6.5, u * RP_UH + 8, 2.6, "#0b0d0f") + C(6.5, u * RP_UH + RP_UH - 8, 2.6, "#0b0d0f") + C(476.5, u * RP_UH + 8, 2.6, "#0b0d0f") + C(476.5, u * RP_UH + RP_UH - 8, 2.6, "#0b0d0f");
+    const f = it.free;
+    if (f === "tiroir") s += R(40, 8, 403, H - 16, "#262a2f", 3) + R(190, H / 2 - 6, 103, 12, "#8a939b", 6) + R(195, H / 2 - 3, 93, 6, "#3a4046", 3);
+    else if (f === "distro") { for (let i = 0; i < 8; i++) s += C(70 + i * 46, H / 2, 13, "#0b0d0f") + C(66 + i * 46, H / 2, 2.2, "#6b7280") + C(74 + i * 46, H / 2, 2.2, "#6b7280"); s += R(430, H / 2 - 8, 26, 16, "#b91c1c", 2); }
+    else if (f === "passe") s += R(30, H / 2 - 7, 423, 14, "#0b0d0f", 7) + Array.from({ length: 60 }, (_, i) => R(34 + i * 7, H / 2 - 6, 1.5, 12, "#3a4046")).join("");
+    else if (f === "patch") for (let i = 0; i < 16; i++) s += C(52 + i * 25, H / 2, 9, "#8a939b") + C(52 + i * 25, H / 2, 7, "#2f3439");
+    else if (f !== "vide") s += `<text x="241.5" y="${H / 2 + 5}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#9aa3ab">${esc(rpLabel(it))}</text>`;
+    return s;
+  }
+  function rpItemArt(it) {
+    const H = it.h * RP_UH;
+    if (it.kind === "rack") return devImg({ kind: "rack", id: it.ref }, 483, H, 0, 0);
+    if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, 483, H, 0, 0); }
+    return `<svg x="0" y="0" width="483" height="${H}" viewBox="0 0 483 ${H}">${rpFreeArt(it, H)}</svg>`;
+  }
+  function rpCaseSvg(c, forExport) {
+    const W = RP_SIDE * 2 + 483 + RP_LW, IH = c.u * RP_UH, H = RP_TOP * 2 + IH, F = `font-family="Arial, Helvetica, sans-serif"`;
+    let s = `<rect x="0" y="0" width="${483 + RP_SIDE * 2}" height="${H}" rx="8" fill="#3a3f45"/><rect x="4" y="4" width="${483 + RP_SIDE * 2 - 8}" height="${H - 8}" rx="6" fill="#2b2f33"/>`;
+    s += `<rect x="${RP_SIDE}" y="${RP_TOP}" width="483" height="${IH}" fill="#0c0e10"/>`;
+    for (let u = 0; u < c.u; u++) {
+      const y = RP_TOP + u * RP_UH;
+      s += `<line x1="${RP_SIDE + 14}" y1="${y}" x2="${RP_SIDE + 469}" y2="${y}" stroke="#1d2125" stroke-width="1"/>`;
+      [8, 22.2, 36.4].forEach((d) => { s += `<rect x="${RP_SIDE + 3}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/><rect x="${RP_SIDE + 475}" y="${y + d - 2}" width="5" height="4" fill="#4b5258"/>`; });
+      s += `<text x="${RP_SIDE / 2}" y="${y + RP_UH / 2 + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#aab3bb" ${F}>${u + 1}</text>`;
+    }
+    s += `<rect x="${RP_SIDE}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/><rect x="${RP_SIDE + 469}" y="${RP_TOP}" width="14" height="${IH}" fill="#5d646b" opacity="0.55"/>`;
+    const items = [...c.items].sort((a, b) => a.at - b.at).map((it) => {
+      const y = RP_TOP + (it.at - 1) * RP_UH, hh = it.h * RP_UH, on = !forExport && rpSel === it.id, cy = y + hh / 2, lx = RP_SIDE * 2 + 483 + 14;
+      const pos = it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`;
+      return `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${RP_SIDE} ${y})">${rpItemArt(it)}<rect class="rpsel" x="1" y="1" width="481" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>
+        <line x1="${RP_SIDE + 486}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
+        ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${it.notes ? " · " + esc(it.notes.slice(0, 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(rpLabel(it).slice(0, 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
+    }).join("");
+    const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
+    const top = forExport ? 40 : 0;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
+  }
+  function renderRackplan() {
+    const P = rpState(), free = rpAddOptions();
+    $("#rpCases").innerHTML = P.cases.length ? P.cases.map((c) => {
+      const used = c.items.reduce((n, i) => n + i.h, 0);
+      return `<div class="panel rpcase" data-rpc="${c.id}">
+        <div class="rphead"><input type="text" data-rpcf="nom" value="${esc(c.nom || "")}" aria-label="Nom du rack" placeholder="Nom du rack">
+        <label class="inl"><input type="number" min="1" max="48" data-rpcf="u" value="${c.u}" inputmode="numeric" aria-label="Hauteur en U"> U</label>
+        <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" list="dlRpLieu" class="rplieu">
+        <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
+        <div class="rpadd"><select data-rpadd aria-label="Ajouter dans ce rack">${free}</select><span class="hint">${used}/${c.u} U occupés</span></div>
+        <div class="rpstage">${rpCaseSvg(c)}</div></div>`;
+    }).join("") : `<div class="panel"><p class="hint" style="margin:0">Aucun rack pour l'instant. « + Flight rack » en crée un ; ajoute ensuite tes appareils dedans.</p></div>`;
+    renderRackplanSide();
+  }
+  function renderRackplanSide() {
+    const side = $("#rpSide"), f = rpSel && rpFind(rpSel);
+    if (!f) { const P = rpState(), n = P.cases.reduce((k, c) => k + c.items.length, 0); side.innerHTML = `<h3>${P.cases.length} rack${P.cases.length > 1 ? "s" : ""} · ${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Ajoute un appareil avec la liste de chaque rack : il se met à la première place libre. Fais-le glisser à la souris ou au doigt pour changer d'U, ou touche-le pour le régler ici.</p>`; return; }
+    const { c, it } = f, P = rpState(), linked = it.kind !== "free";
+    const pos = []; for (let u = 1; u + it.h - 1 <= c.u; u++) if (rpFits(c, it, u)) pos.push(u);
+    side.innerHTML = `<h3>${esc(rpLabel(it))}</h3>
+      ${linked ? `<p class="hint" style="margin:0 0 8px">${it.kind === "rack" ? "Appareil de Racks et I/O : son nom se change dans Réglages racks." : "Élément du synoptique."}</p>` : `<label>Nom<input type="text" data-rpf="label" value="${esc(it.label || "")}" placeholder="${esc(rpLabel({ free: it.free }))}"></label>`}
+      <div class="row2"><label>Hauteur (U)<input type="number" min="1" max="20" data-rpf="h" value="${it.h}" inputmode="numeric"></label>
+      <label>Position<select data-rpf="at">${pos.map((u) => `<option value="${u}"${u === it.at ? " selected" : ""}>U${u}${it.h > 1 ? "–" + (u + it.h - 1) : ""}</option>`).join("")}</select></label></div>
+      ${P.cases.length > 1 ? `<label>Rack<select data-rpf="case">${P.cases.map((x) => `<option value="${x.id}"${x === c ? " selected" : ""}>${esc(x.nom || "Rack")}</option>`).join("")}</select></label>` : ""}
+      <label>Notes<input type="text" data-rpf="notes" value="${esc(it.notes || "")}" placeholder="ex. face arrière, alim 16 A"></label>
+      <p class="hint" id="rpMsg" style="min-height:1em;margin:0"></p>
+      <div class="actions" style="margin-top:8px"><button class="btn small danger" type="button" data-rpdel>Retirer du rack</button></div>`;
+  }
+  function rpPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+  function rackplanBind() {
+    const host = $("#v-rackplan");
+    $("#rpAddCase").addEventListener("click", () => { const P = rpState(); P.cases.push({ id: nid(), nom: "Rack " + (P.cases.length + 1), u: 12, lieu: "", items: [] }); commit(true); });
+    host.addEventListener("change", (e) => {
+      const t = e.target, card = t.closest(".rpcase"), P = rpState();
+      if (card && t.dataset.rpcf) {
+        const c = P.cases.find((x) => x.id === card.dataset.rpc); if (!c) return;
+        if (t.dataset.rpcf === "u") { const min = Math.max(1, ...c.items.map((i) => i.at + i.h - 1)); c.u = Math.max(min, Math.min(48, Math.round(Number(t.value)) || c.u)); }
+        else c[t.dataset.rpcf] = t.value.trim();
+        commit(true); return;
+      }
+      if (card && t.matches("[data-rpadd]")) {
+        const c = P.cases.find((x) => x.id === card.dataset.rpc), [kind, ref] = t.value.split("|"); if (!c || !kind) return;
+        const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
+        if (kind === "free") it.free = ref; else it.ref = ref;
+        it.at = rpNearest(c, it, 1);
+        if (!it.at) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = `Plus de place pour ${it.h} U : agrandis le rack ou libère des U.`; h.classList.add("warn"); return; }
+        c.items.push(it); rpSel = it.id; commit(true); return;
+      }
+      const f = rpSel && rpFind(rpSel), k = t.dataset.rpf; if (!f || !k) return;
+      const { c, it } = f, msg = (m) => { const x = $("#rpMsg"); if (x) x.textContent = m; };
+      if (k === "label" || k === "notes") it[k] = t.value.trim();
+      else if (k === "at") it.at = Number(t.value) || it.at;
+      else if (k === "h") {
+        const h = Math.max(1, Math.min(20, Math.round(Number(t.value)) || it.h)), old = it.h; it.h = h;
+        const at = rpNearest(c, it, it.at); if (!at) { it.h = old; t.value = old; msg(`Pas ${h} U libres d'affilée dans ce rack.`); return; } it.at = at;
+      } else if (k === "case") {
+        const to = P.cases.find((x) => x.id === t.value); if (!to || to === c) return;
+        const at = rpNearest(to, { ...it, id: "_" }, 1); if (!at) { t.value = c.id; msg(`Pas ${it.h} U libres dans ${to.nom || "ce rack"}.`); return; }
+        c.items = c.items.filter((i) => i !== it); it.at = at; to.items.push(it);
+      }
+      commit(true);
+    });
+    host.addEventListener("click", (e) => {
+      const P = rpState();
+      const del = e.target.closest("[data-rpcdel]");
+      if (del) { const id = del.closest(".rpcase").dataset.rpc; P.cases = P.cases.filter((x) => x.id !== id); commit(true); return; }
+      if (e.target.closest("[data-rpdel]")) { const f = rpSel && rpFind(rpSel); if (f) { f.c.items = f.c.items.filter((i) => i !== f.it); rpSel = null; commit(true); } }
+    });
+    host.addEventListener("pointerdown", (e) => {
+      const svg = e.target.closest && e.target.closest("svg.rpsvg"); if (!svg) return;
+      const g = e.target.closest("g.rpit");
+      if (!g) { if (rpSel) { rpSel = null; renderRackplan(); } return; }
+      const f = rpFind(g.dataset.rpi); if (!f) return;
+      const p = rpPoint(svg, e);
+      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, moved: false };
+      if (rpSel !== f.it.id) { rpSel = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); }
+      g.setPointerCapture && g.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    host.addEventListener("pointermove", (e) => {
+      if (!rpDrag) return;
+      const { c, it, svg, g } = rpDrag, p = rpPoint(svg, e);
+      const at = Math.max(1, Math.min(c.u - it.h + 1, Math.round((p.y - rpDrag.dy - RP_TOP) / RP_UH) + 1));
+      if (at !== rpDrag.at) { rpDrag.at = at; rpDrag.moved = true; g.setAttribute("transform", `translate(${RP_SIDE} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at)); }
+    });
+    const end = () => {
+      if (!rpDrag) return; const { c, it, at, moved } = rpDrag; rpDrag = null;
+      if (!moved) return;
+      const ok = rpFits(c, it, at) ? at : 0;
+      if (ok) it.at = ok;
+      commit(true);
+    };
+    host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
+    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("g.rpit")) e.preventDefault(); }, { passive: false });
+    document.addEventListener("keydown", (e) => {
+      if (view !== "rackplan" || !rpSel) return;
+      if (/INPUT|SELECT|TEXTAREA/.test((document.activeElement && document.activeElement.tagName) || "")) return;
+      const f = rpFind(rpSel); if (!f) return;
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); const d = e.key === "ArrowUp" ? -1 : 1; for (let a = f.it.at + d; a >= 1 && a + f.it.h - 1 <= f.c.u; a += d) if (rpFits(f.c, f.it, a)) { f.it.at = a; commit(true); break; } return; }
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); f.c.items = f.c.items.filter((i) => i !== f.it); rpSel = null; commit(true); }
+      if (e.key === "Escape") { rpSel = null; renderRackplan(); }
+    });
+  }
+  // Liste des U d'un rack, pour l'Excel et l'impression (les U libres regroupés)
+  function rpRows(c) {
+    const rows = [], items = [...c.items].sort((a, b) => a.at - b.at); let u = 1;
+    const gap = (to) => { if (to > u) rows.push([to - 1 > u ? `U${u}–${to - 1}` : `U${u}`, "libre", to - u, ""]); };
+    items.forEach((it) => { gap(it.at); rows.push([it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`, rpLabel(it), it.h, it.notes || ""]); u = it.at + it.h; });
+    gap(c.u + 1);
+    return rows;
+  }
+  const RP_HEAD = ["U", "Élément", "Hauteur (U)", "Notes"];
+  function rpPng(c) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { try { const k = 0.6, cv = document.createElement("canvas"); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); const g = cv.getContext("2d"); g.scale(k, k); g.drawImage(img, 0, 0); resolve({ data: cv.toDataURL("image/png"), w: cv.width, h: cv.height }); } catch (err) { resolve(null); } };
+      img.onerror = () => resolve(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(rpCaseSvg(c, true));
     });
   }
 
@@ -3693,7 +3909,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const zp = e.target.closest("[data-zpre]"), zd = e.target.closest("[data-zdel]");
       if (zp || zd) { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (!z) return; if (zp) z.nom = zp.dataset.zpre; else { S.zones = S.zones.filter((q) => q !== z); synSel = null; } commit(true); return; }
       if (e.target.closest("[data-spauto]")) { delete S.pos[synSel]; commit(true); }
-      if (e.target.closest("[data-spdel]")) { const id = synSel; S.nodes = S.nodes.filter((x) => x.id !== id); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); }
+      if (e.target.closest("[data-spdel]")) { const id = synSel; S.nodes = S.nodes.filter((x) => x.id !== id); rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "extra" && i.ref === id)); }); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); }
     });
   }
   function synPng() {
@@ -3808,7 +4024,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (r.ports) return r.ports.map((p) => (p.card && DMI[p.card] ? DMI[p.card].t.split(" (")[0] : `${p.nom} ${portN(p, "in", r)}/${portN(p, "out", r)}`)).join(" + ");
     return r.flat ? `${r.n} in / ${Number(r.out) || 0} out` : `${r.n} cartes in / ${Number(r.out) || 0} cartes out`;
   }
-  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
+  function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
   function countMultis() { const m = new Map(); state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()]; }
   const MAN_CATS = ["Câblage", "Réseau", "HF", "Ears", "Console", "Rack", "Accessoires", "Divers"];
   // En cartes sur téléphone : chaque cellule reprend le titre de sa colonne
@@ -3858,8 +4074,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
+    .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .pr { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; color: #111; font-size: 9.5pt; }
     .pr .prhead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #111; padding-bottom: 4px; margin-bottom: 8px; }
@@ -3915,6 +4132,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
+    rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${RP_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
@@ -3989,6 +4207,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (view === "infos") renderInfos();
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
+    if (view === "rackplan") renderRackplan();
     if (sc.some(Boolean)) document.querySelectorAll("section:not([hidden]) .table-wrap, section:not([hidden]) .hftw, section:not([hidden]) .kb").forEach((w, i) => { if (sc[i]) w.scrollLeft = sc[i]; });
   }
   // Historique : chaque modification enregistrée peut être annulée puis rétablie
@@ -4038,7 +4257,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf"], regie: ["racks", "syn", "materiel"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf"], regie: ["racks", "syn", "materiel", "rackplan"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   function setView(v, fromHistory) {
@@ -4053,7 +4272,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "boites", "reglbox", "racks", "materiel", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "boites", "reglbox", "racks", "materiel", "rackplan", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
@@ -4224,6 +4443,19 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const scale = Math.min(1, 1000 / png.w);
       pl.addImage(id, { tl: { col: 0, row: 1 }, ext: { width: png.w * scale, height: png.h * scale } });
       page(pl, true);
+    }
+    if (rpState().cases.length) {
+      const rs = wb.addWorksheet("Plans de rack");
+      rs.addRow([`Plans de rack · ${titre}`]).font = { bold: true, size: 14 };
+      [14, 34, 12, 30].forEach((w, i) => { rs.getColumn(i + 1).width = w; });
+      for (const c of rpState().cases) {
+        rs.addRow([]); const r0 = rs.rowCount;
+        rs.addRow([`${c.nom || "Rack"} · ${c.u} U${c.lieu ? " · " + c.lieu : ""}`]).font = { bold: true, size: 12 };
+        styleHead(rs.addRow(RP_HEAD)); rpRows(c).forEach((r) => { const row = rs.addRow(r); if (r[1] === "libre") row.font = { color: { argb: "FF9AA3AD" } }; });
+        const png = await rpPng(c);
+        if (png) { const id = wb.addImage({ base64: png.data, extension: "png" }), k = Math.min(1, 420 / png.w); rs.addImage(id, { tl: { col: 5, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20); while (rs.rowCount < r0 + need) rs.addRow([]); }
+      }
+      page(rs, false);
     }
     const sp = state.racks.length > 1 || synState().links.length ? await synPng() : null;
     if (sp) {
@@ -4573,7 +4805,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       commit(false);
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
-    planBind();
+    planBind(); rackplanBind();
     synBind();
     hfBind(); kbBind(); spxPatchBind();
     ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
