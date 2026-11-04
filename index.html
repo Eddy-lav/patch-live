@@ -711,13 +711,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   body.rows table.master th, body.rows table.master td { padding: 2px 3px; white-space: nowrap; }
   body.rows table.master td input[type="text"], body.rows table.master td select { padding: 3px 4px; font-size: 14px; }
   body.rows table.master td { min-width: 96px; }
-  body.rows table.master td.ch { min-width: 0; width: 40px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
+  body.rows table.master td.ch { box-sizing: border-box; min-width: 40px; max-width: 40px; width: 40px; position: sticky; left: 0; z-index: 2; background: var(--surface); }
   /* La source reste figée, mais ne cache que ses lettres : le reste défile et réapparaît juste après le nom */
   body.rows table.master td.src { min-width: 0; width: 1px; position: sticky; left: 40px; z-index: 2; background: transparent; }
   body.rows table.master td.src input { width: auto; min-width: 3ch; field-sizing: content; background: var(--row-bg, var(--surface)); box-shadow: 6px 0 6px -5px rgb(0 0 0 / 0.3); position: relative; }
   body.rows table.master tr.sel { --row-bg: var(--hl); }
   body.rows table.master tr.hit { --row-bg: var(--accent-soft); }
-  body.rows table.master th:first-child { position: sticky; left: 0; z-index: 7; background: var(--surface-2); }
+  body.rows table.master th:first-child { box-sizing: border-box; min-width: 40px; max-width: 40px; width: 40px; position: sticky; left: 0; z-index: 7; background: var(--surface-2); }
   body.rows table.master th:nth-child(2) { position: sticky; left: 40px; z-index: 7; background: var(--surface-2); }
   /* En-tête « Source » : même effet que les lignes, seul le mot reste figé */
   body.rows table.master:not(.rack) th.col-src { position: sticky; left: 40px; z-index: 7; background: transparent; width: 1px; min-width: 0; padding: 0; }
@@ -2801,9 +2801,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
     return r.ports ? "io" : r.flat ? "num" : "sd";
   }
-  // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm), sans logo
+  // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm) ; la marque est écrite en texte (pas de logo copié)
   const DEV_H = { sd: 445, num: 267, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
-  function devArt(type) {
+  function devArt(type, label) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
     const ears = (c) => R(0, 0, 13, H, c || "#5d646b", 1.5) + R(470, 0, 13, H, c || "#5d646b", 1.5) + C(6.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(6.5, H - Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, H - Math.min(8, H / 4), 2.6, "#1d2125");
@@ -2812,6 +2812,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const xlrM = (x, y, s) => C(x, y, 11 * s, "#8a939b") + C(x, y, 8.6 * s, "#2f3439") + C(x - 3.2 * s, y - 2 * s, 1.6 * s, "#d8dee3") + C(x + 3.2 * s, y - 2 * s, 1.6 * s, "#d8dee3") + C(x, y + 3.5 * s, 1.6 * s, "#d8dee3");
     const bnc = (x, y, r) => C(x, y, r, "#c8a24a") + C(x, y, r * 0.55, "#2a2a2a") + C(x, y, r * 0.18, "#e7d6a5");
     const led = (x, y, c, r) => C(x, y, r || 1.6, c);
+    const T = (x, y, t, sz, c, w, ls, anc) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="${sz}" font-weight="${w || 700}" fill="${c}"${ls ? ` letter-spacing="${ls}"` : ""}${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     const vents = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => R(x + (i * w) / n, y, (w / n) * 0.55, h, "#15181b", 1)).join("");
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
@@ -2820,6 +2821,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += R(30, 18, 70, 30, "#7dd3fc", 2) + R(34, 23, 40, 3, "#0c4a6e") + R(34, 30, 52, 3, "#0c4a6e") + R(34, 37, 30, 3, "#0c4a6e");
         s += [0, 1, 2, 3].map((i) => R(30 + i * 18, 60, 13, 10, "#4b5258", 2)).join("");
         s += [0, 1, 2, 3, 4, 5].map((i) => bnc(130 + i * 17, 34, 6)).join("") + bnc(250, 34, 6) + bnc(267, 34, 6);
+        s += T(30, 97, "DiGiCo", 15, "#f3f4f6", 700, 0.3) + T(132, 97, "SD-RACK", 9, "#aab3bb", 700, 1.2);
         s += R(132, 58, 26, 14, "#e8590c", 3) + R(166, 58, 26, 14, "#e8590c", 3) + R(214, 60, 10, 9, "#9aa3ab", 1.5);
         s += [0, 1].map((i) => R(300 + i * 82, 12, 76, 92, "#3a4046", 3) + R(306 + i * 82, 18, 8, 80, "#5d646b", 2) + R(325 + i * 82, 28, 30, 20, "#16191c", 2) + led(370 + i * 82, 80, "#4ade80", 2.5)).join("");
         for (let k = 0; k < 14; k++) {
@@ -2843,18 +2845,19 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += [0, 1, 2, 3].map((i) => R(407 + i * 13, 58, 10, 9, "#55606a", 2)).join("") + C(433, 95, 8, "#15181b") + C(433, 95, 4, "#55606a");
         s += [0, 1, 2, 3, 4, 5].map((i) => led(410 + (i % 3) * 12, 125 + Math.floor(i / 3) * 10, i % 2 ? "#22c55e" : "#38bdf8", 2)).join("");
         s += R(18, 175, 447, 2, "#3d4246") + R(18, 236, 447, 22, "#202326");
+        s += T(24, 156, "MIDAS", 13, "#e5e7eb", 800, 2) + T(88, 156, "DL431 · MIC SPLITTER", 8, "#9aa3ab", 700, 0.8);
         return s;
       }
       // DD4MR-FX : 1 U, façade noire, rangées de LED d'état (MADI, liens optiques, horloge)
       case "dd4mr": {
-        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 26, 6, "#f59e0b", 1) + R(26, 25, 42, 3, "#4b5258");
+        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 26, 6, "#f59e0b", 1) + T(26, 31, "OPTOCORE DD4MR", 6, "#d1d5db", 700);
         for (let g = 0; g < 4; g++) for (let i = 0; i < 8; i++) { s += led(110 + g * 72 + i * 7.5, 16, i < 6 ? "#22c55e" : "#3f4549", 1.8) + led(110 + g * 72 + i * 7.5, 29, i < 3 ? "#f59e0b" : "#3f4549", 1.8); }
         s += led(410, 16, "#22c55e", 2.2) + led(422, 16, "#22c55e", 2.2) + led(410, 29, "#38bdf8", 2.2) + led(422, 29, "#3f4549", 2.2) + R(440, 13, 20, 18, "#1f2326", 2);
         return s;
       }
       // M8 (Optocore) : 1 U, façade noire, LED par port MADI
       case "m8": {
-        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 18, 6, "#f59e0b", 1);
+        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 18, 6, "#f59e0b", 1) + T(26, 31, "OPTOCORE", 7, "#d1d5db", 700, 0.6) + T(66, 21, "M8", 7, "#f3f4f6", 800);
         for (let i = 0; i < 8; i++) s += R(100 + i * 38, 10, 30, 24, "#1f2326", 2) + led(108 + i * 38, 18, "#22c55e", 2) + led(116 + i * 38, 18, "#22c55e", 2) + led(124 + i * 38, 18, "#f59e0b", 2) + R(106 + i * 38, 26, 20, 3, "#4b5258");
         s += led(420, 22, "#22c55e", 2.4) + led(434, 22, "#38bdf8", 2.4) + led(448, 22, "#3f4549", 2.4);
         return s;
@@ -2864,6 +2867,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         let s = ears("#c2410c") + face("#f26b1d") + R(18, 6, 447, 3, "#fb923c");
         s += [0, 1].map((i) => { const x = 40 + i * 175; return R(x, 14, 160, 62, "#1f2326", 3) + R(x + 6, 20, 148, 50, "#2c3136", 2) + Array.from({ length: 4 }, (_, j) => bnc(x + 30 + j * 30, 45, 8)).join("") + C(x + 12, 26, 2.4, "#9aa3ab") + C(x + 148, 26, 2.4, "#9aa3ab"); }).join("");
         s += bnc(408, 32, 8) + bnc(436, 32, 8) + R(412, 56, 14, 12, "#1f2326", 2) + led(445, 62, "#22c55e", 2.4);
+        s += T(40, 85, "DiGiCo", 8, "#2b1205", 800) + T(72, 85, "ORANGE BOX", 6.5, "#3b1a06", 700, 0.8);
         return s;
       }
       // Spectera (base) : 1 U, façade sombre, écran OLED, molette, casque avec volume, LED d'état
@@ -2871,7 +2875,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         let s = ears("#3a3f44") + face("#1c1f22") + R(18, 4, 447, 36, "#23272b", 3);
         s += R(40, 10, 72, 24, "#0b0d0f", 2) + R(46, 15, 40, 3, "#e5e7eb") + R(46, 22, 56, 2.4, "#9ca3af") + R(46, 27, 30, 2.4, "#9ca3af");
         s += C(140, 22, 12, "#3a3f44") + C(140, 22, 9, "#2b3035") + R(139, 13, 2, 6, "#9aa3ab");
-        s += vents(180, 12, 160, 20, 22);
+        s += vents(178, 12, 112, 20, 16) + T(300, 26, "SENNHEISER", 7.5, "#e5e7eb", 700, 0.6);
         s += C(372, 22, 7, "#3a3f44") + C(372, 22, 3, "#0b0d0f") + C(398, 22, 8, "#3a3f44") + R(397, 15, 2, 5, "#9aa3ab");
         s += led(425, 16, "#22c55e", 2.2) + led(425, 28, "#38bdf8", 2.2) + led(440, 16, "#22c55e", 2.2) + led(440, 28, "#3f4549", 2.2);
         return s;
@@ -2883,7 +2887,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += [0, 1, 2].map((i) => led(62, 12 + i * 10, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("");
         s += [0, 1, 2, 3].map((i) => led(90 + i * 11, 17, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("") + [0, 1, 2, 3, 4, 5].map((i) => led(150 + i * 11, 17, i === 0 ? "#3b82f6" : "#7c858d", 2)).join("");
         s += Array.from({ length: 12 }, (_, i) => led(230 + i * 15, 17, "#3b82f6", 2)).join("") + Array.from({ length: 12 }, (_, i) => R(226 + i * 15, 25, 8, 2, "#8a939b")).join("");
-        s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2);
+        s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2) + T(84, 34, "ROSENDAHL", 6.5, "#374151", 800, 0.6) + T(132, 34, "nanoclocks", 6.5, "#4b5563", 400);
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -2899,6 +2903,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         let s = R(0, 0, 483, 210, "#2a2e33", 10) + R(8, 8, 467, 70, "#1b1e21", 6);
         s += [0, 1, 2].map((i) => R(20 + i * 152, 14, 140, 58, "#38bdf8", 3, ' opacity="0.85"') + R(26 + i * 152, 20, 128, 8, "#0c4a6e", 1, ' opacity="0.6"') + Array.from({ length: 12 }, (_, j) => R(30 + i * 152 + j * 10, 34 + (j * 7) % 18, 6, 32 - (j * 7) % 18, "#22c55e", 1, ' opacity="0.8"')).join("")).join("");
         s += R(8, 86, 467, 116, "#1f2326", 6);
+        if (label) s += T(241.5, 84.5, label, 7.5, "#d1d5db", 700, 0.6, "middle");
         for (let b = 0; b < 3; b++) for (let f = 0; f < 12; f++) { const x = 22 + b * 152 + f * 11.5; s += R(x + 3, 98, 2, 92, "#0b0d0f") + R(x, 120 + ((f * 13 + b * 7) % 50), 8, 12, "#e5e7eb", 1.5) + led(x + 4, 92, f % 4 ? "#3f4549" : "#facc15", 2); }
         return s;
       }
@@ -2916,7 +2921,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const r = n && n.kind === "rack" ? rackById(n.id) : n && n.kind === "extra" ? n.ref : n && n.kind === "console" ? synState().cons[n.cons] || {} : n;
     const ph = r && r.photo, t = devType(n), H = DEV_H[t] || 44.45, par = `${left ? "xMin" : "xMid"}YMid meet`;
     if (ph) return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" class="devimg" aria-hidden="true"><image href="${ph}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="${par}"/></svg>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 483 ${H}" preserveAspectRatio="${par}" class="devimg" aria-hidden="true">${devArt(t)}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 483 ${H}" preserveAspectRatio="${par}" class="devimg" aria-hidden="true">${devArt(t, t === "console" ? r && r.model : "")}</svg>`;
   }
   // Photo perso : réduite (240 px) et gardée dans le dossier
   function readPhoto(file) {
