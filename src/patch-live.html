@@ -394,7 +394,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .rpadd select { max-width: 100%; }
 .rpadd .hint.warn { color: var(--danger, #b91c1c); }
 .rpstage { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.rpsvg { width: 100%; height: auto; display: block; touch-action: pan-y; }
+.rpsvg { width: 100%; height: auto; display: block; touch-action: pan-x pan-y; }
 .rpsvg g.rpit { cursor: grab; }
 .rpsvg g.rpit.bad { opacity: 0.45; }
 :root[data-theme="regie"] .rpstage { filter: brightness(0.6); }
@@ -3334,7 +3334,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // et des éléments libres (tiroir, distribution…). Chaque appareil garde sa façade dessinée (ou la photo perso).
   const RP_FREE = [["vide", "Panneau vide", 1], ["tiroir", "Tiroir", 2], ["distro", "Distribution électrique", 1], ["passe", "Passe-câbles", 1], ["patch", "Patch panel", 1], ["autre", "Autre élément", 1]];
   const RP_UH = 44.45, RP_SIDE = 30, RP_TOP = 24, RP_LW = 390;
-  let rpSel = null, rpDrag = null;
+  let rpSel = null, rpDrag = null, rpFresh = null;
   function rpState() { if (!state.rackplan || typeof state.rackplan !== "object") state.rackplan = {}; if (!Array.isArray(state.rackplan.cases)) state.rackplan.cases = []; return state.rackplan; }
   const rpExtra = (id) => synState().nodes.find((x) => x.id === id) || null;
   function rpLabel(it) {
@@ -3433,7 +3433,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function renderRackplanSide() {
     const side = $("#rpSide"), f = rpSel && rpFind(rpSel);
-    if (!f) { const P = rpState(), n = P.cases.reduce((k, c) => k + c.items.length, 0); side.innerHTML = `<h3>${P.cases.length} rack${P.cases.length > 1 ? "s" : ""} · ${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Ajoute un appareil avec la liste de chaque rack : il se met à la première place libre. Fais-le glisser à la souris ou au doigt pour changer d'U, ou touche-le pour le régler ici.</p>`; return; }
+    if (!f) { const P = rpState(), n = P.cases.reduce((k, c) => k + c.items.length, 0); side.innerHTML = `<h3>${P.cases.length} rack${P.cases.length > 1 ? "s" : ""} · ${n} élément${n > 1 ? "s" : ""}</h3><p class="hint">Ajoute un appareil avec la liste de chaque rack : il se met à la première place libre. Fais-le glisser à la souris pour changer d'U ou de colonne ; au doigt, touche-le d'abord puis fais-le glisser. Il se règle aussi ici.</p>`; return; }
     const { c, it } = f, P = rpState(), linked = it.kind !== "free";
     const pos = []; for (let u = 1; u + it.h - 1 <= c.u; u++) if (rpFits(c, it, u)) pos.push(u);
     const n = rpCols(c);
@@ -3507,6 +3507,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const g = e.target.closest("g.rpit");
       if (!g) { if (rpSel) { rpSel = null; renderRackplan(); } return; }
       const f = rpFind(g.dataset.rpi); if (!f) return;
+      // Au doigt : une première touche sélectionne (le plan défile toujours), on fait glisser un appareil déjà sélectionné
+      const wasSel = rpSel === f.it.id;
+      if (e.pointerType === "touch" && !wasSel) { rpSel = f.it.id; rpFresh = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); return; }
       const p = rpPoint(svg, e);
       rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), moved: false };
       if (rpSel !== f.it.id) { rpSel = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); }
@@ -3527,7 +3530,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       commit(true);
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
-    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("g.rpit")) e.preventDefault(); }, { passive: false });
+    host.addEventListener("touchstart", (e) => { const g = e.target.closest && e.target.closest("g.rpit"); if (g && g.dataset.rpi === rpSel && rpFresh !== rpSel) e.preventDefault(); rpFresh = null; }, { passive: false });
     document.addEventListener("keydown", (e) => {
       if (view !== "rackplan" || !rpSel) return;
       if (/INPUT|SELECT|TEXTAREA/.test((document.activeElement && document.activeElement.tagName) || "")) return;
