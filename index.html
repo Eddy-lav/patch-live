@@ -2856,21 +2856,42 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         }
         return s;
       }
-      // DL431 : 6 U, 24 tranches (sélection, bargraphe, 48 V, filtre), 24 sorties XLR en façade, écran et navigation à droite
+      // DL431 : 6 U, façade bleue. À gauche écran, sélection préampli, Ethernet / AES50, alimentations, écoute ;
+      // au centre 3 rangées de 8 tranches (bargraphe, 48 V / filtre, numéro et sélection) ; à droite les 24 sorties isolées C (6 × 4 XLR femelles)
       case "num": {
-        let s = ears("#4b5156") + face("#2b2e31") + R(18, 8, 447, 6, "#3d4246");
-        for (let k = 0; k < 24; k++) {
-          const x = 24 + k * 15.6;
-          s += R(x, 22, 11, 7, "#55606a", 1.5);
-          for (let j = 0; j < 7; j++) s += R(x + 2, 36 + j * 9, 7, 6, j < 1 ? "#ef4444" : j < 3 ? "#facc15" : "#22c55e", 1, j > 3 ? ' opacity="0.9"' : ' opacity="0.45"');
-          s += led(x + 3, 108, "#ef4444", 1.8) + led(x + 8, 108, "#facc15", 1.8);
-          s += xlrM(x + 5.5, 200, 0.62);
-        }
-        s += R(405, 22, 56, 26, "#93c5fd", 2) + R(409, 27, 34, 3, "#1e3a8a") + R(409, 34, 44, 3, "#1e3a8a");
-        s += [0, 1, 2, 3].map((i) => R(407 + i * 13, 58, 10, 9, "#55606a", 2)).join("") + C(433, 95, 8, "#15181b") + C(433, 95, 4, "#55606a");
-        s += [0, 1, 2, 3, 4, 5].map((i) => led(410 + (i % 3) * 12, 125 + Math.floor(i / 3) * 10, i % 2 ? "#22c55e" : "#38bdf8", 2)).join("");
-        s += R(18, 175, 447, 2, "#3d4246") + R(18, 236, 447, 22, "#202326");
-        s += T(24, 156, "MIDAS", 13, "#e5e7eb", 800, 2) + T(88, 156, "DL431 · MIC SPLITTER", 8, "#9aa3ab", 700, 0.8);
+        const T = (x, y, t, sz, c, w, anc, st) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="${sz}" font-weight="${w || 400}" fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}${st ? ` font-style="${st}"` : ""}>${esc(t)}</text>`;
+        const box = (x, y, w, h) => R(x, y, w, h, "#1b3a85", 2, ' stroke="#9fb3e6" stroke-width="0.8"');
+        let s = ears("#2a3f78") + face("#22439a") + R(11, 0, 461, 3, "#1a3478") + R(11, H - 3, 461, 3, "#1a3478");
+        s += T(163, 25, "MIDAS", 10, "#e5e7eb", 800) + T(199, 25, "DL431", 10, "#e5e7eb", 400, "", "italic") + T(230, 25, "audio system input splitter", 6.5, "#e5e7eb", 700);
+        // Commandes à gauche
+        s += box(27, 36, 112, 77);
+        [46, 62, 78, 94].forEach((y) => { s += R(37, y, 11, 9, "#8a95a8", 1.5) + R(39, y + 2, 7, 5, "#5d6779", 1); });
+        s += R(62, 41, 63, 33, "#3555c8", 1.5, ' stroke="#c7d2fe" stroke-width="0.6"') + T(66, 51, "Midas DL431", 6, "#e0e7ff", 400) + T(66, 60, "Mic Splitter 2", 6, "#e0e7ff", 400) + T(66, 69, "A Ch25   0.0dB", 6, "#e0e7ff", 400);
+        s += R(67, 93, 10, 8, "#b91c1c", 1.5) + R(80, 93, 10, 8, "#22c55e", 1.5) + T(72, 108, "phantom", 3.4, "#c7d2fe", 400, "middle") + T(86, 108, "filter", 3.4, "#c7d2fe", 400, "middle");
+        s += C(114, 94, 8, "#111827") + C(114, 94, 5.5, "#374151") + R(113.3, 86.5, 1.4, 5, "#e5e7eb") + T(106, 108, "gain adjust", 3.6, "#c7d2fe");
+        s += R(27, 116, 112, 21, "#efe38a", 2) + T(83, 123, "mic amp select", 4.5, "#1f2937", 700, "middle") + R(63, 126, 10, 8, "#3b82f6", 1.5) + R(93, 126, 10, 8, "#64748b", 1.5);
+        s += box(27, 139, 54, 21) + box(85, 139, 54, 21) + T(54, 145, "Ethernet control", 3.8, "#c7d2fe", 700, "middle") + T(112, 145, "AES50 audio", 3.8, "#c7d2fe", 700, "middle");
+        [38, 50, 62, 72].forEach((x, i) => { s += led(x, 153, i % 2 ? "#22c55e" : "#3f4a6b", 1.6); }); [96, 106, 118, 128].forEach((x, i) => { s += led(x, 153, i < 2 ? "#22c55e" : "#ef4444", 1.6); });
+        s += box(27, 163, 54, 17) + box(85, 163, 54, 17) + T(54, 168, "psu 1", 3.8, "#c7d2fe", 700, "middle") + T(112, 168, "psu 2", 3.8, "#c7d2fe", 700, "middle");
+        for (let i = 0; i < 5; i++) s += led(35 + i * 9, 174, "#facc15", 1.7) + led(93 + i * 9, 174, "#facc15", 1.7);
+        s += box(27, 182, 112, 37) + T(83, 188, "channel monitor", 3.8, "#c7d2fe", 700, "middle") + xlrF(51, 201, 0.85) + C(83, 201, 5, "#9aa3ab") + C(83, 201, 3, "#111827");
+        s += C(114, 201, 8, "#7f1d1d") + C(114, 201, 6, "#dc2626") + R(113.3, 193.5, 1.4, 5, "#fef2f2") + T(51, 215, "line out", 3.5, "#c7d2fe", 400, "middle") + T(83, 215, "phones", 3.5, "#c7d2fe", 400, "middle") + T(114, 215, "level", 3.5, "#c7d2fe", 400, "middle");
+        // Tranches : 3 rangées de 8
+        [47, 109, 173].forEach((y0, row) => {
+          for (let k = 0; k < 8; k++) {
+            const x = 148 + k * 23, n = row * 8 + k + 1;
+            s += R(x, y0, 20, 45, "#0f1f4d", 1) + R(x + 1, y0 + 1, 18, 29, "#e8ecf3", 0.8);
+            for (let j = 0; j < 6; j++) s += R(x + 3, y0 + 4 + j * 4.3, 7, 1, "#6b7280") + R(x + 12, y0 + 3 + j * 4.3, 5, 3, j === 0 ? "#fca5a5" : j < 2 ? "#fde68a" : "#86efac", 0.5);
+            s += R(x + 1, y0 + 30, 18, 6, "#efe38a", 0.5) + R(x + 2.5, y0 + 31.5, 5, 3, "#9ca3af", 0.4) + R(x + 11, y0 + 31.5, 5, 3, "#9ca3af", 0.4);
+            s += T(x + 4, y0 + 42.5, String(n), 5, "#ffffff", 700, "middle") + R(x + 9, y0 + 37.5, 9, 6, n === 1 ? "#60a5fa" : "#64748b", 1);
+          }
+        });
+        s += T(240, 103, "analogue output metering", 4.8, "#e5e7eb", 700, "middle");
+        // Sorties isolées C
+        s += R(339, 36, 111, 193, "#121417", 4) + T(371, 31, "isolated C outputs", 5, "#e5e7eb", 700);
+        for (let r = 0; r < 6; r++) for (let c = 0; c < 4; c++) s += xlrF(354 + c * 27.3, 53 + r * 31.5, 1) + T(362.5 + c * 27.3, 41.5 + r * 31.5, String(r * 4 + c + 1), 4.2, "#d1d5db", 700, "middle");
+        // Ouïes en bas
+        [[30, 76], [111, 103], [225, 97]].forEach(([x, w]) => { s += R(x, 226, w, 30, "#16285e", 2); for (let i = 0; i < Math.floor(w / 4); i++) for (let j = 0; j < 7; j++) s += C(x + 2.5 + i * 4, 229 + j * 4, 0.9, "#0b1430"); });
         return s;
       }
       // DD4MR-FX : 1 U, façade noire, rangées de LED d'état (MADI, liens optiques, horloge)
