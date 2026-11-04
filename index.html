@@ -2549,9 +2549,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       used++;
       return outs ? outRow(x, state.sorties.indexOf(x), occ, pre, card) : masterRow(x, canal(x) - 1, occ, cols, matches(x, query), pre, card);
     }).join("");
-    const th = `<th class="col-ent">${outs ? "Sortie" : "Entrée"}</th>`;
+    const th = `<th class="col-ent">${(r.model === "spectera") !== !!outs ? "Sortie" : "Entrée"}</th>`;
     const key = r.id + (outs ? ":out" : ":in");
-    return `<details class="rt" data-rd="${key}"${closedRacks.has(key) ? "" : " open"}><summary><h3>${outs ? "Sorties" : "Entrées"} <span class="used">${used}/${cells.length}</span></h3></summary><div class="table-wrap"><table class="master rack${outs ? " outm" : ""}${r.model === "spectera" ? " spx" : ""}" data-rk="${r.id}${outs ? "-o" : ""}"><thead>${outs ? outHead(th) : masterHead(cols, th)}</thead><tbody>${rows}</tbody></table></div></details>`;
+    return `<details class="rt" data-rd="${key}"${closedRacks.has(key) ? "" : " open"}><summary><h3>${r.model === "spectera" ? (outs ? "Entrées Spectera · ears" : "Sorties Spectera · micros HF") : outs ? "Sorties" : "Entrées"} <span class="used">${used}/${cells.length}</span>${r.model === "spectera" ? `<span class="hint" style="font-weight:400">${outs ? "les mix envoyés par la console" : "vers les entrées console"}</span>` : ""}</h3></summary><div class="table-wrap"><table class="master rack${outs ? " outm" : ""}${r.model === "spectera" ? " spx" : ""}" data-rk="${r.id}${outs ? "-o" : ""}"><thead>${outs ? outHead(th) : masterHead(cols, th)}</thead><tbody>${rows}</tbody></table></div></details>`;
   }
   // Sources sans entrée de stage rack : elles restent éditables et sélectionnables depuis la vue racks
   function unpatchedTable(occ) {
@@ -2757,7 +2757,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     out.innerHTML = racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
       const cons = (split ? ` · ${r.console === "Partagé" ? "Partagé" : "Console " + consLabel(r.console)}` : "") + (rackLoop(r) ? (loops().length > 1 ? ` · ${rackLoop(r).nom}` : "") : " · hors loop");
-      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${ins.length} in / ${outs.length} out</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
+      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${r.model === "spectera" ? `${outs.length} entrées (ears) / ${ins.length} sorties (micros)` : `${ins.length} in / ${outs.length} out`}</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
     }).join("") + unpatchedTable(occ);
     const hits = query ? state.lignes.filter((l) => matches(l, query)).length : 0;
     $("#searchHint").textContent = query ? (hits ? `${hits} ligne${hits > 1 ? "s" : ""} trouvée${hits > 1 ? "s" : ""}` : "Aucune entrée trouvée") : "";
@@ -2776,8 +2776,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         <td style="width:90px"><input type="number" min="0" max="64" data-rf="out" value="${Number(r.out) || 0}" aria-label="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}" title="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}"></td>`;
       const ports = r.ports ? `<tr class="ports" data-rid="${r.id}"><td></td><td colspan="7"><div class="portlist">${r.ports.map((p, k) => `
           <div class="port" data-pi="${k}">${r.model === "orange" || r.model === "spectera" || p.card ? `<select data-pf="card" aria-label="Interface du port"><option value="">Interface : manuel</option>${Object.entries(DMI).filter(([, d]) => (d.m || "orange") === (r.model === "spectera" ? "spectera" : "orange")).map(([v, d]) => `<option value="${v}"${p.card === v ? " selected" : ""}>${esc(d.t)}</option>`).join("")}</select>` : ""}<input type="text" data-pf="nom" value="${esc(p.nom)}" aria-label="Nom du port" placeholder="MADI 1">
-          <label>In <input type="number" min="0" max="512" data-pf="in" value="${portN(p, "in", r)}" aria-label="Entrées du port"${p.card ? " disabled" : ""}></label>
-          <label>Out <input type="number" min="0" max="512" data-pf="out" value="${portN(p, "out", r)}" aria-label="Sorties du port"${p.card ? " disabled" : ""}></label>
+          <label${r.model === "spectera" ? ' title="Sorties de la base : micros HF vers la console"' : ""}>${r.model === "spectera" ? "Micros" : "In"} <input type="number" min="0" max="512" data-pf="in" value="${portN(p, "in", r)}" aria-label="Entrées du port"${p.card ? " disabled" : ""}></label>
+          <label${r.model === "spectera" ? ' title="Entrées de la base : mix ears envoyés par la console"' : ""}>${r.model === "spectera" ? "Ears" : "Out"} <input type="number" min="0" max="512" data-pf="out" value="${portN(p, "out", r)}" aria-label="Sorties du port"${p.card ? " disabled" : ""}></label>
           <button class="btn small" type="button" data-delport="${k}" aria-label="Retirer ce port">×</button></div>`).join("")}
           <button class="btn small" type="button" data-addport="${r.id}">+ Port</button></div></td></tr>` : "";
       return `
@@ -3192,7 +3192,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     (ks.length ? ks : state.racks.length ? ["ALL"] : []).forEach((k) => out.push({ id: "c:" + k, kind: "console", title: k === "ALL" ? "Console" : "Console " + consLabel(k), sub: "", ports: [], loop: consLoop(k), cons: k }));
     [...state.racks].sort(byRackId).forEach((r) => {
       const ports = r.ports ? r.ports.map((p) => ({ nom: p.nom || "Port", proto: portProto(p), n: `${portN(p, "in", r)}/${portN(p, "out", r)}` })) : [];
-      const sub = (r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
+      const sub = (r.model === "spectera" ? `${rackOutputs(r).length} in (ears) / ${rackInputs(r).length} out (micros)` : r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
       out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
     });
     S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || "", ports: [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
