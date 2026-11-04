@@ -135,6 +135,10 @@ header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-e
 .appmenu .mh { margin: 4px 10px 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
 .appmenu .dangerish { color: var(--danger); }
 .appmenu button.armed { background: var(--danger); color: #fff; }
+#ctxMenu { max-height: min(70vh, 520px); overflow-y: auto; max-width: min(92vw, 360px); }
+#ctxMenu button[disabled] { color: var(--muted); opacity: 0.55; cursor: default; background: transparent; }
+#ctxMenu .cxsub { float: right; color: var(--muted); margin-left: 12px; }
+#ctxMenu .cxback { color: var(--muted); font-size: 13px; }
 .appmenu [role="menuitemcheckbox"]::before { content: ""; display: inline-block; width: 18px; }
 .appmenu [role="menuitemcheckbox"][aria-checked="true"]::before { content: "✓"; }
 .btn.icon { display: inline-flex; align-items: center; justify-content: center; min-width: 38px; padding: 6px 8px; font-size: 17px; line-height: 1; }
@@ -3271,7 +3275,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const snap = (v) => Math.round(v * 4) / 4;
   function planBind() {
     const host = $("#v-plan");
-    host.addEventListener("pointerdown", (e) => {
+    host.addEventListener("pointerdown", (e) => { if (e.button === 2) return; // clic droit : menu, pas de glisser
       const g = e.target.closest("#planSvg g.it");
       if (!e.target.closest("#planSvg")) return;
       if (!g) { if (planSel) { planSel = null; renderPlan(); } return; }
@@ -3515,7 +3519,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }
       if (e.target.closest("[data-rpdel]")) { const f = rpSel && rpFind(rpSel); if (f) { f.c.items = f.c.items.filter((i) => i !== f.it); rpSel = null; commit(true); } }
     });
-    host.addEventListener("pointerdown", (e) => {
+    host.addEventListener("pointerdown", (e) => { if (e.button === 2) return; // clic droit : menu, pas de glisser
       const svg = e.target.closest && e.target.closest("svg.rpsvg"); if (!svg) return;
       const g = e.target.closest("g.rpit");
       if (!g) { if (rpSel) { rpSel = null; renderRackplan(); } return; }
@@ -3839,7 +3843,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function synBind() {
     const host = $("#v-syn");
-    host.addEventListener("pointerdown", (e) => {
+    host.addEventListener("pointerdown", (e) => { if (e.button === 2) return; // clic droit : menu, pas de glisser
       if (!e.target.closest("#synSvg")) return;
       const lk = e.target.closest("g.lkh");
       if (lk) {
@@ -5424,28 +5428,321 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const r = $("#menuBtn").getBoundingClientRect(); $("#appMenu").hidden = true; placeMenu(m, r.right - 260, r.bottom + 4);
   });
   $("#ctxMenu").addEventListener("change", (e) => { const k = e.target.dataset.hc; if (!k) return; if (e.target.checked) hiddenCols.delete(k); else hiddenCols.add(k); setPref("hidecols", [...hiddenCols].join(",")); paintCols(); });
-  // Clic droit sur une ligne : supprimer (avec confirmation), dupliquer quand c'est possible
+  // ---------- Menus clic droit ----------
+  // Un seul menu pour toute l'appli : clic droit à la souris, appui long au doigt, touche Menu (ou Maj+F10) au clavier.
+  // Chaque écran y met ses actions rapides ; Maj+clic droit garde le menu habituel du navigateur (copier, coller).
   const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel]";
-  document.addEventListener("contextmenu", (e) => {
-    // Maj+clic droit, ou du texte sélectionné dans un champ : menu habituel (copier, coller)
-    const t = e.target; if (e.shiftKey || t.matches("textarea") || (t.matches("input[type=text], input[type=search]") && t.selectionStart !== t.selectionEnd)) return;
-    const tr = e.target.closest("tr"); const del = tr && tr.querySelector(DEL_SEL); if (!del) return;
-    e.preventDefault();
-    const m = $("#ctxMenu"), name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
-    const line = tr.dataset.id && state.lignes.find((x) => x.id === tr.dataset.id);
-    m.innerHTML = `<p class="mh">${esc(name || "Cette ligne")}</p>${line && line.box ? `<button type="button" data-cx="panne">Panne sur ${esc(boxAddr(line.box))}…</button>` : ""}<button type="button" data-cx="del" class="dangerish">Supprimer…</button>`;
-    m._del = del; m._line = line; m._xy = [e.clientX, e.clientY]; placeMenu(m, e.clientX, e.clientY);
-  });
-  $("#ctxMenu").addEventListener("click", (e) => {
-    const pb = e.target.closest("[data-panne]");
-    if (pb) { const m = $("#ctxMenu"), l = m._line; m.hidden = true; if (l) doPanne(l, Number(pb.dataset.panne)); return; }
-    const b = e.target.closest("[data-cx]"), m = $("#ctxMenu"); if (!b) return;
-    if (b.dataset.cx === "panne") { e.stopPropagation(); panneMenu(m._line, m._xy[0], m._xy[1]); return; }
-    if (b.dataset.cx === "del") { b.dataset.cx = "ok"; b.textContent = "Confirmer la suppression"; b.classList.add("armed"); return; }
-    if (b.dataset.cx === "ok") {
-      const d = m._del; m.hidden = true; if (!d || !d.isConnected) return;
-      d.click(); if (d.isConnected && d.classList.contains("armed")) d.click();
+  const boxUsed = (b) => [...state.lignes, ...(state.sorties || [])].some((x) => x.box && x.box.b === b.id);
+  const CTX = { items: [], stack: [], title: "", xy: [0, 0], opened: 0 };
+  function ctxRender() {
+    const m = $("#ctxMenu");
+    m.innerHTML = (CTX.stack.length ? `<button type="button" data-ci="back" class="cxback">‹ Retour</button>` : "") + (CTX.title ? `<p class="mh">${esc(CTX.title)}</p>` : "") +
+      CTX.items.map((x, k) => x === "-" ? "<hr>" : x.head ? `<p class="mh">${esc(x.head)}</p>` : `<button type="button" role="menuitem" data-ci="${k}"${x.danger ? ' class="dangerish"' : ""}${x.off ? " disabled" : ""}>${x.on ? "✓ " : ""}${esc(x.t)}${x.sub ? '<span class="cxsub">›</span>' : ""}</button>`).join("");
+  }
+  const ctxClean = (items) => { const out = []; items.filter(Boolean).forEach((i) => { if (i === "-" && (!out.length || out[out.length - 1] === "-")) return; out.push(i); }); while (out[out.length - 1] === "-") out.pop(); return out; };
+  function ctxOpen(x, y, title, items) {
+    const clean = ctxClean(items); if (!clean.some((i) => i !== "-" && !i.head)) return false;
+    closeMenus();
+    Object.assign(CTX, { items: clean, title, stack: [], xy: [x, y], opened: Date.now() });
+    ctxRender(); const m = $("#ctxMenu"); m.style.width = ""; placeMenu(m, x, y);
+    if (CTX.kb) { const f = m.querySelector("button:not([disabled])"); if (f) f.focus(); }
+    return true;
+  }
+  const musList = () => [...new Set([...(state.musiciens || []), ...state.lignes.map((l) => l.musicien).filter(Boolean)])].sort((a, b) => a.localeCompare(b, "fr"));
+  const musItems = (ls) => [...musList().map((m) => ({ t: m, on: ls.every((l) => l.musicien === m), fn: () => { ls.forEach((l) => { l.musicien = m; }); commit(true); } })), "-", { t: "Aucun musicien", fn: () => { ls.forEach((l) => { l.musicien = ""; }); commit(true); } }];
+  function moveIn(arr, x, d) { const i = arr.indexOf(x), j = i + d; if (i < 0 || j < 0 || j >= arr.length) return false; arr.splice(i, 1); arr.splice(j, 0, x); return true; }
+  function focusRow(id, f) { const tr = document.querySelector(`section:not([hidden]) tr[data-id="${id}"]`); if (!tr) return; tr.scrollIntoView({ block: "center" }); flash(tr); const i = f && tr.querySelector(`input[data-f="${f}"]`); if (i) { i.focus(); i.select(); } }
+  function delLines(ls) {
+    const ids = new Set(ls.map((l) => l.id));
+    state.lignes.forEach((x) => { if (x.pair && ids.has(x.pair) && !ids.has(x.id)) x.pair = null; });
+    state.lignes = state.lignes.filter((x) => !ids.has(x.id)); ids.forEach((id) => selection.delete(id)); commit(true);
+  }
+  function delOuts(os) { const ids = new Set(os.map((o) => o.id)); state.sorties.forEach((x) => { if (x.pair && ids.has(x.pair) && !ids.has(x.id)) x.pair = null; }); state.sorties = state.sorties.filter((x) => !ids.has(x.id)); commit(true); }
+  function showInGrid(x) { if (!x.box) return; setView("boites"); const li = document.querySelector(`#gridOut button[data-goto="${x.id}"]`); if (li) { li.scrollIntoView({ block: "center" }); flash(li.closest("li")); } }
+  function showRack(id) { setView("racks"); const d = document.querySelector(`#rackOut details.rackd[data-rd="${id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); flash(d.querySelector("summary")); } }
+  function showSetupRow(sel) { const b = document.querySelector(sel); const tr = b && b.closest("tr"); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } }
+  // Ranger un appareil dans un plan de rack (première place libre, ou à l'U demandé)
+  function rpPut(c, kind, ref, at = 1, col = 0) {
+    const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1, col };
+    if (kind === "free") it.free = ref; else it.ref = ref;
+    const pl = rpPlace(c, it, at);
+    if (!pl) { notice(`Plus de place pour ${it.h} U dans ${esc(c.nom || "ce rack")}.`, true); return; }
+    [it.col, it.at] = pl; if (!it.col) delete it.col;
+    c.items.push(it); rpSel = it.id; commit(true);
+    notice(`${esc(rpLabel(it))} rangé dans ${esc(c.nom || "le rack")}, U${it.at}.`);
+  }
+  function rpPutItem(kind, ref) {
+    const P = rpState(), c = P.cases.find((x) => x.items.some((i) => i.kind === kind && i.ref === ref));
+    if (c) return { t: `Voir dans le plan « ${c.nom || "Rack"} »`, fn: () => { rpSel = c.items.find((i) => i.kind === kind && i.ref === ref).id; setView("rackplan"); } };
+    return { t: "Ranger dans un plan de rack", sub: () => [...P.cases.map((x) => ({ t: x.nom || "Rack", fn: () => rpPut(x, kind, ref) })), "-", { t: "+ Nouveau flight rack", fn: () => { const x = { id: nid(), nom: "Rack " + (P.cases.length + 1), u: 12, lieu: "", items: [] }; P.cases.push(x); rpPut(x, kind, ref); } }] };
+  }
+  // Options d'une liste déroulante (avec ses groupes) transformées en entrées de menu
+  function optItems(html, fn) {
+    const s = document.createElement("select"); s.innerHTML = html; const out = [];
+    [...s.children].forEach((ch) => { if (ch.tagName === "OPTGROUP") { out.push({ head: ch.label }); [...ch.children].forEach((o) => { if (o.value && !o.disabled) out.push({ t: o.textContent, fn: () => fn(o.value) }); }); } else if (ch.value && !ch.disabled) out.push({ t: ch.textContent, fn: () => fn(ch.value) }); });
+    return out;
+  }
+  function ctxLine(l, x, y) {
+    const i = state.lignes.indexOf(l), sel = selection.has(l.id) && selection.size > 1 ? selectedLines() : null;
+    if (sel) return [`${sel.length} lignes sélectionnées`, [
+      { t: "Affecter à un boîtier ou un stage rack…", fn: openRange },
+      { t: "Musicien", sub: () => musItems(sel) },
+      { t: "Remplir une autre colonne…", fn: () => { const f = $("#selMus"); f.scrollIntoView({ block: "nearest" }); f.focus(); } },
+      sel.some((z) => z.box) && { t: "Dépatcher du boîtier", fn: unboxSelection },
+      "-", { t: "Désélectionner", fn: () => { selection.clear(); paintSelection(); } },
+      { t: `Supprimer les ${sel.length} lignes…`, danger: true, fn: () => delLines(sel) }]];
+    const p = l.pair && state.lignes.find((z) => z.id === l.pair), nx = state.lignes[i + 1], srs = srCols().map((c) => [c, lineSr(l, c.k)]).filter(([, a]) => a);
+    const ins = (at) => { const n = newLine("NOUVELLE SOURCE"); state.lignes.splice(at, 0, n); commit(true); focusRow(n.id, "source"); };
+    return [`${canal(l)} · ${l.source || "Source"}`, [
+      { t: "Insérer une source au-dessus", fn: () => ins(i) },
+      { t: "Insérer une source en dessous", fn: () => ins(i + 1) },
+      { t: "Dupliquer", fn: () => { const n = { ...l, id: nid(), box: null, sr: {}, pair: null, accp: [...accList(l)] }; state.lignes.splice(i + 1, 0, n); commit(true); focusRow(n.id, "source"); } },
+      !p && nx && !nx.pair && { t: `Faire une paire stéréo avec ${nx.source || "la suivante"}`, fn: () => { l.pair = nx.id; nx.pair = l.id; commit(true); } },
+      p && { t: "Défaire la paire stéréo", fn: () => { l.pair = null; p.pair = null; commit(true); } },
+      "-",
+      { t: "Musicien", sub: () => musItems([l]) },
+      l.box && { t: `Panne sur ${boxAddr(l.box)}…`, fn: () => panneMenu(l, x, y) },
+      l.box && { t: `Dépatcher de ${boxAddr(l.box)}`, fn: () => { unboxItems([l]); commit(true); } },
+      ...srs.map(([c, a]) => ({ t: `Libérer ${rackAddr(a)}${srCols().length > 1 ? ` (${c.label})` : ""}`, fn: () => { setSr(l, c.k, "", occupancy()); commit(true); } })),
+      "-",
+      { t: selection.has(l.id) ? "Retirer de la sélection" : "Ajouter à la sélection", fn: () => { if (selection.has(l.id)) selection.delete(l.id); else selection.add(l.id); selAnchor = l.id; paintSelection(); } },
+      view !== "master" && showMaster && { t: "Voir dans le master", fn: () => gotoRow("master", l.id) },
+      view !== "racks" && srs.length && { t: "Voir dans Racks et I/O", fn: () => gotoRow("racks", l.id) },
+      l.box && { t: "Voir dans Boîtiers", fn: () => showInGrid(l) },
+      { t: "Monter d'un rang", off: i === 0, fn: () => { moveIn(state.lignes, l, -1); commit(true); focusRow(l.id); } },
+      { t: "Descendre d'un rang", off: i === state.lignes.length - 1, fn: () => { moveIn(state.lignes, l, 1); commit(true); focusRow(l.id); } },
+      "-", { t: "Supprimer la ligne…", danger: true, fn: () => delLines([l]) }]];
+  }
+  function ctxOut(o) {
+    const S = state.sorties, i = S.indexOf(o), p = o.pair && S.find((z) => z.id === o.pair), nx = S[i + 1];
+    const ins = (at) => { const n = newOut("NOUVELLE SORTIE"); S.splice(at, 0, n); commit(true); focusRow(n.id, "mix"); };
+    return [o.mix || "Sortie", [
+      { t: "Insérer une sortie au-dessus", fn: () => ins(i) },
+      { t: "Insérer une sortie en dessous", fn: () => ins(i + 1) },
+      { t: "Dupliquer", fn: () => { const n = { ...o, id: nid(), out: null, box: null, to: null, pair: null }; S.splice(i + 1, 0, n); commit(true); focusRow(n.id, "mix"); } },
+      !p && nx && !nx.pair && { t: `Faire une paire stéréo avec ${nx.mix || "la suivante"}`, fn: () => { o.pair = nx.id; nx.pair = o.id; commit(true); } },
+      p && { t: "Défaire la paire stéréo", fn: () => { o.pair = null; p.pair = null; commit(true); } },
+      "-",
+      o.out && { t: `Libérer ${rackAddr(o.out)}`, fn: () => { log(`${o.mix} : ${rackAddr(o.out)} libéré.`); o.out = null; commit(true); } },
+      o.box && { t: `Dépatcher de ${boxAddr(o.box)}`, fn: () => { unboxItems([o]); commit(true); } },
+      o.to && { t: "Retirer l'arrivée directe", fn: () => { o.to = null; commit(true); } },
+      "-",
+      view !== "sorties" && { t: "Voir dans Sorties", fn: () => gotoRow("sorties", o.id) },
+      view !== "racks" && o.out && { t: "Voir dans Racks et I/O", fn: () => gotoRow("racks", o.id) },
+      o.box && { t: "Voir dans Boîtiers", fn: () => showInGrid(o) },
+      { t: "Monter d'un rang", off: i === 0, fn: () => { moveIn(S, o, -1); commit(true); focusRow(o.id); } },
+      { t: "Descendre d'un rang", off: i === S.length - 1, fn: () => { moveIn(S, o, 1); commit(true); focusRow(o.id); } },
+      "-", { t: "Supprimer la sortie…", danger: true, fn: () => delOuts([o]) }]];
+  }
+  // Case libre d'un stage rack : y mettre une source (ou une sortie) qui n'a pas encore d'entrée
+  function ctxFree(inp) {
+    const key = inp.dataset.qk, [rid, c, i] = key.split(":"), r = rackById(rid); if (!r) return null;
+    const outs = inp.dataset.qo === "1", ks = consoleKeys(), col = !ks.length ? "ALL" : r.console === "Partagé" ? ks[0] : r.console;
+    const cand = outs ? state.sorties.filter((o) => !o.out) : state.lignes.filter((l) => !lineSr(l, col));
+    return [`${rackTitle(r)} · ${rackShort(r, +c, +i)} (libre)`, [
+      { t: outs ? "Nouvelle sortie ici…" : "Nouvelle source ici…", fn: () => { inp.focus(); } },
+      { t: outs ? "Mettre ici une sortie sans départ" : "Mettre ici une source sans entrée", off: !cand.length, sub: () => cand.map((x) => ({ t: outs ? x.mix || "Sortie" : `${canal(x)} · ${x.source}`, fn: () => {
+        if (outs) { x.out = { r: rid, c: +c, i: +i }; log(`${x.mix} : départ ${rackAddr(x.out)}.`); commit(true); }
+        else if (setSr(x, col, key, occupancy())) commit(true);
+      } })) }]];
+  }
+  function ctxGrid(li) {
+    const bx = li.closest(".box[data-bid]"), b = bx && boxById(bx.dataset.bid); if (!b) return null;
+    const n = +(li.querySelector(".n") || {}).textContent, go = li.querySelector("[data-goto]");
+    if (go) {
+      const id = go.dataset.goto, x = state.lignes.find((z) => z.id === id) || state.sorties.find((z) => z.id === id); if (!x) return null;
+      return [`${boxName(b)} → ${n} · ${label(x)}`, [
+        { t: isOut(x) ? "Voir dans Sorties" : showMaster ? "Voir dans le master" : "Voir dans Racks et I/O", fn: () => go.click() },
+        !isOut(x) && { t: "Panne : passer sur une autre entrée…", fn: () => panneMenu(x, CTX.xy[0], CTX.xy[1]) },
+        { t: "Dépatcher cette entrée", fn: () => { unboxItems([x]); commit(true); } }]];
     }
+    const hs = li.querySelector("[data-unhs]");
+    if (hs) return [`${boxName(b)} → ${n} (HS)`, [{ t: "Entrée réparée : la remettre en service", fn: () => hs.click() }]];
+    const ls = state.lignes.filter((l) => !l.box), os = state.sorties.filter((o) => !o.box && !o.to);
+    const put = (x) => { x.box = { b: b.id, i: n }; log(`${label(x)} : patché sur ${boxAddr(x.box)}.`); commit(true); };
+    return [`${boxName(b)} → ${n} (libre)`, [
+      { t: "Mettre ici une source", off: !ls.length, sub: () => ls.map((l) => ({ t: `${canal(l)} · ${l.source}`, fn: () => put(l) })) },
+      { t: "Mettre ici une sortie", off: !os.length, sub: () => os.map((o) => ({ t: o.mix || "Sortie", fn: () => put(o) })) }]];
+  }
+  function ctxBoxHead(b) {
+    const n = boxSize(b);
+    return [boxTitle(b), [
+      boxUsed(b) && { t: "Dépatcher tout le boîtier…", danger: true, confirm: "Confirmer : tout dépatcher", fn: () => unboxRange(b, 1, n) },
+      { t: "Réglages du boîtier", fn: () => { setView("reglbox"); showSetupRow(`button[data-delbox="${b.id}"]`); } }]];
+  }
+  function ctxRackHead(d) {
+    const r = rackById(d.dataset.rd), all = [...document.querySelectorAll("#rackOut details.rackd")];
+    return [r ? rackTitle(r) : "Sources sans entrée", [
+      { t: d.open ? "Replier" : "Déplier", fn: () => { d.open = !d.open; } },
+      { t: "Tout replier", fn: () => all.forEach((x) => { x.open = false; }) },
+      { t: "Tout déplier", fn: () => all.forEach((x) => { x.open = true; }) },
+      r && "-",
+      r && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${r.id}"]`); } },
+      r && { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } },
+      r && rpPutItem("rack", r.id)]];
+  }
+  function ctxRackplan(e, svg, t) {
+    const P = rpState(), c = P.cases.find((x) => x.id === svg.dataset.rpc); if (!c) return null;
+    const n = rpCols(c), gi = t.closest("g.rpit");
+    if (gi) {
+      const f = rpFind(gi.dataset.rpi); if (!f) return null; const { it } = f;
+      rpSel = it.id; renderRackplan();
+      const step = (d) => { for (let a = it.at + d; a >= 1 && a + it.h - 1 <= c.u; a += d) if (rpFits(c, it, a)) { it.at = a; commit(true); return; } };
+      return [`${rpLabel(it)} · U${it.at}${it.h > 1 ? "–" + (it.at + it.h - 1) : ""}`, [
+        { t: "Monter d'un U", off: !Array.from({ length: it.at - 1 }, (_, k) => it.at - 1 - k).some((a) => rpFits(c, it, a)), fn: () => step(-1) },
+        { t: "Descendre d'un U", off: !Array.from({ length: c.u - it.at - it.h + 1 }, (_, k) => it.at + 1 + k).some((a) => rpFits(c, it, a)), fn: () => step(1) },
+        n > 1 && { t: "Colonne", sub: () => RP_COLN[n].map((nm, k) => ({ t: nm, on: rpCol(it) === k, fn: () => { const a = rpNearest(c, it, it.at, k); if (!a) { notice(`Pas ${it.h} U libres dans la colonne ${nm.toLowerCase()}.`, true); return; } it.col = k; it.at = a; if (!k) delete it.col; commit(true); } })) },
+        P.cases.length > 1 && { t: "Déplacer vers un autre rack", sub: () => P.cases.filter((x) => x !== c).map((x) => ({ t: x.nom || "Rack", fn: () => { const pl = rpPlace(x, { ...it, id: "_", col: 0 }, 1); if (!pl) { notice(`Pas ${it.h} U libres dans ${esc(x.nom || "ce rack")}.`, true); return; } c.items = c.items.filter((i) => i !== it); [it.col, it.at] = pl; if (!it.col) delete it.col; x.items.push(it); commit(true); } })) },
+        "-",
+        it.kind === "rack" && { t: "Voir dans Racks et I/O", fn: () => showRack(it.ref) },
+        it.kind === "rack" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${it.ref}"]`); } },
+        it.kind === "extra" && { t: "Voir dans le synoptique", fn: () => { synSel = it.ref; setView("syn"); } },
+        "-", { t: "Retirer du rack", fn: () => { c.items = c.items.filter((i) => i !== it); rpSel = null; commit(true); } }]];
+    }
+    const p = rpPoint(svg, e), col = Math.max(0, Math.min(n - 1, Math.floor(p.x / (RP_CW + RP_GAP)))), at = Math.max(1, Math.min(c.u, Math.floor((p.y - RP_TOP) / RP_UH) + 1));
+    return [`${c.nom || "Rack"} · U${at}${n > 1 ? " · " + RP_COLN[n][col].toLowerCase() : ""}`, [
+      { t: "Ajouter ici", sub: () => optItems(rpAddOptions(), (v) => { const [kind, ref] = v.split("|"); rpPut(c, kind, ref, at, col); }) },
+      { t: "Agrandir le rack d'1 U", off: c.u >= 48, fn: () => { c.u++; commit(true); } },
+      n > 1 && { t: `Séparer en ${n} racks simples`, fn: () => { const b = document.querySelector(`.rpcase[data-rpc="${c.id}"] [data-rpcsplit]`); if (b) b.click(); } },
+      "-", { t: "Supprimer ce rack…", danger: true, fn: () => { P.cases = P.cases.filter((x) => x !== c); commit(true); } }]];
+  }
+  function ctxPlan(e, t) {
+    const P = planState(), gi = t.closest("#planSvg g.it");
+    if (gi) {
+      const it = P.items.find((i) => i.id === gi.dataset.pid); if (!it) return null;
+      planSel = it.id; renderPlan();
+      return [planItemLabel(it), [
+        { t: "Pivoter de 90°", fn: () => { it.rot = ((it.rot || 0) + 90) % 360; commit(true); } },
+        { t: "Dupliquer", fn: () => { const b = $("#planSide [data-pdup]"); if (b) b.click(); } },
+        { t: "Passer au premier plan", fn: () => { P.items = P.items.filter((i) => i !== it).concat(it); commit(true); } },
+        { t: "Passer à l'arrière-plan", fn: () => { P.items = [it, ...P.items.filter((i) => i !== it)]; commit(true); } },
+        it.kind === "rack" && rpPutItem("rack", it.ref),
+        "-", { t: "Retirer du plan", fn: () => { P.items = P.items.filter((i) => i !== it); planSel = null; commit(true); } }]];
+    }
+    const p = planPoint(e);
+    return ["Plan de scène", [{ t: "Placer ici", sub: () => optItems(planAddOptions(), (v) => {
+      $("#planAdd").value = v; $("#planAddBtn").click();
+      const it = planState().items.find((i) => i.id === planSel); if (it) { it.x = snap(p.x - it.w / 2); it.y = snap(p.y - it.h / 2); commit(true); }
+    }) }]];
+  }
+  function ctxSyn(e, t) {
+    const S = synState(), gn = t.closest("#synSvg g.nd"), gz = t.closest("#synSvg g.zn");
+    if (gn) {
+      const id = gn.dataset.nid, n = synNodes().find((x) => x.id === id); if (!n) return null;
+      synSel = id; renderSyn();
+      const x = n.kind === "extra" ? S.nodes.find((q) => q.id === id) : null;
+      return [n.title, [
+        { t: "Relier à un autre appareil…", fn: () => { synPick = id; notice("Touche maintenant l'appareil d'arrivée de la liaison (ailleurs pour annuler)."); } },
+        { t: "Ajouter une zone autour", fn: () => $("#synAddZone").click() },
+        n.kind === "console" && { t: "Modèle de la console…", fn: () => { const i = $('#synSide [data-sp="cmodel"]'); if (i) { i.focus(); i.select(); } } },
+        "-",
+        n.kind === "rack" && { t: "Voir dans Racks et I/O", fn: () => showRack(id) },
+        n.kind === "rack" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${id}"]`); } },
+        n.kind === "rack" && rpPutItem("rack", id),
+        x && rpPutItem("extra", id),
+        x && "-",
+        x && { t: "Supprimer l'élément…", danger: true, fn: () => { S.nodes = S.nodes.filter((q) => q.id !== id); rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "extra" && i.ref === id)); }); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); } }]];
+    }
+    if (gz) {
+      const z = (S.zones || []).find((q) => q.id === gz.dataset.zid); if (!z) return null;
+      return [`Zone ${z.nom || ""}`, [
+        { t: "Renommer…", fn: () => { synSel = "z:" + z.id; renderSyn(); const i = $('#synSide [data-sp="znom"]'); if (i) { i.focus(); i.select(); } } },
+        "-", { t: "Supprimer la zone", fn: () => { S.zones = S.zones.filter((q) => q !== z); synSel = null; commit(true); } }]];
+    }
+    if (!$("#synSvg")) return null;
+    const p = synPoint(e), r10 = (v) => Math.round(v / 10) * 10;
+    const addAt = (x) => { S.nodes.push(x); S.pos[x.id] = { x: r10(p.x - 90), y: r10(p.y - 30) }; synSel = x.id; commit(true); };
+    return ["Synoptique", [
+      { t: "Ajouter un élément ici (switch, ordinateur…)", fn: () => { addAt({ id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } } },
+      { t: "Ajouter une horloge ici", fn: () => addAt({ id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }) },
+      { t: "Ajouter une zone ici", fn: () => { const used = new Set(S.zones.map((z) => z.nom)); const id = nid(); S.zones.push({ id, nom: ZONE_PRESETS.find((v) => !used.has(v)) || "Zone", x: r10(p.x - 20), y: r10(p.y - 20), w: 420, h: 260 }); synSel = "z:" + id; commit(true); } },
+      { t: "Nouvelle liaison", fn: () => $("#synAddLink").click() }]];
+  }
+  function ctxRow(tr, del) {
+    const name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
+    const rm = { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
+    const hr = tr.dataset.hr && tr.closest("[data-hg]");
+    if (hr) {
+      const g = hfState().find((x) => x.id === hr.dataset.hg), r = g && g.rows.find((x) => x.id === tr.dataset.hr); if (!r) return null;
+      const blank = () => (g.kind === "spx" ? { id: nid(), nom: "", iem: "LIVE_S" } : g.kind === "spxm" ? { id: nid(), nom: "", mic: "LIVE" } : { id: nid(), nom: "" });
+      const at = g.rows.indexOf(r);
+      return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } }, "-", rm]];
+    }
+    if (tr.dataset.mid) {
+      const m = (state.materiel || []).find((x) => x.id === tr.dataset.mid); if (!m) return null;
+      return [m.nom || "Matériel", [{ t: "Dupliquer", fn: () => { state.materiel.splice(state.materiel.indexOf(m) + 1, 0, { ...m, id: nid() }); commit(true); } }, "-", rm]];
+    }
+    if (tr.dataset.lk) {
+      const l = synState().links.find((x) => x.id === tr.dataset.lk); if (!l) return null;
+      return ["Liaison", [...SYN_DIRS.map(([k, t]) => ({ t: "Sens : " + t, on: (l.dir || "") === k, fn: () => { l.dir = k; commit(true); } })), "-", rm]];
+    }
+    if (del.matches("[data-delrack]")) {
+      const r = rackById(del.dataset.delrack); if (!r) return null;
+      return [rackTitle(r), [{ t: "Voir dans Racks et I/O", fn: () => showRack(r.id) }, { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } }, rpPutItem("rack", r.id), "-", rm]];
+    }
+    if (del.matches("[data-delbox]")) {
+      const b = boxById(del.dataset.delbox); if (!b) return null;
+      return [boxTitle(b), [{ t: "Voir dans Boîtiers", fn: () => { setView("boites"); const d = document.querySelector(`#gridOut .box[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); flash(d); } } }, boxUsed(b) && { t: "Dépatcher tout le boîtier", fn: () => unboxRange(b, 1, boxSize(b)) }, "-", rm]];
+    }
+    return [name || "Cette ligne", [rm]];
+  }
+  function ctxDispatch(e) {
+    const t = e.target; if (!t || !t.closest || t.closest("#ctxMenu, #appMenu, dialog")) return false;
+    let x = e.clientX, y = e.clientY;
+    if (!x && !y) { const r = t.getBoundingClientRect(); x = r.left + 12; y = r.bottom + 2; }
+    let m = null, g;
+    if ((g = t.closest("svg.rpsvg") || (t.closest(".rpstage") && t.closest(".rpstage").querySelector("svg.rpsvg")))) m = ctxRackplan(e, g, t);
+    else if (t.closest("#v-plan .plan-stage")) m = ctxPlan(e, t);
+    else if (t.closest("#synStage")) m = ctxSyn(e, t);
+    else if ((g = t.closest("#gridOut li"))) m = ctxGrid(g);
+    else if ((g = t.closest("#gridOut .box > h3"))) { const b = boxById(g.closest(".box").dataset.bid); m = b && ctxBoxHead(b); }
+    else if ((g = t.closest("#rackOut details.rackd > summary"))) m = ctxRackHead(g.parentNode);
+    else if ((g = t.closest("tr.free")) && g.querySelector("input.quick")) m = ctxFree(g.querySelector("input.quick"));
+    else if ((g = t.closest("tr[data-id]"))) {
+      const l = state.lignes.find((z) => z.id === g.dataset.id), o = !l && (state.sorties || []).find((z) => z.id === g.dataset.id);
+      m = l ? ctxLine(l, x, y) : o ? ctxOut(o) : null;
+    }
+    if (!m && (g = t.closest("tr"))) { const d = g.querySelector(DEL_SEL); if (d) m = ctxRow(g, d); }
+    return !!m && ctxOpen(x, y, m[0], m[1]);
+  }
+  document.addEventListener("contextmenu", (e) => {
+    const t = e.target;
+    // Maj+clic droit, ou du texte sélectionné dans un champ : menu habituel (copier, coller)
+    const kb = !e.clientX && !e.clientY;
+    if ((e.shiftKey && !kb) || t.matches("textarea") || (t.matches("input[type=text], input[type=search]") && t.selectionStart !== t.selectionEnd)) return;
+    if (!$("#ctxMenu").hidden && Date.now() - CTX.opened < 900) { e.preventDefault(); return; }
+    CTX.kb = kb;
+    if (ctxDispatch(e)) e.preventDefault();
+  });
+  // Appui long au doigt (iPhone compris, qui n'envoie pas de clic droit) ; pas dans un champ, pour garder la sélection de texte
+  let ctxLp = null;
+  document.addEventListener("touchstart", (e) => {
+    clearTimeout(ctxLp && ctxLp.t); ctxLp = null;
+    if (e.touches.length !== 1 || e.target.closest("input, select, textarea, button, #ctxMenu, #appMenu")) return;
+    const p = e.touches[0], target = e.target;
+    ctxLp = { x: p.clientX, y: p.clientY };
+    ctxLp.t = setTimeout(() => { if (!ctxLp) return; CTX.kb = false; if (!$("#ctxMenu").hidden && Date.now() - CTX.opened < 900) { ctxLp.fired = true; return; } if (ctxDispatch({ target, clientX: ctxLp.x, clientY: ctxLp.y })) { ctxLp.fired = true; if (navigator.vibrate) navigator.vibrate(12); if (rpDrag) rpDrag = null; } }, 550);
+  }, { passive: true });
+  document.addEventListener("touchmove", (e) => { if (!ctxLp) return; const p = e.touches[0]; if (Math.hypot(p.clientX - ctxLp.x, p.clientY - ctxLp.y) > 10) { clearTimeout(ctxLp.t); ctxLp = null; } }, { passive: true });
+  document.addEventListener("touchend", (e) => { if (!ctxLp) return; clearTimeout(ctxLp.t); if (ctxLp.fired && e.cancelable) e.preventDefault(); ctxLp = null; }, { passive: false });
+  $("#ctxMenu").addEventListener("click", (e) => {
+    const m = $("#ctxMenu"), pb = e.target.closest("[data-panne]");
+    if (pb) { const l = m._line; m.hidden = true; if (l) doPanne(l, Number(pb.dataset.panne)); return; }
+    const b = e.target.closest("[data-ci]"); if (!b) return;
+    e.stopPropagation();
+    if (b.dataset.ci === "back") { const s = CTX.stack.pop(); CTX.items = s.items; CTX.title = s.title; ctxRender(); placeMenu(m, ...CTX.xy); return; }
+    const it = CTX.items[+b.dataset.ci]; if (!it || it.off) return;
+    if (it.sub) { const sub = ctxClean(typeof it.sub === "function" ? it.sub() : it.sub); CTX.stack.push({ items: CTX.items, title: CTX.title }); CTX.items = sub.length ? sub : [{ head: "Rien à proposer ici." }]; CTX.title = it.t; ctxRender(); placeMenu(m, ...CTX.xy); const f = m.querySelector("[data-ci]:not([data-ci=back]):not([disabled])"); if (f && CTX.kb) f.focus(); return; }
+    if (it.danger && !b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = it.confirm || "Confirmer : " + it.t.replace(/…$/, "").toLowerCase(); return; }
+    closeMenus(); if (it.fn) it.fn();
+  });
+  // Au clavier dans le menu : flèches, Entrée, Échap, ← pour revenir
+  $("#ctxMenu").addEventListener("keydown", (e) => {
+    const bs = [...$("#ctxMenu").querySelectorAll("button:not([disabled])")], i = bs.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = bs.length; if (n) bs[(i + (e.key === "ArrowDown" ? 1 : -1) + n) % n].focus(); }
+    else if (e.key === "Escape") { e.preventDefault(); closeMenus(); }
+    else if (e.key === "ArrowLeft" && CTX.stack.length) { e.preventDefault(); const bk = $("#ctxMenu [data-ci=back]"); if (bk) { bk.click(); CTX.kb = true; const f = $("#ctxMenu button:not([disabled])"); if (f) f.focus(); } }
+    else if (e.key === "ArrowRight" && document.activeElement && document.activeElement.querySelector(".cxsub")) { e.preventDefault(); CTX.kb = true; document.activeElement.click(); }
   });
   // Recherche globale : Ctrl+K ou « / » depuis n'importe quel onglet
   function gsItems() {
