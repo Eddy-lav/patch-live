@@ -827,13 +827,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   <button role="tab" data-v="master" aria-selected="true">Master patch<span class="count" id="cMaster"></span></button>
   <button role="tab" data-v="sorties" aria-selected="false">Sorties<span class="count" id="cSorties"></span></button>
   <button role="tab" data-v="boites" aria-selected="false">Boîtiers<span class="count" id="cBoites"></span></button>
+  <button role="tab" data-v="reglbox" aria-selected="false">Réglages boîtiers</button>
   <button role="tab" data-v="hf" aria-selected="false">Distribution HF<span class="count" id="cHf"></span></button>
   <button role="tab" data-v="racks" aria-selected="false">Racks et I/O<span class="count" id="cRacks"></span></button>
   <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
+  <button role="tab" data-v="materiel" aria-selected="false">Réglages racks</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
-  <button role="tab" data-v="materiel" aria-selected="false">Réglages racks et boîtiers</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
 </nav>
 </div>
@@ -946,17 +947,22 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       <div class="tbl"><table id="racksTbl" class="cards"></table></div>
       <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">Stage rack (cartes de 8)</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
     </div>
+  </div>
+  <div class="panel" style="margin-top:18px">
+    <h2>Occupation des stage racks</h2>
+    <p class="hint">Une case par entrée et par sortie, remplie quand elle est utilisée. Passe la souris sur une case (ou touche-la) pour voir ce qui y est patché et câblé.</p>
+    <div class="rack-occ" id="rackOcc"></div>
+  </div>
+</section>
+
+<section id="v-reglbox" hidden>
+  <div class="setup one">
     <div class="panel">
       <h2>Boîtiers de sous-patch</h2>
       <p class="hint">Le type de multi donne le nombre d'entrées par défaut (12N = 12 liaisons, 20H = Harting 20 liaisons). Tu peux le changer dans la colonne Entrées, ou choisir « Autre ».</p>
       <div class="tbl"><table id="boxesTbl" class="cards"></table></div>
       <div class="actions" style="margin-top:8px"><button id="addBox" class="btn small" type="button">+ Boîtier</button></div>
     </div>
-  </div>
-  <div class="panel" style="margin-top:18px">
-    <h2>Occupation des stage racks</h2>
-    <p class="hint">Une case par entrée et par sortie, remplie quand elle est utilisée. Passe la souris sur une case (ou touche-la) pour voir ce qui y est patché et câblé.</p>
-    <div class="rack-occ" id="rackOcc"></div>
   </div>
 </section>
 
@@ -1172,7 +1178,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function spxPanelHtml() {
     if (!hfState().some((g) => g.kind === "spx" || g.kind === "spxm")) return "";
     const { bases, loose, orphans } = spxUsage();
-    if (!bases.length) return `<div class="panel spxres"><h3>Ressources Spectera</h3><p class="hint">Ajoute une base Spectera dans « Réglages racks et boîtiers » (modèle Sennheiser Spectera) pour suivre l'utilisation des ressources.</p></div>`;
+    if (!bases.length) return `<div class="panel spxres"><h3>Ressources Spectera</h3><p class="hint">Ajoute une base Spectera dans « Réglages racks » (modèle Sennheiser Spectera) pour suivre l'utilisation des ressources.</p></div>`;
     const bar = (pct) => `<span class="gauge${pct > 100 ? " over" : pct > 85 ? " warn" : ""}"><span style="width:${Math.min(100, pct)}%"></span></span>`;
     // Replié par défaut sur une ligne de résumé ; une alerte (dépassement, RF sans antenne) se voit aussi replié
     const sum = bases.map((u) => `<span class="spxs"><b>${esc(spxName(u.b))}</b> ${SPX_RF.map((k) => { const c = u.rf[k], noAnt = !antOn(u.b, k).length && c.sek + c.skm; return `<span class="${c.pct > 100 || noAnt ? "over" : ""}">RF ${k} ${pctTxt(c.pct)}${noAnt ? " · sans antenne" : ""}</span>`; }).join(" · ")}${u.iemIn > u.maxIn || u.micOut > u.maxOut ? ` · <span class="over">entrées ou sorties dépassées</span>` : ""}</span>`).join("");
@@ -1242,7 +1248,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     };
     return `<div class="kb" id="spxKb">${bases.map((u) => `<div class="kbbase"><div class="kbbh"><b>${esc(spxName(u.b))}</b><span class="${u.iemIn > u.maxIn ? "over" : ""}">Entrées IEM ${u.iemIn}/${u.maxIn}</span><span class="${u.micOut > u.maxOut ? "over" : ""}">Sorties micro ${u.micOut}/${u.maxOut}</span></div>${antHtml(u.b)}<div class="kbcols"><div class="kbcol kbnorf" data-kbdrop="${u.b.id}|"><div class="kbch"><span class="lab">RF à configurer</span><span></span><span class="val">${noRf(u).length || ""}</span></div><div class="kbcards">${noRf(u).length ? noRf(u).map(card).join("") : `<div class="kbempty">Sur cette base, sans RF channel</div>`}</div></div>${SPX_RF.map((k) => col(u, k)).join("")}</div></div>`).join("")}
       <div class="kbbase"><div class="kbbh"><b>Base à configurer</b><span>${loose.length}</span></div><div class="kbcols"><div class="kbcol" data-kbdrop="|">${cards(loose)}</div></div></div></div>
-      ${bases.length ? "" : `<p class="hint">Ajoute une base Spectera dans « Réglages racks et boîtiers » pour avoir ses colonnes ici.</p>`}`;
+      ${bases.length ? "" : `<p class="hint">Ajoute une base Spectera dans « Réglages racks » pour avoir ses colonnes ici.</p>`}`;
   }
   // Déposer une carte : nouvelle base et RF. Les copies de mix suivent leur original ; une copie déplacée seule redevient un lien ears normal.
   function spxDrop(ids, target) {
@@ -2103,7 +2109,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const tbl = $("#masterTbl");
     renderDatalists();
     if (!state.lignes.length) {
-      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune source pour l'instant. Commence par créer tes stage racks et tes boîtiers dans l'onglet « Réglages racks et boîtiers », puis ajoute une source avec « + Source ».</div></td></tr></tbody>`;
+      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune source pour l'instant. Commence par créer tes stage racks (Régie › Réglages racks) et tes boîtiers (Patch › Réglages boîtiers), puis ajoute une source avec « + Source ».</div></td></tr></tbody>`;
       return;
     }
     let h = `<thead>${masterHead(cols, "")}</thead><tbody>`;
@@ -2406,7 +2412,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     renderDatalists();
     const outs = state.sorties || [];
     if (!outs.length) {
-      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune sortie pour l'instant. Donne d'abord des sorties à tes stage racks (onglet « Réglages racks et boîtiers », colonne Sorties), puis ajoute une sortie avec « + Sortie ».<br><br><button class="btn small" type="button" id="loadExample">Recharger le dossier d'exemple</button></div></td></tr></tbody>`;
+      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune sortie pour l'instant. Donne d'abord des sorties à tes stage racks (onglet « Réglages racks », colonne Sorties), puis ajoute une sortie avec « + Sortie ».<br><br><button class="btn small" type="button" id="loadExample">Recharger le dossier d'exemple</button></div></td></tr></tbody>`;
       return;
     }
     const occ = occupancy();
@@ -2488,7 +2494,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   let unboxOpen = null;
   function renderGrid() {
     const out = $("#gridOut");
-    if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier. Crée-les dans l'onglet « Réglages racks et boîtiers ».</div>`; return; }
+    if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier. Crée-les dans l'onglet « Réglages boîtiers ».</div>`; return; }
     const occ = occupancy();
     const sides = [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]];
     out.innerHTML = sides.map(([s, sideName]) => {
@@ -2705,7 +2711,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const out = $("#rackOut");
     $("#hideFree").checked = hideFree; out.classList.toggle("hidefree", hideFree);
     $("#spxSuggest").hidden = !spxBases().length; renderSpxPatch();
-    if (!state.racks.length) { out.innerHTML = `<div class="empty-state">Aucun stage rack. Crée-les dans l'onglet « Réglages racks et boîtiers ».</div>`; return; }
+    if (!state.racks.length) { out.innerHTML = `<div class="empty-state">Aucun stage rack. Crée-les dans l'onglet « Réglages racks ».</div>`; return; }
     const occ = occupancy();
     const ks = consoleKeys(), split = ks.length > 0, ord = (c) => (c === "Partagé" ? 99 : ks.indexOf(c));
     $("#groupCons").checked = groupCons; $("#groupCons").closest("label").hidden = !split;
@@ -3216,6 +3222,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   const synStroke = (proto, extra) => { const P = PROTOS[proto] || PROTOS.Autre; return `stroke="${P.c}" stroke-width="${P.w + (extra || 0)}"${P.d ? ` stroke-dasharray="${P.d}"` : ""} fill="none" stroke-linecap="round"`; };
   const synLabel = (x, y, t, col) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" ${SYN_FONT} fill="${col || "#374151"}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${esc(t)}</text>`;
+  // Sens d'une liaison : aller-retour (deux câbles, ou un câble duplex), ou un seul sens (sortie MADI d'un appareil vers l'entrée d'un autre)
+  const SYN_DIRS = [["", "⇄ 2 sens"], ["ab", "De → Vers"], ["ba", "Vers → De"]];
+  const synMk = (c) => c.replace("#", "");
+  const synMarkers = () => [...new Set(Object.values(PROTOS).map((P) => P.c))].map((c) => `<marker id="ar${synMk(c)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("");
+  // Qui reçoit sur une liaison : les deux en aller-retour, sinon seulement l'extrémité d'arrivée
+  const synRecv = (l, id) => (l.dir === "ab" ? (l.b || {}).n === id : l.dir === "ba" ? (l.a || {}).n === id : (l.a || {}).n === id || (l.b || {}).n === id);
   function synEdges(nodes, forExport) {
     const S = synState(), byId = new Map(nodes.map((n) => [n.id, n])), sel = forExport ? null : synSel;
     let ring = "", labels = "";
@@ -3229,14 +3241,22 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const cx = ns.reduce((t, n) => t + synCenter(n)[0], 0) / ns.length, cy = ns.reduce((t, n) => t + synCenter(n)[1], 0) / ns.length;
       if (ns.length > 2) labels += `<g ${SYN_FONT} text-anchor="middle"><text x="${cx.toFixed(1)}" y="${(cy - 4).toFixed(1)}" font-size="15" font-weight="700" fill="#b45309">${esc(lp.nom || "Loop")}</text><text x="${cx.toFixed(1)}" y="${(cy + 14).toFixed(1)}" font-size="12" fill="#6b7280">Optocore · ${lp.freq === "96" ? "96" : "48"} kHz · ${tot}${max ? " / " + max : ""} canaux</text></g>`;
     });
+    // Plusieurs câbles sur un même port (MADI in et out vers deux appareils) : on les écarte un peu pour les voir tous
+    const share = new Map();
+    S.links.forEach((l) => [l.a, l.b].forEach((e) => { if (!e || !e.n || !e.p) return; const k = e.n + "|" + portKey(e.p); share.set(k, [...(share.get(k) || []), l.id]); }));
+    const nudge = (e, id) => { const L = (e && e.p && share.get(e.n + "|" + portKey(e.p))) || []; return L.length > 1 ? (L.indexOf(id) - (L.length - 1) / 2) * 8 : 0; };
+    const pairSeen = new Map();
     const links = S.links.map((l) => {
       const A = byId.get((l.a || {}).n), B = byId.get((l.b || {}).n); if (!A || !B || A === B) return "";
       const pa = synAnchor(A, l.a.p, B), pb = synAnchor(B, l.b.p, A), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
-      const d = Math.max(50, Math.abs(pb.x - pa.x) / 3), c1 = [pa.x + pa.dir * d, pa.y], c2 = [pb.x + pb.dir * d, pb.y];
+      if (pa.dir) pa.y += nudge(l.a, l.id); if (pb.dir) pb.y += nudge(l.b, l.id);
+      const arrow = l.dir === "ab" ? ` marker-end="url(#ar${synMk(P.c)})"` : l.dir === "ba" ? ` marker-start="url(#ar${synMk(P.c)})"` : "";
+      const pk = [A.id, B.id].sort().join("|"), pi = pairSeen.get(pk) || 0; pairSeen.set(pk, pi + 1);
+      const d = Math.max(50, Math.abs(pb.x - pa.x) / 3) + pi * 30, c1 = [pa.x + pa.dir * d, pa.y + pi * 26], c2 = [pb.x + pb.dir * d, pb.y + pi * 26];
       const mx = (pa.x + 3 * c1[0] + 3 * c2[0] + pb.x) / 8, my = (pa.y + 3 * c1[1] + 3 * c2[1] + pb.y) / 8;
       const hot = sel && (sel === A.id || sel === B.id);
       const lab = [pr === "Autre" ? "" : pr, l.cable].filter(Boolean).join(" · ");
-      return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}/>${lab ? synLabel(mx, my + 4, lab, P.c) : ""}</g>`;
+      return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}${arrow}/>${lab ? synLabel(mx, my + 4 + pi * 15, lab, P.c) : ""}</g>`;
     }).join("");
     const wc = synClock(nodes).edges.map(({ from, to }) => { const [tx, ty] = synCenter(to), [fx, fy] = synCenter(from), p = synClip(from, tx, ty), q = synClip(to, fx, fy); return `<g class="wc"><line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Word clock")} marker-end="url(#wcArrow)"/>${synLabel((p[0] + q[0]) / 2, (p[1] + q[1]) / 2 + 4, "WC", "#0f172a")}</g>`; }).join("");
     return ring + links + wc + labels;
@@ -3280,7 +3300,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const legend = leg.map((k) => { const s = `<line x1="${lx}" y1="${ly}" x2="${lx + 30}" y2="${ly}" ${synStroke(k)}/><text x="${lx + 36}" y="${ly + 4}" font-size="12" fill="#374151" ${SYN_FONT}>${esc(k)}</text>`; lx += 52 + k.length * 7; return s; }).join("");
     const W = Math.max(x1 - x0, lx - x0), H = y1 - top;
     const size = forExport ? `width="${Math.round(W * 1.5)}" height="${Math.round(H * 1.5)}"` : `width="${Math.round(W * synZoom)}" height="${Math.round(H * synZoom)}"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker></defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synZones">${zones.map((z) => synZoneMarkup(z, forExport)).join("")}</g><g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker>${synMarkers()}</defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synZones">${zones.map((z) => synZoneMarkup(z, forExport)).join("")}</g><g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
   }
   const SYN_ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
   let synPick = null;
@@ -3294,16 +3314,16 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
   function renderSyn() {
     const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
-    if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Ajoute tes stage racks et I/O dans « Réglages racks et boîtiers » : le synoptique se dessine tout seul à partir d'eux.</div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
+    if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Ajoute tes stage racks et I/O dans « Réglages racks » : le synoptique se dessine tout seul à partir d'eux.</div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
     stage.innerHTML = synSvg(false).replace("<svg ", `<svg id="synSvg" role="img" aria-label="Synoptique" `);
     $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
     const opts = (cur) => `<option value="">—</option>` + nodes.map((n) => `<option value="${esc(n.id)}"${n.id === cur ? " selected" : ""}>${esc(n.title)}</option>`).join("");
     const protoOpts = (l) => `<option value="">Auto (${esc(synLinkProto({ ...l, proto: "" }, nodes))})</option>` + Object.keys(PROTOS).map((k) => `<option${l.proto === k ? " selected" : ""}>${esc(k)}</option>`).join("");
     const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${n.ports.filter((p) => !p.added).map((p) => `<option value="${esc(p.nom)}">`).join("")}</datalist>`).join("");
     const dlFor = (id) => { const i = nodes.findIndex((n) => n.id === id); return i < 0 ? "" : ` data-suggest="dlSynP_${i}"`; };
-    $("#synLinks").innerHTML = dls + (S.links.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Câble / notes</th><th></th></tr></thead><tbody>${S.links.map((l) => {
+    $("#synLinks").innerHTML = dls + (S.links.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Sens</th><th>Câble / notes</th><th></th></tr></thead><tbody>${S.links.map((l) => {
       const [an, ap] = synEnd(l.a), [bn, bp] = synEnd(l.b), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
-      return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
+      return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><select data-sl="dir" aria-label="Sens">${SYN_DIRS.map(([k, t]) => `<option value="${k}"${(l.dir || "") === k ? " selected" : ""}>${t}</option>`).join("")}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
     }).join("")}</tbody></table></div>` : `<p class="hint">Pas encore de liaison. « + Liaison » relie deux appareils (MADI, Dante, AES, analogique…) : la loop Optocore, elle, se dessine toute seule.</p>`);
     renderSynSide(nodes);
     renderSynClock(nodes);
@@ -3322,10 +3342,10 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     side.innerHTML = `<h3>${esc(n.title)}</h3>${n.sub ? `<p class="hint" style="margin:0 0 8px">${esc(n.sub)}</p>` : ""}
       ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}`}` : ""}
       ${n.kind === "console" ? loopSel(n.loop) : ""}
-      ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks et boîtiers ».</p>` : ""}
+      ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
       ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}`; })()}
-      <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; return `<li>${esc(me.p || "—")} → ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
+      <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; const ar = !l.dir ? "⇄" : synRecv(l, n.id) ? "←" : "→"; return `<li>${esc(me.p || "—")} ${ar} ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
       <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
   }
   function synPoint(e) {
@@ -3424,7 +3444,16 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const tr = e.target.closest("tr[data-ck]"), f = e.target.dataset.ckf; if (!tr || !f) return;
       const n = synNodes().map((q) => (q.loop = q.loop, q)).find((q) => q.id === tr.dataset.ck); if (!n) return;
       const c = { ...clkOf(n) }; c[f] = e.target.value; if (f === "src" && c.src !== "wc") c.from = "";
-      setClk(n.id, c); commit(true);
+      setClk(n.id, c);
+      // Choisir « Loop Optocore » pour un appareil hors loop le met sur la loop (la première, s'il y en a plusieurs)
+      if (f === "src" && c.src === "loop" && !n.loop && loops().length) {
+        const L = loops()[0], S = synState();
+        if (n.kind === "console") S.cons[n.cons] = { ...(S.cons[n.cons] || {}), loopId: L.id };
+        else if (n.kind === "rack") { const r = rackById(n.id); if (r) r.loopId = L.id; }
+        else if (n.ref) n.ref.loopId = L.id;
+        notice(`${esc(n.title)} est maintenant sur ${esc(L.nom || "la loop")}${loops().length > 1 ? " (change de loop dans le panneau de droite en touchant l'appareil)" : ""}.`);
+      }
+      commit(true);
     });
     $("#synZoomIn").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.min(SYN_ZOOMS.length - 1, SYN_ZOOMS.indexOf(synZoom) + 1)]; renderSyn(); });
     $("#synZoomOut").addEventListener("click", () => { synZoom = SYN_ZOOMS[Math.max(0, SYN_ZOOMS.indexOf(synZoom) - 1)]; renderSyn(); });
@@ -3433,7 +3462,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const l = synState().links.find((x) => x.id === tr.dataset.lk); if (!l) return;
       l.a = l.a || { n: "", p: "" }; l.b = l.b || { n: "", p: "" };
       const v = e.target.value;
-      if (f === "an") l.a.n = v; else if (f === "ap") l.a.p = v.trim(); else if (f === "bn") l.b.n = v; else if (f === "bp") l.b.p = v.trim(); else if (f === "proto") l.proto = v; else if (f === "cable") l.cable = v.trim();
+      if (f === "an") l.a.n = v; else if (f === "ap") l.a.p = v.trim(); else if (f === "bn") l.b.n = v; else if (f === "bp") l.b.p = v.trim(); else if (f === "proto") l.proto = v; else if (f === "dir") l.dir = v; else if (f === "cable") l.cable = v.trim();
       commit(true);
     });
     $("#synLinks").addEventListener("click", (e) => {
@@ -3472,9 +3501,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
   function synLinkRows() {
     const nodes = synNodes(), name = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
-    return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), l.cable || ""]);
+    return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), (SYN_DIRS.find((d) => d[0] === (l.dir || "")) || SYN_DIRS[0])[1], l.cable || ""]);
   }
-  const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Câble / notes"];
+  const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Sens", "Câble / notes"];
   const CLK_HEAD = ["Appareil", "Horloge", "Word clock depuis", "Vérification"];
   // ---------- Horloge (word clock) ----------
   // Chaque appareil numérique a une source d'horloge. Sur une loop Optocore, tout se cale sur la loop : le maître est l'appareil d'ID le plus bas
@@ -3515,8 +3544,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }
       if (!c.src) add(n.id, "Source d'horloge à choisir.");
       const want = { madi: "MADI", aes: "AES", dante: "Dante" }[c.src];
-      if (want && !S.links.some((l) => ((l.a || {}).n === n.id || (l.b || {}).n === n.id) && synLinkProto(l, nodes) === want)) add(n.id, `Aucune liaison ${want} n'arrive sur cet appareil dans le synoptique : ajoute-la, sinon il n'a rien sur quoi se caler.`);
-      if (c.src === "loop" && !n.loop) add(n.id, "Cet appareil n'est sur aucune loop.");
+      if (want && !S.links.some((l) => synRecv(l, n.id) && synLinkProto(l, nodes) === want)) add(n.id, `Aucune liaison ${want} n'arrive sur cet appareil dans le synoptique : ajoute-la, sinon il n'a rien sur quoi se caler.`);
+      if (c.src === "loop" && !n.loop) add(n.id, "Cet appareil n'est sur aucune loop : touche-le dans le schéma pour choisir sa loop, ou change de source.");
       if (n.loop && c.src === "int") add(n.id, "Sur la loop, mets « Loop Optocore » : c'est l'appareil d'ID le plus bas qui est maître (note DiGiCo TN300).");
       if (n.loop && (c.src === "madi" || c.src === "aes")) add(n.id, "Une loop Optocore ne se cale pas sur du MADI ou de l'AES (FAQ Optocore) : passe par le word clock.");
       if (!n.loop && c.src === "int" && !isGen(n)) { const peer = nodes.find((o) => o !== n && talks(n.id, o.id)); if (peer) add(n.id, `En interne alors qu'il échange de l'audio avec ${peer.title} : risque de clics. Cale-le sur un word clock ou sur le flux qui arrive.`); }
@@ -3730,7 +3759,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (view === "racks") renderRacks();
     if (view === "sorties") renderOut();
     if (view === "hf") renderHf();
-    if (view === "materiel") renderSetup();
+    if (view === "materiel" || view === "reglbox") renderSetup();
     if (view === "liste") renderListe();
     if (view === "journal") renderJournal();
     if (view === "infos") renderInfos();
@@ -3785,7 +3814,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites"], hf: ["hf"], regie: ["racks", "syn"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "materiel", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf"], regie: ["racks", "syn", "materiel"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   function setView(v, fromHistory) {
@@ -3800,7 +3829,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "boites", "racks", "materiel", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "boites", "reglbox", "racks", "materiel", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
@@ -4321,9 +4350,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     planBind();
     synBind();
     hfBind(); kbBind(); spxPatchBind();
-    const setup = $("#v-materiel");
-    setup.addEventListener("change", onSetupChange);
-    setup.addEventListener("click", onSetupClick);
+    ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
     $("#sortRacks").addEventListener("click", () => { state.racks.sort(byRackId); commit(true); notice("Stage racks et I/O triés par ID."); });
     $("#groupCons").addEventListener("change", (e) => { groupCons = e.target.checked; try { localStorage.setItem("patch-live-groupcons", groupCons ? "1" : "0"); } catch (err) { /* ignore */ } render(); });
     $("#addRack").addEventListener("click", () => {
