@@ -433,7 +433,7 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .prov { display: block; font-size: 12px; color: var(--muted); }
 .devimg { display: inline-block; vertical-align: middle; flex: none; }
 .rackd > summary h2 .devimg { margin-right: 8px; vertical-align: -3px; }
-.devcell { width: 74px; white-space: nowrap; }
+.devcell { width: 152px; white-space: nowrap; }
 .devpick { cursor: pointer; display: inline-flex; border-radius: 4px; padding: 2px; }
 .devpick:hover { outline: 2px solid var(--accent); }
 .devcell .xdel { margin-left: 2px; }
@@ -2782,7 +2782,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     out.innerHTML = racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
       const cons = (split ? ` · ${r.console === "Partagé" ? "Partagé" : "Console " + consLabel(r.console)}` : "") + (rackLoop(r) ? (loops().length > 1 ? ` · ${rackLoop(r).nom}` : "") : " · hors loop");
-      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${devImg({ kind: "rack", id: r.id }, 44, 18)}${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${r.model === "spectera" ? `${outs.length} entrées (ears) / ${ins.length} sorties (micros)` : `${ins.length} in / ${outs.length} out`}</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
+      return `<details class="grid-side rackd" data-rd="${r.id}"${closedRacks.has(r.id) ? "" : " open"}><summary><h2>${devImg({ kind: "rack", id: r.id }, 84, 30, undefined, undefined, true)}${esc(rackTitle(r))} <span class="meta">${esc(cons)} · ${r.model === "spectera" ? `${outs.length} entrées (ears) / ${ins.length} sorties (micros)` : `${ins.length} in / ${outs.length} out`}</span></h2></summary><div class="rackgrid">${rackTable(r, ins, occ.rack, false)}${outs.length ? rackTable(r, outs, occ.out, true) : ""}</div></details>`;
     }).join("") + unpatchedTable(occ);
     const hits = query ? state.lignes.filter((l) => matches(l, query)).length : 0;
     $("#searchHint").textContent = query ? (hits ? `${hits} ligne${hits > 1 ? "s" : ""} trouvée${hits > 1 ? "s" : ""}` : "Aucune entrée trouvée") : "";
@@ -2801,31 +2801,122 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
     return r.ports ? "io" : r.flat ? "num" : "sd";
   }
+  // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm), sans logo
+  const DEV_H = { sd: 445, num: 267, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type) {
-    const body = (y, h, c) => `<rect x="2" y="${y}" width="92" height="${h}" rx="2" fill="${c || "#2b2f33"}"/><rect x="0" y="${y}" width="4" height="${h}" rx="1" fill="#7c858d"/><rect x="92" y="${y}" width="4" height="${h}" rx="1" fill="#7c858d"/>`;
-    const dots = (x0, y, n, dx, r, c) => Array.from({ length: n }, (_, i) => `<circle cx="${x0 + i * dx}" cy="${y}" r="${r}" fill="${c || "#c9d1d8"}"/>`).join("");
-    const led = (x, y, c) => `<circle cx="${x}" cy="${y}" r="1.4" fill="${c}"/>`;
+    const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
+    const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
+    const ears = (c) => R(0, 0, 13, H, c || "#5d646b", 1.5) + R(470, 0, 13, H, c || "#5d646b", 1.5) + C(6.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(6.5, H - Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, H - Math.min(8, H / 4), 2.6, "#1d2125");
+    const face = (c) => R(11, 0, 461, H, c || "#24282c", 2);
+    const xlrF = (x, y, s) => C(x, y, 11 * s, "#8a939b") + C(x, y, 8.6 * s, "#1b1e21") + C(x - 3.2 * s, y - 2 * s, 1.3 * s, "#9aa3ab") + C(x + 3.2 * s, y - 2 * s, 1.3 * s, "#9aa3ab") + C(x, y + 3.5 * s, 1.3 * s, "#9aa3ab") + R(x - 2 * s, y - 11 * s, 4 * s, 2.4 * s, "#c9d1d8");
+    const xlrM = (x, y, s) => C(x, y, 11 * s, "#8a939b") + C(x, y, 8.6 * s, "#2f3439") + C(x - 3.2 * s, y - 2 * s, 1.6 * s, "#d8dee3") + C(x + 3.2 * s, y - 2 * s, 1.6 * s, "#d8dee3") + C(x, y + 3.5 * s, 1.6 * s, "#d8dee3");
+    const bnc = (x, y, r) => C(x, y, r, "#c8a24a") + C(x, y, r * 0.55, "#2a2a2a") + C(x, y, r * 0.18, "#e7d6a5");
+    const led = (x, y, c, r) => C(x, y, r || 1.6, c);
+    const vents = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => R(x + (i * w) / n, y, (w / n) * 0.55, h, "#15181b", 1)).join("");
     switch (type) {
-      case "sd": return body(2, 36) + Array.from({ length: 8 }, (_, i) => `<rect x="${8 + i * 10.4}" y="6" width="8.6" height="28" rx="1" fill="#3a3f45"/>${dots(12.3 + i * 10.4, 11, 1, 0, 2.2)}${dots(12.3 + i * 10.4, 19, 1, 0, 2.2)}${dots(12.3 + i * 10.4, 27, 1, 0, 2.2)}`).join("") + led(88, 6, "#4ade80");
-      case "num": return body(4, 32) + dots(12, 13, 12, 6.6, 2.1) + dots(12, 26, 12, 6.6, 2.1) + `<rect x="8" y="31" width="22" height="2" fill="#e0700b"/>`;
-      case "dd4mr": return body(12, 16) + `<rect x="9" y="16" width="16" height="8" rx="1" fill="#e0700b"/>` + dots(36, 20, 4, 8, 2.4, "#d4b06a") + `<rect x="72" y="16.5" width="8" height="7" rx="1" fill="#6b9bd2"/>` + led(86, 17, "#4ade80") + led(86, 23, "#facc15");
-      case "orange": return body(12, 16, "#3a3a3a") + `<rect x="6" y="12" width="5" height="16" fill="#f97316"/><rect x="18" y="15" width="30" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/><rect x="54" y="15" width="30" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/>` + led(88, 20, "#4ade80");
-      case "m8": return body(12, 16) + dots(12, 17, 8, 8.4, 1.8, "#d4b06a") + dots(12, 23.5, 8, 8.4, 1.8, "#d4b06a") + `<rect x="82" y="15" width="6" height="10" rx="1" fill="#e0700b"/>`;
-      case "spectera": return body(12, 16, "#24282c") + `<rect x="10" y="15" width="24" height="10" rx="1" fill="#0ea5e9" opacity=".85"/><rect x="38" y="16" width="20" height="2" fill="#7c858d"/><rect x="38" y="21" width="14" height="2" fill="#7c858d"/>` + dots(68, 20, 2, 12, 3, "#c9d1d8") + `<circle cx="68" cy="20" r="1.2" fill="#2b2f33"/><circle cx="80" cy="20" r="1.2" fill="#2b2f33"/>`;
-      case "switch": return body(13, 14, "#30353a") + Array.from({ length: 12 }, (_, i) => `<rect x="${9 + i * 6.3}" y="${i % 2 ? 21 : 16}" width="4.8" height="4" rx=".5" fill="#9aa3ab"/>`).join("") + led(88, 20, "#4ade80");
-      case "clock": return body(12, 16) + `<rect x="8" y="15" width="22" height="10" rx="1" fill="#111" /><text x="19" y="22.5" font-size="6.5" text-anchor="middle" fill="#f87171" font-family="ui-monospace, Menlo, monospace">96k</text>` + dots(38, 20, 7, 7.4, 2.1, "#d4b06a");
-      case "console": return `<path d="M6 34 L14 8 H82 L90 34 Z" fill="#2b2f33"/><rect x="22" y="10" width="22" height="9" rx="1" fill="#0ea5e9" opacity=".85"/><rect x="52" y="10" width="22" height="9" rx="1" fill="#0ea5e9" opacity=".85"/>` + Array.from({ length: 12 }, (_, i) => `<rect x="${14 + i * 5.8}" y="22" width="1.2" height="10" fill="#7c858d"/><rect x="${12.8 + i * 5.8}" y="${25 + (i * 7) % 5}" width="3.6" height="2.4" fill="#e5e7eb"/>`).join("") + `<rect x="4" y="34" width="88" height="3" rx="1" fill="#1f2326"/>`;
-      case "io": return body(10, 20) + dots(14, 20, 3, 9, 2.6, "#d4b06a") + `<rect x="44" y="15" width="18" height="10" rx="1" fill="#1f2326" stroke="#7c858d" stroke-width=".6"/>` + led(84, 16, "#4ade80") + led(84, 24, "#facc15");
-      default: return body(10, 20) + led(84, 20, "#4ade80");
+      // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
+      case "sd": {
+        let s = ears() + face("#1f2327") + R(18, 6, 447, 104, "#2c3136", 3);
+        s += R(30, 18, 70, 30, "#7dd3fc", 2) + R(34, 23, 40, 3, "#0c4a6e") + R(34, 30, 52, 3, "#0c4a6e") + R(34, 37, 30, 3, "#0c4a6e");
+        s += [0, 1, 2, 3].map((i) => R(30 + i * 18, 60, 13, 10, "#4b5258", 2)).join("");
+        s += [0, 1, 2, 3, 4, 5].map((i) => bnc(130 + i * 17, 34, 6)).join("") + bnc(250, 34, 6) + bnc(267, 34, 6);
+        s += R(132, 58, 26, 14, "#e8590c", 3) + R(166, 58, 26, 14, "#e8590c", 3) + R(214, 60, 10, 9, "#9aa3ab", 1.5);
+        s += [0, 1].map((i) => R(300 + i * 82, 12, 76, 92, "#3a4046", 3) + R(306 + i * 82, 18, 8, 80, "#5d646b", 2) + R(325 + i * 82, 28, 30, 20, "#16191c", 2) + led(370 + i * 82, 80, "#4ade80", 2.5)).join("");
+        for (let k = 0; k < 14; k++) {
+          const x = 19 + k * 31.9, out = k >= 7;
+          s += R(x, 118, 30, 320, out ? "#30363b" : "#2a2f33", 1.5) + R(x + 1, 120, 28, 6, "#4b5258");
+          for (let j = 0; j < 8; j++) s += out ? xlrM(x + 15, 145 + j * 37, 1.18) : xlrF(x + 15, 145 + j * 37, 1.18);
+        }
+        return s;
+      }
+      // DL431 : 6 U, 24 tranches (sélection, bargraphe, 48 V, filtre), 24 sorties XLR en façade, écran et navigation à droite
+      case "num": {
+        let s = ears("#4b5156") + face("#2b2e31") + R(18, 8, 447, 6, "#3d4246");
+        for (let k = 0; k < 24; k++) {
+          const x = 24 + k * 15.6;
+          s += R(x, 22, 11, 7, "#55606a", 1.5);
+          for (let j = 0; j < 7; j++) s += R(x + 2, 36 + j * 9, 7, 6, j < 1 ? "#ef4444" : j < 3 ? "#facc15" : "#22c55e", 1, j > 3 ? ' opacity="0.9"' : ' opacity="0.45"');
+          s += led(x + 3, 108, "#ef4444", 1.8) + led(x + 8, 108, "#facc15", 1.8);
+          s += xlrM(x + 5.5, 200, 0.62);
+        }
+        s += R(405, 22, 56, 26, "#93c5fd", 2) + R(409, 27, 34, 3, "#1e3a8a") + R(409, 34, 44, 3, "#1e3a8a");
+        s += [0, 1, 2, 3].map((i) => R(407 + i * 13, 58, 10, 9, "#55606a", 2)).join("") + C(433, 95, 8, "#15181b") + C(433, 95, 4, "#55606a");
+        s += [0, 1, 2, 3, 4, 5].map((i) => led(410 + (i % 3) * 12, 125 + Math.floor(i / 3) * 10, i % 2 ? "#22c55e" : "#38bdf8", 2)).join("");
+        s += R(18, 175, 447, 2, "#3d4246") + R(18, 236, 447, 22, "#202326");
+        return s;
+      }
+      // DD4MR-FX : 1 U, façade noire, rangées de LED d'état (MADI, liens optiques, horloge)
+      case "dd4mr": {
+        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 26, 6, "#f59e0b", 1) + R(26, 25, 42, 3, "#4b5258");
+        for (let g = 0; g < 4; g++) for (let i = 0; i < 8; i++) { s += led(110 + g * 72 + i * 7.5, 16, i < 6 ? "#22c55e" : "#3f4549", 1.8) + led(110 + g * 72 + i * 7.5, 29, i < 3 ? "#f59e0b" : "#3f4549", 1.8); }
+        s += led(410, 16, "#22c55e", 2.2) + led(422, 16, "#22c55e", 2.2) + led(410, 29, "#38bdf8", 2.2) + led(422, 29, "#3f4549", 2.2) + R(440, 13, 20, 18, "#1f2326", 2);
+        return s;
+      }
+      // M8 (Optocore) : 1 U, façade noire, LED par port MADI
+      case "m8": {
+        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 18, 6, "#f59e0b", 1);
+        for (let i = 0; i < 8; i++) s += R(100 + i * 38, 10, 30, 24, "#1f2326", 2) + led(108 + i * 38, 18, "#22c55e", 2) + led(116 + i * 38, 18, "#22c55e", 2) + led(124 + i * 38, 18, "#f59e0b", 2) + R(106 + i * 38, 26, 20, 3, "#4b5258");
+        s += led(420, 22, "#22c55e", 2.4) + led(434, 22, "#38bdf8", 2.4) + led(448, 22, "#3f4549", 2.4);
+        return s;
+      }
+      // Orange Box : 2 U, façade orange, deux emplacements DMI, word clock (BNC) et USB en façade
+      case "orange": {
+        let s = ears("#c2410c") + face("#f26b1d") + R(18, 6, 447, 3, "#fb923c");
+        s += [0, 1].map((i) => { const x = 40 + i * 175; return R(x, 14, 160, 62, "#1f2326", 3) + R(x + 6, 20, 148, 50, "#2c3136", 2) + Array.from({ length: 4 }, (_, j) => bnc(x + 30 + j * 30, 45, 8)).join("") + C(x + 12, 26, 2.4, "#9aa3ab") + C(x + 148, 26, 2.4, "#9aa3ab"); }).join("");
+        s += bnc(408, 32, 8) + bnc(436, 32, 8) + R(412, 56, 14, 12, "#1f2326", 2) + led(445, 62, "#22c55e", 2.4);
+        return s;
+      }
+      // Spectera (base) : 1 U, façade sombre, écran OLED, molette, casque avec volume, LED d'état
+      case "spectera": {
+        let s = ears("#3a3f44") + face("#1c1f22") + R(18, 4, 447, 36, "#23272b", 3);
+        s += R(40, 10, 72, 24, "#0b0d0f", 2) + R(46, 15, 40, 3, "#e5e7eb") + R(46, 22, 56, 2.4, "#9ca3af") + R(46, 27, 30, 2.4, "#9ca3af");
+        s += C(140, 22, 12, "#3a3f44") + C(140, 22, 9, "#2b3035") + R(139, 13, 2, 6, "#9aa3ab");
+        s += vents(180, 12, 160, 20, 22);
+        s += C(372, 22, 7, "#3a3f44") + C(372, 22, 3, "#0b0d0f") + C(398, 22, 8, "#3a3f44") + R(397, 15, 2, 5, "#9aa3ab");
+        s += led(425, 16, "#22c55e", 2.2) + led(425, 28, "#38bdf8", 2.2) + led(440, 16, "#22c55e", 2.2) + led(440, 28, "#3f4549", 2.2);
+        return s;
+      }
+      // Rosendahl Nanoclocks : 1 U, rangées de LED (mode, entrée A, entrée B, 12 sorties), touches MENU / SELECT, interrupteur ; BNC à l'arrière
+      case "clock": {
+        let s = ears("#9aa3ab") + face("#c9cfd4") + R(18, 5, 447, 1.2, "#8a939b") + R(18, 38, 447, 1.2, "#8a939b");
+        s += R(26, 12, 14, 20, "#2b2f33", 2) + R(29, 15, 8, 7, "#ef4444", 1);
+        s += [0, 1, 2].map((i) => led(62, 12 + i * 10, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("");
+        s += [0, 1, 2, 3].map((i) => led(90 + i * 11, 17, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("") + [0, 1, 2, 3, 4, 5].map((i) => led(150 + i * 11, 17, i === 0 ? "#3b82f6" : "#7c858d", 2)).join("");
+        s += Array.from({ length: 12 }, (_, i) => led(230 + i * 15, 17, "#3b82f6", 2)).join("") + Array.from({ length: 12 }, (_, i) => R(226 + i * 15, 25, 8, 2, "#8a939b")).join("");
+        s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2);
+        return s;
+      }
+      // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
+      case "switch": {
+        let s = ears() + face("#22262a");
+        for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) s += R(110 + i * 22, 7 + j * 16, 18, 13, "#0f1113", 1.5) + R(113 + i * 22, 9 + j * 16, 12, 2, "#9aa3ab") + led(114 + i * 22, 18 + j * 16, "#22c55e", 1) + led(124 + i * 22, 18 + j * 16, "#f59e0b", 1);
+        s += [0, 1, 2, 3].map((i) => R(385 + i * 19, 9, 15, 26, "#3a4046", 1.5) + R(388 + i * 19, 12, 9, 20, "#0f1113")).join("");
+        s += R(24, 10, 60, 24, "#0b0d0f", 2) + R(30, 16, 30, 3, "#38bdf8") + led(92, 14, "#22c55e", 2) + led(92, 28, "#22c55e", 2);
+        return s;
+      }
+      // Console : vue de dessus, écrans en haut, baies de faders
+      case "console": {
+        let s = R(0, 0, 483, 210, "#2a2e33", 10) + R(8, 8, 467, 70, "#1b1e21", 6);
+        s += [0, 1, 2].map((i) => R(20 + i * 152, 14, 140, 58, "#38bdf8", 3, ' opacity="0.85"') + R(26 + i * 152, 20, 128, 8, "#0c4a6e", 1, ' opacity="0.6"') + Array.from({ length: 12 }, (_, j) => R(30 + i * 152 + j * 10, 34 + (j * 7) % 18, 6, 32 - (j * 7) % 18, "#22c55e", 1, ' opacity="0.8"')).join("")).join("");
+        s += R(8, 86, 467, 116, "#1f2326", 6);
+        for (let b = 0; b < 3; b++) for (let f = 0; f < 12; f++) { const x = 22 + b * 152 + f * 11.5; s += R(x + 3, 98, 2, 92, "#0b0d0f") + R(x, 120 + ((f * 13 + b * 7) % 50), 8, 12, "#e5e7eb", 1.5) + led(x + 4, 92, f % 4 ? "#3f4549" : "#facc15", 2); }
+        return s;
+      }
+      // Interface 1 U générique
+      default: {
+        let s = ears() + face("#1c1f22") + [0, 1, 2, 3].map((i) => bnc(60 + i * 26, 22, 8)).join("") + R(200, 12, 80, 20, "#0b0d0f", 2) + R(206, 18, 40, 3, "#38bdf8");
+        s += [0, 1, 2, 3, 4, 5].map((i) => led(320 + i * 12, 22, i < 3 ? "#22c55e" : "#3f4549", 2)).join("");
+        return s;
+      }
     }
   }
-  // Une image d'appareil à la taille demandée (svg imbriqué : marche dans une page comme dans le synoptique)
-  function devImg(n, w, h, x, y) {
+  // Une façade à la taille demandée, centrée ou calée à gauche (svg imbriqué : marche dans une page comme dans le synoptique)
+  function devImg(n, w, h, x, y, left) {
     const pos = x !== undefined ? ` x="${x}" y="${y}"` : "";
     const r = n && n.kind === "rack" ? rackById(n.id) : n && n.kind === "extra" ? n.ref : n && n.kind === "console" ? synState().cons[n.cons] || {} : n;
-    const ph = r && r.photo;
-    if (ph) return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 96 40" class="devimg" aria-hidden="true"><image href="${ph}" x="0" y="0" width="96" height="40" preserveAspectRatio="xMidYMid meet"/></svg>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 96 40" class="devimg" aria-hidden="true">${devArt(devType(n))}</svg>`;
+    const ph = r && r.photo, t = devType(n), H = DEV_H[t] || 44.45, par = `${left ? "xMin" : "xMid"}YMid meet`;
+    if (ph) return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" class="devimg" aria-hidden="true"><image href="${ph}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="${par}"/></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${pos} width="${w}" height="${h}" viewBox="0 0 483 ${H}" preserveAspectRatio="${par}" class="devimg" aria-hidden="true">${devArt(t)}</svg>`;
   }
   // Photo perso : réduite (240 px) et gardée dans le dossier
   function readPhoto(file) {
@@ -2856,7 +2947,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           <button class="btn small" type="button" data-addport="${r.id}">+ Port</button></div></td></tr>` : "";
       return `
       <tr data-rid="${r.id}">
-        <td class="devcell" data-l="Visuel"><label class="devpick" title="${r.photo ? "Changer la photo" : "Ajouter une photo de l'appareil (facultatif)"}">${devImg({ kind: "rack", id: r.id }, 60, 25)}<input type="file" accept="image/*" data-rphoto hidden></label>${r.photo ? `<button class="btn small xdel" type="button" data-rphotodel title="Revenir au pictogramme" aria-label="Retirer la photo">×</button>` : ""}</td>
+        <td class="devcell" data-l="Visuel"><label class="devpick" title="${r.photo ? "Changer la photo" : "Ajouter une photo de l'appareil (facultatif)"}">${devImg({ kind: "rack", id: r.id }, 136, 48, undefined, undefined, true)}<input type="file" accept="image/*" data-rphoto hidden></label>${r.photo ? `<button class="btn small xdel" type="button" data-rphotodel title="Revenir au pictogramme" aria-label="Retirer la photo">×</button>` : ""}</td>
         <td style="width:70px"><input type="text" data-rf="num" value="${esc(r.num)}" aria-label="ID" placeholder="—" title="ID facultatif (ex. ID Optocore)"></td>
         <td style="min-width:120px"><input type="text" data-rf="nom" value="${esc(r.nom)}" aria-label="Nom"></td>
         <td style="min-width:110px">${consoleSelect(r)}</td>
@@ -2867,7 +2958,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       </tr>${ports}`;
     }).join("")}</tbody>`;
     { const ks = consoleKeys(), S = synState(), list = ks.length ? ks : ["ALL"];
-      $("#consModels").innerHTML = `<h3 style="margin:16px 0 6px">Consoles</h3><div class="consm">${list.map((k) => `<label>${devImg({ kind: "console", cons: k, id: "c:" + k }, 48, 20)} ${esc(k === "ALL" ? "Console" : "Console " + consLabel(k))}<input type="text" data-cmodel="${esc(k)}" value="${esc((S.cons[k] || {}).model || "")}" placeholder="Modèle (ex. DiGiCo SD7)" list="dlConsModel" autocomplete="off"></label>`).join("")}</div><datalist id="dlConsModel">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>`; }
+      $("#consModels").innerHTML = `<h3 style="margin:16px 0 6px">Consoles</h3><div class="consm">${list.map((k) => `<label>${devImg({ kind: "console", cons: k, id: "c:" + k }, 66, 30)} ${esc(k === "ALL" ? "Console" : "Console " + consLabel(k))}<input type="text" data-cmodel="${esc(k)}" value="${esc((S.cons[k] || {}).model || "")}" placeholder="Modèle (ex. DiGiCo SD7)" list="dlConsModel" autocomplete="off"></label>`).join("")}</div><datalist id="dlConsModel">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>`; }
     const usedBox = (b) => state.lignes.some((l) => l.box && l.box.b === b.id);
     $("#boxesTbl").innerHTML = `<thead><tr><th>Multi</th><th>N°</th><th>Nom</th><th>Côté</th><th>Entrées</th><th></th></tr></thead><tbody>${state.boites.map((b) => `
       <tr data-bid="${b.id}">
@@ -3214,7 +3305,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     Autre: { c: "#9ca3af", w: 2, d: "" },
     "Word clock": { c: "#0f172a", w: 1.6, d: "2 3" }
   };
-  const SYN_IX = 60; // le texte commence après le visuel de l'appareil
+  const SYN_IX = 12;
   const SYN_W = 220, SYN_ROW = 18, SYN_TOP = 46, SYN_FONT = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"`;
   function protoOfName(s) {
     s = String(s || "");
@@ -3283,7 +3374,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
       n.ports.push({ nom: e.p.trim(), proto: l.proto || protoOfName(e.p) || "Autre", n: "", added: true });
     }));
-    out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16)))); n.h = n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52; });
+    out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16))));
+      // Façade de l'appareil en bandeau en haut, aux vraies proportions (40 px de haut au plus)
+      const ph = n.kind === "rack" ? (rackById(n.id) || {}).photo : n.kind === "extra" ? n.ref.photo : (S.cons[n.cons] || {}).photo;
+      n.ih = ph ? 40 : Math.min(40, Math.round(((n.w - 20) * (DEV_H[devType(n)] || 44.45)) / 483)); n.dy = n.ih + 8;
+      n.h = n.dy + (n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52); });
     return out;
   }
   // Disposition auto : chaque loop en ellipse, les appareils hors loop en rangées dessous ; un appareil déplacé garde sa place
@@ -3320,7 +3415,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const [ox, oy] = synCenter(other);
     if (k < 0) { const [x, y] = synClip(n, ox, oy); return { x, y, dir: 0 }; }
     const right = ox >= n.x + n.w / 2;
-    return { x: right ? n.x + n.w : n.x, y: n.y + SYN_TOP + k * SYN_ROW + SYN_ROW / 2, dir: right ? 1 : -1 };
+    return { x: right ? n.x + n.w : n.x, y: n.y + (n.dy || 0) + SYN_TOP + k * SYN_ROW + SYN_ROW / 2, dir: right ? 1 : -1 };
   }
   const synStroke = (proto, extra) => { const P = PROTOS[proto] || PROTOS.Autre; return `stroke="${P.c}" stroke-width="${P.w + (extra || 0)}"${P.d ? ` stroke-dasharray="${P.d}"` : ""} fill="none" stroke-linecap="round"`; };
   const synLabel = (x, y, t, col) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" ${SYN_FONT} fill="${col || "#374151"}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${esc(t)}</text>`;
@@ -3374,11 +3469,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const title = synFit(n.title, n.w - SYN_IX - (n.loop ? 82 : 66), 14, 700), s = synFit(n.sub, n.w - SYN_IX - 12, 11, 400);
     return `<g class="nd${on ? " on" : ""}" data-nid="${esc(n.id)}" transform="translate(${n.x} ${n.y})" ${SYN_FONT}>
       <rect class="box" width="${n.w}" height="${n.h}" rx="8" fill="${fill}" stroke="${on ? "#111827" : con ? "#373737" : "#a7b4bb"}" stroke-width="${on ? 2.5 : 1.2}"/>
+      ${n.ih ? devImg(n, n.w - 20, n.ih, 10, 8) : ""}<g transform="translate(0 ${n.dy || 0})">
       ${n.loop ? `<circle cx="${n.w - 13}" cy="15" r="5" fill="${PROTOS.Optocore.c}"><title>Sur ${esc(n.loop.nom || "la loop")}</title></circle>` : ""}
       ${(() => { const c = clkOf(n), t = CLK_SHORT[c.src] || "?"; return `<text x="${n.w - (n.loop ? 24 : 10)}" y="19" font-size="9" text-anchor="end" font-family="ui-monospace, Menlo, monospace" font-weight="700" fill="${c.src ? (con ? "#d1d5db" : "#6b7280") : "#b91c1c"}">⏱ ${t}</text>`; })()}
-      ${con ? `<rect x="6" y="10" width="50" height="24" rx="4" fill="#5b6167"/>` : ""}${devImg(n, 44, 18.3, 9, 13)}
       <text x="${SYN_IX}" y="20" font-size="14" font-weight="700" fill="${ink}">${esc(title)}</text>
-      ${s ? `<text x="${SYN_IX}" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}
+      ${s ? `<text x="${SYN_IX}" y="36" font-size="11" fill="${sub}">${esc(s)}</text>` : ""}${ports}</g>
       ${on ? `<g class="lkh" transform="translate(${n.w + 6} ${Math.min(n.h / 2, 26) - 13})"><circle cx="13" cy="13" r="13" fill="#111827"/><path d="M13 7v12M7 13h12" stroke="#fce694" stroke-width="2.4" stroke-linecap="round"/><title>Tirer une liaison vers un autre appareil (ou toucher puis toucher l'appareil d'arrivée)</title></g>` : ""}</g>`;
   }
   // Zones : cadre en pointillé avec un titre (FOH, Monitor, Stage…), dessiné sous les appareils
