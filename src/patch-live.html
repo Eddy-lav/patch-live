@@ -328,6 +328,10 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
 .box .unbform input { width: 52px; padding: 3px 4px; }
 .box li .n { font-family: var(--font-mono); color: var(--muted); text-align: right; }
 .box li.free .s { color: var(--muted); font-weight: 400; }
+.box li input.bquick { width: 100%; min-width: 0; border: 1px solid transparent; background: transparent; padding: 1px 4px; border-radius: 3px; font: inherit; }
+.box li input.bquick::placeholder { color: var(--muted); }
+.box li input.bquick:hover { border-color: var(--line); }
+.box li input.bquick:focus { border-color: var(--accent); background: var(--surface); }
 .box li button { all: unset; cursor: pointer; display: flex; flex-wrap: wrap; gap: 0 6px; min-width: 0; }
 .box li button:hover .s { text-decoration: underline; }
 .box li button:focus-visible { outline: 2px solid var(--accent); }
@@ -2717,11 +2721,41 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
 
   // ---------- Grilles boîtiers ----------
   let unboxOpen = null;
+  let boxPick = new Map();
+  // Saisie dans une liaison libre d'un boîtier : la source ou la sortie choisie y est patchée (déplacée si elle était ailleurs) ;
+  // un nom inconnu crée une source en fin de master
+  function onQuickBox(t) {
+    const q = t.value.trim(); if (!q) return;
+    const [bid, i] = t.dataset.bk.split(":"), b = boxById(bid); if (!b) return;
+    let x = boxPick.get(q.toLowerCase());
+    if (!x) { const lq = q.toLowerCase(), hits = [...state.lignes.filter((l) => l.source.toLowerCase() === lq), ...(state.sorties || []).filter((o) => (o.mix || "").toLowerCase() === lq)]; if (hits.length === 1) x = hits[0]; }
+    let created = false;
+    if (!x && /^\d+$/.test(q)) x = state.lignes[+q - 1];
+    if (!x) { x = newLine(q); state.lignes.push(x); created = true; }
+    const occ = occupancy();
+    if (!setBox(x, `${bid}:${i}`, occ)) { if (created) state.lignes.pop(); return; }
+    if (x.to) { log(`${label(x)} : ${toAddr(x)} remplacé par ${boxAddr(x.box)}.`); x.to = null; }
+    if (isOut(x)) followOutPair(x, "box"); else followPair(x, "box");
+    commit(true);
+    notice(created ? `${esc(x.source)} créée en N° ${canal(x)} du master sur ${esc(boxAddr(x.box))}.` : `${esc(label(x))} patchée sur ${esc(boxAddr(x.box))}.`);
+    // On enchaîne sur la liaison libre suivante du même boîtier
+    const nx = [...document.querySelectorAll(`#gridOut .box[data-bid="${bid}"] input.bquick`)].find((el) => +el.dataset.bk.split(":")[1] > +i); if (nx) nx.focus();
+  }
   function renderGrid() {
     const out = $("#gridOut");
     if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier. Crée-les dans l'onglet « Réglages boîtiers ».</div>`; return; }
     const occ = occupancy();
     const sides = [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]];
+    // Liste de recherche des cases libres : sources (N° du master) et sorties ; d'abord celles qui n'ont pas encore de boîtier
+    boxPick = new Map();
+    const pick = [];
+    state.lignes.forEach((l) => pick.push({ v: `${canal(l)} · ${l.source}`, x: l, lab: l.box ? `sur ${boxAddr(l.box)}` : l.micro || "source", free: !l.box }));
+    (state.sorties || []).forEach((o, k) => pick.push({ v: `OUT ${k + 1} · ${o.mix}`, x: o, lab: o.box ? `sur ${boxAddr(o.box)}` : o.to ? `vers ${toAddr(o)}` : o.type || "sortie", free: !o.box && !o.to }));
+    pick.sort((a, b) => b.free - a.free);
+    pick.forEach((q) => boxPick.set(q.v.toLowerCase(), q.x));
+    let dlb = document.getElementById("dlBoxPickWrap");
+    if (!dlb) { dlb = document.createElement("div"); dlb.id = "dlBoxPickWrap"; dlb.hidden = true; document.body.appendChild(dlb); }
+    dlb.innerHTML = `<datalist id="dlBoxPick">${pick.map((q) => `<option value="${esc(q.v)}" label="${esc(q.lab)}">`).join("")}</datalist>`;
     out.innerHTML = sides.map(([s, sideName]) => {
       const bx = state.boites.filter((b) => (b.cote || "") === s).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num);
       if (!bx.length) return "";
@@ -2735,7 +2769,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           li += l
             ? `<li class="${hit ? "hit" : ""}"><span class="n">${i}</span><button type="button" data-goto="${l.id}"><span class="s">${esc(label(l))}</span><span class="m">${isOut(l) ? "OUT · " + esc(l.type) : esc(l.micro)}</span></button></li>`
             : isHs(`${b.id}:${i}`) ? `<li class="hs"><span class="n">${i}</span><span class="s">HS</span><button type="button" class="unhs" data-unhs="${b.id}:${i}" title="Entrée réparée : la remettre en service">réparée</button></li>`
-            : `<li class="free"><span class="n">${i}</span><span class="s">libre</span></li>`;
+            : `<li class="free"><span class="n">${i}</span><input type="text" class="bquick" data-bk="${b.id}:${i}" placeholder="libre" data-suggest="dlBoxPick" autocomplete="off" aria-label="Patcher une source ou une sortie sur ${esc(boxName(b))} → ${i}" title="Tape un nom ou un N° : source ou sortie à mettre sur cette liaison"></li>`;
         }
         return `<div class="box" data-bid="${b.id}"><h3><span>${esc(boxTitle(b))}</span><span class="used">${used}/${n}${used ? ` <button type="button" class="unb" data-unbox="${b.id}" aria-expanded="${unboxOpen === b.id}" title="Dépatcher des entrées de ce boîtier">Dépatcher…</button>` : ""}</span></h3>${unboxOpen === b.id ? `<form class="unbform" data-unbf="${b.id}">Entrées <input type="number" min="1" max="${n}" value="1" data-unf="from" aria-label="De l'entrée" inputmode="numeric"> à <input type="number" min="1" max="${n}" value="${n}" data-unf="to" aria-label="À l'entrée" inputmode="numeric"> <button class="btn small danger" type="submit">Dépatcher</button> <button class="btn small" type="button" data-unbcancel>Annuler</button></form>` : ""}<ol>${li}</ol></div>`;
       }).join("")}</div></div>`;
@@ -4484,6 +4518,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function printTables(root) {
     // Une copie sans boutons ni champs : chaque champ devient son texte
     const c = root.cloneNode(true);
+    c.querySelectorAll("input.bquick").forEach((x) => { const sp = document.createElement("span"); sp.className = "s"; sp.textContent = "libre"; x.replaceWith(sp); });
     c.querySelectorAll("button, .toolbar, .selbar, form, .hint, tr.free, input.quick, summary .meta, script, datalist, .empty-state").forEach((x) => x.remove());
     c.querySelectorAll("input, select, textarea").forEach((i) => {
       let v = i.type === "checkbox" ? (i.checked ? "✓" : "") : i.tagName === "SELECT" ? (i.selectedIndex >= 0 && i.value ? i.options[i.selectedIndex].text : "") : i.value;
@@ -5155,6 +5190,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (u) { unboxOpen = unboxOpen === u.dataset.unbox ? null : u.dataset.unbox; renderGrid(); const i = document.querySelector(`form[data-unbf] input[data-unf="from"]`); if (i) { i.focus(); i.select(); } return; }
       if (e.target.closest("[data-unbcancel]")) { unboxOpen = null; renderGrid(); }
     });
+    $("#gridOut").addEventListener("change", (e) => { if (e.target.classList.contains("bquick")) onQuickBox(e.target); });
     $("#gridOut").addEventListener("submit", (e) => {
       e.preventDefault(); const f = e.target.closest("form[data-unbf]"); if (!f) return;
       const b = state.boites.find((x) => x.id === f.dataset.unbf); if (!b) return;
