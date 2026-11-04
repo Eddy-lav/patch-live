@@ -3185,7 +3185,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (!n) return "box";
     if (n.kind === "console") return "console";
     if (n.kind === "hf") return (n.ref || {}).kind === "tx" ? "hftx" : "hfrx";
-    if (n.kind === "extra") { const x = n.ref || {}; return x.gen ? "clock" : x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
+    if (n.kind === "extra") { const x = n.ref || {}; if (extraModel(x)) return extraModel(x); return x.gen ? "clock" : x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
     const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
     if (r.model === "orange") return "orange"; if (r.model === "spectera") return "spectera"; if (r.model === "m8") return "m8";
     if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
@@ -3196,7 +3196,14 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return "sd";
   }
   // Façades dessinées d'après les fiches des fabricants, aux vraies proportions (19 pouces = 483 mm, 1 U = 44,45 mm) ; la marque est écrite en texte (pas de logo copié)
-  const DEV_H = { sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  // Appareils du synoptique connus de l'appli (fiches Midas, Klark Teknik, Clear-Com) : façade, type et ports proposés pour les liaisons
+  const EXTRA_MODELS = {
+    as80: { nom: "AS 80", type: "Convertisseur HMAC redondant", t: "Midas AS 80 · HMAC vers double HMAC redondant", re: /\bas\s*-?\s*80\b/i, ports: [["Port A (HMAC)", "HyperMAC"], ["Port X (HMAC)", "HyperMAC"], ["Port Y (HMAC)", "HyperMAC"], ["Réseau (contrôle)", "Réseau"]] },
+    dn9680: { nom: "DN9680", type: "Extender AES50 · 8 ports", t: "Klark Teknik DN9680 · 8 ports AES50 sur un snake", re: /dn\s*-?\s*9680/i, ports: [["Snake (HMAC)", "HyperMAC"], ...Array.from({ length: 8 }, (_, i) => [`AES50 ${i + 1}`, "AES50"]), ["Réseau (contrôle)", "Réseau"]] },
+    ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
+  };
+  const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
+  const DEV_H = { as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3303,6 +3310,44 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += [0, 1, 2, 3].map((i) => led(90 + i * 11, 17, i === 1 ? "#3b82f6" : "#7c858d", 2)).join("") + [0, 1, 2, 3, 4, 5].map((i) => led(150 + i * 11, 17, i === 0 ? "#3b82f6" : "#7c858d", 2)).join("");
         s += Array.from({ length: 12 }, (_, i) => led(230 + i * 15, 17, "#3b82f6", 2)).join("") + Array.from({ length: 12 }, (_, i) => R(226 + i * 15, 25, 8, 2, "#8a939b")).join("");
         s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2) + T(84, 34, "ROSENDAHL", 6.5, "#374151", 800, 0.6) + T(132, 34, "nanoclocks", 6.5, "#4b5563", 400);
+        return s;
+      }
+      // Midas AS 80 : 1 U noir, grilles d'aération de chaque côté, panneau central (sélection optique / cuivre, ports A, X, Y, horloge), voyants Cu/OPT, OK/ERR
+      case "as80": {
+        let s = ears("#1d2024") + face("#141619");
+        const mesh = (x0, w) => R(x0, 5, w, 34, "#0b0c0e", 2) + Array.from({ length: Math.floor(w / 5) }, (_, i) => Array.from({ length: 6 }, (_, j) => C(x0 + 3 + i * 5 + (j % 2) * 2.5, 9 + j * 5.2, 1.3, "#22262b")).join("")).join("");
+        s += mesh(20, 110) + T(28, 37, "MIDAS", 7, "#c9cfd4", 800, 1.2);
+        s += R(140, 4, 216, 36, "#202428", 2) + T(144, 10.5, "AS 80", 5.5, "#e5e7eb", 800) + T(170, 10.5, "DUAL REDUNDANT HMAC", 4.5, "#9aa3ab", 600, 0.4);
+        [["OPTICAL", 0, 0], ["COPPER", 0, 1], ["OPTICAL", 1, 0], ["PORT X-Y", 1, 1], ["PORT A", 2, 0], ["CLOCK", 2, 1]].forEach(([t, c, r]) => { s += R(146 + c * 24, 14 + r * 12, 21, 9, "#2c3237", 1) + T(156.5 + c * 24, 20 + r * 12, t, 2.6, r === 0 && c < 2 ? "#60a5fa" : "#9aa3ab", 700, 0, "middle"); });
+        ["A", "X", "Y"].forEach((p, k) => { const x = 222 + k * 44; s += T(x + 4, 37, "PORT " + p, 3, "#9aa3ab", 700) + led(x, 15, "#22c55e", 1.4) + led(x, 22, "#3f4549", 1.4) + led(x + 18, 15, "#22c55e", 1.4) + led(x + 18, 22, "#3f4549", 1.4) + T(x + 3, 16.3, "Cu", 2.6, "#9aa3ab", 600) + T(x + 21, 16.3, "OPT", 2.6, "#9aa3ab", 600) + T(x + 3, 23.3, "OK", 2.6, "#9aa3ab", 600) + T(x + 21, 23.3, "ERR", 2.6, "#9aa3ab", 600); });
+        s += mesh(380, 84) + R(358, 12, 18, 18, "#202428", 2) + `<path d="M367 15 l5 6 -5 6 -5 -6z" fill="#3b82f6"/>` + T(367, 37, "POWER", 2.8, "#9aa3ab", 700, 0, "middle");
+        return s;
+      }
+      // Klark Teknik DN9680 : 1 U argent, voyants AES50 1 à 8, snake, sélection snake et horloge, écran bleu, etherCON bleu en façade
+      case "dn9680": {
+        let s = ears("#b8bec4") + face("#d7dbdf") + R(11, 0, 461, 1.4, "#eef0f2");
+        s += Array.from({ length: 4 }, (_, i) => R(24, 10 + i * 6.5, 30, 3, "#2a2e33", 1.5)).join("");
+        s += T(80, 9.5, "CONTROL", 3, "#4b5563", 700, 0, "middle") + led(80, 16, "#22c55e", 1.6) + T(80, 22, "ETHERNET", 2.4, "#6b7280", 600, 0, "middle");
+        s += T(138, 9.5, "AES50 AUDIO", 3.2, "#374151", 700, 0, "middle") + Array.from({ length: 8 }, (_, i) => led(104 + i * 10, 17, "#f59e0b", 1.5) + led(104 + i * 10, 25, "#22c55e", 1.5) + T(104 + i * 10, 33, String(i + 1), 2.8, "#4b5563", 700, 0, "middle")).join("");
+        s += T(205, 9.5, "SNAKE", 3, "#374151", 700, 0, "middle") + led(198, 17, "#22c55e", 1.5) + led(212, 17, "#22c55e", 1.5) + T(205, 25, "OPTICAL  COPPER", 2.3, "#6b7280", 600, 0, "middle");
+        s += T(262, 9.5, "SNAKE SELECTION", 3, "#374151", 700, 0, "middle") + led(250, 17, "#facc15", 1.5) + led(250, 25, "#3f4549", 1.5) + T(256, 18, "OPTICAL", 2.4, "#6b7280", 600) + T(256, 26, "COPPER", 2.4, "#6b7280", 600);
+        s += T(320, 9.5, "CLOCK SOURCE", 3, "#374151", 700, 0, "middle") + [0, 1, 2].map((i) => led(306, 15 + i * 6, i === 1 ? "#f59e0b" : "#3f4549", 1.4) + T(311, 16 + i * 6, ["INTERNAL", "EXTERNAL AES50", "EXTERNAL SNAKE"][i], 2.3, "#6b7280", 600)).join("");
+        s += R(352, 12, 66, 18, "#1d4ed8", 2) + T(385, 19.5, "Klark Teknik", 4.5, "#dbeafe", 600, 0, "middle") + T(385, 26.5, "DN9680", 4.5, "#dbeafe", 700, 0, "middle") + T(385, 37, "DN9680 8 PORT AES50 EXTENDER", 3, "#374151", 700, 0, "middle");
+        s += T(385, 9, "KLARK TEKNIK", 3.6, "#111827", 800, 0.3, "middle");
+        s += R(431, 7, 30, 30, "#9aa3ab", 4) + C(446, 22, 12, "#2563eb") + C(446, 22, 8, "#1e3a8a") + R(441, 18, 10, 8, "#0b0d0f", 1);
+        return s;
+      }
+      // Clear-Com MS-702 : 1 U bleu nuit, micro de panneau et casque XLR-4 à gauche, canaux A et B (volume, Talk, Call), program, haut-parleur à droite
+      case "ms702": {
+        let s = ears("#2a3a5c") + face("#1f2d4d");
+        s += C(36, 22, 10, "#c9cfd4") + C(36, 22, 7.5, "#2f3439") + T(36, 9, "Panel Mic", 3, "#e5e7eb", 600, 0, "middle");
+        s += xlrM(66, 23, 0.9) + C(66, 23, 3, "#d8dee3") + T(66, 9, "Headset", 3, "#e5e7eb", 600, 0, "middle");
+        s += C(92, 15, 3, "#e5e7eb") + R(88, 26, 8, 8, "#e5e7eb", 1) + T(100, 17, "Announce", 2.6, "#e5e7eb", 600) + T(100, 33, "Party Line", 2.6, "#e5e7eb", 600);
+        ["A", "B"].forEach((ch, k) => { const x = 128 + k * 112; s += R(x, 4, 104, 36, "none", 2, ' stroke="#9aa3ab" stroke-width="0.8"') + T(x + 52, 8.5, "Channel " + ch, 3.4, "#e5e7eb", 700, 0, "middle") + C(x + 18, 18, 6.5, "#0b0d0f") + C(x + 18, 18, 5, "#3a4046") + R(x + 17.5, 12, 1, 5, "#e5e7eb") + T(x + 18, 30, "Volume", 2.6, "#e5e7eb", 600, 0, "middle") + R(x + 42, 11, 18, 18, "#e5e7eb", 1.5) + R(x + 44, 13, 14, 14, "#f8fafc", 1) + T(x + 51, 35, "Call", 2.6, "#e5e7eb", 600, 0, "middle") + T(x + 66, 21, "Talk", 2.8, "#e5e7eb", 700) + C(x + 86, 18, 2.8, "#9aa3ab") + T(x + 86, 30, "Sidetone", 2.4, "#e5e7eb", 600, 0, "middle"); });
+        s += C(366, 17, 6.5, "#0b0d0f") + C(366, 17, 5, "#3a4046") + R(365.5, 11, 1, 5, "#e5e7eb") + T(366, 8.5, "Program", 3, "#e5e7eb", 700, 0, "middle") + T(366, 30, "Level", 2.6, "#e5e7eb", 600, 0, "middle");
+        s += led(390, 14, "#ef4444", 1.6) + led(390, 21, "#ef4444", 1.6) + T(395, 15, "Ch. A", 2.4, "#e5e7eb", 600) + T(395, 22, "Ch. B", 2.4, "#e5e7eb", 600) + T(392, 36, "Remote Mic Kill", 2.4, "#e5e7eb", 600);
+        s += Array.from({ length: 6 }, (_, i) => Array.from({ length: 7 }, (_, j) => C(426 + j * 5.5, 12 + i * 4.5, 1.2, "#0f1626")).join("")).join("");
+        s += T(464, 9, "Clear-Com", 3.6, "#e5e7eb", 800, 0, "end") + T(464, 38, "MS-702", 3.2, "#e5e7eb", 700, 0, "end");
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -3903,6 +3948,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const hs = hfDevs().filter((d) => !placed.has("hf:" + d.id));
     if (hs.length) h += `<optgroup label="HF (récepteurs, émetteurs)">${hs.map((d) => `<option value="hf|${d.id}">${esc(d.nom)} · ${rpDefaultU("hf", d.id)} U</option>`).join("")}</optgroup>`;
     if (xs.length) h += `<optgroup label="Synoptique">${xs.map((x) => `<option value="extra|${x.id}">${esc(x.nom || "Élément")}</option>`).join("")}</optgroup>`;
+    h += `<optgroup label="Nouvel appareil (ajouté au synoptique)">${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="newx|${k}">${esc(m.t)} · 1 U</option>`).join("")}</optgroup>`;
     h += `<optgroup label="Autres">${RP_FREE.map(([k, t, u]) => `<option value="free|${k}">${t} · ${u} U</option>`).join("")}</optgroup>`;
     return h;
   }
@@ -4021,7 +4067,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         commit(true); return;
       }
       if (card && t.matches("[data-rpadd]")) {
-        const c = P.cases.find((x) => x.id === card.dataset.rpc), [kind, ref] = t.value.split("|"); if (!c || !kind) return;
+        const c = P.cases.find((x) => x.id === card.dataset.rpc); let [kind, ref] = t.value.split("|"); if (!c || !kind) return;
+        if (kind === "newx") { const m = EXTRA_MODELS[ref]; if (!m) return; const k = synState().nodes.filter((x) => extraModel(x) === ref).length + 1; const x = { id: nid(), nom: k > 1 ? `${m.nom} #${k}` : m.nom, model: ref, type: "", loopId: "" }; synState().nodes.push(x); kind = "extra"; ref = x.id; }
         const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
         if (kind === "free") it.free = ref; else it.ref = ref;
         const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; } else it.at = 0;
@@ -4124,6 +4171,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     MADI: { c: "#2563eb", w: 3, d: "" },
     Dante: { c: "#d0245e", w: 3, d: "9 5" },
     AES: { c: "#7c3aed", w: 2.5, d: "3 4" },
+    HyperMAC: { c: "#b91c1c", w: 4, d: "" },
+    AES50: { c: "#0d9488", w: 3, d: "" },
+    Intercom: { c: "#ca8a04", w: 2.5, d: "7 3" },
     AVB: { c: "#0f8f84", w: 3, d: "12 4 3 4" },
     SoundGrid: { c: "#5d9b0f", w: 3, d: "6 3" },
     Analogique: { c: "#4b5563", w: 2.5, d: "1.5 4" },
@@ -4138,6 +4188,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (/opto|loop/i.test(s)) return "Optocore";
     if (/madi/i.test(s)) return "MADI";
     if (/dante/i.test(s)) return "Dante";
+    if (/h\s*-?mac|hypermac|snake/i.test(s)) return "HyperMAC";
+    if (/aes\s*-?50|supermac/i.test(s)) return "AES50";
+    if (/intercom|party\s*-?line|canal [ab]\b|clear-?com/i.test(s)) return "Intercom";
     if (/aes/i.test(s)) return "AES";
     if (/avb|milan/i.test(s)) return "AVB";
     if (/sound ?grid|waves/i.test(s)) return "SoundGrid";
@@ -4194,7 +4247,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const sub = (r.model === "spectera" ? `${rackOutputs(r).length} in (ears) / ${rackInputs(r).length} out (micros)` : r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
       out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
     });
-    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || "", ports: [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
+    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || (extraModel(x) ? EXTRA_MODELS[extraModel(x)].type : ""), ports: [], sugg: extraModel(x) ? EXTRA_MODELS[extraModel(x)].ports.map((p) => p[0]) : [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
     // Les ports nommés dans les liaisons apparaissent sur l'appareil, pour y accrocher le câble
     S.links.forEach((l) => [l.a, l.b].forEach((e) => {
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
@@ -4347,7 +4400,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
     const opts = (cur) => `<option value="">—</option>` + nodes.map((n) => `<option value="${esc(n.id)}"${n.id === cur ? " selected" : ""}>${esc(n.title)}</option>`).join("");
     const protoOpts = (l) => `<option value="">Auto (${esc(synLinkProto({ ...l, proto: "" }, nodes))})</option>` + Object.keys(PROTOS).map((k) => `<option${l.proto === k ? " selected" : ""}>${esc(k)}</option>`).join("");
-    const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${n.ports.filter((p) => !p.added).map((p) => `<option value="${esc(p.nom)}">`).join("")}</datalist>`).join("");
+    const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${[...n.ports.filter((p) => !p.added).map((p) => p.nom), ...(n.sugg || []).filter((q) => !n.ports.some((p) => portKey(p.nom) === portKey(q)))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("");
     const dlFor = (id) => { const i = nodes.findIndex((n) => n.id === id); return i < 0 ? "" : ` data-suggest="dlSynP_${i}"`; };
     $("#synLinks").innerHTML = dls + (S.links.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Sens</th><th>Câble / notes</th><th></th></tr></thead><tbody>${S.links.map((l) => {
       const [an, ap] = synEnd(l.a), [bn, bp] = synEnd(l.b), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
@@ -4376,7 +4429,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const all = synNodes(), name = (id) => (all.find((x) => x.id === id) || {}).title || "?";
     const loopSel = (cur) => `<label>Loop<select data-sp="loop"><option value="">Hors loop</option>${loops().map((L) => `<option value="${L.id}"${cur && cur.id === L.id ? " selected" : ""}>${esc(L.nom)}</option>`).join("")}</select></label>`;
     side.innerHTML = `<h3>${esc(n.title)}</h3>${n.sub ? `<p class="hint" style="margin:0 0 8px">${esc(n.sub)}</p>` : ""}
-      ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="Switch, ordinateur record…"></label>${loopSel(n.loop)}`}` : ""}
+      ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Modèle<select data-sp="xmodel"><option value="">Autre (façade selon le type)</option>${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="${k}"${extraModel(n.ref) === k ? " selected" : ""}>${esc(m.t)}</option>`).join("")}</select></label><label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="${esc(extraModel(n.ref) ? EXTRA_MODELS[extraModel(n.ref)].type : "Switch, ordinateur record…")}"></label>${extraModel(n.ref) ? `<p class="hint" style="margin:0 0 8px">Ports proposés dans les liaisons : ${EXTRA_MODELS[extraModel(n.ref)].ports.map((p) => esc(p[0])).join(", ")}.</p>` : ""}${loopSel(n.loop)}`}` : ""}
       ${n.kind === "console" ? `<label>Modèle<input type="text" data-sp="cmodel" value="${esc((S.cons[n.cons] || {}).model || "")}" placeholder="ex. DiGiCo SD7" list="dlConsModelSyn" autocomplete="off"></label><datalist id="dlConsModelSyn">${CONS_MODELS.map((m) => `<option value="${esc(m)}">`).join("")}</datalist>` + loopSel(n.loop) : ""}
       ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
@@ -4538,6 +4591,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const x = S.nodes.find((q) => q.id === synSel); if (!x) return;
       if (f === "loop") x.loopId = e.target.value;
       else if (f === "gmodel") { const g = CLK_GENS.find((q) => q[0] === e.target.value); x.gen.model = e.target.value; if (g) { x.gen.outs = g[2]; if (!x.nom || CLK_GENS.some((q) => q[1].endsWith(x.nom))) x.nom = g[1].replace("Rosendahl ", "").replace("Autre générateur", "Horloge"); } }
+      else if (f === "xmodel") { const old = EXTRA_MODELS[extraModel(x)], m = EXTRA_MODELS[e.target.value]; if (m) { x.model = e.target.value; if (!x.nom || x.nom === "Switch Dante" || (old && x.nom === old.nom)) x.nom = m.nom; if (!x.type || x.type === "Réseau" || (old && x.type === old.type)) x.type = ""; } else { x.model = "none"; } }
       else if (f === "gfreq") x.gen.freq = e.target.value;
       else if (f === "gouts") x.gen.outs = Math.max(1, Number(e.target.value) || 1);
       else x[f] = e.target.value.trim();
@@ -4598,6 +4652,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const S = synState();
     const c = n.kind === "rack" ? (rackById(n.id) || {}).clk : n.kind === "console" ? (S.cons[n.cons] || {}).clk : n.ref && n.ref.clk;
     if (c && c.src !== undefined) return c;
+    // AS 80 et DN9680 suivent l'horloge qui arrive par l'AES50 ou le snake ; l'intercom MS-702 est analogique
+    const xm = n.kind === "extra" ? extraModel(n.ref) : "";
+    if (xm) return { src: xm === "ms702" ? "none" : "aes", from: "" };
     return { src: isGen(n) ? "int" : n.loop ? "loop" : n.kind === "extra" && n.ref && (n.ref.type === "Réseau" || /switch/i.test(n.ref.nom || "")) ? "none" : "", from: "" };
   }
   function setClk(id, c) {
@@ -4909,6 +4966,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     if (v === "master" && !showMaster) v = "racks";
     if (!fromHistory && view && v !== view) { try { history.pushState({ v }, ""); } catch (e) { /* ignore */ } }
     view = v;
+    try { sessionStorage.setItem("patch-live-view", v); localStorage.setItem("patch-live-view", v); } catch (e) { /* ignore */ }
     $('nav.tabs button[data-v="master"]').hidden = !showMaster; $("nav.tabs").classList.toggle("nomaster", !showMaster); $("#showMaster").checked = showMaster;
     document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
     const sp = spaceOf(v); lastIn[sp] = v;
@@ -6475,7 +6533,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#rowsBtn").addEventListener("click", () => { rows = !rows; try { localStorage.setItem("patch-live-phonerows", rows ? "1" : "0"); } catch (e) { /* ignore */ } paint(); syncNavH(); stickHeads(); });
   })();
   coverBind();
-  view = ""; setView(homeView(), true);
+  // Au rechargement, on revient sur l'onglet où on était
+  let lastView = ""; try { lastView = sessionStorage.getItem("patch-live-view") || localStorage.getItem("patch-live-view") || ""; } catch (e) { /* ignore */ }
+  view = ""; setView(lastView && $("#v-" + lastView) ? lastView : homeView(), true);
   // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
   try { history.replaceState({ v: view, base: true }, ""); history.pushState({ v: view }, ""); } catch (e) { /* ignore */ }
   addEventListener("popstate", (e) => {
