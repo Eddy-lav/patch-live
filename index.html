@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "59352100ad";</script>
+<script>window.PL_VER = "38ffa25a69";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -3240,12 +3240,17 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     dn9680: { nom: "DN9680", type: "Extender AES50 · 8 ports", t: "Klark Teknik DN9680 · 8 ports AES50 sur un snake", re: /dn\s*-?\s*9680/i, ports: [["Snake (HMAC)", "HyperMAC"], ...Array.from({ length: 8 }, (_, i) => [`AES50 ${i + 1}`, "AES50"]), ["Réseau (contrôle)", "Réseau"]] },
     ad600: { nom: "AD600", type: "Analyseur de spectre HF", t: "Shure AD600 · analyseur de spectre (Axient Digital)", re: /\bad\s*-?\s*600\b/i, clk: "none", ports: [["Antenne A", "Antenne"], ["Antenne B", "Antenne"], ["Réseau", "Réseau"]] },
     ua845: { nom: "UA845", type: "Distribution d'antennes", t: "Shure UA845 · distribution d'antennes", re: /\bua\s*-?\s*845/i, clk: "none", ports: [["Antenne A in", "Antenne"], ["Antenne B in", "Antenne"], ...Array.from({ length: 5 }, (_, i) => [`Sortie ${i + 1} (A/B)`, "Antenne"]), ["Cascade A/B", "Antenne"]] },
+    ac3000: { nom: "AC 3000", type: "Combineur actif d'émetteurs", t: "Sennheiser AC 3000 · combineur actif 8 émetteurs", re: /\bac\s*-?\s*3000\b/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`RF in ${i + 1}`, "Antenne"]), ["Antenne out", "Antenne"]] },
+    pa821: { nom: "PA821A", type: "Combineur d'antennes PSM", t: "Shure PA821A · combineur d'antennes PSM", re: /\bpa\s*-?\s*[48]21/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`Entrée ${i + 1}`, "Antenne"]), ["Main out", "Antenne"], ["A in", "Antenne"], ["B in", "Antenne"], ["A+B out", "Antenne"]] },
+    ad8c: { nom: "AD8C", type: "Combineur d'antennes PSM", t: "Shure AD8C · combineur d'antennes Axient Digital PSM", re: /\bad\s*-?\s*8c\b/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`Entrée ${i + 1}`, "Antenne"]), ["Out A", "Antenne"], ["Out B", "Antenne"], ["Réseau", "Réseau"]] },
+    csi16t: { nom: "CSI16T/W", type: "Combineur 16 émetteurs", t: "Wisycom CSI16T/W · combineur 16 émetteurs", re: /csi\s*-?\s*16/i, clk: "none", ports: [...Array.from({ length: 16 }, (_, i) => [`Entrée ${i + 1}`, "Antenne"]), ...Array.from({ length: 4 }, (_, i) => [`Sortie ${"ABCD"[i]}`, "Antenne"])] },
+    rfamp: { nom: "Booster HF", type: "Ampli d'antenne 2 voies", t: "Sennheiser RF-Amplifier · booster d'antenne 2 voies", re: /rf\s*-?\s*amplifier|booster/i, clk: "none", ports: [["Entrée I", "Antenne"], ["Sortie I", "Antenne"], ["Entrée II", "Antenne"], ["Sortie II", "Antenne"]] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
-  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t" };
+  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050" };
   const DEV_W = { ewdxem2: 241.5 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3436,22 +3441,150 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += T(204, 40.4, "EW DIGITAL", 1.8, "#9aa3ab", 600, 0.2, "end") + T(236, 40.4, "SENNHEISER", 2, "#e5e7eb", 800, 0.15, "end");
         return s;
       }
-      // Shure PSM1000 P10T (d'après le guide Shure) : casque + volume + bouton A/B du retour casque, par canal une fenêtre IR de synchro, une touche RF (coupure HF) et les LED audio L/R (CLIP rouge, jaunes, vertes) ; un seul écran commun, touches, enter / exit, molette, interrupteur
+      // Shure PSM1000 P10T (d'après la photo de la façade) : logo et nom à gauche, fenêtre de synchro, puis par canal RF (LED bleue, interrupteur), LED L / R, écran jaune sur fond olive avec menu Radio / Audio / Util / Sync, 4 touches navigate ; enter / exit, grosse molette control, monitor (LED clip / 1 / 2, petit bouton, jack), interrupteur power
       case "p10t": {
-        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 14) : "—");
-        let s = shureBody() + T(46, 12.5, "PSM1000", 3.8, "#e5e7eb", 400) + T(46, 16.4, ref && ref.band ? ref.band : "P10T", 1.8, "#9aa3ab", 400) + shureLeft(false) + T(46, 32, "P10T", 2.4, "#c7cdd2", 700, 0.2) + T(46, 35.4, "Wireless Transmitter", 2.1, "#9aa3ab", 400);
-        s += T(74, 3.5, "MONITOR", 1.9, "#9aa3ab", 600, 0, "middle") + T(89.5, 22.6, "A/B", 1.6, "#9aa3ab", 700, 0, "middle") + led(89.5, 19.5, "#3f4549", 0.7);
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 8) : `CH${k}`), Q = (k) => String((ref && ref.freqs && ref.freqs[k]) || "---.---").replace(",", ".").replace(/\s*MHz/i, "");
+        const L = (x, y, t, sz, anc) => T(x, y, t, sz || 3.2, "#d6d6d6", 400, 0, anc || "middle"), Y = "#d4e043", O = "#30360a";
+        const bd = ref && ref.band ? (BANDS_PSM1000.find((b) => b[0] === ref.band) || [ref.band, ""]) : ["G10", "470–542 MHz"];
+        let s = [0, 470].map((x) => R(x, 0, 13, H, "#161718", 1.5) + C(x + 6.5, 5.6, 2.4, "#d5dade") + C(x + 6.5, 22.2, 3.6, "#d5dade") + C(x + 6.5, 38.8, 2.4, "#d5dade")).join("") + R(13, 0, 457, H, "#2d2e30", 1.5) + R(13, 0, 457, 1, "#3c3d40");
+        s += Array.from({ length: 22 }, (_, i) => R(13, 1.5 + i * 1.95, 457, 0.25, i % 3 ? "#ffffff" : "#000000", 0, ` opacity="0.04"`)).join("");
+        s += `<g transform="translate(13 0) scale(1.108 1) translate(-34.6 0)">`;
+        s += `<g font-style="italic">${T(38.4, 8.6, "SHURE", 6.4, "#e8e8e8", 900, 0.1)}</g>` + T(62.6, 4.4, "®", 1.6, "#e8e8e8", 400);
+        s += T(38.7, 12.9, "PSM1000", 3.9, "#e8e8e8", 400) + T(38.7, 18.3, "P10T", 3.9, "#e8e8e8", 400) + ["Dual Wireless Transmitter", "with Audio Reference", "Companding"].map((t, i) => T(38.7, 21.7 + i * 3.55, t, 2.35, "#d6d6d6", 400)).join("");
+        s += R(34.9, 31.9, 35.8, 13, "#38393b", 1.2, ` stroke="#47484b" stroke-width="0.3"`) + R(37.8, 35.6, 11, 5.4, "#5a2537", 0.6) + T(49.8, 39.4, `${bd[0]} ${bd[1].replace("–", "-")}`, 2.1, "#a8a8a8", 400) + T(43.3, 43.2, "sync", 2.1, "#a8a8a8", 400, 0, "middle");
         [1, 2].forEach((ch, k) => {
-          const x = 104 + k * 66;
-          s += T(x + 2, 3.5, `CH ${ch}`, 1.9, "#9aa3ab", 600) + T(x + 30, 3.5, "AUDIO", 1.9, "#9aa3ab", 600) + T(x + 46, 3.5, "L   R", 1.9, "#9aa3ab", 600);
-          s += R(x + 2, 7.5, 12, 11, "#3a3f45", 1.2) + T(x + 8, 15.6, String(ch), 6.2, "#e5e7eb", 400, 0, "middle") + T(x + 2, 38.6, F(ch), 3, "#f3f4f6", 700);
-          s += R(x + 18, 8, 9, 13, "#3b0a0a", 1.2) + R(x + 19.2, 9.4, 6.6, 10.2, "#991b1b", 0.8) + T(x + 22.5, 24.4, "SYNC", 1.5, "#9aa3ab", 700, 0, "middle");
-          s += R(x + 2, 25.5, 12, 6, "#2e3338", 1) + T(x + 8, 29.6, "RF", 2, "#cbd5e1", 700, 0, "middle") + led(x + 8, 22.4, "#22c55e", 0.8);
-          for (let j = 0; j < 9; j++) s += led(x + 47, 8 + j * 3.4, j < 1 ? "#ef4444" : j < 3 ? "#facc15" : "#22c55e", 0.9) + led(x + 53, 8 + j * 3.4, j < 1 ? "#ef4444" : j < 3 ? "#facc15" : "#22c55e", 0.9);
-          s += T(x + 40, 9, "CLIP", 1.5, "#fca5a5", 700, 0, "end") + R(x + 64, 5.5, 0.5, 34.5, "#3a3f45");
+          const d = k * 142.9;
+          s += L(77 + d, 4.8, "RF") + L(97.7 + d, 4.8, "L") + L(105.1 + d, 4.8, "R") + L(200.6 + d, 4, "navigate");
+          s += R(73.6 + d, 7.6, 134.9, 29.2, "#232426", 1.6, ` stroke="#3d3e41" stroke-width="0.5"`) + led(76.9 + d, 14.6, "#38bdf8", 0.9) + led(76.9 + d, 29, "#55585c", 0.9);
+          s += R(81.5 + d, 10.5, 11.6, 23.4, "#0c0c0d", 1) + R(83.6 + d, 12.6, 7.4, 19.2, "#2a2b2d", 0.8) + R(83.6 + d, 12.6, 7.4, 9, "#38393c", 0.8) + R(87.1 + d, 14.6, 0.5, 3.6, "#e8e8e8") + C(87.35 + d, 25.5, 1.5, "none", ` stroke="#e8e8e8" stroke-width="0.4"`);
+          for (let j = 0; j < 8; j++) { const c = j < 1 ? "#ef4444" : j < 3 ? "#f59e0b" : "#22c55e"; s += led(97.7 + d, 9.9 + j * 3.36, c, 0.95) + led(105.1 + d, 9.9 + j * 3.36, c, 0.95); }
+          s += R(120.2 + d, 9.9, 69.1, 25.2, "#0a0b0c", 1) + R(121 + d, 10.7, 67.5, 23.6, O, 0.6);
+          s += T(122 + d, 17.4, F(ch), 6.4, Y, 700) + `<text x="${122 + d}" y="26.2" font-family="Arial, Helvetica, sans-serif" font-size="6.4" font-weight="700" fill="${Y}">${esc(Q(ch))}<tspan font-size="2.8">MHz</tspan></text>` + T(122 + d, 32.4, `G:01  Ch:0${ch}`, 4.2, Y, 400);
+          s += R(163 + d, 12.4, 2.6, 2.9, Y, 0.4) + `<path d="M${163.6 + d} 12.5 v-0.9 a0.7 0.7 0 0 1 1.4 0 v0.9" fill="none" stroke="${Y}" stroke-width="0.45"/>` + R(166.6 + d, 11.3, 5, 4.6, Y, 0.4) + T(169.1 + d, 15.2, "St", 3.8, O, 700, 0, "middle");
+          s += [["Line", 20.2], ["TV: 14", 24], ["10mW", 28], ["Lvl:-16dB", 32.2]].map(([t, y]) => T(171.3 + d, y, t, 3.3, Y, 400, 0, "end")).join("");
+          s += [["Radio", 15.4], ["Audio", 20.8], ["Util", 26.3], ["Sync", 31.9]].map(([t, y]) => T(187.6 + d, y, t, 4.1, Y, 400, 0, "end").replace("<text ", `<text text-decoration="underline" `)).join("");
+          s += [0, 1, 2, 3].map((i) => R(195.5 + d, 10.5 + i * 6.9, 10.1, 4.6, "#a2a2a6", 0.9) + R(196.6 + d, 11.5 + i * 6.9, 7.9, 2.6, "#141416", 0.6)).join("");
         });
-        s += R(240, 6.5, 115, 31, "#06080b", 1.2);
-        [1, 2].forEach((ch, k) => { const y = 13.5 + k * 12; s += R(243, y - 4, 4.5, 4.5, "none", 0.5, ` stroke="#e5e7eb" stroke-width="0.4"`) + T(245.25, y - 0.4, String(ch), 3.2, "#e5e7eb", 400, 0, "middle") + T(251, y, F(ch), 4.2, "#f3f4f6", 400) + T(351, y, "10 mW", 2.2, "#9aa3ab", 400, 0, "end") + T(251, y + 4.2, "470.100 MHz", 2.1, "#9aa3ab", 400); });
+        s += R(354.8, 12, 10.8, 6.6, "#0e5a1e", 0.8, ` stroke="#2f8f46" stroke-width="0.5"`) + T(360.2, 16.2, "enter", 2.6, "#dcfce7", 400, 0, "middle") + R(354.8, 25.1, 10.8, 6.6, "#6b1d1d", 0.8, ` stroke="#a33a3a" stroke-width="0.5"`) + T(360.2, 29.3, "exit", 2.6, "#fee2e2", 400, 0, "middle");
+        s += L(379, 3.6, "control") + C(379, 22.7, 12.3, "#0b0b0c") + C(379, 22.7, 11.3, "#1d1e20") + C(377.4, 21, 7, "#242527") + L(379, 40.6, "push");
+        s += L(409.6, 3.6, "monitor") + C(396.3, 8.8, 1.1, "#141414", ` stroke="#5a5a5a" stroke-width="0.3"`) + T(398.4, 9.7, "clip", 2.4, "#c4c4c4", 400) + T(396.3, 15.2, "push", 2.4, "#c4c4c4", 400, 0, "middle");
+        s += C(396.3, 19.3, 1.1, "#141414", ` stroke="#5a5a5a" stroke-width="0.3"`) + T(399.4, 20.2, "1", 2.4, "#c4c4c4", 400) + led(396.3, 26.6, "#f59e0b", 1.1) + T(399.4, 27.5, "2", 2.4, "#c4c4c4", 400);
+        s += C(410.8, 14.3, 7.9, "#0b0b0c") + C(410.8, 14.3, 6.9, "#1f2022") + `<path d="M${414.6} ${11.9} l2.3 -1.5" stroke="#e5e5e5" stroke-width="0.7" stroke-linecap="round"/>` + jack(408.9, 29.7, 3.6, "#cfcfcf");
+        s += L(435.3, 3.6, "power") + R(427.6, 6.1, 15.2, 31.2, "#18191a", 1.5, ` stroke="#3c3d40" stroke-width="0.5"`) + R(430.4, 10.8, 9.8, 22, "#38393c", 1.2) + R(431.1, 11.5, 8.4, 10.2, "#45464a", 1) + R(435, 13.4, 0.7, 4.2, "#e8e8e8");
+        s += `<path d="M${433.6} ${25.6} a2 2 0 1 0 3.5 0" fill="none" stroke="#e8e8e8" stroke-width="0.5"/>` + R(435, 24, 0.7, 3, "#e8e8e8");
+        return s + "</g>";
+      }
+      // Wisycom MTK952 (d'après la photo) : poignées, panneau IR (SCAN / SYNC), par émetteur vu-mètres AF / MOD, écran ambre (nom, canal, fréquence, menu) avec 3 touches, triangle d'alerte et molette ; MONITOR (1 / 2, volume, casque), LOCK, POWER
+      case "mtk952": {
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 12).toUpperCase() : `TRANSMITTER${k}`), Q = (k) => String((ref && ref.freqs && ref.freqs[k]) || "---.---").replace(",", ".").replace(/\s*MHz/i, "");
+        const A = "#f2b705", W = "#e8e8e8", G = "#a3a3a3", ear = (x) => R(x, 0, 13, H, "#1a1b1c", 1.5) + R(x + 3, 3.4, 7, 4.8, "#d5dade", 2.4) + C(x + 6.5, 22.2, 3.8, "#d5dade") + R(x + 3, 36.2, 7, 4.8, "#d5dade", 2.4);
+        const pan = (x, y, w, h) => R(x, y, w, h, "#0c0c0d", 1.2, ` stroke="#d4d4d4" stroke-width="0.45"`), wb = (x, y, r, t, c) => C(x, y, r, "#ececec") + (t ? T(x, y + 0.8, t, t.length > 1 ? 1.7 : 2.6, c || "#9a9a9a", 700, 0, "middle") : "");
+        let s = ear(0) + ear(470) + R(13, 0, 457, H, "#0c0c0d", 1.2) + `<g transform="translate(13 0) scale(1.112 1) translate(-35 0)">`;
+        s += [35, 431].map((x) => R(x, 3.5, 15, 37.5, "#1c1d1f", 4) + R(x + 2, 6.5, 11, 31.5, "#2a2b2e", 3) + R(x + 3, 8, 3, 28.5, "#3a3b3e", 1.5)).join("") + R(50.5, 1.5, 380.5, 41.4, "none", 1, ` stroke="#d4d4d4" stroke-width="0.5"`);
+        s += pan(51.7, 2.4, 14.7, 39.6) + wb(59.3, 9.8, 4, "SCAN") + wb(59.3, 22.3, 4, "SYNC") + T(59.3, 37.3, "IR", 2.8, W, 700, 0, "middle") + T(59.3, 40.3, "INTERFACE", 1.5, G, 700, 0, "middle");
+        [0, 1].forEach((k) => {
+          const d = k * 147, y0 = 8.5, sc = ["0", "-3", "-6", "-9", "-12", "-18", "-24", "-30", "-40"];
+          s += pan(67.1 + d, 2.4, 146.5, 39.6) + T(135 + d, 5.4, `TRANSMITTER ${k + 1}`, 2.5, W, 700, 0, "middle");
+          s += T(68.6 + d, 4.6, "AF LEVEL (dB)", 1.2, "#c4c4c4", 700) + T(83.4 + d, 4.6, "MOD (dB)", 1.2, "#c4c4c4", 700) + T(70.2 + d, 6.9, "L", 1.4, "#c4c4c4", 700) + T(77.4 + d, 6.9, "R", 1.4, "#c4c4c4", 700) + T(88.6 + d, 6.9, "PEAK", 1.2, "#c4c4c4", 700);
+          s += R(70 + d, y0, 3.4, 23, "#11284a", 0.4) + R(77 + d, y0, 3.4, 23, "#11284a", 0.4) + R(84.4 + d, y0, 2.6, 23, "#11284a", 0.4) + sc.map((t, i) => T(75.7 + d, y0 + 1.6 + i * 2.55, t, 1.2, "#c4c4c4", 700, 0, "middle") + T(90.4 + d, y0 + 1.6 + i * 2.55, t, 1.2, "#c4c4c4", 700, 0, "middle")).join("");
+          s += led(85.7 + d, 27.6, "#22c55e", 0.8) + led(85.7 + d, 29.8, "#22c55e", 0.8);
+          s += T(73.2 + d, 36.2, "MODE", 1.6, W, 700, 0, "middle") + T(84 + d, 36.2, "INPUT", 1.6, W, 700, 0, "middle") + led(75.6 + d, 38.4, "#22c55e", 0.8) + led(81.4 + d, 38.4, "#22c55e", 0.8) + [["MON", 71], ["ST", 75.6], ["AN", 81.4], ["DIG", 86.4]].map(([t, x]) => T(x + d, 41, t, 1.1, G, 700, 0, "middle")).join("");
+          s += R(96.4 + d, 7.1, 77.2, 22.3, "#080600", 0.8) + T(97.1 + d, 13, F(k + 1), 5.4, A, 700) + R(96.8 + d, 13.8, 60, 0.35, A) + R(157 + d, 8.5, 0.35, 19.5, A);
+          s += T(97.1 + d, 18.5, `CH0${k + 1}: ${Q(k + 1)}`, 3.9, A, 700) + T(97.1 + d, 22.6, "GR00: Center", 3.2, A, 700) + T(97.1 + d, 25.6, "MODE03: SF Stereo", 2.4, A, 700).replace("<text ", `<text text-decoration="underline" `) + T(97.1 + d, 28.2, "TV:62    Power:100mW    SVR 1.04", 1.6, A, 700);
+          s += [["menu", 11.2], ["MAIN", 17], ["MODE", 21.7], ["OFF", 26.4]].map(([t, y]) => T(158 + d, y, t, 2.7, A, 700)).join("");
+          s += `<path d="M${173.6 + d} 16.6 h4 L${181 + d} 11.8 M${173.6 + d} 21.8 H${180.2 + d} M${173.6 + d} 26 h4 L${181 + d} 32.2" fill="none" stroke="${W}" stroke-width="0.4"/>` + wb(184.3 + d, 9.8, 4.2) + wb(184.3 + d, 21.8, 4.2) + wb(184.3 + d, 34.3, 4.2);
+          s += wb(203.1 + d, 9.3, 4.2) + `<path d="M${203.1 + d} 6.6 l2.6 4.6 h-5.2z M${203.1 + d} 8.2 v1.7" fill="none" stroke="#3a3a3a" stroke-width="0.35"/>`;
+          s += `<path d="M${195.5 + d} 16 A 10 10 0 0 0 ${195.5 + d} 31" fill="none" stroke="${W}" stroke-width="0.35"/>` + C(202.9 + d, 23.4, 8.6, "#19191a") + C(202.9 + d, 23.4, 7.6, "#232325") + C(201.6 + d, 22, 4.4, "#28282b") + T(203 + d, 36.6, "PUSH TO SELECT", 1.5, G, 700, 0, "middle");
+        });
+        s += T(95, 39.8, "DUAL TRANSMITTER - DIGITAL SYNTHESIS MONO/STEREO/INTERCOM", 1.95, W, 700) + T(255.7, 39.8, "HIGH PERFORMANCE DSP AUDIO PROCESSING", 1.95, W, 700);
+        s += pan(361.4, 2.4, 41.5, 35.4) + T(382.1, 5.4, "MONITOR", 2.5, W, 700, 0, "middle") + wb(366.4, 14.6, 4.2, "1", "#222") + wb(378.6, 14.6, 4.2, "2", "#222");
+        s += C(372.9, 26.4, 4.6, "#0b0b0b") + C(372.9, 26.4, 3.8, "#2a2a2a") + `<path d="M${372.9} 26.4 l-2.6 -2.4" stroke="${W}" stroke-width="0.6" stroke-linecap="round"/>`;
+        s += T(395, 7.4, "CLIP", 1.5, "#c4c4c4", 700, 0, "middle") + R(390.6, 9, 0.35, 14, "#d4d4d4") + `<path d="M${394} 21 v-1.4 a1.8 1.8 0 0 1 3.6 0 v1.4" fill="none" stroke="${W}" stroke-width="0.4"/>` + R(393.6, 20.2, 0.9, 1.6, W, 0.3) + R(397.1, 20.2, 0.9, 1.6, W, 0.3) + jack(391, 28.2, 3.4, "#5a5a5a");
+        s += pan(404.3, 2.4, 25.7, 17) + T(412.9, 5.4, "LOCK", 2.5, W, 700, 0, "middle") + T(406.6, 7.6, "TX1", 1.3, "#c4c4c4", 700, 0, "middle") + T(420.6, 7.6, "TX2", 1.3, "#c4c4c4", 700, 0, "middle") + wb(413.3, 13.8, 3.6) + ["PUSH TO", "LOCK/", "UNLOCK"].map((t, i) => T(423.4, 11.6 + i * 2, t, 1.2, G, 700, 0, "middle")).join("");
+        s += pan(404.3, 20.3, 25.7, 17.5) + R(407.9, 22.6, 11.4, 7.8, "#e8e8e8", 0.6) + T(413.6, 34.8, "POWER", 2.6, W, 700, 0, "middle") + led(422.9, 26.4, "#22c55e", 0.9) + T(424.4, 27, "ON", 1.4, W, 700) + T(425.6, 34.8, "ON/OFF", 1.2, "#c4c4c4", 700, 0, "middle");
+        s += R(361, 38.2, 69.5, 4.3, "#d9d9d9", 0.6) + T(378, 41.6, "MTK952", 3.4, "#1f1f1f", 700, 0.2, "middle") + T(414, 41.4, "WisyCom", 2.4, "#3a3a3a", 700, 0, "middle");
+        return s + "</g>";
+      }
+      // Sennheiser SR 2050 IEM (d'après la photo) : poignées, par émetteur casque + volume, touche sync orange, écran orange (crêtes AF I / AF II, canal, fréquence, nom, EQ), molette, bande verte d'eau avec la touche esc / marche rouge
+      case "sr2050": {
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 9) : "**2050**"), Q = (k) => String((ref && ref.freqs && ref.freqs[k]) || "---.---").replace(",", ".").replace(/\s*MHz/i, "");
+        const O = "#ff8a1c", G = "#a7c3b9", W = "#eef2f1", ear = (x) => R(x, 0, 13, H, "#1c1d1f", 1.5) + R(x + 3, 3.4, 7, 5, "#d5dade", 2.4) + C(x + 6.5, 22.2, 4, "#d5dade") + R(x + 3, 36, 7, 5, "#d5dade", 2.4);
+        let s = ear(0) + ear(470) + R(13, 0, 457, H, "#2b2d30", 1.2) + R(13, 0, 457, 0.8, "#3a3c40") + `<g transform="translate(13 0) scale(1.034 1) translate(-20 0)">`;
+        s += [20, 453].map((x) => R(x, 1.5, 9, 41.5, "#141517", 2.5) + R(x + 1.5, 3, 6, 38.5, "#222326", 2)).join("");
+        [0, 1].forEach((k) => {
+          const d = k * 213;
+          s += `<path d="M${201 + d} 0 Q${210 + d} 22 ${205 + d} 44.45 L${228 + d} 44.45 Q${226 + d} 22 ${222 + d} 0Z" fill="${G}"/>` + R(43.3 + d, 37.4, 163, 1.1, G, 0.5);
+          s += jack(42.6 + d, 28.5, 5, "#b9bec3") + `<path d="M${50.6 + d} 25.4 v-1.6 a1.8 1.8 0 0 1 3.6 0 v1.6" fill="none" stroke="${W}" stroke-width="0.45"/>` + R(50.2 + d, 24.3, 1, 1.8, W, 0.3) + R(53.8 + d, 24.3, 1, 1.8, W, 0.3);
+          s += C(62.4 + d, 30.3, 6.5, "#0d0e0f") + C(62.4 + d, 30.3, 5.6, "#1e2023") + C(61.4 + d, 29, 3, "#26282b") + C(55.6 + d, 36, 0.6, "#9a9a9a") + C(69.8 + d, 36, 0.9, "#e5e5e5");
+          s += T(85.4 + d, 16.6, "sync", 2.6, W, 700) + `<path d="M${91.2 + d} 14.2 l1.2 1.2 l-1.2 1.2" fill="none" stroke="${O}" stroke-width="0.5"/>` + C(88.2 + d, 24.2, 4.3, O) + C(88.2 + d, 24.2, 3, "#151618") + R(93.4 + d, 23.4, 2.3, 0.5, W);
+          s += R(96 + d, 8.3, 78.8, 28.4, "#060403", 1) + T(112.3 + d, 10.9, "PEAKPEAK", 2, O, 700) + R(112.4 + d, 23.6, 6.2, 12.6, O) + R(119.2 + d, 32.6, 6.2, 3.6, O) + R(125.8 + d, 9, 0.4, 27, O);
+          ["0", "-10", "-20", "-30", "-40"].forEach((v, i) => { const y = 14.2 + i * 3.9; s += T(117.6 + d, y, v, 1.9, i > 2 ? "#3a1a00" : O, 700, 0, "end") + T(124.4 + d, y, v, 1.9, O, 700, 0, "end"); });
+          s += T(112.8 + d, 35.8, "AF I", 1.5, "#3a1a00", 700) + T(119.6 + d, 35.8, "AF II", 1.5, "#3a1a00", 700);
+          s += T(126.3 + d, 13.1, `B.Ch: U1. ${k + 1}`, 3.4, O, 400) + T(173.4 + d, 13.1, F(k + 1), 3.4, O, 700, 0, "end");
+          s += T(158.4 + d, 21.4, Q(k + 1), 7, O, 400, 0, "end") + T(159.6 + d, 19.4, "MHz", 2.8, O, 400) + T(169.5 + d, 19.6, "Ψ", 3.6, O, 400);
+          s += T(126.3 + d, 28.7, "EQ", 3.6, O, 400) + R(131.6 + d, 26, 2.2, 1.4, O) + R(133.8 + d, 26.7, 6.4, 0.5, O) + R(140.2 + d, 26.7, 2.2, 1.6, O) + R(142.4 + d, 26.7, 3.8, 0.5, O) + R(146 + d, 26, 1.4, 1.2, O);
+          s += T(126.3 + d, 34.4, "ΨStandard", 3.4, O, 400) + T(151.8 + d, 34.4, "-12 dB", 3.4, O, 400);
+          s += `<path d="M${191.2 + d} 12.6 q4.5 -2.4 9 0 M${191.2 + d} 12.6 l1.3 -0.2 M${191.2 + d} 12.6 l0.4 -1.2 M${200.2 + d} 12.6 l-1.3 -0.2 M${200.2 + d} 12.6 l-0.4 -1.2 M${195.7 + d} 10.8 v4 l-0.9 -0.9 M${195.7 + d} 14.8 l0.9 -0.9" fill="none" stroke="${W}" stroke-width="0.45"/>` + C(195.7 + d, 10.6, 0.7, W);
+          s += C(195.7 + d, 26.5, 6.3, "#0d0e0f") + C(195.7 + d, 26.5, 5.4, "#212326") + R(194.9 + d, 20.4, 1.6, 4.2, "#35383c", 0.6);
+          s += T(215.2 + d, 13.6, "esc", 2.6, W, 700, 0, "middle") + C(214.9 + d, 25.5, 7, "#c8104e") + C(214.9 + d, 25.5, 6.1, "#ff4f86") + C(214.9 + d, 25.5, 5.2, "#121314");
+          s += `<path d="M${213.9 + d} 34.2 a2 2 0 1 0 2.2 0" fill="none" stroke="${W}" stroke-width="0.5"/>` + R(214.75 + d, 32.6, 0.5, 2.4, W);
+        });
+        s += sennLogo(230.4, 3) + T(237.6, 7.6, "SENNHEISER", 4.4, "#f1f1f1", 800, 0.35) + T(234, 11.8, "Stereo Transmitter SR 2050 IEM", 2.3, "#d4d4d4", 700);
+        return s + "</g>";
+      }
+      // Sennheiser AC 3000 (d'après la photo) : poignées, inscriptions à gauche, grande marque au centre, 8 LED RF INPUT, LED et bouton POWER rouges
+      case "ac3000": {
+        const ear = (x) => R(x, 0, 13, H, "#141517", 1.5) + R(x + 3, 3.6, 7, 4.6, "#d5dade", 2.3) + C(x + 6.5, 22.2, 1.6, "#d5dade") + R(x + 3, 36.2, 7, 4.6, "#d5dade", 2.3);
+        let s = ear(0) + ear(470) + R(13, 0, 457, H, "#161719", 1.2) + R(13, 0, 457, 0.8, "#2a2b2e") + [22, 448].map((x) => R(x, 1.5, 13, 41.5, "#0d0e0f", 3) + R(x + 2, 3.5, 9, 37.5, "#1d1e21", 2.5)).join("");
+        s += T(48.3, 14.6, "ACTIVE TRANSMITTER COMBINER", 3.6, "#f1f1f1", 700) + T(48.3, 19.8, "AC 3000", 3.8, "#f1f1f1", 700);
+        s += R(130.5, 12.5, 23.5, 19, "none", 0.6, ` stroke="#f1f1f1" stroke-width="1.6"`) + `<path d="M${135} 29 q6 -4 7 -8 q1.5 -4 7 -6" fill="none" stroke="#f1f1f1" stroke-width="2.2"/>` + T(165, 27.9, "SENNHEISER", 15, "#f1f1f1", 800, 1.2);
+        s += T(360.8, 17.6, "RF INPUT", 2.4, "#e5e5e5", 700, 0, "middle") + Array.from({ length: 8 }, (_, i) => led(343.4 + i * 4.9, 25.2, "#a3e635", 1.4) + T(343.4 + i * 4.9, 30.8, String(i + 1), 2.2, "#e5e5e5", 700, 0, "middle")).join("");
+        s += led(424.4, 24.7, "#ef4444", 1) + T(424, 30.6, "POWER", 2.4, "#e5e5e5", 700, 0, "middle") + C(437, 30.1, 5, "#7f1010") + C(437, 30.1, 4.3, "#c81e1e") + C(436, 29, 1.8, "#e14848");
+        return s;
+      }
+      // Shure PA821A (d'après la photo) : connecteur MAIN OUT, LED d'entrée et de sortie DC, grille d'aération, A IN / B IN / A+B OUT (extension), LED et interrupteur POWER
+      case "pa821": {
+        const ear = (x) => R(x, 0, 13, H, "#1a1b1d", 1.5) + R(x + 3, 3.6, 7, 4.6, "#d5dade", 2.3) + C(x + 6.5, 22.2, 4, "#d5dade") + R(x + 3, 36.2, 7, 4.6, "#d5dade", 2.3);
+        const bn = (x, y) => C(x, y, 6.8, "#bfc3c7") + C(x, y, 5.6, "#8e9398") + C(x, y, 3.6, "#d9dcdf") + C(x, y, 2.4, "#3a3d40") + C(x, y, 0.7, "#d9dcdf");
+        let s = ear(0) + ear(470) + R(13, 0, 457, H, "#1c1d1f", 1.2) + Array.from({ length: 22 }, (_, i) => R(13, 1.5 + i * 1.95, 457, 0.25, "#ffffff", 0, ` opacity="0.035"`)).join("") + [30.5, 444].map((x) => R(x, 1.5, 8, 41.5, "#0f1011", 2)).join("");
+        s += `<g font-style="italic">${T(40.7, 4.6, "SHURE", 3.6, "#d4d4d4", 900)}</g>` + T(40.7, 7.3, "PA821A", 2, "#d4d4d4", 700) + T(40.7, 9.4, "PSM Antenna Combiner", 1.5, "#a3a3a3", 400) + T(40.7, 11.3, "470-865 MHz", 1.5, "#a3a3a3", 400);
+        s += T(91.5, 11.8, "ACTIVE COMBINER", 2.4, "#d4d4d4", 400, 0, "middle") + bn(65, 29.9) + T(65, 42.8, "MAIN OUT - 50 OHMS", 1.7, "#bdbdbd", 400, 0, "middle");
+        s += T(92, 18.8, "INPUT SIGNAL", 1.7, "#bdbdbd", 400, 0, "middle") + T(92, 38.4, "DC OUTPUT", 1.7, "#bdbdbd", 400, 0, "middle") + Array.from({ length: 8 }, (_, i) => { const x = 82.6 + i * 2.7; return T(x, 21.8, String(i + 1), 1.2, "#bdbdbd", 400, 0, "middle") + led(x, 25, "#3a3d40", 0.9) + led(x, 31.5, "#3a3d40", 0.9) + T(x, 35.2, String(i + 1), 1.2, "#bdbdbd", 400, 0, "middle"); }).join("");
+        s += R(123.4, 5.4, 115.6, 35, "#141516", 1) + Array.from({ length: 17 }, (_, i) => R(125 + i * 6.8, 6.2, 3.4, 33.4, "#050506", 0.6) + Array.from({ length: 11 }, (_, j) => R(125 + i * 6.8, 7.2 + j * 3, 3.4, 0.7, "#3a3b3e")).join("")).join("");
+        s += T(264.6, 16.4, "A IN", 1.8, "#bdbdbd", 400, 0, "middle") + T(291.3, 16.4, "B IN", 1.8, "#bdbdbd", 400, 0, "middle") + T(361.3, 16.4, "A+B OUT", 1.8, "#bdbdbd", 400, 0, "middle") + R(264.6, 28.6, 96.7, 0.5, "#d4d4d4") + bn(264.6, 28.8) + bn(291.3, 28.8) + bn(361.3, 28.8) + T(327, 42.4, "EXPANSION PORT", 1.7, "#bdbdbd", 400, 0, "middle");
+        s += led(397.7, 22, "#3a3d40", 0.9) + T(397.7, 26.9, "POWER", 1.7, "#bdbdbd", 400, 0, "middle") + R(408.4, 6.7, 21.6, 31, "#0b0b0c", 1.5) + R(411, 9.4, 16.4, 25.6, "#2a2b2e", 1) + R(411, 9.4, 16.4, 12, "#36373a", 1) + R(418.9, 12, 0.7, 4.6, "#e8e8e8") + C(419.2, 27.6, 1.8, "none", ` stroke="#e8e8e8" stroke-width="0.5"`);
+        return s;
+      }
+      // Wisycom CSI16T/W (d'après la photo) : poignées, radiateur à ailettes, panneau MODE (4x4→1, 16→1, 2x8→1), schéma INPUT / OUTPUT, POWER
+      case "csi16t": {
+        const ear = (x) => R(x, 0, 13, H, "#141517", 1.5) + R(x + 3, 3.6, 7, 4.6, "#d5dade", 2.3) + R(x + 3, 36.2, 7, 4.6, "#d5dade", 2.3);
+        const W = "#e8e8e8", box = (x, w) => R(x, 2.4, w, 32, "#0b0b0c", 0.8, ` stroke="${W}" stroke-width="0.4"`);
+        let s = ear(0) + ear(470) + R(13, 0, 457, H, "#121315", 1.2) + [13, 434].map((x) => R(x, 1, 24, 42.5, "#0e0f10", 5) + R(x + 3, 4, 18, 36.5, "#1d1e21", 4) + C(x + 12, 12, 1.5, "#4b4f54") + C(x + 12, 32.4, 1.5, "#4b4f54")).join("");
+        s += R(37, 0.8, 290, 42.8, "#0c0d0e") + Array.from({ length: 23 }, (_, i) => R(38 + i * 12.6, 0.8, 5.2, 42.8, "#2a2c2f") + R(38 + i * 12.6, 0.8, 1.2, 42.8, "#3c3f43")).join("");
+        s += R(327, 1.2, 106, 42, "#0b0b0c") + box(328, 33.3) + box(362.6, 54.7) + box(418.6, 14);
+        s += T(344.6, 6.2, "MODE", 2.2, W, 700, 0, "middle") + R(330.4, 20.6, 3.4, 2.2, "#9aa3ab", 0.6) + R(333.4, 21.3, 3.2, 0.8, "#d4d4d4") + [["4x4→1", 12.7], ["16→1", 21.9], ["2x8→1", 31.2]].map(([t, y]) => R(339.6, y - 1.6, 1.6, 1.6, W) + T(342.2, y, t, 2, W, 700)).join("") + R(337, 12, 0.3, 19.2, W);
+        s += T(378, 6.2, "INPUT", 2.2, W, 700, 0, "middle") + T(406.4, 6.2, "OUTPUT", 2.2, W, 700, 0, "middle");
+        for (let r = 0; r < 4; r++) { const y = 12.7 + r * 4.6; s += Array.from({ length: 4 }, (_, c) => R(367.2 + c * 4.7, y - 0.8, 1.6, 1.6, W) + (c < 3 ? R(368.8 + c * 4.7, y - 0.15, 3.1, 0.3, W) : "")).join("") + R(386.4, y - 0.15, 8, 0.3, W, 0, ` opacity="0.6"`) + R(400, y - 0.8, 1.6, 1.6, W); }
+        s += `<path d="M401.6 12.7 L405 15 L401.6 17.3 M401.6 22 L405 24.6 L401.6 26.6 M405 15 L409 19.8 L405 24.6" fill="none" stroke="${W}" stroke-width="0.3"/>` + R(405, 14.2, 1.6, 1.6, W) + R(405, 23.8, 1.6, 1.6, W) + R(409, 19, 1.6, 1.6, W) + T(363.8, 31.2, "GREEN: RF ON", 1.1, "#bdbdbd", 700) + T(363.8, 32.9, "BLUE: RF ON & PWR COMP", 1.1, "#bdbdbd", 700) + T(398.8, 31.2, "GREEN: RF ON", 1.1, "#bdbdbd", 700) + T(398.8, 32.9, "RED: RF OFF", 1.1, "#bdbdbd", 700);
+        s += T(425.6, 6.2, "POWER", 2, W, 700, 0, "middle") + R(421.4, 8.6, 1.8, 1.8, W) + R(427.4, 8.6, 1.8, 1.8, W) + R(422.4, 14.2, 6.6, 17.6, "#2a2b2e", 1.2) + R(423.2, 15, 5, 7.6, "#3a3b3e", 1) + R(425.5, 16.4, 0.4, 3, W) + C(425.7, 27.2, 1, "none", ` stroke="${W}" stroke-width="0.35"`) + T(425.6, 34, "STANDBY", 1.2, "#bdbdbd", 700, 0, "middle");
+        s += T(330, 39.2, "CSI16T/W", 3.2, W, 700) + R(398, 35.8, 34, 5, "#f1f1f1", 0.5) + T(415, 39.6, "WisyCom", 3, "#111111", 800, 0, "middle");
+        return s;
+      }
+      // Booster d'antenne Sennheiser (RF-Amplifier, d'après la photo) : façade noire pleine, vis, marque et nom à gauche, deux interrupteurs I et II
+      case "rfamp": {
+        const sc = (x, y) => C(x, y, 2.6, "#2c2e31") + C(x, y, 2, "#0d0e0f") + `<path d="M${x - 1.2} ${y} h2.4 M${x} ${y - 1.2} v2.4" stroke="#4b4f54" stroke-width="0.5"/>`;
+        let s = R(0, 0, 483, H, "#131416", 1.5) + R(0, 0, 483, 0.8, "#24262a") + [3.8, 479.2].map((x) => R(x - 2.4, 3.6, 4.8, 5.4, "#d5dade", 2.4) + R(x - 2.4, 35.4, 4.8, 5.4, "#d5dade", 2.4)).join("") + sc(34.4, 6.6) + sc(34.4, 35.9) + sc(448.4, 6.6) + sc(448.4, 35.9);
+        s += R(75, 4.2, 6.6, 5.4, "none", 0.4, ` stroke="#8a8a8a" stroke-width="0.6"`) + `<path d="M76.2 8.8 q2.2 -1.2 2.6 -2.4 q0.4 -1.2 2.2 -1.8" fill="none" stroke="#8a8a8a" stroke-width="0.8"/>` + T(84.5, 9.2, "SENNHEISER", 5.4, "#8a8a8a", 800, 0.4) + T(89, 17, "RF-Amplifier", 4.6, "#8a8a8a", 400);
+        s += T(380.4, 8.4, "I", 2.8, "#8a8a8a", 400, 0, "middle") + T(399.2, 8.4, "II", 2.8, "#8a8a8a", 400, 0, "middle") + [372.7, 391.8].map((x) => R(x, 12, 15.3, 20.7, "#060607", 1) + R(x + 1.6, 13.6, 12.1, 17.5, "#1a1b1d", 0.8) + R(x + 1.6, 13.6, 12.1, 5, "#2b2d30", 0.8)).join("") + T(388.5, 40.2, "Power", 3.4, "#8a8a8a", 400, 0, "middle");
+        return s;
+      }
+      // Shure AD8C (d'après la photo) : combineur d'antennes Axient Digital PSM, grille hexagonale, écran du schéma de combinaison (entrées 1 à 8 vers Out), touches, molette, interrupteur
+      case "ad8c": {
+        let s = shureBody() + T(46, 12.5, "AD8C", 4.4, "#e5e7eb", 400) + T(46, 30, "AXIENT DIGITAL PSM", 2, "#c7cdd2", 700, 0.2) + T(46, 33, "Antenna Combiner", 2, "#9aa3ab", 400) + T(46, 35.8, ref && ref.band ? ref.band : "470-960 MHz", 1.8, "#9aa3ab", 400);
+        s += R(133.6, 5, 121, 36, "#0f1012", 1) + Array.from({ length: 8 }, (_, r) => Array.from({ length: 15 }, (_, c) => R(135.5 + c * 7.8 + (r % 2) * 3.9, 6.4 + r * 4.3, 5.6, 2.8, "#26292d", 1.4)).join("")).join("");
+        s += R(258, 5, 99, 36, "#121417", 1) + R(262, 20.4, 5.2, 5.2, "#d5dade", 0.8) + R(281, 12.5, 74, 22, "#06080b", 1);
+        s += T(285, 19.4, "Out", 2.8, "#e5e7eb", 400) + T(285, 30, "In", 2.8, "#e5e7eb", 400);
+        [296.4, 327].forEach((x0, g) => { s += `<path d="M${x0} 26 V23 H${x0 + 19.2} V26 M${x0 + 6.4} 23 V26 M${x0 + 12.8} 23 V26 M${x0 + 9.6} 23 V18.5" fill="none" stroke="#e5e7eb" stroke-width="0.4"/>` + [0, 1, 2, 3].map((i) => C(x0 + i * 6.4, 28.8, 2.3, "none", ` stroke="#e5e7eb" stroke-width="0.4"`) + T(x0 + i * 6.4, 29.8, String(g * 4 + i + 1), 2.6, "#e5e7eb", 400, 0, "middle")).join("") + C(x0 + 9.6, 17.6, 0.9, "#e5e7eb"); });
         return s + shureRight();
       }
       // Midas AS 80 : 1 U noir, grilles d'aération de chaque côté, panneau central (sélection optique / cuivre, ports A, X, Y, horloge), voyants Cu/OPT, OK/ERR
