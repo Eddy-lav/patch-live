@@ -570,6 +570,25 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 #hfRxOut .hfdev, #hfTxOut .hfdev { border: 0; padding: 0; background: transparent; }
 .hdlk input { width: 44px !important; }
 .hdlk .hint { font-size: 11px; white-space: nowrap; }
+/* Téléphone : chaque appareil HF rack devient une carte lisible */
+@media (max-width: 760px) {
+  .hfdev .hfdt, .hfdev .hfdt tbody { display: block; width: 100%; }
+  .hfdev .hfdt thead { display: none; }
+  .hfdev .hfdt tr { display: grid; grid-template-columns: 1fr 1fr auto; grid-template-areas: "mo no x" "ba nn nn" "us us us" "nt nt nt"; gap: 6px 10px; padding: 10px 12px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  .hfdev .hfdt td { display: block; width: auto !important; padding: 0; border: 0; min-width: 0; }
+  .hfdev .hfdt td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .hfdev .hfdt td input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .hfdev .hdlk { justify-content: flex-start; }
+  .hfdev .hfdt td:nth-child(1) { grid-area: mo; } .hfdev .hfdt td:nth-child(2) { grid-area: no; }
+  .hfdev .hfdt td:nth-child(3) { grid-area: ba; } .hfdev .hfdt td:nth-child(4) { grid-area: nn; }
+  .hfdev .hfdt td:nth-child(5) { grid-area: us; } .hfdev .hfdt td:nth-child(6) { grid-area: nt; }
+  .hfdev .hfdt td.x { grid-area: x; align-self: start; }
+  .hfdev .hdlk input { width: 56px !important; }
+  .hfdev .hdus { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 15px; }
+  .hfdev .hdu { display: flex; gap: 8px; align-items: baseline; padding: 4px 8px; border-radius: 8px; background: var(--surface-2); }
+  .hfdev .hdu b { flex: none; min-width: 34px; }
+  .hfdev .hftw { overflow: visible; }
+}
 .spxres h3 { margin: 0 0 8px; font-size: 16px; }
 details.spxres > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
 details.spxres > summary::-webkit-details-marker { display: none; }
@@ -1238,12 +1257,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     return `<div class="hfdev">
       <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack." : "Émetteurs des ears, en liaisons stéréo L/R. Chaque liaison devient une arrivée dans Sorties (« P10T #1 · 2 L » et « 2 R ») et l'appareil se range dans les plans de rack."}</p>
       ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Modèle</th><th>Nom</th><th>Plage</th><th>${rx ? "Voies" : "Liaisons"}</th><th>${rx ? "Sources du master" : "Mix des sorties"}</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
-        <td style="width:150px"><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" list="dlHfDevModel" autocomplete="off"></td>
-        <td style="width:160px"><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
-        <td style="width:100px"><input type="text" data-hdf="band" value="${esc(d.band || "")}" aria-label="Plage de fréquences" placeholder="${esc(((HFDEV_BANDS()[normModel(d.model)] || [])[0] || ["plage"])[0])}" autocomplete="off" data-suggest="dlHdBand_${d.id}"${hfBandRange(d.model, d.band) ? ` title="${hfBandRange(d.model, d.band).join("–")} MHz"` : ""}><datalist id="dlHdBand_${d.id}">${(HFDEV_BANDS()[normModel(d.model)] || []).map(([c, rg]) => `<option value="${esc(c)}" label="${esc(rg)}">`).join("")}</datalist></td>
-        <td style="width:${rx ? 64 : 120}px">${rx ? `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">` : `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">stéréo</span></span>`}</td>
-        <td><div class="hdus">${use(d)}</div></td>
-        <td><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
+        <td data-l="Modèle" style="width:150px"><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" list="dlHfDevModel" autocomplete="off"></td>
+        <td data-l="Nom" style="width:160px"><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
+        <td data-l="Plage" style="width:100px"><input type="text" data-hdf="band" value="${esc(d.band || "")}" aria-label="Plage de fréquences" placeholder="${esc(((HFDEV_BANDS()[normModel(d.model)] || [])[0] || ["plage"])[0])}" autocomplete="off" data-suggest="dlHdBand_${d.id}"${hfBandRange(d.model, d.band) ? ` title="${hfBandRange(d.model, d.band).join("–")} MHz"` : ""}><datalist id="dlHdBand_${d.id}">${(HFDEV_BANDS()[normModel(d.model)] || []).map(([c, rg]) => `<option value="${esc(c)}" label="${esc(rg)}">`).join("")}</datalist></td>
+        <td data-l="${rx ? "Voies" : "Liaisons"}" style="width:${rx ? 64 : 120}px">${rx ? `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">` : `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">stéréo</span></span>`}</td>
+        <td data-l="${rx ? "Sources du master" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
+        <td data-l="Notes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
         <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle et clique « + Ajouter ».</div>`}
       <div class="actions" style="margin-top:8px"><select data-hdmodel aria-label="Appareil à ajouter">${opt}</select><input type="number" data-hdn min="1" max="24" value="1" style="width:56px" aria-label="Combien" title="Combien d'appareils ajouter"><button class="btn small" type="button" data-hdadd>+ Ajouter</button></div>
       <datalist id="dlHfDevModel">${[...new Set(HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]))].map((m) => `<option value="${esc(m)}">`).join("")}</datalist></div>`;
