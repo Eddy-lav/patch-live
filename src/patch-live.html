@@ -5872,11 +5872,18 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   // Synchronisation : télécharge la version Dropbox si elle a changé, fusionne, renvoie le résultat
   // Taille d'un dossier : sources, sorties, appareils, boîtiers, HF
   const dbxCount = (st) => (st ? ["lignes", "sorties", "racks", "boites", "hf", "hfdev"].reduce((n, k) => n + ((st[k] || []).length || 0), 0) : 0);
+  // Part des éléments de « ref » encore présents dans « st » (détecte un dossier remplacé par un autre, même de taille voisine)
+  const DBX_KEYS = ["lignes", "sorties", "racks", "boites", "hf", "hfdev"];
+  function dbxKept(ref, st) {
+    const ids = new Set(); DBX_KEYS.forEach((k) => (st[k] || []).forEach((x) => x && ids.add(x.id)));
+    let n = 0, k = 0; DBX_KEYS.forEach((key) => (ref[key] || []).forEach((x) => { if (x && x.id) { n++; if (ids.has(x.id)) k++; } }));
+    return n ? k / n : 1;
+  }
+  function dbxShrinks(ref, st) { const a = dbxCount(ref); return a >= 10 && (dbxCount(st) < a * 0.6 || dbxKept(ref, st) < 0.6); }
   function dbxLoss(ref, merged, mine) {
     if (!ref) return false;
     if (mine && mine.exemple) return true;
-    const a = dbxCount(ref), b = dbxCount(merged);
-    return a >= 10 && b < a * 0.6;
+    return dbxShrinks(ref, merged);
   }
   // Versions précédentes du fichier (Dropbox les garde au moins 30 jours)
   async function dbxRevs() {
@@ -5934,6 +5941,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           conflicts = []; merged = merge3(base, mine, theirs, [], [], conflicts);
           merged.exemple = false;
           fromOthers = J(merged) !== snap;
+        }
+        // Garde-fou à l'arrivée : une version Dropbox bien plus pauvre que celle de cet appareil (écrasée par un autre appareil, dossier d'exemple…) n'est jamais reprise sans accord
+        if (theirs && !dbx.allowLoss && !mine.exemple && dbxShrinks(mine, merged)) {
+          dbx.minePick = mine; dbxPaint("err");
+          notice(`<b>Synchro arrêtée pour protéger ton dossier.</b> La version de « ${esc(dbx.file.name)} » dans Dropbox n'a plus grand-chose en commun avec celle de cet appareil (${Math.round(dbxKept(mine, merged) * 100)} % de tes éléments s'y retrouvent, ${dbxCount(theirs)} éléments au lieu de ${dbxCount(mine)}). Rien n'a été changé ici. <div class="actions" style="margin-top:6px"><button class="btn small primary" type="button" data-dbxmine>Remettre ma version dans Dropbox</button><button class="btn small" type="button" data-dbxrevs>Versions précédentes…</button><button class="btn small danger" type="button" data-dbxkeep>Prendre quand même la version Dropbox</button></div>`, true);
+          return;
         }
         if (theirs && J(merged) === J(theirs)) { dbxSetFile(meta); dbxSetBase(merged); }
         else if (!dbx.allowLoss && dbxLoss(theirs || (dbx.base ? JSON.parse(dbx.base) : null), merged, mine)) {
@@ -6009,6 +6022,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       dbxPaint("sync");
       const meta = await dbxCall("files/get_metadata", { path: idOrPath });
       const { next, report } = await parseWorkbook(await dbxCall("files/download", { path: "rev:" + meta.rev }, { content: true, raw: true }));
+      // Copie de secours du dossier qui était sur cet appareil, avant de le remplacer
+      if (!state.exemple && dbxCount(state) >= 10) { try { localStorage.setItem("patch-live-avant-ouverture", J(state)); } catch (e) { /* stockage plein */ } }
       dbxSetFile(meta); dbxSetBase(next);
       state = next; record(); persist(); render();
       notice(`Dossier « ${esc(state.dossier.nom)} » ouvert depuis Dropbox. Tes modifs y sont enregistrées automatiquement.` + openReport(report), report.problems.length > 0);
@@ -6098,6 +6113,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (e.target.closest("[data-dbxrevs]")) { dbxRevs(); return; }
       const rv = e.target.closest("[data-dbxrev]"); if (rv) { dbxRevPreview(rv.dataset.dbxrev); return; }
       if (e.target.closest("[data-dbxrestore]")) { dbxRestore().catch((err) => notice(dbxErrMsg("La restauration n'a pas abouti.", err), true)); return; }
+      if (e.target.closest("[data-dbxmine]")) { if (dbx.minePick) { dbx.revPick = { next: dbx.minePick }; dbx.minePick = null; dbxRestore().catch((err) => notice(dbxErrMsg("La restauration n'a pas abouti.", err), true)); } return; }
       if (e.target.closest("[data-dbxkeep]")) { dbxKeepRemote().catch((err) => notice(dbxErrMsg("Impossible de reprendre la version Dropbox.", err), true)); return; }
       if (e.target.closest("[data-dbxforce]")) { dbx.allowLoss = true; await dbxSync(); dbx.allowLoss = false; return; }
       const m = $("#dbxMenu"), b = e.target.closest("[data-dbx]");
