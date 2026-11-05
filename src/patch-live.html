@@ -202,6 +202,9 @@ nav.spaces button:hover { color: var(--ink); }
 nav.spaces button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 nav.tabs { display: flex; gap: 6px; padding: 8px 0; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line); }
 nav.tabs::-webkit-scrollbar { display: none; }
+.revs { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; max-height: 260px; overflow-y: auto; }
+.rev { display: flex; align-items: center; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--line); }
+.rev > span:first-child { flex: 1; }
 .verbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 90; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; background: var(--ink); color: var(--surface); border-radius: 12px; box-shadow: 0 10px 28px rgb(0 0 0 / 0.25); font-size: 14px; width: max-content; max-width: calc(100vw - 32px); }
 @media (max-width: 760px) { .verbar { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
 @media print { .verbar { display: none !important; } }
@@ -5285,7 +5288,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const app = wb.addWorksheet("_appli", { properties: { tabColor: { argb: "FF9AA3AD" } } });
     const json = JSON.stringify({ ...state, exemple: false, bibliotheque: lib, savedAt: new Date().toISOString() });
     app.getCell(1, 1).value = "patch-live";
-    app.getCell(1, 2).value = 1;
+    app.getCell(1, 2).value = 1; app.getCell(1, 4).value = APP_FMT;
     app.getCell(1, 3).value = "Données de l'appli Patch Live : ne pas modifier ni supprimer cette feuille. Les corrections se font dans le master patch.";
     app.getCell(1, 3).font = { bold: true, color: { argb: "FFA3201A" } };
     app.getColumn(1).width = 12; app.getColumn(3).width = 90;
@@ -5312,6 +5315,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
 
   // Relit un fichier créé par l'appli, puis reprend les corrections faites dans Excel sur le master patch
+  // Format du fichier : augmente quand une version ne doit plus être relue par une plus ancienne
+  const APP_FMT = 2;
   // Lit un .xlsx de l'appli : l'état complet (feuille _appli) plus les corrections faites dans Excel sur le master
   async function parseWorkbook(buf) {
     const wb = new ExcelJS.Workbook();
@@ -5336,6 +5341,8 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     for (let r = 2; r <= app.rowCount; r++) json += raw(app.getCell(r, 1));
     next = JSON.parse(json);
     if (!next || next.v !== 1) throw new Error("format");
+    // Fichier écrit par une version plus récente de l'appli : on ne le réécrit pas avec une version ancienne
+    if ((Number(app.getCell(1, 4).value) || 0) > APP_FMT) { const e = new Error("trop-recent"); e.code = "trop-recent"; throw e; }
     const report = reconcile(next, wb.getWorksheet("Master patch"));
     next.sorties = next.sorties || [];
     learnDossier(next);
@@ -5374,10 +5381,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       const col = (name) => head.indexOf(name);
       const cols = srCols();
       const iId = col("ID appli");
+      // Sans la colonne des ID, on ne peut pas reconnaître les lignes : on ne touche à rien (sinon tout serait recréé ou supprimé)
+      if (iId < 1 || col("Source") < 1) { rep.problems.push("Le master patch du fichier n'a pas sa colonne « ID appli » : les corrections faites dans Excel sur le master ne sont pas reprises."); return rep; }
       const order = [];
       for (let r = 3; r <= ws.rowCount; r++) {
         const row = ws.getRow(r);
-        const get = (name) => { const i = col(name); return i > 0 ? cellText(row.getCell(i)) : ""; };
+        // Une colonne absente du fichier (version différente de l'appli, colonne supprimée) ne change rien : elle n'efface pas la valeur
+        const get = (name) => { const i = col(name); return i > 0 ? cellText(row.getCell(i)) : null; };
         const id = iId > 0 ? get("ID appli") : "";
         const src = get("Source");
         if (!id && !src) continue;
@@ -5385,13 +5395,13 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         if (!l) { l = newLine(src); next.lignes.push(l); rep.added++; }
         order.push(l);
         let touched = false;
-        const setTxt = (f, v) => { if ((l[f] || "") !== v) { l[f] = v; touched = true; } };
+        const setTxt = (f, v) => { if (v !== null && (l[f] || "") !== v) { l[f] = v; touched = true; } };
         setTxt("source", src); setTxt("musicien", get("Musicien")); setTxt("micro", get("Micro / DI")); setTxt("pied", get("Pied")); setTxt("notes", get("Notes")); if (col("Provenance") > 0) setTxt("prov", get("Provenance")); if (col("Accessoire") > 0) { const nv = accList({ accp: get("Accessoire") }); if (accList(l).join("|") !== nv.join("|")) { l.accp = nv; touched = true; } }
-        const pad = Math.abs(parseFloat(get("Pad dB").replace(",", "."))) || 0; if ((l.pad || 0) !== pad) { l.pad = pad; touched = true; }
-        const p48 = /^(oui|x|1|48|yes)$/i.test(get("48V")); if (!!l.p48 !== p48) { l.p48 = p48; touched = true; }
+        if (get("Pad dB") !== null) { const pad = Math.abs(parseFloat(get("Pad dB").replace(",", "."))) || 0; if ((l.pad || 0) !== pad) { l.pad = pad; touched = true; } }
+        if (get("48V") !== null) { const p48 = /^(oui|x|1|48|yes)$/i.test(get("48V")); if (!!l.p48 !== p48) { l.p48 = p48; touched = true; } }
         // Boîtier
         const bt = get("Boîtier → entrée");
-        if (bt !== boxAddr(l.box)) {
+        if (bt !== null && bt !== boxAddr(l.box)) {
           if (!bt) { l.box = null; touched = true; }
           else {
             const mm = bt.match(/^\s*(\S+)\s*#\s*(\d+)\s*(?:→|->|>)\s*(\d+)\s*$/);
@@ -5402,7 +5412,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         }
         cols.forEach((c) => {
           const t = get(c.label);
-          if (t === rackAddr(lineSr(l, c.k))) return;
+          if (t === null || t === rackAddr(lineSr(l, c.k))) return;
           if (!t) { if (c.k === "ALL") l.sr = {}; else l.sr[c.k] = null; touched = true; return; }
           let mm = t.match(/^\s*#\s*(\S+)\s*-\s*(?:(.+?)\s*-\s*)?(\d+)\s*$/);
           const okCons = (x) => c.k === "ALL" || x.console === c.k || x.console === "Partagé";
@@ -5860,6 +5870,47 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   }
 
   // Synchronisation : télécharge la version Dropbox si elle a changé, fusionne, renvoie le résultat
+  // Taille d'un dossier : sources, sorties, appareils, boîtiers, HF
+  const dbxCount = (st) => (st ? ["lignes", "sorties", "racks", "boites", "hf", "hfdev"].reduce((n, k) => n + ((st[k] || []).length || 0), 0) : 0);
+  function dbxLoss(ref, merged, mine) {
+    if (!ref) return false;
+    if (mine && mine.exemple) return true;
+    const a = dbxCount(ref), b = dbxCount(merged);
+    return a >= 10 && b < a * 0.6;
+  }
+  // Versions précédentes du fichier (Dropbox les garde au moins 30 jours)
+  async function dbxRevs() {
+    if (!dbx.file) return;
+    try {
+      const j = await dbxCall("files/list_revisions", { path: dbx.file.id, mode: "id", limit: 40 });
+      const fmt = (d) => new Date(d).toLocaleString("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      notice(`<b>Versions précédentes de « ${esc(dbx.file.name)} »</b> (la plus récente en haut). « Voir » montre ce qu'elle contient, puis tu peux la restaurer.<div class="revs">${j.entries.map((r, i) => `<div class="rev"><span>${fmt(r.server_modified)}${i === 0 ? " · <b>actuelle</b>" : ""}</span><span class="hint">${Math.round(r.size / 1024)} ko</span>${i ? `<button class="btn small" type="button" data-dbxrev="${esc(r.rev)}">Voir</button>` : ""}</div>`).join("")}</div>`);
+    } catch (e) { notice(dbxErrMsg("Impossible de lire les versions précédentes.", e), true); }
+  }
+  async function dbxRevPreview(rev) {
+    try {
+      const { next } = await parseWorkbook(await dbxCall("files/download", { path: "rev:" + rev }, { content: true, raw: true }));
+      dbx.revPick = { rev, next };
+      const n = (k) => (next[k] || []).length;
+      notice(`Cette version contient <b>${n("lignes")} sources</b>, ${n("sorties")} sorties, ${n("racks")} racks et I/O, ${n("boites")} boîtiers, ${n("hfdev")} appareils HF. <div class="actions" style="margin-top:6px"><button class="btn small primary" type="button" data-dbxrestore>Restaurer cette version</button><button class="btn small" type="button" data-dbxrevs>Retour à la liste</button></div>`);
+    } catch (e) { notice(dbxErrMsg("Impossible d'ouvrir cette version.", e), true); }
+  }
+  async function dbxRestore() {
+    const p = dbx.revPick; if (!p || !dbx.file) return;
+    state = JSON.parse(J(p.next)); state.exemple = false; dbx.revPick = null; dbx.allowLoss = true;
+    record(); persist(); render();
+    // Envoyée comme nouvelle version : les autres appareils la reçoivent à leur prochaine synchro
+    const meta = await dbxCall("files/get_metadata", { path: dbx.file.id });
+    const up = await dbxCall("files/upload", { path: meta.path_lower, mode: { ".tag": "overwrite" }, autorename: false, mute: true }, { content: true, body: await stateBlob(state) });
+    dbxSetFile(up); dbxSetBase(JSON.parse(J(state))); dbx.allowLoss = false; dbxPaint();
+    notice("Version restaurée et renvoyée dans Dropbox. Les autres appareils la reprennent à leur prochaine synchro.");
+  }
+  async function dbxKeepRemote() {
+    const meta = await dbxCall("files/get_metadata", { path: dbx.file.id });
+    const { next } = await parseWorkbook(await dbxCall("files/download", { path: "rev:" + meta.rev }, { content: true, raw: true }));
+    dbxSetFile(meta); dbxSetBase(next); state = next; record(); persist(); render(); dbxPaint();
+    notice("Version Dropbox reprise sur cet appareil.");
+  }
   async function dbxSync() {
     if (!DBX_ON || !dbx.file || !dbx.tok) return;
     if (dbx.busy) { dbx.again = true; return; }
@@ -5885,6 +5936,12 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
           fromOthers = J(merged) !== snap;
         }
         if (theirs && J(merged) === J(theirs)) { dbxSetFile(meta); dbxSetBase(merged); }
+        else if (!dbx.allowLoss && dbxLoss(theirs || (dbx.base ? JSON.parse(dbx.base) : null), merged, mine)) {
+          // Garde-fou : un envoi qui viderait le dossier (appareil resté sur un vieil état, dossier d'exemple…) n'est jamais fait sans accord
+          dbxPaint("err");
+          notice(`<b>Synchro arrêtée pour protéger le dossier.</b> Cet appareil allait remplacer « ${esc(((theirs || {}).dossier || state.dossier || {}).nom || "le dossier")} » dans Dropbox par une version qui contient beaucoup moins de choses (${dbxCount(merged)} éléments au lieu de ${dbxCount(theirs || JSON.parse(dbx.base))}). <div class="actions" style="margin-top:6px"><button class="btn small primary" type="button" data-dbxkeep>Reprendre la version Dropbox</button><button class="btn small" type="button" data-dbxrevs>Versions précédentes…</button><button class="btn small danger" type="button" data-dbxforce>Envoyer quand même</button></div>`, true);
+          return;
+        }
         else if (theirs || J(merged) !== dbx.base) {
           try {
             const up = await dbxCall("files/upload", { path: meta.path_lower, mode: { ".tag": "update", update: meta.rev }, autorename: false, mute: true, strict_conflict: true }, { content: true, body: await stateBlob(merged) });
@@ -5916,6 +5973,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       dbxPaint("ok");
     } catch (e) {
       if (e && e.code === "auth") dbxPaint("auth");
+      else if (e && e.code === "trop-recent") { dbxPaint("err"); notice("Un collègue a enregistré ce dossier avec une version plus récente de Patch Live : la synchro est en pause sur cet appareil. Ferme complètement l'appli et rouvre-la pour la mettre à jour.", true); }
       else if (e && e.status === 409 && /not_found/.test(e.summary)) { dbxPaint("lost"); }
       else { dbxPaint(navigator.onLine ? "err" : "offline"); dbx.retry = setTimeout(dbxSync, 8000); }
       dbx.lastErr = dbxErr(e) || (e && (e.summary || e.message)) || "";
@@ -5958,6 +6016,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       return true;
     } catch (e) {
       dbxPaint("err");
+      if (e && e.code === "trop-recent") { notice("Ce dossier a été enregistré par une version plus récente de Patch Live. Ferme complètement l'appli et rouvre-la pour la mettre à jour, puis rouvre le dossier.", true); return false; }
       notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
       return false;
     }
@@ -6026,7 +6085,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function dbxMenu(btn) {
     const m = $("#dbxMenu"); if (!m.hidden) { m.hidden = true; return; }
     m.innerHTML = !dbx.tok ? `<button type="button" data-dbx="login">Se connecter à Dropbox</button>` :
-      `<button type="button" data-dbx="open">Ouvrir depuis Dropbox…</button><button type="button" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>${dbx.file ? `<button type="button" data-dbx="link">Copier le lien du dossier</button><button type="button" data-dbx="sync">Synchroniser maintenant</button><button type="button" data-dbx="detach">Ne plus synchroniser ce dossier</button>` : ""}<button type="button" data-dbx="logout">Se déconnecter de Dropbox</button>`;
+      `<button type="button" data-dbx="open">Ouvrir depuis Dropbox…</button><button type="button" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>${dbx.file ? `<button type="button" data-dbx="link">Copier le lien du dossier</button><button type="button" data-dbx="sync">Synchroniser maintenant</button><button type="button" data-dbx="revs">Versions précédentes…</button><button type="button" data-dbx="detach">Ne plus synchroniser ce dossier</button>` : ""}<button type="button" data-dbx="logout">Se déconnecter de Dropbox</button>`;
     m.innerHTML += `<button type="button" data-dbx="local" class="dbxlocal">Ouvrir un fichier Excel de l'appareil…</button>`;
     m.hidden = false;
     const r = btn.getBoundingClientRect(); m.style.top = r.bottom + 4 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + "px";
@@ -6036,6 +6095,11 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     $("#dbxBtn").addEventListener("click", (e) => { e.stopPropagation(); dbxMenu(e.currentTarget); });
     $("#dbxState").addEventListener("click", (e) => { e.stopPropagation(); dbxMenu($("#dbxBtn")); });
     document.addEventListener("click", async (e) => {
+      if (e.target.closest("[data-dbxrevs]")) { dbxRevs(); return; }
+      const rv = e.target.closest("[data-dbxrev]"); if (rv) { dbxRevPreview(rv.dataset.dbxrev); return; }
+      if (e.target.closest("[data-dbxrestore]")) { dbxRestore().catch((err) => notice(dbxErrMsg("La restauration n'a pas abouti.", err), true)); return; }
+      if (e.target.closest("[data-dbxkeep]")) { dbxKeepRemote().catch((err) => notice(dbxErrMsg("Impossible de reprendre la version Dropbox.", err), true)); return; }
+      if (e.target.closest("[data-dbxforce]")) { dbx.allowLoss = true; await dbxSync(); dbx.allowLoss = false; return; }
       const m = $("#dbxMenu"), b = e.target.closest("[data-dbx]");
       if (!b) { if (!m.hidden && !e.target.closest("#dbxMenu")) m.hidden = true; return; }
       m.hidden = true;
@@ -6045,6 +6109,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       if (a === "open") dbxBrowse("open", "");
       if (a === "save") { $("#dbxName").value = dbxNameOf(); dbxBrowse("save", dbx.file ? dbx.file.path.replace(/\/[^/]*$/, "") : ""); }
       if (a === "sync") dbxSync();
+      if (a === "revs") dbxRevs();
       if (a === "detach") { dbxDetach(); notice("Ce dossier n'est plus synchronisé avec Dropbox. Il reste dans ce navigateur."); }
       if (a === "logout") { dbxLogout(); notice("Déconnecté de Dropbox."); }
       if (a === "link") {
