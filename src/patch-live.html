@@ -3379,7 +3379,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       // Sennheiser EM 6000 : panneau argent (casque, volume) puis façade noire, un écran + une molette + ESC / SET / SYNC par canal
       case "em6000": {
         const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 12) : "—");
-        let s = [0, 470].map((x) => R(x, 0, 13, H, "#2a2d31", 1.5) + R(x + 3, 2.6, 7, 4.4, "#d5dade", 2.2) + R(x + 3, 37.4, 7, 4.4, "#d5dade", 2.2) + R(x + 5.2, 10, 2.6, 24.5, "#15171a", 1.2)).join("") + R(13, 0, 457, H, "#141619", 1.5);
+        let s = [0, 470].map((x) => R(x, 0, 13, H, "#2a2d31", 1.5) + R(x + 3, 2.6, 7, 4.4, "#d5dade", 2.2) + R(x + 3, 37.4, 7, 4.4, "#d5dade", 2.2) + R(x + 5.2, 10, 2.6, 24.5, "#15171a", 1.2)).join("") + R(13, 0, 457, H, "#4a4e53", 1.5) + R(13, 0, 457, 1.2, "#5d6268");
         s += R(14, 1.8, 70, 40.8, "#e3e5e6", 1.5) + R(14, 1.8, 70, 1, "#f4f5f6") + jack(48, 20, 4.2, "#eef0f1") + knurl(68, 20, 6) + T(48, 34, "HEADPHONES", 1.7, "#6b7280", 600, 0.1, "middle") + T(68, 34, "VOLUME", 1.7, "#6b7280", 600, 0.1, "middle");
         s += sennLogo(89, 4.5) + led(91, 38, "#22c55e", 0.9) + T(93.5, 38.7, "SYNC", 1.8, "#9aa3ab", 600);
         [0, 1].forEach((k) => {
@@ -3426,15 +3426,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       case "p10t": {
         const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 12) : "—");
         let s = shureBody() + T(46, 12.5, "PSM1000", 3.8, "#e5e7eb", 400) + T(46, 16.4, ref && ref.band ? ref.band : "P10T", 1.8, "#9aa3ab", 400) + shureLeft(false) + T(46, 32, "P10T", 2.4, "#c7cdd2", 700, 0.2) + T(46, 35.4, "Wireless Transmitter", 2.1, "#9aa3ab", 400);
+        // Les deux canaux centrés entre la partie casque et les touches
         ["A", "B"].forEach((ch, k) => {
-          const x = 99 + k * 72;
+          const x = 155 + k * 74;
           s += T(x + 3, 3.5, `CH ${ch}`, 1.9, "#9aa3ab", 600) + T(x + 22, 3.5, "AUDIO L  R", 1.9, "#9aa3ab", 600);
           s += R(x + 2.5, 7.5, 12, 11, "#3a3f45", 1.2) + T(x + 8.5, 15.6, ch, 6.2, "#e5e7eb", 400, 0, "middle") + R(x + 2.5, 22, 12, 6, "#5b1414", 1) + R(x + 4, 23.2, 9, 3.6, "#991b1b", 0.6) + R(x + 2.5, 30.5, 12, 5, "#2e3338", 1) + T(x + 8.5, 34, "SYNC", 1.6, "#9aa3ab", 700, 0, "middle");
           for (let j = 0; j < 9; j++) s += led(x + 23, 8.5 + j * 3.2, j < 1 ? "#ef4444" : j < 3 ? "#f59e0b" : "#22c55e", 0.85) + led(x + 28, 8.5 + j * 3.2, j < 1 ? "#ef4444" : j < 3 ? "#f59e0b" : "#22c55e", 0.85);
           s += R(x + 33, 8, 34, 26, "#0b0f14", 1) + T(x + 35, 13.5, `${ch}  ${k + 1}`, 2.4, "#9aa3ab", 600) + T(x + 35, 21.5, F(k + 1), 3.6, "#f3f4f6", 700) + T(x + 35, 28.5, "G10E  470.100", 2.1, "#9aa3ab", 400) + T(x + 64, 13.5, "10 mW", 2.1, "#9aa3ab", 400, 0, "end");
-          if (!k) s += R(x + 70.5, 5.5, 0.5, 34.5, "#3a3f45");
+          s += R(x + (k ? 72 : -2), 5.5, 0.5, 34.5, "#3a3f45");
         });
-        s += R(246, 5.5, 0.5, 34.5, "#3a3f45") + [["MENU", 0], ["SYNC", 1], ["MODE", 2]].map(([t, i]) => R(254 + i * 30, 26, 18, 6, "#2e3338", 1) + T(263 + i * 30, 30.2, t, 1.8, "#9aa3ab", 700, 0, "middle")).join("") + T(254, 13, "MONITOR", 2, "#9aa3ab", 600) + C(258, 18.5, 1.2, "#22c55e") + C(268, 18.5, 1.2, "#22c55e") + T(256.5, 22.6, "A", 1.8, "#9aa3ab", 600) + T(266.5, 22.6, "B", 1.8, "#9aa3ab", 600);
         return s + shureRight();
       }
       // Midas AS 80 : 1 U noir, grilles d'aération de chaque côté, panneau central (sélection optique / cuivre, ports A, X, Y, horloge), voyants Cu/OPT, OK/ERR
@@ -4045,7 +4045,15 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   const RP_FREE = [["vide", "Panneau vide", 1], ["tiroir", "Tiroir", 2], ["distro", "Distribution électrique", 1], ["passe", "Passe-câbles", 1], ["patch", "Patch panel", 1], ["autre", "Autre élément", 1]];
   const RP_UH = 44.45, RP_SIDE = 30, RP_TOP = 24, RP_LW = 390;
   let rpSel = null, rpDrag = null, rpFresh = null;
-  function rpState() { if (!state.rackplan || typeof state.rackplan !== "object") state.rackplan = {}; if (!Array.isArray(state.rackplan.cases)) state.rackplan.cases = []; return state.rackplan; }
+  // Nouvel appareil du catalogue (AS 80, DN9680, MS-702…) : créé dans le synoptique, l'élément du plan pointe dessus
+  function rpNewExtra(key, id) { const m = EXTRA_MODELS[key]; if (!m) return null; if (id && synState().nodes.some((x) => x.id === id)) return id; const k = synState().nodes.filter((x) => extraModel(x) === key).length + 1; const x = { id: id || nid(), nom: k > 1 ? `${m.nom} #${k}` : m.nom, model: key, type: "", loopId: "" }; synState().nodes.push(x); return x.id; }
+  function rpState() {
+    if (!state.rackplan || typeof state.rackplan !== "object") state.rackplan = {}; if (!Array.isArray(state.rackplan.cases)) state.rackplan.cases = [];
+    // Réparation : les appareils ajoutés par « Ajouter ici » restaient en « newx » et s'affichaient en « Autre élément »
+    state.rackplan.cases.forEach((c) => (c.items || []).forEach((it) => { if (it.kind === "newx") { const id = rpNewExtra(it.ref, "x" + it.id); // même id sur tous les appareils : pas de doublon à la fusion Dropbox
+      if (id) { it.kind = "extra"; it.ref = id; } else { it.kind = "free"; it.free = "autre"; delete it.ref; } } }));
+    return state.rackplan;
+  }
   const rpExtra = (id) => synState().nodes.find((x) => x.id === id) || null;
   function rpLabel(it) {
     if (it.kind === "rack") { const r = rackById(it.ref); return r ? rackTitle(r) : it.label || "Appareil supprimé"; }
@@ -4199,7 +4207,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
       }
       if (card && t.matches("[data-rpadd]")) {
         const c = P.cases.find((x) => x.id === card.dataset.rpc); let [kind, ref] = t.value.split("|"); if (!c || !kind) return;
-        if (kind === "newx") { const m = EXTRA_MODELS[ref]; if (!m) return; const k = synState().nodes.filter((x) => extraModel(x) === ref).length + 1; const x = { id: nid(), nom: k > 1 ? `${m.nom} #${k}` : m.nom, model: ref, type: "", loopId: "" }; synState().nodes.push(x); kind = "extra"; ref = x.id; }
+        if (kind === "newx") { ref = rpNewExtra(ref); if (!ref) return; kind = "extra"; }
         const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
         if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
         const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; if (pl[2]) it.half = pl[2]; } else it.at = 0;
@@ -6373,6 +6381,7 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
   function showSetupRow(sel) { const b = document.querySelector(sel); const tr = b && b.closest("tr"); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } }
   // Ranger un appareil dans un plan de rack (première place libre, ou à l'U demandé)
   function rpPut(c, kind, ref, at = 1, col = 0) {
+    if (kind === "newx") { ref = rpNewExtra(ref); if (!ref) return; kind = "extra"; }
     const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1, col };
     if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
     const pl = rpPlace(c, it, at);
