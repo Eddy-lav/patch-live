@@ -3229,9 +3229,9 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
-  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2" };
+  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t" };
   const DEV_W = { ewdxem2: 241.5 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3243,6 +3243,19 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
     const led = (x, y, c, r) => C(x, y, r || 1.6, c);
     const T = (x, y, t, sz, c, w, ls, anc) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="${sz}" font-weight="${w || 700}" fill="${c}"${ls ? ` letter-spacing="${ls}"` : ""}${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     const vents = (x, y, w, h, n) => Array.from({ length: n }, (_, i) => R(x + (i * w) / n, y, (w / n) * 0.55, h, "#15181b", 1)).join("");
+    // Façades détaillées : boutons crantés, prises jack, boutons ronds, logo Sennheiser, gabarit Shure (oreilles percées, bandeau d'inscriptions, crans en bas)
+    const knurl = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.9, "#4a5056") + `<circle cx="${x}" cy="${y}" r="${(r * 0.84).toFixed(2)}" fill="none" stroke="#1b1e21" stroke-width="${(r * 0.12).toFixed(2)}" stroke-dasharray="${(r * 0.09).toFixed(2)} ${(r * 0.13).toFixed(2)}"/>` + C(x, y, r * 0.66, "#2f3439") + C(x - r * 0.2, y - r * 0.25, r * 0.3, "#3d4349");
+    const jack = (x, y, r, ring) => C(x, y, r, ring || "#9aa3ab") + C(x, y, r * 0.74, "#0b0d0f") + C(x, y, r * 0.32, "#2a2e33");
+    const rb = (x, y, t) => C(x, y, 3.5, "#1d2023", ` stroke="#3f454b" stroke-width="0.5"`) + T(x, y + 0.7, t, t.length > 2 ? 1.5 : 2.2, "#cbd5e1", 700, 0, "middle");
+    const sennLogo = (x, y) => R(x, y, 5.2, 5.2, "#e5e7eb", 0.6) + `<path d="M${x + 1} ${y + 3.6} q1.6 -2.8 3.2 -2.2 M${x + 1} ${y + 4.4} q1.6 -1 3.2 -2.2" fill="none" stroke="#141619" stroke-width="0.55"/>`;
+    const shureBody = (slot) => [0, 470].map((x) => R(x, 0, 13, H, "#202326", 1.5) + R(x + 3.2, 2.6, 6.6, 4.4, "#d5dade", 2.2) + R(x + 3.2, 37.4, 6.6, 4.4, "#d5dade", 2.2) + (slot ? R(x + 3.8, 13, 5.4, 18.4, "#d5dade", 2.4) : C(x + 6.5, 22.2, 3.3, "#d5dade"))).join("")
+      + R(13, 0, 457, H, "#1b1d20", 1.5) + R(13, 0, 457, 4.8, "#26292d") + Array.from({ length: 38 }, (_, i) => R(17 + i * 12, 41.3, 7, 1.5, "#0b0d0f", 0.4)).join("")
+      + R(44, 0.6, 17, 3.7, "#c7cdd2", 0.5) + T(52.5, 3.6, "SHURE", 3.1, "#1b1d20", 800, 0.2, "middle") + T(89.5, 3.5, "IR", 1.9, "#9aa3ab", 600, 0, "middle");
+    const shureLeft = (ir) => knurl(74, 14, 5) + jack(77, 27.5, 4, "#b8bfc5") + (ir ? R(86.5, 7.5, 6, 8, "#3b0a0a", 1) + R(87.5, 8.5, 4, 6, "#b91c1c", 0.6) + C(89.5, 19, 0.8, "#e5e7eb") : "") + R(86.5, 24, 6, 7.5, "#e5e7eb", 1);
+    const shureRight = () => T(365, 3.5, "FUNCTION", 1.9, "#9aa3ab", 600, 0, "middle") + T(406, 3.5, "CONTROL", 1.9, "#9aa3ab", 600, 0, "middle") + T(434.5, 3.5, "POWER", 1.9, "#9aa3ab", 600, 0, "middle")
+      + [0, 1, 2, 3].map((i) => R(361, 8 + i * 7.4, 8.5, 4, "#5b6167", 0.8) + R(361, 8 + i * 7.4, 8.5, 1, "#7a8288", 0.5)).join("")
+      + R(377.5, 8, 10, 5, "#1f3a2a", 1) + T(382.5, 11.4, "ENTER", 1.7, "#86efac", 700, 0, "middle") + T(382.5, 22.8, "PUSH –", 1.9, "#9aa3ab", 600, 0, "middle") + R(377.5, 30.5, 10, 5, "#3f1414", 1) + T(382.5, 33.9, "EXIT", 1.7, "#fca5a5", 700, 0, "middle")
+      + knurl(406, 22, 11) + R(428, 7.5, 13, 29, "#0b0d0f", 1.5) + R(430.5, 10, 8, 24, "#2a2e33", 1) + R(430.5, 10, 8, 11, "#3d4349", 1) + R(434, 12.5, 1, 4, "#e5e7eb");
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
       case "sd": {
@@ -3344,18 +3357,16 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += R(420, 13, 16, 9, "#55606a", 2) + R(442, 13, 16, 9, "#55606a", 2) + T(84, 34, "ROSENDAHL", 6.5, "#374151", 800, 0.6) + T(132, 34, "nanoclocks", 6.5, "#4b5563", 400);
         return s;
       }
-      // Shure AD600 : analyseur de spectre 1 U, écran couleur avec la trace du spectre, grand bouton de réglage
+      // Shure AD600 : analyseur de spectre 1 U (même gabarit que les Axient Digital), grille d'aération, grand écran couleur avec la trace du spectre
       case "ad600": {
-        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#4b5258") + C(x, y, r * 0.55, "#2f3439") + R(x - 0.7, y - r * 0.78, 1.4, r * 0.45, "#e5e7eb");
-        let s = ears("#2b2f33") + face("#1c1f22") + T(22, 10, "SHURE", 5, "#e5e7eb", 800, 0.4);
-        s += R(22, 15, 7, 17, "#0b0d0f", 2) + C(42, 24, 5, "#9aa3ab") + C(42, 24, 3.4, "#0b0d0f") + T(22, 40, "AD600", 3.6, "#e5e7eb", 700) + T(42, 40, "Spectrum Manager", 2.6, "#9aa3ab", 600);
-        s += Array.from({ length: 16 }, (_, i) => R(112 + i * 6, 7, 3, 30, "#0b0d0f", 1)).join("");
-        s += R(212, 5, 158, 34, "#070b14", 2) + ["#22c55e", "#facc15", "#f472b6", "#38bdf8", "#a78bfa"].map((c, i) => C(262 + i * 9, 10, 2, c)).join("") + R(216, 8, 30, 4, "#1f2937", 1);
-        let d = "M216 36"; for (let i = 0; i <= 75; i++) { const v = (Math.sin(i * 1.7) * 0.5 + Math.sin(i * 0.37) * 0.8 + ((i * 37) % 11) / 11) * 4 + ((i > 20 && i < 26) || (i > 44 && i < 48) ? 9 : 0); d += ` L${(216 + i * 2).toFixed(1)} ${(31 - Math.max(0, v)).toFixed(1)}`; }
-        s += `<path d="${d} L366 36 Z" fill="#1d4ed8" opacity="0.35"/><path d="${d.replace("M216 36 L", "M")}" fill="none" stroke="#60a5fa" stroke-width="0.8"/>` + R(216, 36, 150, 0.6, "#334155");
-        s += [0, 1].map((i) => R(378, 9 + i * 12, 16, 7, "#3a4046", 1.5)).join("") + knob(418, 22, 12) + T(418, 7, "CONTROL", 2.4, "#9aa3ab", 700, 0, "middle");
-        s += R(446, 10, 12, 24, "#0b0d0f", 2) + R(448, 12, 8, 10, "#e5e7eb", 1);
-        return s;
+        let s = shureBody(true), x = 194, y = 6;
+        s += T(46, 12.5, "AD600", 4.4, "#e5e7eb", 400) + shureLeft(false) + T(46, 32, "AXIENT DIGITAL", 2.1, "#c7cdd2", 700, 0.2) + T(46, 35.4, "Spectrum Manager", 2.1, "#9aa3ab", 400);
+        s += R(97, 6, 88, 32, "#0e1012", 1) + Array.from({ length: 15 }, (_, i) => R(100 + i * 5.8, 8, 3.2, 28, "#2a2e33", 0.8)).join("");
+        s += R(x, y, 162, 32, "#06080b", 1.2) + R(x + 3, y + 2, 21, 4, "none", 0.8, ` stroke="#84cc16" stroke-width="0.4"`) + T(x + 13.5, y + 5, "Main menu", 2, "#d9f99d", 600, 0, "middle") + T(x + 28, y + 5, "Scan tools", 2, "#e5e7eb", 600);
+        s += R(x + 44, y + 2.2, 5, 3.6, "#ef4444", 0.6) + ["#22d3ee", "#a3e635", "#facc15", "#e879f9", "#c084fc"].map((c, i) => C(x + 54 + i * 6.4, y + 4, 1.7, "none", ` stroke="${c}" stroke-width="0.6"`)).join("") + R(x + 86, y + 2.2, 7, 3.6, "#ef4444", 0.6) + `<path d="M${x + 151} ${y + 5.5} l2 -3 l2 3z" fill="#e5e7eb"/>`;
+        [["#22d3ee", 0, 26, [9, 7.5, 8.5, 7, 8]], ["#a3e635", 26, 52, [5, 7, 4.5, 6, 8, 5]], ["#facc15", 52, 82, [8, 5.5, 7, 9, 6]], ["#e879f9", 82, 108, [9.5, 9, 9.5]], ["#f472b6", 108, 148, [10, 10.5, 10, 10.5]]].forEach(([c, a, b, lv]) => { let d = ""; for (let i = a; i <= b; i++) { const v = lv[Math.floor(((i - a) / (b - a + 0.01)) * lv.length)] + ((i * 7) % 5) * 0.25; d += `${d ? "L" : "M"}${(x + 8 + i).toFixed(1)} ${(y + 18 + v - 9).toFixed(1)} `; } s += `<path d="${d}" fill="none" stroke="${c}" stroke-width="0.6"/>`; });
+        s += R(x + 7, y + 25, 150, 0.4, "#334155") + R(x + 7, y + 9, 0.4, 16, "#334155") + Array.from({ length: 8 }, (_, i) => R(x + 14 + i * 19, y + 27, 6, 0.9, "#64748b")).join("");
+        return s + shureRight();
       }
       // Shure UA845 : distribution d'antennes 1 U argent, interrupteur à droite (connecteurs à l'arrière)
       case "ua845": {
@@ -3365,45 +3376,66 @@ footer.foot { margin-top: 28px; color: var(--muted); font-size: 13px; max-width:
         s += T(431, 8, "POWER", 2.6, "#374151", 700, 0, "middle") + R(421, 11, 20, 26, "#111315", 2) + R(424, 14, 14, 10, "#2f3439", 1) + R(430, 16, 2, 6, "#e5e7eb");
         return s;
       }
-      // Sennheiser EM 6000 : récepteur 2 canaux, écran large (fréquence de chaque canal), molette, touches ESC / SET / SYNC
+      // Sennheiser EM 6000 : panneau argent (casque, volume) puis façade noire, un écran + une molette + ESC / SET / SYNC par canal
       case "em6000": {
-        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#3f454b") + C(x, y, r * 0.5, "#2a2f33");
-        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 11) : "—");
-        let s = ears("#cfd4d8") + R(13, 3, 6, 38, "#aeb5bb", 2) + R(464, 3, 6, 38, "#aeb5bb", 2) + face("#141619");
-        s += C(36, 22, 5, "#9aa3ab") + C(36, 22, 3.4, "#0b0d0f") + knob(56, 22, 6.5) + T(36, 36, "HEADPHONES", 2.2, "#9aa3ab", 600, 0, "middle") + T(56, 36, "VOLUME", 2.2, "#9aa3ab", 600, 0, "middle") + led(80, 34, "#22c55e", 1.3) + T(84, 35, "SYNC", 2.2, "#9aa3ab", 600);
-        s += R(100, 5, 262, 34, "#05070a", 2);
-        [0, 1].forEach((k) => { const x = 104 + k * 130; s += [0, 1, 2].map((b) => R(x + b * 5, 10, 3, 24, "#1f2937") + R(x + b * 5, 18 + b * 3, 3, 16 - b * 3, b === 2 ? "#facc15" : "#22c55e")).join(""); s += T(x + 22, 13, "Ch " + (k + 1), 3.4, "#9aa3ab", 700) + T(x + 22, 25, F(k + 1), 8, "#f3f4f6", 700) + T(x + 22, 33, ref && ref.band ? ref.band : "", 3.2, "#9aa3ab", 600) + (k ? "" : R(232, 8, 0.6, 28, "#374151")); });
-        s += knob(386, 22, 10) + ["ESC", "SET", "SYNC"].map((t, i) => R(404, 7 + i * 11, 18, 8, "#2a2f33", 2) + T(413, 12.6 + i * 11, t, 2.6, "#d1d5db", 700, 0, "middle")).join("");
-        s += C(436, 14, 4.5, "#2a2f33") + T(436, 15.2, "⏻", 4, "#d1d5db", 700, 0, "middle") + T(458, 38, "Digital 6000", 2.6, "#9aa3ab", 600, 0, "end") + T(458, 32, "SENNHEISER", 2.8, "#e5e7eb", 800, 0.2, "end");
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 12) : "—");
+        let s = [0, 470].map((x) => R(x, 0, 13, H, "#2a2d31", 1.5) + R(x + 3, 2.6, 7, 4.4, "#d5dade", 2.2) + R(x + 3, 37.4, 7, 4.4, "#d5dade", 2.2) + R(x + 5.2, 10, 2.6, 24.5, "#15171a", 1.2)).join("") + R(13, 0, 457, H, "#141619", 1.5);
+        s += R(14, 1.8, 70, 40.8, "#e3e5e6", 1.5) + R(14, 1.8, 70, 1, "#f4f5f6") + jack(48, 20, 4.2, "#eef0f1") + knurl(68, 20, 6) + T(48, 34, "HEADPHONES", 1.7, "#6b7280", 600, 0.1, "middle") + T(68, 34, "VOLUME", 1.7, "#6b7280", 600, 0.1, "middle");
+        s += sennLogo(89, 4.5) + led(91, 38, "#22c55e", 0.9) + T(93.5, 38.7, "SYNC", 1.8, "#9aa3ab", 600);
+        [0, 1].forEach((k) => {
+          const dx = k * 161;
+          s += R(107 + dx, 8.5, 82, 26, "#05070a", 1.5, ` stroke="#2c3035" stroke-width="0.6"`);
+          s += [0, 1, 2].map((b) => R(110.5 + dx + b * 3.4, 12, 2.4, 18, "#1e2a24") + R(110.5 + dx + b * 3.4, 15 + b * 2.5, 2.4, 15 - b * 2.5, "#86efac")).join("") + T(110 + dx, 11.2, "RF  AF", 1.6, "#9aa3ab", 600);
+          s += T(124 + dx, 18.6, F(k + 1), 5, "#e5e7eb", 400) + T(124 + dx, 26.4, ref && ref.band ? ref.band : `Canal ${k + 1}`, 3.4, "#cbd5e1", 400) + R(176 + dx, 28.6, 9, 3.4, "#cbd5e1", 0.5) + R(185 + dx, 29.6, 0.8, 1.4, "#cbd5e1");
+          s += `<path d="M${196 + dx} 15 l2.4 -3.6 l2.4 3.6z" fill="#3f454b"/>` + knurl(212 + dx, 22, 7.6);
+          s += rb(231 + dx, 14, "ESC") + rb(244 + dx, 14, "SET") + rb(231 + dx, 29, "SYNC") + (k ? rb(244 + dx, 29, "PHONES") : "");
+        });
+        s += rb(433, 14, "⏻") + T(437, 40.6, "Digital 6000", 1.9, "#9aa3ab", 400, 0, "end") + T(458, 40.6, "SENNHEISER", 2.1, "#e5e7eb", 800, 0.15, "end");
         return s;
       }
-      // Shure Axient Digital AD4Q / AD4D : 4 ou 2 canaux, bargraphes RF et audio par canal, écran, gros bouton, interrupteur
+      // Shure Axient Digital AD4Q / AD4D : SHURE en haut à gauche, casque, IR rouge, un bloc par canal (n°, SYNC, LED RF A/B et audio), écran, touches, ENTER / EXIT, gros bouton, interrupteur
       case "ad4q": case "ad4d": {
         const nC = type === "ad4q" ? 4 : 2, F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 11) : "—");
-        const knob = (x, y, r) => C(x, y, r, "#0b0d0f") + C(x, y, r * 0.82, "#4b5258") + C(x, y, r * 0.55, "#2f3439") + R(x - 0.7, y - r * 0.78, 1.4, r * 0.45, "#e5e7eb");
-        let s = ears("#2b2f33") + face("#16181b") + T(22, 9.5, "SHURE", 4.5, "#e5e7eb", 800, 0.3);
-        s += C(28, 24, 5, "#9aa3ab") + C(28, 24, 3.4, "#0b0d0f") + knob(45, 24, 6) + T(20, 39, type.toUpperCase(), 3.6, "#e5e7eb", 700) + T(20, 42.5, "AXIENT DIGITAL", 2, "#9aa3ab", 600);
-        const x0 = 66, cw = 236 / nC;
+        let s = shureBody() + T(46, 12.5, type === "ad4q" ? "AD4Q" : "AD4D", 4.4, "#e5e7eb", 400) + T(46, 16.4, ref && ref.band ? ref.band : "G57 470-616 MHz", 1.8, "#9aa3ab", 400) + shureLeft(true) + T(46, 32, "AXIENT DIGITAL", 2.1, "#c7cdd2", 700, 0.2) + T(46, 35.4, "Wireless Receiver", 2.1, "#9aa3ab", 400);
         for (let k = 0; k < nC; k++) {
-          const x = x0 + k * cw;
-          s += R(x + 2, 6, 12, 10, "#2c3237", 1.5) + T(x + 8, 13.5, String(k + 1), 5, "#e5e7eb", 700, 0, "middle") + T(x + 18, 9, "RF", 2.2, "#9aa3ab", 600) + T(x + 26, 9, "AUDIO", 2.2, "#9aa3ab", 600);
-          for (let j = 0; j < 8; j++) s += led(x + 20, 13 + j * 3.4, j > 3 ? "#3b82f6" : "#1e3a5f", 1) + led(x + 30, 13 + j * 3.4, j < 2 ? "#ef4444" : j < 4 ? "#facc15" : "#22c55e", 1);
-          s += T(x + 2, 24, "", 1, "#000") + R(x + 2, 20, 12, 3, "#3a4046", 1) + T(x + 2, 40, F(k + 1), 3.6, "#cbd5e1", 700);
-          if (k) s += R(x - 1, 6, 0.6, 34, "#2c3237");
+          const x = 99 + k * 43;
+          s += T(x + 21, 3.5, `RX ${k + 1}`, 1.9, "#9aa3ab", 600) + T(x + 29, 3.5, "RF", 1.9, "#9aa3ab", 600) + T(x + 34, 3.5, "AUDIO", 1.9, "#9aa3ab", 600);
+          s += R(x + 2.5, 7.5, 12, 11, "#3a3f45", 1.2) + T(x + 8.5, 15.6, String(k + 1), 6.4, "#e5e7eb", 400, 0, "middle") + R(x + 2.5, 21, 12, 1.2, "#5b6167") + R(x + 2.5, 26.5, 12, 5, "#2e3338", 1) + T(x + 8.5, 30, "SYNC", 1.6, "#9aa3ab", 700, 0, "middle");
+          s += T(x + 21.4, 7.4, "A", 1.7, "#93c5fd", 700, 0, "middle") + T(x + 26.4, 7.4, "B", 1.7, "#93c5fd", 700, 0, "middle");
+          for (let j = 0; j < 8; j++) s += led(x + 21.4, 10 + j * 3.3, j < 2 ? "#3b82f6" : "#f59e0b", 0.85) + led(x + 26.4, 10 + j * 3.3, j < 2 ? "#3b82f6" : "#f59e0b", 0.85) + led(x + 33, 10 + j * 3.3, j < 3 ? "#f59e0b" : "#22c55e", 0.85);
+          s += T(x + 2.5, 38.6, F(k + 1), 3, "#f3f4f6", 700);
+          if (k < 3) s += R(x + 41.5, 5.5, 0.5, 34.5, "#3a3f45");
         }
-        s += R(306, 6, 100, 32, "#0b0f14", 2) + T(312, 14, `Channel ${nC}`, 4.6, "#f3f4f6", 700) + R(378, 9, 22, 7, "#374151", 1) + T(389, 14, "EDIT", 3, "#e5e7eb", 700, 0, "middle") + T(312, 27, F(nC), 7, "#f3f4f6", 700) + T(312, 34, "[AD1]", 3, "#9aa3ab", 600);
-        s += T(426, 7, "FUNCTION", 2.2, "#9aa3ab", 600, 0, "middle") + knob(428, 24, 11) + T(456, 7, "POWER", 2.2, "#9aa3ab", 600, 0, "middle") + R(450, 11, 12, 24, "#0b0d0f", 2) + R(452, 13, 8, 10, "#e5e7eb", 1);
+        s += R(272, 6.5, 85, 31, "#06080b", 1.2) + R(275.5, 9, 4.5, 4.5, "none", 0.5, ` stroke="#e5e7eb" stroke-width="0.4"`) + T(277.75, 12.6, String(nC), 3.4, "#e5e7eb", 400, 0, "middle") + T(283, 13.4, F(nC), 4.6, "#f3f4f6", 400) + T(352, 12.6, "EDIT", 2.4, "#e5e7eb", 700, 0, "end");
+        s += T(283, 22, "470.475 MHz", 2.4, "#9aa3ab", 400) + T(352, 22, "TV 14", 2, "#9aa3ab", 400, 0, "end") + R(275.5, 30, 9, 4.4, "none", 0.6, ` stroke="#cbd5e1" stroke-width="0.4"`) + T(280, 33.4, "7:55", 2.2, "#e5e7eb", 400, 0, "middle") + T(289, 33.6, "[AD1]", 2.6, "#e5e7eb", 400) + T(334, 33.6, "18 dBm", 2.4, "#e5e7eb", 400);
+        return s + shureRight();
+      }
+      // Sennheiser EW-DX EM 2 : demi-rack (deux par U), équerre champagne à gauche, écran (RF / AF, menu), flèches, SET, ESC, SYNC, marche rouge
+      case "ewdxem2": {
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 10) : "—");
+        let s = R(0, 0, 241.5, H, "#2b2e31", 1.5) + R(0.8, 0.8, 46, 42.85, "#ddd5c5", 2) + R(2.5, 2.5, 4, 39.45, "#c9c0ae", 1.5) + R(46.8, 0.8, 1.2, 42.85, "#b3aa98") + R(48.6, 1.4, 192, 41.65, "#121416", 2);
+        s += sennLogo(55, 4) + led(70.5, 26.5, "#22c55e", 1) + T(73, 27.3, "LINK", 1.9, "#cbd5e1", 600) + led(70.5, 30.5, "#3f4549", 1) + T(73, 31.3, "DATA", 1.9, "#9aa3ab", 600);
+        s += R(80, 6.5, 76, 29, "#05070a", 1.2, ` stroke="#2c3035" stroke-width="0.6"`) + T(83, 10.6, "Ψ", 3, "#e5e7eb", 400);
+        s += [0, 1].map((c) => Array.from({ length: 6 }, (_, j) => R(83 + c * 5, 13 + j * 3.2, 3.6, 2.4, j < 2 && c ? "#3f4549" : "#e5e7eb", 0.3)).join("")).join("") + T(83, 34, "RF  AF", 1.6, "#cbd5e1", 600);
+        s += T(96, 18.6, F(1), 5, "#f3f4f6", 400) + T(96, 27.6, F(2), 5, "#f3f4f6", 400) + ["GAIN", "AF OUT", "MUTE LOCK", "SQ", "EQ", "RESET"].map((t, i) => T(153, 10.4 + i * 3.8, t, 1.8, "#cbd5e1", 600, 0, "end")).join("");
+        s += rb(169, 14, "▲") + rb(169, 30, "▼") + rb(184, 14, "SET") + rb(199, 14, "ESC") + rb(199, 30, "SYNC") + C(228, 22, 4.6, "#1d2023", ` stroke="#3a3f45" stroke-width="0.6"`) + C(228, 22, 2, "none", ` stroke="#ef4444" stroke-width="0.7"`) + R(227.6, 19.2, 0.8, 2.6, "#ef4444");
+        s += T(204, 40.4, "EW DIGITAL", 1.8, "#9aa3ab", 600, 0.2, "end") + T(236, 40.4, "SENNHEISER", 2, "#e5e7eb", 800, 0.15, "end");
         return s;
       }
-      // Sennheiser EW-DX EM 2 : demi-rack (deux par U), écran 2 canaux, molette et touches
-      case "ewdxem2": {
-        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 11) : "—");
-        let s = R(0, 0, 241.5, 44.45, "#c9cfd4", 2) + R(4, 2, 233.5, 40.45, "#16181b", 2);
-        s += T(12, 11, "EW-DX", 4, "#e5e7eb", 800) + T(12, 16, "EM 2", 3, "#9aa3ab", 700) + led(14, 30, "#22c55e", 1.3) + T(18, 31, "LINK", 2.2, "#9aa3ab", 600);
-        s += R(50, 7, 108, 30, "#05070a", 2) + [1, 2].map((k) => T(55, 9 + k * 11, String(k), 4, "#9aa3ab", 700) + T(63, 9 + k * 11, F(k), 6.5, "#f3f4f6", 700) + R(126, 4 + k * 11, 26, 3, "#1f2937") + R(126, 4 + k * 11, 14 + k * 4, 3, "#22c55e")).join("");
-        s += C(178, 22, 9, "#0b0d0f") + C(178, 22, 7.4, "#3f454b") + C(178, 22, 4.5, "#2a2f33") + R(196, 11, 12, 7, "#2a2f33", 2) + R(196, 25, 12, 7, "#2a2f33", 2) + T(202, 16, "ESC", 2.4, "#d1d5db", 700, 0, "middle") + T(202, 30, "SET", 2.4, "#d1d5db", 700, 0, "middle");
-        s += T(232, 39, "SENNHEISER", 2.6, "#e5e7eb", 800, 0.2, "end");
-        return s;
+      // Shure PSM1000 P10T : émetteur ears 2 canaux, même famille de façade que les Axient (casque, un bloc par canal avec vu-mètres L/R, IR, écran, touches, molette, interrupteur)
+      case "p10t": {
+        const F = (k) => (ref && ref.id ? (hfSlotWho(ref, k) || "—").slice(0, 12) : "—");
+        let s = shureBody() + T(46, 12.5, "PSM1000", 3.8, "#e5e7eb", 400) + T(46, 16.4, ref && ref.band ? ref.band : "P10T", 1.8, "#9aa3ab", 400) + shureLeft(false) + T(46, 32, "P10T", 2.4, "#c7cdd2", 700, 0.2) + T(46, 35.4, "Wireless Transmitter", 2.1, "#9aa3ab", 400);
+        ["A", "B"].forEach((ch, k) => {
+          const x = 99 + k * 72;
+          s += T(x + 3, 3.5, `CH ${ch}`, 1.9, "#9aa3ab", 600) + T(x + 22, 3.5, "AUDIO L  R", 1.9, "#9aa3ab", 600);
+          s += R(x + 2.5, 7.5, 12, 11, "#3a3f45", 1.2) + T(x + 8.5, 15.6, ch, 6.2, "#e5e7eb", 400, 0, "middle") + R(x + 2.5, 22, 12, 6, "#5b1414", 1) + R(x + 4, 23.2, 9, 3.6, "#991b1b", 0.6) + R(x + 2.5, 30.5, 12, 5, "#2e3338", 1) + T(x + 8.5, 34, "SYNC", 1.6, "#9aa3ab", 700, 0, "middle");
+          for (let j = 0; j < 9; j++) s += led(x + 23, 8.5 + j * 3.2, j < 1 ? "#ef4444" : j < 3 ? "#f59e0b" : "#22c55e", 0.85) + led(x + 28, 8.5 + j * 3.2, j < 1 ? "#ef4444" : j < 3 ? "#f59e0b" : "#22c55e", 0.85);
+          s += R(x + 33, 8, 34, 26, "#0b0f14", 1) + T(x + 35, 13.5, `${ch}  ${k + 1}`, 2.4, "#9aa3ab", 600) + T(x + 35, 21.5, F(k + 1), 3.6, "#f3f4f6", 700) + T(x + 35, 28.5, "G10E  470.100", 2.1, "#9aa3ab", 400) + T(x + 64, 13.5, "10 mW", 2.1, "#9aa3ab", 400, 0, "end");
+          if (!k) s += R(x + 70.5, 5.5, 0.5, 34.5, "#3a3f45");
+        });
+        s += R(246, 5.5, 0.5, 34.5, "#3a3f45") + [["MENU", 0], ["SYNC", 1], ["MODE", 2]].map(([t, i]) => R(254 + i * 30, 26, 18, 6, "#2e3338", 1) + T(263 + i * 30, 30.2, t, 1.8, "#9aa3ab", 700, 0, "middle")).join("") + T(254, 13, "MONITOR", 2, "#9aa3ab", 600) + C(258, 18.5, 1.2, "#22c55e") + C(268, 18.5, 1.2, "#22c55e") + T(256.5, 22.6, "A", 1.8, "#9aa3ab", 600) + T(266.5, 22.6, "B", 1.8, "#9aa3ab", 600);
+        return s + shureRight();
       }
       // Midas AS 80 : 1 U noir, grilles d'aération de chaque côté, panneau central (sélection optique / cuivre, ports A, X, Y, horloge), voyants Cu/OPT, OK/ERR
       case "as80": {
