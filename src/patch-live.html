@@ -7714,7 +7714,7 @@ label.p48 input:checked + span { border-style: solid; }
     const note = !g.auto ? "" : !g.model ? `<p class="hint fxnote">Choisis le modèle : ses entrées et sorties locales se déclarent toutes seules.</p>` : !spec ? `<p class="hint fxnote">Ce modèle n'a pas de locaux connus dans l'appli : ajoute-les à la main.</p>` : "";
     const rk = g.auto && g.cons === "COM" ? `<p class="hint fxnote">${racks.length ? `Stage rack${racks.length > 1 ? "s" : ""} de la console de com : ${racks.map((r) => esc(rackTitle(r))).join(", ")}. Leur patch est dans Racks et I/O.` : "Pas encore de stage rack sur la console de com : dans Réglages racks, mets « com » dans la colonne Console d'un appareil."}</p>` : "";
     return `<div class="panel fxg" data-g="${esc(g.id)}">
-      <div class="fxh">${name}<span class="meta">${esc(meta || "vide")}</span>${g.auto ? "" : `<button class="btn small" type="button" data-fxdelg title="Supprimer et effacer ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Supprimer</button>`}</div>${note}${rk}
+      <div class="fxh">${name}<span class="meta">${esc(meta || "vide")}</span>${g.auto ? `<button class="btn small" type="button" data-fxdelc="${esc(g.cons)}" title="Retirer la console du dossier, avec ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Retirer la console</button>` : `<button class="btn small" type="button" data-fxdelg title="Supprimer et effacer ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Supprimer</button>`}</div>${note}${rk}
       ${K.sens.map(([s, t, add]) => {
         const rows = freeView(k, g, s);
         return `<div class="fxs" data-sens="${s}"><h3>${esc(t)}</h3>${rows.length ? `<div class="tbl"><table class="cards fxt"><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-fr="${esc(r.id)}"${r.virt ? ` data-vp="${esc(r.port)}"` : ""}${r.virt ? ' class="virt"' : ""}>${K.cols.map(([f, , ph, w, dl]) => {
@@ -7764,6 +7764,14 @@ label.p48 input:checked + span { border-style: solid; }
     });
     sec.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
+      if (b.matches("[data-fxdelc]")) {
+        const c = b.dataset.fxdelc, n = state.racks.filter((r) => r.console === c).length;
+        if (n) { notice(`Impossible : ${n} appareil${n > 1 ? "s sont" : " est"} sur la console ${esc(consLabel(c))}. Dans Réglages racks, passe-le${n > 1 ? "s" : ""} sur une autre console ou en « Partagé » d'abord.`, true); return; }
+        const C = synState(), id = "c:" + c; delete C.cons[c]; if (C.pos) delete C.pos[id];
+        C.links = (C.links || []).filter((l) => l.a.n !== id && l.b.n !== id);
+        ["locaux", "com"].forEach((x) => { const F = freeState(x); F.rows = F.rows.filter((r) => r.g !== id); });
+        rebuildSr(); commit(true); notice(`Console ${esc(consLabel(c))} retirée. Cmd+Z (ou Ctrl+Z) pour annuler.`); return;
+      }
       if (b.id === "comAddCons") {
         const C = synState(); C.cons.COM = { ...(C.cons.COM || {}), added: true }; rebuildSr(); commit(true);
         notice("Console de com ajoutée. Choisis son modèle ici ; ses stage racks se règlent dans Réglages racks (colonne Console : « com »).");
