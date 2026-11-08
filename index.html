@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "62ab5937b5";</script>
+<script>window.PL_VER = "5ae768670a";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -3486,15 +3486,19 @@ label.p48 input:checked + span { border-style: solid; }
   const CONS_MODELS = ["DiGiCo SD5", "DiGiCo SD7", "DiGiCo SD7 Quantum", "DiGiCo SD10", "DiGiCo SD12", "DiGiCo Quantum 225", "DiGiCo Quantum 338", "DiGiCo Quantum 5", "DiGiCo Quantum 7", "DiGiCo Quantum 852", "Yamaha Rivage PM10", "Yamaha Rivage PM7", "Yamaha Rivage PM5", "Yamaha Rivage PM3", "Yamaha CL5", "Avid S6L-24D", "Avid S6L-32D", "Avid S6L-48D", "Midas Heritage-D HD96-24", "Midas Pro X", "Allen & Heath dLive S7000", "Allen & Heath dLive S5000", "Yamaha QL5", "Yamaha QL1", "Behringer X32", "Midas M32", "SSL L550 Plus", "SSL L650", "Lawo mc²56"];
   // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
+  // Façades dessinées d'après les photos du parc, reconnues au nom (stage racks, I/O, appareils du synoptique, horloges)
+  const FACE_BY_NAME = [[/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
+  const faceByName = (t) => (FACE_BY_NAME.find(([re]) => re.test(t || "")) || [])[1] || "";
   function devType(n) {
     if (!n) return "box";
     if (n.kind === "console") return "console";
     if (n.kind === "hf") { const m = normModel((n.ref || {}).model); return HF_ART[m] || ((n.ref || {}).kind === "tx" ? "hftx" : "hfrx"); }
-    if (n.kind === "extra") { const x = n.ref || {}; if (extraModel(x)) return extraModel(x); return x.gen ? "clock" : x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
+    if (n.kind === "extra") { const x = n.ref || {}; if (extraModel(x)) return extraModel(x); if (x.gen) return x.gen.model === "nanosyncs" ? "nanosyncs" : x.gen.model === "bigben" ? "bigben" : faceByName(x.nom) || "clock"; if (x.model !== "none" && faceByName(x.nom)) return faceByName(x.nom); return x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
     const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
     if (r.model === "orange") return "orange"; if (r.model === "spectera") return "spectera"; if (r.model === "m8") return "m8";
     if (/dd4mr/i.test(r.nom || "")) return "dd4mr";
     if (isOsend(r)) return "osend";
+    const fn = faceByName((r.nom || "") + " " + (r.model || "")); if (fn) return fn;
     if (r.ports) return "io";
     // Le dessin du DL431 seulement pour un DL431 (ou un Midas) ; les autres boîtiers à entrées numérotées ont une façade neutre
     if (r.flat) return /dl\s*-?\s*\d{3}|midas/i.test((r.nom || "") + " " + (r.model || "")) ? "num" : "numg";
@@ -3517,12 +3521,27 @@ label.p48 input:checked + span { border-style: solid; }
     axt900: { nom: "AXT900", type: "Chargeur de batteries", t: "Shure AXT900 · chargeur rack Axient (8 batteries)", re: /\baxt\s*-?\s*900\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
     sbrc: { nom: "SBRC", type: "Chargeur de batteries", t: "Shure SBRC · chargeur rack (8 batteries SB900 / SB910)", re: /\bsbrc\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
     l6000: { nom: "L 6000", type: "Chargeur de batteries", t: "Sennheiser L 6000 · chargeur rack (4 modules)", re: /\bl\s*-?\s*6000\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
+    ro8d: { nom: "RO8-D", type: "Boîtier de sorties Dante", t: "Yamaha RO8-D · 8 sorties ligne Dante", re: /\bro\s*-?\s*8\s*-?\s*d\b/i, ports: [["Dante primaire", "Dante"], ["Dante secondaire", "Dante"]] },
+    rio3224: { nom: "Rio3224-D", type: "Stage rack Dante 32/16", t: "Yamaha Rio3224-D · 32 entrées, 16 sorties + 4 AES", re: /rio\s*-?\s*3224/i, ports: [["Dante primaire", "Dante"], ["Dante secondaire", "Dante"]] },
+    rio1608: { nom: "Rio1608-D", type: "Stage rack Dante 16/8", t: "Yamaha Rio1608-D · 16 entrées, 8 sorties", re: /rio\s*-?\s*1608/i, ports: [["Dante primaire", "Dante"], ["Dante secondaire", "Dante"]] },
+    rpio622: { nom: "RPio622", type: "Stage rack Rivage", t: "Yamaha RPio622 · 6 cartes RY, TWINLANe", re: /rpio\s*-?\s*622/i, ports: [["TWINLANe in", "Autre"], ["TWINLANe out", "Autre"], ["Carte HY (Dante)", "Dante"]] },
+    stage32: { nom: "Stage 32", type: "Stage rack AVB", t: "Avid Stage 32 · 24 entrées, 8 sorties, AVB", re: /stage\s*-?\s*32\b/i, ports: [["AVB 1", "AVB"], ["AVB 2 (fibre)", "AVB"]] },
+    e6l: { nom: "E6L-144", type: "Moteur de console", t: "Avid VENUE E6L · moteur S6L (AVB)", re: /\be6l\b/i, ports: [["AVB console", "AVB"], ["AVB stage", "AVB"], ["Réseau (ECx)", "Réseau"]] },
+    sdmini: { nom: "SD-Mini Rack", type: "Stage rack MADI / fibre", t: "DiGiCo SD-Mini Rack · 4 cartes de 8", re: /mini\s*-?\s*rack/i, ports: [["Optocore A", "Optocore"], ["Optocore B", "Optocore"], ["MADI", "MADI"]] },
+    madirack: { nom: "MADI Rack", type: "Stage rack MADI", t: "DiGiCo MADI Rack (ancienne génération)", re: /madi\s*-?\s*rack/i, ports: [["MADI A", "MADI"], ["MADI B", "MADI"]] },
+    ml32: { nom: "ML32.32", type: "Stage rack SSL", t: "SSL ML32.32 · 32 entrées micro / ligne, 32 sorties", re: /\bml\s*-?\s*32/i, ports: [["MADI principal", "MADI"], ["MADI secours", "MADI"]] },
+    d3232: { nom: "D32.32", type: "Stage rack AES", t: "SSL D32.32 · 16 paires AES in / out", re: /\bd\s*-?\s*32\s*\.?\s*32/i, ports: [["MADI principal", "MADI"], ["MADI secours", "MADI"]] },
+    blacklight: { nom: "Blacklight II", type: "Concentrateur MADI", t: "SSL Blacklight II · concentrateur MADI (BLII-D)", re: /blacklight/i, ports: [["Blacklight A main", "MADI"], ["Blacklight A backup", "MADI"], ["Blacklight B main", "MADI"], ["Blacklight B backup", "MADI"]] },
+    sgimpact: { nom: "Impact Server", type: "Serveur SoundGrid", t: "Waves SoundGrid Impact Server", re: /impact\s*server/i, ports: [["SoundGrid", "SoundGrid"]] },
+    sgextreme: { nom: "Extreme Server", type: "Serveur SoundGrid", t: "Waves SoundGrid Extreme Server", re: /extreme\s*server|server\s*extreme/i, ports: [["SoundGrid", "SoundGrid"], ["SoundGrid secours", "SoundGrid"]] },
+    sgone: { nom: "Server One", type: "Serveur SoundGrid", t: "Waves SoundGrid Server One", re: /server\s*one/i, ports: [["SoundGrid", "SoundGrid"], ["SoundGrid secours", "SoundGrid"]] },
+    fourier: { nom: "transform.engine", type: "Serveur de plugins", t: "Fourier Audio transform.engine · plugins VST3", re: /fourier|transform\s*\.?\s*engine/i, ports: [["Audio (primaire)", "Dante"], ["Audio (secondaire)", "Dante"], ["Contrôle", "Réseau"]] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
   const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9 };
   function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3557,6 +3576,13 @@ label.p48 input:checked + span { border-style: solid; }
     const rocker = (x, y, w, h) => R(x, y, w, h, "#0b0d0f", 1.2) + R(x + 1, y + 1.2, w - 2, h - 2.4, "#2b2f33", 1) + R(x + w / 2 - 0.4, y + 3.5, 0.8, 3.5, "#e5e7eb") + C(x + w / 2, y + h - 6, 1.6, "none", ' stroke="#e5e7eb" stroke-width="0.45"');
     const shLogo = (x, y, sz) => T(x, y, "SHURE", sz || 4, "#f3f4f6", 900, 0.3);
     const who = (k, dflt) => (ref && ref.id && ref.kind ? (hfSlotWho(ref, k) || "—").slice(0, 12) : dflt);
+    // Oreilles percées à chaque U (appareils de plusieurs U), vis, etherCON, logo Yamaha (diapason stylisé + texte), texte à empattements ou italique
+    const earsU = (c, hc) => [0, 470].map((x) => R(x, 0, 13, H, c || "#1c1d1f", 1.5) + Array.from({ length: Math.max(1, Math.round(H / 44.45)) }, (_, u) => R(x + 2.2, u * 44.45 + 4.5, 8.6, 5.6, hc || "#d5dade", 2.8) + R(x + 2.2, u * 44.45 + 34.35, 8.6, 5.6, hc || "#d5dade", 2.8)).join("")).join("");
+    const sbnc = (x, y, r) => C(x, y, r, "#c9ced3") + C(x, y, r * 0.78, "#8a9096") + C(x, y, r * 0.55, "#2a2a2a") + C(x, y, r * 0.18, "#e5e7eb");
+    const scr = (x, y, r) => C(x, y, r || 1.3, "#8a8f94") + C(x, y, (r || 1.3) * 0.45, "#4b4f55");
+    const ecn = (x, y, r) => C(x, y, r, "#9aa3ab") + C(x, y, r * 0.78, "#1d2023") + R(x - r * 0.36, y - r * 0.34, r * 0.72, r * 0.62, "#c9ced3", 0.5);
+    const yam = (x, y) => C(x, y, 2.4, "none", ' stroke="#f3f4f6" stroke-width="0.6"') + R(x - 0.3, y - 1.8, 0.6, 3.6, "#f3f4f6") + T(x + 4, y + 1.6, "YAMAHA", 4.6, "#f3f4f6", 900);
+    const Tf = (x, y, t, sz, c, anc, it) => `<text x="${x}" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-size="${sz}"${it ? ' font-style="italic"' : ""} fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
       case "sd": {
@@ -3614,28 +3640,6 @@ label.p48 input:checked + span { border-style: solid; }
         for (let r = 0; r < 6; r++) for (let c = 0; c < 4; c++) s += xlrF(354 + c * 27.3, 53 + r * 31.5, 1) + T(362.5 + c * 27.3, 41.5 + r * 31.5, String(r * 4 + c + 1), 4.2, "#d1d5db", 700, "middle");
         // Ouïes en bas
         [[30, 76], [111, 103], [225, 97]].forEach(([x, w]) => { s += R(x, 226, w, 30, "#16285e", 2); for (let i = 0; i < Math.floor(w / 4); i++) for (let j = 0; j < 7; j++) s += C(x + 2.5 + i * 4, 229 + j * 4, 0.9, "#0b1430"); });
-        return s;
-      }
-      // DD4MR-FX : 1 U, façade noire, rangées de LED d'état (MADI, liens optiques, horloge)
-      case "dd4mr": {
-        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 26, 6, "#f59e0b", 1) + T(26, 31, "OPTOCORE DD4MR", 6, "#d1d5db", 700);
-        for (let g = 0; g < 4; g++) for (let i = 0; i < 8; i++) { s += led(110 + g * 72 + i * 7.5, 16, i < 6 ? "#22c55e" : "#3f4549", 1.8) + led(110 + g * 72 + i * 7.5, 29, i < 3 ? "#f59e0b" : "#3f4549", 1.8); }
-        s += led(410, 16, "#22c55e", 2.2) + led(422, 16, "#22c55e", 2.2) + led(410, 29, "#38bdf8", 2.2) + led(422, 29, "#3f4549", 2.2) + R(440, 13, 20, 18, "#1f2326", 2);
-        return s;
-      }
-      // M8 (Optocore) : 1 U, façade noire, LED par port MADI
-      case "m8": {
-        let s = ears() + face("#141618") + R(22, 9, 60, 26, "#1f2326", 2) + R(26, 15, 18, 6, "#f59e0b", 1) + T(26, 31, "OPTOCORE", 7, "#d1d5db", 700, 0.6) + T(66, 21, "M8", 7, "#f3f4f6", 800);
-        for (let i = 0; i < 8; i++) s += R(100 + i * 38, 10, 30, 24, "#1f2326", 2) + led(108 + i * 38, 18, "#22c55e", 2) + led(116 + i * 38, 18, "#22c55e", 2) + led(124 + i * 38, 18, "#f59e0b", 2) + R(106 + i * 38, 26, 20, 3, "#4b5258");
-        s += led(420, 22, "#22c55e", 2.4) + led(434, 22, "#38bdf8", 2.4) + led(448, 22, "#3f4549", 2.4);
-        return s;
-      }
-      // Orange Box : 2 U, façade orange, deux emplacements DMI, word clock (BNC) et USB en façade
-      case "orange": {
-        let s = ears("#c2410c") + face("#f26b1d") + R(18, 6, 447, 3, "#fb923c");
-        s += [0, 1].map((i) => { const x = 40 + i * 175; return R(x, 14, 160, 62, "#1f2326", 3) + R(x + 6, 20, 148, 50, "#2c3136", 2) + Array.from({ length: 4 }, (_, j) => bnc(x + 30 + j * 30, 45, 8)).join("") + C(x + 12, 26, 2.4, "#9aa3ab") + C(x + 148, 26, 2.4, "#9aa3ab"); }).join("");
-        s += bnc(408, 32, 8) + bnc(436, 32, 8) + R(412, 56, 14, 12, "#1f2326", 2) + led(445, 62, "#22c55e", 2.4);
-        s += T(40, 85, "DiGiCo", 8, "#2b1205", 800) + T(72, 85, "ORANGE BOX", 6.5, "#3b1a06", 700, 0.8);
         return s;
       }
       // Spectera (base) : 1 U, façade sombre, écran OLED, molette, casque avec volume, LED d'état
@@ -4058,6 +4062,237 @@ label.p48 input:checked + span { border-style: solid; }
         });
         s += kb(312, 12, 11, 7, "#1d1e21", "ch1") + kb(312, 25, 11, 7, "#1d1e21", "ch2") + `<path d="M335 12 A11 11 0 0 1 353 12" fill="none" stroke="#9ca3af" stroke-width="0.6"/>` + knurl(344, 22, 9.5) + kb(362, 12, 11, 7, "#1d1e21", "fnc") + kb(362, 25, 11, 7, "#1d1e21", "esc");
         s += kb(390, 12, 10, 7, "#1d1e21", "♫1") + kb(390, 25, 10, 7, "#1d1e21", "♫2") + jack(418, 22, 4.4, "#6b7280") + T(440, 6.4, "beyerdynamic", 2.4, "#c4c7cc", 600, 0, "end") + T(418, 33, "phones", 1.5, "#9ca3af", 600, 0, "middle");
+        return s;
+      }
+      // ——— Lot régie : façades dessinées d'après les photos du parc (Plan de Rack/Machine/CONSOLE) ———
+      // Optocore M8 et DD4MR : 1 U noir, logo à gauche, blocs de LED (word clock, ports, liens), ID en rouge, RS232 et USB à droite
+      case "m8": case "dd4mr": {
+        const dd = type === "dd4mr", lab = (x, y, t) => T(x, y, t, 1.5, "#cbd5e1", 700, 0, "middle"), o = dd ? 8 : 0;
+        let s = earsO("#141618", "#e5e7eb") + R(13, 0, 457, H, "#111214", 1) + [29, 129, 445].map((x) => scr(x, 5) + scr(x, 39.5)).join("");
+        s += T(dd ? 91 : 90, dd ? 16 : 13.5, dd ? "DD4MR" : "M8", dd ? 11 : 12.5, "#f3f4f6", 900, 0, "middle") + (dd ? "" : T(90, 21.5, "MADI SWITCH", 5.4, "#e5e7eb", 900, 0, "middle"));
+        s += C(dd ? 91 : 90, dd ? 24 : 27, 2.6, "none", ' stroke="#e5e7eb" stroke-width="0.9"') + T(dd ? 91 : 90, 38, "OPTOCORE", 6.6, "#e5e7eb", 400, 1.4, "middle");
+        s += lab(143 + o, 7, "WORD CLOCK / SAMPLE RATE") + ["INT", "BNC", "NET"].map((t, i) => led(135 + o + i * 8.5, 14, i === 0 ? "#22c55e" : "#3f4549", 1) + lab(135 + o + i * 8.5, 18, t)).join("");
+        s += ["44.1", "48", "88.2", "96", "176.4", "192"].map((t, i) => led(124 + o + i * 8, 25, i === 1 ? "#f59e0b" : "#3f4549", 1) + lab(124 + o + i * 8, 29, t)).join("");
+        if (dd) {
+          [["INPUT 1", 186], ["OUTPUT 1", 222], ["INPUT 2", 258], ["OUTPUT 2", 294]].forEach(([t, x]) => {
+            s += T(x - 4, 7, t, 1.5, "#cbd5e1", 700) + ["SYNC", "MADI", "32/64"].map((u, j) => led(x + 17, 6.5 + j * 4.5, j === 1 ? "#22c55e" : "#3f4549", 0.9) + T(x + 19, 7.1 + j * 4.5, u, 1.4, "#cbd5e1", 700)).join("") + T(x - 4, 17.5, "MODE", 1.4, "#cbd5e1", 700);
+            for (let k = 0; k < 8; k++) s += led(x - 2 + (k % 4) * 6.5, 25 + Math.floor(k / 4) * 6, k === 0 ? "#22c55e" : "#3f4549", 1) + T(x - 4.3 + (k % 4) * 6.5, 25.5 + Math.floor(k / 4) * 6, String(k + 1), 1.3, "#cbd5e1", 700);
+          });
+          s += lab(222, 39.5, "OPTICAL NETWORK SYSTEM") + lab(285, 39.5, "DUAL MADI · VIDEO · DATA MODULE");
+        } else {
+          s += led(195, 17, "#9aa3ab", 1) + led(195, 24, "#38bdf8", 1) + T(198, 17.6, "BNC", 1.5, "#cbd5e1", 700) + T(198, 24.6, "OPT", 1.5, "#cbd5e1", 700);
+          [214, 252].forEach((x0, g) => { s += lab(x0 + 3, 6.5, String(g * 2 + 1)) + lab(x0 + 15, 6.5, String(g * 2 + 2)); for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) s += C(x0 + c * 6, 11 + r * 6.3, 1.5, r === 2 ? "#22c55e" : "#5b6167"); });
+          s += ["ERROR", "LAN", "MADI", "POWER"].map((t, i) => lab(242, 11.6 + i * 6.3, t)).join("");
+          s += lab(212, 39.5, "OPTICAL NETWORK SYSTEM") + lab(277, 39.5, "MADI SWITCH/ROUTER MODULE") + led(300, 17, "#3f4549", 1) + led(300, 24, "#3f4549", 1) + lab(295, 17.6, "CAT") + lab(295, 24.6, "POE");
+        }
+        s += lab(338, 7, "AUDIO LINK / LAN LINK") + ["S1", "S2", "OL1", "OL2"].map((t, i) => led(323 + i * 10.5, 14, "#22c55e", 1) + lab(323 + i * 10.5, 18, t)).join("") + ["S1", "S2", "UP", "L1", "L2"].map((t, i) => led(321 + i * 8.5, 25, i < 2 ? "#f59e0b" : "#3f4549", 1) + lab(321 + i * 8.5, 29, t)).join("");
+        s += [["MASTER", "#f59e0b"], ["OPTO", "#22c55e"], ["SANE", "#3f4549"]].map(([t, c], i) => led(367, 11 + i * 5.5, c, 1.1) + T(369.5, 11.6 + i * 5.5, t, 1.6, "#cbd5e1", 700)).join("");
+        s += lab(396, 6.5, "DEVICE ID") + R(387, 8.5, 18, 11.5, "#1a0a0a", 0.8) + (dd ? "" : T(396, 18.5, "5", 9, "#dc2626", 400, 0, "middle"));
+        s += [["HEALTH", 12], ["PWR 1", 17.5], ["PWR 2", 23]].map(([t, y]) => T(426, y + 0.6, t, 1.6, "#cbd5e1", 700, 0, "end") + led(430, y, "#22c55e", 1.1)).join("");
+        s += C(377, 31, 1.4, "#9aa3ab") + R(380, 27.5, 13, 7, "#7a8288", 2) + R(381.5, 29, 10, 4, "#1d2023", 1.5) + C(396, 31, 1.4, "#9aa3ab") + lab(386.5, 39.5, "RS232");
+        s += R(412, 26.5, 9, 8, "#9aa3ab", 1) + R(413.5, 28, 6, 5, "#1d2023", 0.5) + lab(416.5, 39.5, "USB") + T(452, 40, "FX", 4, "#e5e7eb", 900, 0, "middle");
+        return s;
+      }
+      // Orange Box : 2 U, façade gris anthracite, logos orange, modules DMI 1 (Dante) et DMI 2 (MADI BNC), USB et deux alimentations au centre
+      case "orange": {
+        const O = "#f2761d", lab = (x, y, t, c, sz) => T(x, y, t, sz || 2.2, c || O, 700, 0, "middle");
+        let s = earsO("#1d1e20", "#f3f4f6") + R(13, 0, 457, H, "#3b3c3e", 1) + [[36, 17], [36, 72], [449, 17], [449, 72]].map(([x, y]) => scr(x, y, 2.2)).join("");
+        s += `<path d="M53 9 l3 4 l3 -4 M56 13 l0 4" stroke="${O}" stroke-width="1.2" fill="none"/>` + T(62, 18, "DiGiCo", 11, O, 900) + lab(135, 17, "DMI 1", O, 4) + lab(348, 17, "DMI 2", O, 4) + T(438, 18, "ORANGE BOX", 8.5, O, 900, 0, "end");
+        s += lab(35, 27.8, "CLK SOURCE", O, 1.9) + led(57, 27, "#7f1d1d", 1.1) + lab(35, 44, "WORD CLK OUT", O, 1.9) + sbnc(57, 43, 5.5) + lab(35, 62.5, "WORD CLK IN", O, 1.9) + sbnc(57, 62, 5.5);
+        const mod = (x, w) => R(x, 24, w, 59, "#2f3032", 2, ' stroke="#4b4d50" stroke-width="0.5"') + [[x + 4, 30], [x + w - 4, 30], [x + 4, 77], [x + w - 4, 77]].map(([a, b]) => C(a, b, 1.2, "#55595e")).join("");
+        s += mod(74, 126) + lab(137, 31, "DMI-DANTE", "#e5e7eb", 2.6) + [119, 150].map((x) => ecn(x, 47, 9.5) + R(x - 2.5, 55.5, 5, 3, "#d6c48a", 0.5)).join("") + lab(119, 63, "PRIMARY", "#e5e7eb", 1.9) + lab(150, 63, "SECONDARY", "#e5e7eb", 1.9) + T(88, 79, "Dante", 2.6, "#e5e7eb", 400);
+        s += mod(286, 128) + lab(350, 31, "DMI-MADI-B", "#e5e7eb", 2.6) + [[333, 45], [366, 45], [333, 62], [366, 62]].map(([x, y]) => sbnc(x, y, 5.5)).join("") + lab(333, 75, "1A", "#e5e7eb", 2) + lab(366, 75, "1B", "#e5e7eb", 2);
+        s += [[320, 45, 1], [379, 45, -1], [320, 62, -1], [379, 62, 1]].map(([x, y, d]) => `<path d="M${x - 1.5 * d} ${y - 1.6} l${3 * d} 1.6 l${-3 * d} 1.6z" fill="#e5e7eb"/>`).join("");
+        s += [["FAULT", 207, "#7f1d1d"], ["PSU A", 222, "#a3e635"], ["PSU B", 262, "#a3e635"], ["FAULT", 278, "#7f1d1d"]].map(([t, x, c]) => lab(x, 21, t, O, 1.9) + led(x, 27, c, 1.1)).join("");
+        s += lab(243.5, 13, "USB", O, 1.9) + lab(243.5, 16.5, "REMOTE", O, 1.9) + R(235, 19, 17, 15, "none", 2, ` stroke="${O}" stroke-width="0.9"`) + R(239, 22, 9, 9, "#9aa3ab", 1) + R(241, 24.5, 5, 4, "#1d2023", 0.6);
+        s += [50, 70].map((y, i) => R(230, y, 27, 13, "none", 2, ` stroke="${O}" stroke-width="0.9"`) + R(232.5, y + 2.5, 22, 8, "#141516", 1.5) + C(243.5, y + 6.5, 2, "#3a3d40") + lab(265, y + 7.5, i ? "PSU B" : "PSU A", O, 1.9)).join("");
+        return s;
+      }
+      // Apogee Big Ben : 1 U argenté, bandeau violet (logo, touches de réglage, écran rouge), colonnes de LED (format, pull up/down, fréquences, sorties word clock)
+      case "bigben": {
+        const P = "#5b2a7a", lab = (x, y, t, c, anc) => T(x, y, t, 1.6, c || "#374151", 700, 0, anc || "start");
+        let s = earsO("#c9ccd0", "#f8fafc") + R(13, 0, 457, H, "#dadde0", 1) + `<path d="M15 3 H203 Q221 3 224 19 L227 33 Q228 36 235 36 H468 V41.5 H15 Z" fill="${P}"/>`;
+        s += Tf(40, 17, "Apogee", 8, "#f3f4f6", "middle", 1) + R(33, 26, 14, 7, "#eef0f2", 0.8) + lab(40, 38.6, "POWER", "#e9d5ff", "middle") + C(27, 29.5, 1.5, "none", ' stroke="#e9d5ff" stroke-width="0.4"') + C(52, 29.5, 0.9, "#1f1028");
+        s += [[78, 13], [66, 20], [90, 20], [78, 27]].map(([x, y]) => R(x, y, 15, 6, "#eef0f2", 0.8)).join("") + lab(95, 17, "UP", "#e9d5ff") + lab(64, 24, "PREV", "#e9d5ff", "end") + lab(107, 24, "NEXT", "#e9d5ff") + lab(95, 31, "DOWN", "#e9d5ff") + lab(85.5, 38.6, "SET UP", "#e9d5ff", "middle") + C(85.5, 23, 0.9, "#1f1028");
+        s += R(121, 5.5, 70, 29.5, "#0b0b0c", 2) + T(152, 25, "192.0", 11, "#ef4444", 400, 1, "middle") + T(124, 9.5, "INT", 1.3, "#6b7280", 700) + lab(150, 31, "LOCK", "#6b7280") + tri(160, 29.5, 1.4, false, "#22c55e") + led(160, 33, "#38bdf8", 0.9);
+        const col = (x, items, side) => items.map((t, i) => led(x, 9.5 + i * 3.9, i === 4 ? "#facc15" : "#4b5563", 0.9) + lab(side ? x - 2 : x + 2, 10.1 + i * 3.9, t, "#374151", side ? "end" : "start")).join("");
+        s += col(234, ["S/PDIF", "ADAT", "S/MUX²", "S/MUX⁴", "SINGLE", "DOUBLE"]) + col(276, ["+4%", "+.1%", "VSO", "NONE", "-.1%", "-4%"]) + col(314, ["fs x 256", "fs x 4", "fs x 2", "fs x 1", "fs /2", "fs /4"]) + Array.from({ length: 6 }, (_, i) => led(336, 9.5 + i * 3.9, "#4b5563", 0.9)).join("");
+        s += [["OPTICAL", 240], ["AES", 256], ["PULL UP/DOWN", 281], ["WC OUT 5", 316], ["WC OUT 6", 338], ["WC OUT/TERMINATION 1", 368], ["2", 396.5], ["3", 407], ["4", 417.5], ["5", 428], ["6", 438.5]].map(([t, x]) => lab(x, 39.8, t, "#f3e8ff", "middle")).join("");
+        s += Array.from({ length: 6 }, (_, i) => { const x = 386 + i * 10.5, y = 28 - i * 2.4; return R(x - 0.2, y, 0.4, 36 - y, "#6b7280") + led(x, y, i % 2 ? "#4b5563" : "#a3e635", 1) + led(x, y + 3, "#7f1d1d", 0.8); }).join("");
+        s += R(455, 8, 11, 13, "#4b5563", 0.6) + T(460.5, 16.5, "APOGEE", 1.6, "#f3f4f6", 800, 0, "middle") + T(466, 32, "BIG BEN", 6, "#1f2937", 900, 0.3, "end") + T(466, 39.8, "Master Digital Clock", 1.5, "#f3e8ff", 700, 0, "end");
+        return s;
+      }
+      // Rosendahl Nanosyncs HD : 1 U blanc, cinq zones rouges (power, reference, sample rate, output multiplier, setup), logo à droite
+      case "nanosyncs": {
+        const Rd = "#d42a2a", lab = (x, y, t, anc) => T(x, y, t, 2.1, "#f9fafb", 700, 0.1, anc || "start"), hd = (x, t) => T(x, 6.2, t, 3, Rd, 400, 0.3, "middle");
+        const L = (x, y, c) => C(x, y, 1.9, "#f3f4f6") + C(x, y, 1.3, c || "#5b1010");
+        let s = earsO("#eceef0", "#c4c9ce") + R(13, 0, 457, H, "#f4f5f6", 1) + [[37, 5], [37, 40], [445, 5], [445, 40]].map(([x, y]) => scr(x, y, 1.8)).join("");
+        s += hd(64, "power") + hd(99, "reference") + hd(185, "sample rate") + hd(274, "output multiplier") + hd(319, "setup");
+        s += [[47, 32], [80, 85], [167, 73], [243, 65], [309, 46]].map(([x, w]) => R(x, 8.5, w, 33, Rd, 1, ' stroke="#3b0b0b" stroke-width="0.4"')).join("") + R(55, 15.5, 16, 19, "#141516", 1) + R(57.5, 18, 11, 14, "#2b2f33", 0.8);
+        s += ["INTERNAL", "EXT. PAL", "EXT. NTSC", "WORD"].map((t, i) => L(88, 13 + i * 7.6, i === 0 ? "#22c55e" : "") + lab(91.5, 13.8 + i * 7.6, t)).join("") + ["TC 24 FPS", "TC 25 FPS", "TC 29.97 FPS", "TC 30 FPS"].map((t, i) => L(123, 13 + i * 7.6) + lab(126.5, 13.8 + i * 7.6, t)).join("");
+        s += ["48.000", "LOCKED", "44.100"].map((t, i) => L(177, 16.5 + i * 7.6, i === 1 ? "#38bdf8" : i === 0 ? "#22c55e" : "") + lab(180.5, 17.3 + i * 7.6, t)).join("") + ["+4%", "+0.1%", "-0.1%", "-4%"].map((t, i) => L(212, 13 + i * 7.6) + lab(215.5, 13.8 + i * 7.6, t)).join("");
+        s += [["x2", 258], ["x4", 276], ["x256", 296]].map(([t, x]) => lab(x, 14.5, t, "middle")).join("") + R(250, 16, 20, 0.35, "#f9fafb") + R(266, 16, 23, 0.35, "#f9fafb") + R(286, 16, 4, 0.35, "#f9fafb");
+        s += Array.from({ length: 6 }, (_, i) => lab(251 + i * 7.6, 22, String(i + 1), "middle") + L(251 + i * 7.6, 27.6, "#e8c25a")).join("") + T(248, 33.5, "AES", 1.7, "#f9fafb", 700) + T(256, 33.5, "SPDIF", 1.7, "#f9fafb", 700);
+        s += lab(319.5, 14.5, "MENU", "middle") + lab(339.5, 14.5, "SELECT", "middle") + [312, 332].map((x) => R(x, 18.5, 15, 13, "#141516", 1) + R(x + 1.5, 20, 12, 10, "#2b2f33", 0.8)).join("") + T(332, 37.5, "press 1 sec. to store", 2, "#f9fafb", 400, 0, "middle");
+        s += T(396, 18, "ROSENDAHL", 10.5, "#3f4248", 400, 0, "middle") + R(363, 21, 66, 9, Rd, 0.5) + T(396, 28.2, "nanosyncs", 8, "#f9fafb", 700, 0.6, "middle") + T(396, 34.5, "DDS AUDIO CLOCK AND VIDEO", 2.6, "#4b5563", 700, 0.3, "middle") + T(396, 38.8, "SYNC REFERENCE GENERATOR", 2.6, "#4b5563", 700, 0.3, "middle");
+        return s;
+      }
+      // iClock : 1 U bleu nuit, logo à gauche, écran bleu deux lignes, menu en arc et pavé quatre directions à droite
+      case "iclock": {
+        let s = earsO("#1d2b8c", "#f3f4f6") + R(13, 0, 457, H, "#22339a", 1) + R(13, 0, 457, 1.2, "#2f44b8");
+        s += `<ellipse cx="79" cy="7" rx="5" ry="2" fill="none" stroke="#e5e7eb" stroke-width="0.7"/>` + T(79, 26, "iCLOCK", 13, "#f3f4f6", 900, 0, "middle") + T(79, 30.5, "PRECISION MULTIFORMAT CLOCK SYNTHESIZER", 1.5, "#c7d2fe", 700, 0, "middle");
+        s += R(133, 10, 164, 19, "#3046c8", 1.5, ' stroke="#5468e0" stroke-width="0.6"') + T(137, 17.5, "↑ INPUT FG REF1   STATUS", 4, "#dbe4ff", 400) + T(137, 25, "↓ GPS-10.0M        LOCKED", 4, "#dbe4ff", 400) + T(240, 17.5, "OUTPUTS", 4, "#dbe4ff", 400) + T(240, 25, "VIDEO1-2-NTSC", 4, "#dbe4ff", 400);
+        s += `<path d="M330 3 Q352 22 330 42" fill="none" stroke="#4a5cc7" stroke-width="1"/>` + ["STATUS", "CLOCK REF 1", "CLOCK REF 2", "WORD SELECT", "VIDEO", "PHASE"].map((t, i) => T(346, 8 + i * 5.6, t, 1.5, "#9fb0f0", 700)).join("") + ["HOLD", "PULL UP", "UNDERSCAN", "PULL DN"].map((t, i) => T(372, 14 + i * 5.6, t, 1.5, "#9fb0f0", 700)).join("");
+        s += [[410, 13.5, 0], [410, 28, 180], [402.5, 20.7, 270], [417.5, 20.7, 90]].map(([x, y, a]) => `<path transform="translate(${x} ${y}) rotate(${a})" d="M-3.5 2.5 L0 -4 L3.5 2.5 Q0 4 -3.5 2.5Z" fill="#8f97a8"/>`).join("") + T(424, 37, "ENTER", 1.6, "#c7d2fe", 700, 0, "middle");
+        return s;
+      }
+      // Yamaha RO8-D : 1 U noir, 8 XLR mâles de sortie numérotés, logo et modèle, LED de signal, ID, Dante, interrupteur
+      case "ro8d": {
+        let s = earsO("#1b1c1e", "#e5e7eb") + R(13, 0, 457, H, "#222326", 1) + R(26, 3, 217, 39, "#141517", 1.5);
+        s += R(28, 13.5, 15, 8, "#9aa3ab", 0.6) + T(35.5, 17, "OUTPUT", 2, "#141517", 800, 0, "middle") + T(35.5, 20.3, "+4dBu", 2, "#141517", 800, 0, "middle");
+        for (let i = 0; i < 8; i++) { const x = 57 + i * 25.3; s += xlrM(x, 19.5, 0.9) + R(x - 7, 35.5, 14, 4, "#d7dbe0", 0.6) + T(x, 38.6, String(i + 1), 2.6, "#141517", 700, 0, "middle"); }
+        s += yam(253, 10) + T(304, 12, "RO8-D", 7.5, "#f3f4f6", 900, 0, "middle") + T(304, 15.2, "OUTPUT RACK", 1.6, "#cbd5e1", 700, 0, "middle");
+        s += T(250, 29.6, "SIGNAL", 1.9, "#cbd5e1", 700) + Array.from({ length: 8 }, (_, i) => T(264 + i * 6.3, 24.5, String(i + 1), 2.2, "#cbd5e1", 700, 0, "middle") + led(264 + i * 6.3, 28.8, "#22c55e", 0.9)).join("");
+        s += T(333.5, 6, "UNIT ID", 1.5, "#cbd5e1", 700, 0, "middle") + R(328, 7.5, 11, 11, "#3a3d40", 1) + C(333.5, 13, 4, "#5b6167") + C(333.5, 13, 1.2, "#141517") + R(342, 9, 24, 6, "#e5e7eb", 0.4) + Array.from({ length: 8 }, (_, i) => R(343.2 + i * 2.8, 10, 1.6, 2.4, "#141517")).join("");
+        s += [["SECONDARY PORT", 350, ["DAISY CHAIN", "REDUNDANT"]], ["START UP MODE", 378, ["REFRESH", "RESUME"]]].map(([t, x, l]) => T(x, 22, t, 1.5, "#cbd5e1", 700, 0, "middle") + l.map((u, j) => R(x - 9, 23.5 + j * 2.6, 2, 1.6, "#cbd5e1") + T(x - 6.5, 25 + j * 2.6, u, 1.4, "#cbd5e1", 700)).join("")).join("");
+        s += T(331, 27, "SYSTEM", 1.7, "#cbd5e1", 700, 0, "middle") + T(342, 27, "SYNC", 1.7, "#cbd5e1", 700, 0, "middle") + [327, 331, 340, 344].map((x, i) => R(x - 1.5, 29.3, 3, 2, i === 1 ? "#facc15" : "#22c55e", 0.4)).join("") + T(326, 39, "Dante", 3.4, "#f3f4f6", 700);
+        s += Array.from({ length: 4 }, (_, i) => R(398, 4 + i * 1.7, 13, 0.8, "#0b0c0d") + R(445, 4 + i * 1.7, 12, 0.8, "#0b0c0d")).join("") + led(393, 35, "#22c55e", 0.8);
+        s += R(413, 12.5, 20, 19.5, "#111214", 1.5, ' stroke="#55595e" stroke-width="0.5"') + R(416, 15, 14, 14.5, "#2b2f33", 1) + C(440, 22, 1.8, "none", ' stroke="#cbd5e1" stroke-width="0.5"') + R(439.75, 19.3, 0.5, 2.2, "#cbd5e1");
+        return s;
+      }
+      // Yamaha Rio3224-D (5 U) et Rio1608-D (3 U) : entrées XLR à gauche (rangées de 8 numérotées), commandes en haut à droite, sorties dans le cadre gris
+      case "rio3224": case "rio1608": {
+        const big = type === "rio3224", lab = (x, y, t, sz) => T(x, y, t, sz || 1.7, "#cbd5e1", 700, 0, "middle");
+        let s = earsU("#1b1c1e", "#e5e7eb") + R(13, 0, 457, H, "#202124", 1) + yam(37, 9.5) + lab(145, 14, "INPUT", 2.4) + R(42, 15.5, 192, 0.3, "#6b7280");
+        const box = (x, y, n) => R(x - 9, y, 18, 6, "#e5e7eb", 0.5) + T(x, y + 4.6, String(n), 3, "#141517", 800, 0, "middle") + led(x - 5, y + 9.5, "#22c55e", 0.8) + led(x + 1, y + 9.5, "#ef4444", 0.8) + T(x + 3, y + 10, "PEAK", 1.2, "#cbd5e1", 700);
+        for (let r = 0; r < (big ? 4 : 2); r++) for (let c = 0; c < 8; c++) { const x = 54 + c * 23.8, y = big ? 48 + r * 47.7 : 51 + r * 51; s += box(x, y - 26, r * 8 + c + 1) + xlrF(x, y, 0.85); }
+        const y0 = big ? 22 : 12;
+        s += lab(282, y0, "UNIT ID") + R(276, y0 + 2, 12, 11, "#3a3d40", 1) + C(282, y0 + 7.5, 4, "#5b6167") + R(293, y0 + 4, 30, 6, "#e5e7eb", 0.4) + Array.from({ length: 10 }, (_, i) => R(294 + i * 2.9, y0 + 5, 1.6, 2.4, "#141517")).join("");
+        s += lab(300, y0 + 16, "SECONDARY PORT") + lab(330, y0 + 16, "START UP MODE") + [["SYSTEM", 367], ["SYNC", 377], ["+48V MASTER", 393]].map(([t, x]) => lab(x, y0 + 4, t) + R(x - 1.5, y0 + 6, 3, 2, t === "SYNC" ? "#facc15" : "#22c55e", 0.4)).join("") + T(362, y0 + 16, "Dante", 3.6, "#f3f4f6", 700);
+        s += R(423, y0 + 3, 24, 24, "#111214", 1.5, ' stroke="#55595e" stroke-width="0.5"') + R(426.5, y0 + 6.5, 17, 17, "#2b2f33", 1) + C(435, y0 - 1.5, 1.6, "none", ' stroke="#cbd5e1" stroke-width="0.45"');
+        s += big ? T(380, 77, "I/O RACK", 1.8, "#cbd5e1", 700, 0, "end") + T(447, 77, "Rio3224-D", 8, "#e5e7eb", 900, 0, "end") : T(420, 12, "I/O RACK", 1.8, "#cbd5e1", 700, 0, "end") + T(462, 12, "Rio1608-D", 6.5, "#e5e7eb", 900, 0, "end");
+        if (big) {
+          s += `<path d="M240 60 H343 Q347 60 348 65 L351 98 Q352 102 357 102 H465 V216 H240 Z" fill="#26282b" stroke="#9aa3ab" stroke-width="0.7"/>` + lab(294, 67, "AES/EBU OUT", 2.2) + ["1/2", "3/4", "5/6", "7/8"].map((t, i) => lab(252 + i * 28.5, 77, t, 2.4) + xlrM(252 + i * 28.5, 92, 1.05)).join("") + lab(350, 112, "OUTPUT +4dBu", 2.2);
+          for (let r = 0; r < 2; r++) for (let c = 0; c < 8; c++) { const x = 252 + c * 28.5, y = 147 + r * 47; s += box(x, y - 26, r * 8 + c + 1) + xlrM(x, y, 0.9); }
+        } else {
+          s += R(238, 58, 227, 70, "#26282b", 2.5, ' stroke="#9aa3ab" stroke-width="0.7"') + lab(273, 65, "OUTPUT +4dBu", 2.2);
+          for (let c = 0; c < 8; c++) { const x = 252 + c * 26.6; s += box(x, 76, c + 1) + xlrM(x, 102, 0.85); }
+        }
+        return s;
+      }
+      // Yamaha RPio622 : 10 U gris ardoise, écran et touches, deux emplacements de carte, six cartes RY de 16 XLR, deux interrupteurs A / B
+      case "rpio622": {
+        const lab = (x, y, t, sz) => T(x, y, t, sz || 2, "#e5e7eb", 700, 0, "middle");
+        let s = earsU("#1b1c1e", "#e5e7eb") + R(13, 0, 457, H, "#3a3f49", 1) + yam(31, 10) + T(410, 12, "I/O RACK", 1.8, "#cbd5e1", 700, 0, "end") + T(446, 12, "RPio622", 7, "#f3f4f6", 900, 0, "end");
+        s += R(36, 40, 66, 30, "#24272d", 1.5) + R(39, 43, 26, 20, "#e5e7eb", 0.8) + R(39, 58, 26, 5, "#3b82f6") + kb(69, 44, 13, 6, "", "MENU") + kb(69, 54, 13, 6, "", "ENTER") + [[92, 47, 0], [92, 59, 180], [87, 53, 270], [97, 53, 90]].map(([x, y, a]) => `<path transform="translate(${x} ${y}) rotate(${a})" d="M-2 1.2 L0 -2 L2 1.2Z" fill="#cbd5e1"/>`).join("");
+        s += R(39, 80, 50, 4, "#e5e7eb", 0.4) + R(70, 80, 10, 4, "#b91c1c");
+        s += [[164, "SLOT 1"], [289, "SLOT 2"]].map(([y, t]) => R(60, y, 42, 116, "#141517", 1) + C(81, y + 3, 1, "#5b6167") + C(81, y + 113, 1, "#5b6167") + R(42, y + 72, 12, 7, "#e5e7eb", 0.5) + T(48, y + 70, t, 1.8, "#e5e7eb", 700, 0, "middle") + T(48, y + 77.3, t.slice(-1), 3, "#141517", 800, 0, "middle")).join("");
+        for (let k = 0; k < 6; k++) {
+          const x0 = 116 + k * 42.3, t = k < 4 ? "INPUT" : k === 4 ? "OUTPUT" : "AES/EBU";
+          s += lab(x0 + 20, 23, String(k + 1), 3) + C(x0 + 20, 16, 2.4, "#1d2023") + R(x0, 28, 40, 392, "#2c3038", 1.5, ' stroke="#5b6170" stroke-width="0.5"') + R(x0 + 4, 30, 32, 5, "#e5e7eb", 0.4) + T(x0 + 20, 33.8, t, 2.4, "#141517", 800, 0, "middle") + R(x0 + 4, 413, 32, 5, "#e5e7eb", 0.4) + T(x0 + 20, 416.8, t, 2.4, "#141517", 800, 0, "middle");
+          for (let j = 0; j < 16; j++) s += (k < 4 ? xlrF : xlrM)(x0 + 17, 48 + j * 23.2, 0.82) + led(x0 + 34, 44 + j * 23.2, "#22c55e", 0.8) + led(x0 + 34, 48 + j * 23.2, "#3f4549", 0.8);
+          s += Array.from({ length: 5 }, (_, i) => R(x0 + 4 + i * 7, 426, 4, 12, "#141517", 0.8)).join("");
+        }
+        s += [[65, 108, "A"], [276, 302, "B"]].map(([v, y, t]) => Array.from({ length: 6 }, (_, i) => R(401, v + i * 3, 11, 1.4, "#141517") + R(415, v + i * 3, 11, 1.4, "#141517")).join("") + R(419, y, 16, 39, "#111214", 1.5) + R(421.5, y + 3, 11, 33, "#2b2f33", 1) + R(426.5, y + 6, 1, 6, "#e5e7eb") + lab(427, y - 3, t, 3) + led(412, y + 12, "#22c55e", 1)).join("");
+        return s;
+      }
+      // Avid Stage 32 : 5 U noir, ouïes en haut, cadre I/O (3 rangées de 8 entrées micro, 1 rangée de 8 sorties), module AVB à droite, logo et nom
+      case "stage32": {
+        let s = earsU("#151618", "#e5e7eb") + R(13, 0, 457, H, "#1a1b1d", 1) + Array.from({ length: 60 }, (_, i) => R(27 + i * 7.2, 6, 3.6, 11, "#0b0c0d", 0.8)).join("");
+        s += R(49, 38, 322, 124, "#2a2c2f", 1.5);
+        for (let r = 0; r < 3; r++) { const y = 56 + r * 30; s += R(52, y - 13, 316, 27, "#3a3d41", 1) + C(57, y, 1.2, "#9aa3ab") + C(363, y, 1.2, "#9aa3ab"); for (let c = 0; c < 8; c++) { const x = 73.5 + c * 39; s += xlrF(x, y, 0.95) + led(x + 15, y - 5, "#22c55e", 0.9) + led(x + 15, y - 1, "#ef4444", 0.9) + T(x + 15, y + 5, String(r * 8 + c + 1), 2.2, "#cbd5e1", 700, 0, "middle"); } }
+        s += R(52, 132, 316, 27, "#9ea3a8", 1) + Array.from({ length: 8 }, (_, c) => xlrM(73.5 + c * 39, 145.5, 1) + led(58.5 + c * 39, 141, "#22c55e", 0.9) + led(58.5 + c * 39, 145, "#ef4444", 0.9)).join("");
+        s += R(382, 41, 67, 154, "#141517", 1.5, ' stroke="#2f3236" stroke-width="0.6"') + ecn(413, 86, 8) + led(402, 112, "#a3e635", 1) + led(402, 117, "#a3e635", 1) + R(406, 113, 18, 7, "#9aa3ab", 0.6) + R(406, 122, 18, 7, "#9aa3ab", 0.6) + R(408, 114.5, 14, 4, "#1d2023") + R(408, 123.5, 14, 4, "#1d2023") + ecn(413, 153, 8) + scr(413, 186, 3);
+        s += T(198, 192, "AVID", 14, "#f3f4f6", 900, 2, "middle") + T(280, 192, "Stage 32", 11, "#e5e7eb", 400, 0, "middle") + C(333, 187, 4, "#9aa3ab") + C(333, 187, 2, "#5b6167");
+        return s;
+      }
+      // DiGiCo SD-Mini Rack : 4 U noir, panneau de connexion à gauche (fibre, MADI BNC, petit écran), 4 cartes de 8 XLR
+      case "sdmini": {
+        let s = earsU("#151618", "#e5e7eb") + R(13, 0, 457, H, "#18191b", 1) + T(434, 13, "SD-MINI Rack", 8, "#f3f4f6", 900, 0, "end");
+        s += R(24, 8, 128, 162, "#202225", 1.5) + R(30, 12, 28, 12, "#d1d5db", 0.6) + R(33, 15, 22, 1.2, "#6b7280") + R(33, 19, 16, 1.2, "#6b7280");
+        s += C(55, 52, 13, "#3a3d41") + C(55, 52, 10, "#141517") + C(55, 52, 4, "#7dd3fc") + T(76, 46, "A", 5, "#e5e7eb", 800) + T(76, 62, "B", 5, "#e5e7eb", 800) + C(55, 85, 10, "#3a3d41") + C(55, 85, 7.5, "#141517") + C(55, 85, 3, "#9aa3ab");
+        s += [60, 88, 116].map((y) => bnc(122, y, 6)).join("") + `<text x="0" y="0" transform="translate(142 120) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="5" font-weight="800" fill="#e5e7eb">SD-Rack Madi POD</text>`;
+        s += R(40, 122, 42, 30, "#8fb2d8", 1.5) + R(44, 126, 34, 10, "#dbeafe", 0.6) + [0, 1, 2].map((i) => R(45 + i * 11, 140, 8, 6, "#1e3a8a", 1)).join("");
+        for (let r = 0; r < 4; r++) { const y = 26 + r * 37; s += R(160, y, 286, 33, "#232528", 1.5) + R(448, y + 8, 8, 17, "#3a3d41", 1); for (let c = 0; c < 8; c++) s += xlrF(179 + c * 35, y + 18, 0.95) + T(171 + c * 35, y + 5, String(r * 8 + c + 1), 2.4, "#cbd5e1", 700, 0, "middle"); }
+        return s;
+      }
+      // DiGiCo MADI Rack : 8 U noir, deux rangées d'ouïes, grand logo, LED des alimentations
+      case "madirack": {
+        let s = earsU("#151618", "#e5e7eb") + R(13, 0, 457, H, "#1c1d1f", 1);
+        for (let r = 0; r < 2; r++) for (let i = 0; i < 43; i++) s += R(43 + i * 9.2, 20 + r * 39, 4.5, 30, "#0b0c0d", 1);
+        s += [[86, 132, 4.5], [102, 140, 4.5], [121, 131, 4.5], [112, 160, 6]].map(([x, y, r]) => C(x, y, r, "#eef0f2")).join("") + `<path d="M86 132 L112 160 M102 140 L112 160 M121 131 L112 160" stroke="#eef0f2" stroke-width="3" fill="none"/>` + T(178, 163, "DiGiCo", 62, "#eef0f2", 900);
+        s += [248, 267].map((x) => led(x, 259, "#a3e635", 1.8)).join("") + T(257.5, 268, "POWER SUPPLIES", 2.6, "#9aa3ab", 700, 0, "middle") + [341, 351, 361, 371].map((x) => led(x, 259, "#a3e635", 1.8)).join("") + T(356, 268, "SYSTEM SUPPLIES", 2.6, "#9aa3ab", 700, 0, "middle");
+        s += R(78, 322, 43, 11, "#e5e7eb", 0.8) + R(81, 325, 30, 1.2, "#6b7280") + T(431, 331, "MaDi-Rack", 9, "#e5e7eb", 800, 0, "end");
+        return s;
+      }
+      // Avid VENUE E6L : 5 U noir, ailettes de ventilation, logo éclairé au centre, poignées, USB et LED en bas à gauche
+      case "e6l": {
+        let s = earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#1b1c1f", 1) + [4, 473].map((x) => R(x, 42, 6, 112, "#4b4f55", 3) + R(x + 1.5, 45, 3, 106, "#2b2e33", 1.5)).join("");
+        for (let i = 0; i < 13; i++) { const x = 22 + i * 34; if (x > 165 && x < 300) continue; s += `<path d="M${x} 8 L${x + 22} 8 Q${x + 30} 60 ${x + 22} 126 L${x} 126 Q${x + 8} 60 ${x} 8Z" fill="#26282c" stroke="#0e0f10" stroke-width="0.8"/>`; }
+        s += `<path d="M178 30 L305 30 L297 104 L186 104 Z" fill="#111214" stroke="#2b2e33" stroke-width="0.8"/>` + T(241.5, 78, "AVID", 24, "none", 900, 2, "middle").replace('fill="none"', 'fill="#1b1c1f" stroke="#a78bfa" stroke-width="1.6"') + T(241.5, 118, "VENUE | E6L", 4.4, "#9aa3ab", 700, 0.8, "middle");
+        s += R(42, 133, 413, 82, "#101113", 2) + R(46, 138, 46, 74, "#202226", 1.5) + led(54, 152, "#a3e635", 1.3) + led(54, 158, "#a3e635", 1.3) + R(61, 148, 11, 5, "#3b82f6", 0.6) + R(61, 156, 11, 5, "#3b82f6", 0.6) + C(82, 155, 3, "#3a3d41");
+        return s;
+      }
+      // SSL ML32.32 : 5 U argenté, poignées, quatre blocs (sorties ligne, entrées micro / ligne), grilles, logo
+      case "ml32": {
+        let s = earsU("#c3c7cb", "#f3f4f6") + R(13, 0, 457, H, "#d4d7da", 1) + [3, 474].map((x) => R(x, 40, 6, 140, "#aeb3b8", 3)).join("");
+        const blk = (x, y, w, mic, n0) => { let b = R(x, y, w, 80, "#1d1f22", 2) + T(x + w / 2, y + 5, mic ? "MIC / LINE" : "LINE", 3, "#f3f4f6", 700, 0, "middle") + T(x + w - 3, y + 5, mic ? "INPUTS" : "OUTPUTS", 2.2, "#f3f4f6", 700, 0, "end"); const st = (w - 20) / 7; for (let r = 0; r < 2; r++) for (let c = 0; c < 8; c++) { const cx = x + 10 + c * st, cy = y + 24 + r * 33; b += (mic ? xlrF : xlrM)(cx, cy, 0.85) + T(cx + 9, cy - 9, String(n0 + r * 8 + c), 2, "#f3f4f6", 700, 0, "middle") + (mic ? R(cx - 5, cy + 11, 4, 2.5, "#f3f4f6", 0.4) + R(cx + 1, cy + 11, 4, 2.5, "#f3f4f6", 0.4) : ""); } return b; };
+        s += blk(28, 5, 189, false, 1) + blk(220, 5, 235, true, 1) + blk(28, 110, 189, false, 17) + blk(220, 110, 235, true, 17);
+        const mesh = (x, y, w, h) => R(x, y, w, h, "#9aa0a6", 1.5) + Array.from({ length: Math.floor(w / 3) }, (_, i) => R(x + 1 + i * 3, y + 1.5, 1.6, h - 3, "#5f656b", 0.6)).join("");
+        s += Tf(124, 101, "Solid State Logic", 9, "#2b2d30", "middle") + mesh(262, 89, 179, 13) + mesh(42, 196, 180, 13) + mesh(262, 196, 179, 13);
+        s += R(224, 192, 35, 20, "#f3f4f6", 1, ' stroke="#1d1f22" stroke-width="0.6"') + Tf(241.5, 199, "Live I/O", 4, "#1d1f22", "middle", 1) + R(226, 201, 31, 5, "#1d1f22") + T(241.5, 205, "ML 32.32", 3.2, "#f3f4f6", 700, 0.4, "middle");
+        return s;
+      }
+      // SSL D32.32 : 2 U argenté, quatre blocs AES/EBU (paires entrée / sortie), cadre Live I/O au centre, logo
+      case "d3232": {
+        let s = earsO("#c9ccd0", "#f3f4f6") + R(13, 0, 457, H, "#d4d7da", 1) + [[33, 85], [241, 85], [449, 85]].map(([x, y]) => scr(x, y, 1.6)).join("");
+        const blk = (x, y, n0) => R(x, y, 193, 37, "#1d1f22", 2) + T(x + 96, y + 4.5, "AES / EBU", 3, "#f3f4f6", 700, 0, "middle") + R(x + 168, y + 1.3, 16, 4.2, "#f3f4f6", 1) + T(x + 176, y + 4.6, "I/Os", 2.4, "#1d1f22", 700, 0, "middle") + Array.from({ length: 8 }, (_, i) => (i % 2 ? xlrM : xlrF)(x + 12 + i * 24, y + 22, 0.82) + T(x + 12 + i * 24, y + 34.5, i % 2 ? "Out" : "In", 1.8, "#f3f4f6", 700, 0, "middle") + (i % 2 ? T(x + 12 + i * 24, y + 9.5, `${n0 + i - 1}/${n0 + i}`, 2.3, "#f3f4f6", 700, 0, "middle") : "")).join("");
+        s += blk(28, 2, 1) + blk(264, 2, 9) + blk(28, 41, 17) + blk(264, 41, 25);
+        s += R(225, 46, 35, 14, "#f3f4f6", 1, ' stroke="#1d1f22" stroke-width="0.6"') + Tf(242.5, 52, "Live I/O", 4, "#1d1f22", "middle", 1) + R(227, 54, 31, 5, "#1d1f22") + T(242.5, 58, "D  32.32", 3.2, "#f3f4f6", 700, 0.4, "middle") + R(225, 62, 35, 12, "#e5e7eb", 1, ' stroke="#9aa0a6" stroke-width="0.5"') + [["PSU", 230], ["MAIN", 242.5], ["LINK", 255]].map(([t, x]) => T(x, 65.5, t, 1.6, "#1d1f22", 700, 0, "middle") + led(x - 4, 68.5, "#a3e635", 0.8) + led(x - 4, 71.5, "#6b7280", 0.8)).join("");
+        s += Tf(124, 85, "Solid State Logic", 8, "#2b2d30", "middle");
+        return s;
+      }
+      // SSL Blacklight II : 2 U argenté, bloc de 4 connecteurs fibre (A et B, main / backup), cadre Live I/O BLII-D, logo
+      case "blacklight": {
+        let s = earsO("#c9ccd0", "#f3f4f6") + R(13, 0, 457, H, "#d4d7da", 1) + [[33, 5], [33, 84], [192, 5], [192, 84], [295, 5], [295, 84], [449, 5], [449, 84]].map(([x, y]) => scr(x, y, 1.6)).join("");
+        s += R(38, 4, 143, 54, "#1d1f22", 3) + T(109.5, 10, "BLACKLIGHT II", 3.6, "#f3f4f6", 800, 0, "middle") + [55, 90, 128, 164].map((x) => R(x - 10, 18, 20, 24, "#2a2c30", 2) + C(x, 30, 8.5, "#3a3d41") + C(x, 30, 7, "#141517") + R(x - 4, 27, 3.4, 5, "#9aa3ab", 0.6) + R(x + 0.6, 27, 3.4, 5, "#9aa3ab", 0.6)).join("");
+        s += [["MAIN", 55], ["BACKUP", 90], ["MAIN", 128], ["BACKUP", 164]].map(([t, x]) => T(x, 53, t, 2.8, "#f3f4f6", 700, 0, "middle")).join("") + T(72.5, 54, "A", 5, "#f3f4f6", 800, 0, "middle") + T(146, 54, "B", 5, "#f3f4f6", 800, 0, "middle");
+        s += Tf(108, 80, "Solid State Logic", 8.5, "#2b2d30", "middle") + T(243, 33, "BLACKLIGHT II / MADI", 2.4, "#2b2d30", 800, 0, "middle") + T(243, 36.5, "CONCENTRATOR", 2.4, "#2b2d30", 800, 0, "middle");
+        s += R(216, 46, 55, 15, "#f3f4f6", 0.8, ' stroke="#1d1f22" stroke-width="0.6"') + Tf(243.5, 52, "Live I/O", 4, "#1d1f22", "middle", 1) + R(218, 54, 51, 6, "#1d1f22") + T(243.5, 58.6, "BLII • D", 3.6, "#f3f4f6", 700, 0.6, "middle") + R(220, 64, 47, 12, "#e5e7eb", 1, ' stroke="#9aa0a6" stroke-width="0.5"') + [["PSU", 226], ["LINK A", 240], ["LINK B", 258]].map(([t, x]) => T(x, 67, t, 1.6, "#1d1f22", 700, 0, "middle") + led(x - 4, 70, "#a3e635", 0.8) + led(x - 4, 73.5, "#6b7280", 0.8)).join("");
+        return s;
+      }
+      // Waves SoundGrid : Impact Server, Extreme Server et Server One (2 U noirs : poignées, grilles, logo WSG, marche / reset)
+      case "sgimpact": case "sgextreme": case "sgone": {
+        const hdl = (x, y, h) => R(x, y, 3.2, h, "#c9ced3", 1.6) + R(x - 1.5, y, 4.5, 3, "#9aa3ab", 1) + R(x - 1.5, y + h - 3, 4.5, 3, "#9aa3ab", 1);
+        const wsg = (x, y, w) => R(x, y, w, w * 0.4, "#f3f4f6", 0.8) + T(x + w / 2, y + w * 0.33, "WSG", w * 0.32, "#141517", 900, 0, "middle");
+        const btn = (x, y, r) => C(x, y, r, "#0b0c0d", ' stroke="#3a3d41" stroke-width="0.6"') + C(x - r * 0.25, y - r * 0.25, r * 0.4, "#2b2e33");
+        let s = earsO("#141517", "#e5e7eb") + R(13, 0, 457, H, "#16171a", 1);
+        if (type === "sgimpact") {
+          s += R(13, 2, 118, 85, "#1e1f22", 1) + R(352, 2, 118, 85, "#1e1f22", 1) + hdl(102, 16, 57) + hdl(375, 16, 57) + R(133, 2, 217, 85, "#121315", 1);
+          s += wsg(148, 30, 37) + T(166.5, 50.5, "WAVES SOUNDGRID", 2.1, "#e5e7eb", 800, 0, "middle") + R(141, 57, 49, 9, "#1c1d20", 1.5, ' stroke="#3a3d41" stroke-width="0.5"') + T(165.5, 63, "IMPACT SERVER", 3.2, "#e5e7eb", 800, 0, "middle");
+          s += R(202, 11, 79, 68, "#0b0c0d", 3); for (let i = 0; i < 15; i++) for (let j = 0; j < 13; j++) s += C(207 + i * 4.9, 16 + j * 4.9, 1.6, "#2a2c30");
+          s += T(317, 20, "ON/OFF", 2.6, "#e5e7eb", 700, 0, "middle") + btn(317, 30, 4.5) + led(317, 47, "#3b82f6", 1.1) + T(317, 55, "RESET", 2.6, "#e5e7eb", 700, 0, "middle") + btn(317, 63, 3.2);
+        } else if (type === "sgextreme") {
+          s += hdl(6, 15, 59) + hdl(474, 15, 59) + [59, 179].map((x) => R(x, 14, 68, 64, "#0b0c0d", 2) + Array.from({ length: 13 }, (_, i) => R(x + 3 + i * 5, 16, 2.4, 60, "#202226", 0.6)).join("") + `<path d="M${x + 14} 26 L${x + 54} 66 M${x + 54} 26 L${x + 14} 66" stroke="#2b2e33" stroke-width="2"/>`).join("");
+          s += wsg(305, 18, 52) + T(331, 45.5, "WAVES SOUNDGRID", 3.2, "#e5e7eb", 800, 0, "middle") + R(302, 52, 50, 10, "#1c1d20", 1.5, ' stroke="#3a3d41" stroke-width="0.5"') + T(327, 58.8, "EXTREME SERVER", 3.4, "#e5e7eb", 800, 0, "middle");
+          s += T(412, 19, "ON/OFF", 2.6, "#e5e7eb", 700, 0, "middle") + btn(412, 30, 4.5) + led(412, 46, "#6b7280", 1.1) + T(412, 55, "RESET", 2.6, "#e5e7eb", 700, 0, "middle") + btn(412, 63, 3.2);
+        } else {
+          s += hdl(6, 15, 59) + hdl(474, 15, 59) + R(41, 9, 235, 72, "#111214", 2) + [53, 167].map((x) => Array.from({ length: 22 }, (_, i) => R(x + i * 4.5, 15, 2.2, 60, "#2a2c30", 0.6)).join("")).join("") + [[30, 6], [160, 6], [330, 6], [450, 6], [30, 84], [160, 84], [330, 84], [450, 84]].map(([x, y]) => scr(x, y, 1.4)).join("");
+          s += R(302, 31, 57, 30, "#26282b", 3) + T(330.5, 39, "WAVES", 4.2, "#d1d5db", 400, 0.6, "middle") + T(330.5, 46, "SOUNDGRID", 4.2, "#d1d5db", 400, 0.6, "middle") + T(330.5, 53.5, "SERVER ONE", 4.6, "#f3f4f6", 800, 0.3, "middle");
+          s += C(386, 60, 3, "#dc2626") + btn(421, 60, 9) + wsg(436, 61, 21) + led(421, 27, "#6b7280", 1);
+        }
+        return s;
+      }
+      // Fourier Audio transform.engine : 2 U noir, écran (adresses IP), molette jaune, deux USB, grande grille jaune en goutte, logo
+      case "fourier": {
+        let s = earsO("#141517", "#e5e7eb") + R(13, 0, 457, H, "#141517", 1) + [[37, 16], [37, 73], [445, 16], [445, 73]].map(([x, y]) => scr(x, y, 2)).join("");
+        s += R(52, 7, 81, 75, "#0b0c0d", 2) + T(92, 19, "fourieraudio", 6, "#f3f4f6", 400, 0, "middle") + T(92, 26, "transform.engine", 5, "#e5e7eb", 400, 0, "middle") + T(60, 37, "< ip addresses", 2.6, "#d1d5db", 400) + R(58, 39, 40, 4.2, "#e5e7eb") + T(59, 42.3, "p:192.168.123.123", 2.6, "#0b0c0d", 700) + T(59, 47.5, "s:10.314.159.265", 2.6, "#d1d5db", 400) + T(59, 52.5, "c:172.27.18.281", 2.6, "#d1d5db", 400);
+        s += C(116, 42, 6.5, "#e5e600") + C(116, 42, 5, "#141517") + C(115, 41, 2, "#2b2e33") + [69, 91].map((x) => R(x - 5, 70, 10, 4, "#9aa3ab", 0.5) + R(x - 4, 71, 8, 1.5, "#2b2e33")).join("") + `<path d="M72 66 h-4 l-1.5 2 M88 66 h4 l1.5 2" stroke="#e5e7eb" stroke-width="0.5" fill="none"/>`;
+        const hh = (x) => { const u = (x - 150) / 230; return u <= 0 || u >= 1 ? 0 : 33 * Math.pow(1 - Math.pow(2 * u - 1, 2), 0.4) * (0.4 + 0.6 * Math.pow(u, 0.6)); }, cy = (x) => 52 - 6 * ((x - 150) / 230);
+        const top = [], bot = []; for (let x = 150; x <= 380; x += 5) { top.push(`${x} ${(cy(x) - hh(x)).toFixed(1)}`); bot.unshift(`${x} ${(cy(x) + hh(x)).toFixed(1)}`); }
+        s += `<path d="M${top.join(" L")} L${bot.join(" L")} Z" fill="#b5c934" stroke="#0b0c0d" stroke-width="1.5" stroke-linejoin="round"/>`;
+        for (let x = 156; x < 377; x += 4.6) for (let y = 14; y < 84; y += 4) { const xx = x + (Math.round((y - 14) / 4) % 2) * 2.3; if (Math.abs(y - cy(xx)) < hh(xx) - 2.2) s += C(xx, y, 1.45, "#1d200a"); }
+        s += `<path d="M397 54 q6 -11 14 -5 q7 6 15 -4 M404 41 q4 -6 10 -2" fill="none" stroke="#e5e600" stroke-width="2.6" stroke-linecap="round"/>`;
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -4646,7 +4881,7 @@ label.p48 input:checked + span { border-style: solid; }
     if (it.kind === "hf") { const d = hfDevById(it.ref); return d ? d.nom : it.label || "Appareil HF supprimé"; }
     return it.label || (RP_FREE.find((f) => f[0] === it.free) || RP_FREE[5])[1];
   }
-  function rpDefaultU(kind, ref) { if (kind === "hf") { const d = hfDevById(ref); return d && /9046/.test(d.model) ? 2 : 1; } if (kind !== "rack") return 1; const t = devType({ kind: "rack", id: ref }); return t === "sd" ? 10 : t === "num" ? 6 : t === "orange" || t === "numg" ? 2 : 1; }
+  function rpDefaultU(kind, ref) { if (kind === "hf") { const d = hfDevById(ref); return d && /9046/.test(d.model) ? 2 : 1; } const t = kind === "rack" ? devType({ kind: "rack", id: ref }) : kind === "extra" ? devType({ kind: "extra", ref: rpExtra(ref) || {} }) : ""; if (!t) return 1; return t === "sd" ? 10 : Math.max(1, Math.round((DEV_H[t] || 44.45) / 44.45)); }
   // Rack simple, double ou triple : chaque colonne a ses U
   const rpCol = (it) => it.col || 0, rpCols = (c) => Math.max(1, Math.min(3, c.cols || 1));
   const RP_COLN = { 2: ["Gauche", "Droite"], 3: ["Gauche", "Milieu", "Droite"] };
@@ -4668,7 +4903,7 @@ label.p48 input:checked + span { border-style: solid; }
     const hs = hfDevs().filter((d) => !placed.has("hf:" + d.id));
     if (hs.length) h += `<optgroup label="HF (récepteurs, émetteurs)">${hs.map((d) => `<option value="hf|${d.id}">${esc(d.nom)} · ${rpDefaultU("hf", d.id)} U</option>`).join("")}</optgroup>`;
     if (xs.length) h += `<optgroup label="Synoptique">${xs.map((x) => `<option value="extra|${x.id}">${esc(x.nom || "Élément")}</option>`).join("")}</optgroup>`;
-    h += `<optgroup label="Nouvel appareil (ajouté au synoptique)">${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="newx|${k}">${esc(m.t)} · 1 U</option>`).join("")}</optgroup>`;
+    h += `<optgroup label="Nouvel appareil (ajouté au synoptique)">${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="newx|${k}">${esc(m.t)} · ${Math.max(1, Math.round((DEV_H[k] || 44.45) / 44.45))} U</option>`).join("")}</optgroup>`;
     h += `<optgroup label="Autres">${RP_FREE.map(([k, t, u]) => `<option value="free|${k}">${t} · ${u} U</option>`).join("")}</optgroup>`;
     return h;
   }
@@ -5382,7 +5617,7 @@ label.p48 input:checked + span { border-style: solid; }
   const CLK_SRC = [["", "— à choisir"], ["loop", "Loop Optocore"], ["int", "Interne (maître)"], ["wc", "Word clock depuis…"], ["madi", "MADI entrant"], ["aes", "AES / AES50 entrant"], ["dante", "Réseau Dante"], ["none", "Sans horloge (switch, analogique)"]];
   const CLK_SHORT = { "": "?", loop: "OPTO", int: "INT", wc: "WC", madi: "MADI", aes: "AES", dante: "DANTE", none: "—" };
   // Générateurs d'horloge : sorties word clock vérifiées sur les fiches des fabricants
-  const CLK_GENS = [["nanoclocks", "Rosendahl Nanoclocks", 12], ["nanosyncs", "Rosendahl Nanosyncs HD", 8], ["autre", "Autre générateur", 8]];
+  const CLK_GENS = [["nanoclocks", "Rosendahl Nanoclocks", 12], ["nanosyncs", "Rosendahl Nanosyncs HD", 8], ["bigben", "Apogee Big Ben", 6], ["autre", "Autre générateur", 8]];
   const isGen = (n) => n.kind === "extra" && n.ref && n.ref.gen;
   function clkOf(n) {
     const S = synState();
@@ -5777,7 +6012,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["DMI-MADI-B", "DiGiCo", "Carte DMI MADI BNC · 64 canaux"],
       ["DMI-OPTO", "DiGiCo", "Carte DMI Optocore"],
       ["MOD-WAVES", "DiGiCo", "Carte SoundGrid pour plugins Waves (Q3, Q852)"],
-      ["Orange Box", "DiGiCo", "Convertisseur de format · 2 slots DMI · 1 U"],
+      ["Orange Box", "DiGiCo", "Convertisseur de format · 2 slots DMI · 2 U"],
       ["ML32.32", "SSL", "Stage rack Live · 32 in mic/ligne + 32 out + 32 out split · MADI · 5 U"],
       ["Blacklight II", "SSL", "Concentrateur BLII.D · 256 ou 512 in/out MADI · 2 U"],
       ["DL431", "Midas", "Stage rack · 24 in (split 5 voies) / 8 out · 6 U"],
@@ -5978,16 +6213,17 @@ label.p48 input:checked + span { border-style: solid; }
       ["DiGiCo SD7", "DiGiCo", "Console · 253 canaux · 128 bus · double moteur · Optocore"],
       ["DiGiCo SD10", "DiGiCo", "Console · 96 canaux extensibles · MADI / Optocore"],
       ["Avid S6L-32D", "Avid", "Console VENUE S6L · 32 faders · moteur E6L · AVB"],
-      ["E6L-144", "Avid", "Moteur VENUE S6L · 144 canaux · AVB · 4 U"],
+      ["E6L-144", "Avid", "Moteur VENUE S6L · 144 canaux · AVB · 5 U"],
       ["Yamaha QL1", "Yamaha", "Console compacte · 32 voies mono + 8 stéréo · Dante"]
     ],
     "Stage racks et cartes": [
       ["Stage 64", "Avid", "Stage rack VENUE · 64 entrées micro / 32 sorties · AVB"],
-      ["Stage 32", "Avid", "Stage rack VENUE · 32 entrées micro / 16 sorties · AVB"],
-      ["MADI Rack", "DiGiCo", "Stage rack MADI · ancienne génération"],
-      ["Rio3224-D2", "Yamaha", "Stage rack Dante · 32 entrées / 16 sorties + AES · 3 U"],
-      ["Rio1608-D2", "Yamaha", "Stage rack Dante · 16 entrées / 8 sorties · 2 U"],
-      ["RPio622", "Yamaha", "Stage rack Rivage · 6 cartes RY · TWINLANe / Dante · 6 U"],
+      ["Stage 32", "Avid", "Stage rack VENUE · 24 entrées micro / 8 sorties (4 cartes) · AVB · 5 U"],
+      ["MADI Rack", "DiGiCo", "Stage rack MADI · ancienne génération · 8 U"],
+      ["Rio3224-D2", "Yamaha", "Stage rack Dante · 32 entrées / 16 sorties + 4 AES · 5 U"],
+      ["Rio1608-D2", "Yamaha", "Stage rack Dante · 16 entrées / 8 sorties · 3 U"],
+      ["RPio622", "Yamaha", "Stage rack Rivage · 6 cartes RY de 16 voies · TWINLANe / Dante · 10 U"],
+      ["D32.32", "SSL", "Stage rack AES · 16 paires AES/EBU in et out · MADI · 2 U"],
       ["RO8-D", "Yamaha", "Boîtier Dante · 8 sorties ligne · 1 U"]
     ],
     "Transport audio et convertisseurs": [
@@ -5999,7 +6235,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["MediorNet MicroN", "Riedel", "Nœud MediorNet · vidéo, audio et données sur fibre · 1 U"]
     ],
     "Horloge et timecode": [
-      ["Big Ben", "Apogee", "Générateur word clock maître · sorties BNC · demi-rack"],
+      ["Big Ben", "Apogee", "Générateur word clock maître · 6 sorties BNC · AES, S/PDIF, optique · 1 U"],
       ["Nanosyncs HD", "Rosendahl", "Générateur word clock et synchro vidéo · 1 U"]
     ],
     "Périphériques et effets": [
@@ -6020,8 +6256,8 @@ label.p48 input:checked + span { border-style: solid; }
       ["Midas XL48", "Midas", "Mélangeur / matrice ligne"],
       ["TA-1VP", "Tascam", "Processeur vocal Auto-Tune (Antares) · 1 U"],
       ["Eurorack Pro RX1602", "Behringer", "Mélangeur ligne · 16 entrées · 1 U"],
-      ["SoundGrid Impact Server", "Waves", "Serveur DSP SoundGrid"],
-      ["SoundGrid Server One", "Waves", "Serveur DSP SoundGrid · 1 U"]
+      ["SoundGrid Impact Server", "Waves", "Serveur DSP SoundGrid · 2 U"],
+      ["SoundGrid Server One", "Waves", "Serveur DSP SoundGrid · 2 U"]
     ],
     "DI et talkback": [
       ["REDDI", "A-Designs", "DI à lampes · basse"]
