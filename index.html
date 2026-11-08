@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "5ae768670a";</script>
+<script>window.PL_VER = "a66bbe4981";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -3487,7 +3487,7 @@ label.p48 input:checked + span { border-style: solid; }
   // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   // Façades dessinées d'après les photos du parc, reconnues au nom (stage racks, I/O, appareils du synoptique, horloges)
-  const FACE_BY_NAME = [[/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
+  const FACE_BY_NAME = [[/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
   const faceByName = (t) => (FACE_BY_NAME.find(([re]) => re.test(t || "")) || [])[1] || "";
   function devType(n) {
     if (!n) return "box";
@@ -3536,12 +3536,24 @@ label.p48 input:checked + span { border-style: solid; }
     sgextreme: { nom: "Extreme Server", type: "Serveur SoundGrid", t: "Waves SoundGrid Extreme Server", re: /extreme\s*server|server\s*extreme/i, ports: [["SoundGrid", "SoundGrid"], ["SoundGrid secours", "SoundGrid"]] },
     sgone: { nom: "Server One", type: "Serveur SoundGrid", t: "Waves SoundGrid Server One", re: /server\s*one/i, ports: [["SoundGrid", "SoundGrid"], ["SoundGrid secours", "SoundGrid"]] },
     fourier: { nom: "transform.engine", type: "Serveur de plugins", t: "Fourier Audio transform.engine · plugins VST3", re: /fourier|transform\s*\.?\s*engine/i, ports: [["Audio (primaire)", "Dante"], ["Audio (secondaire)", "Dante"], ["Contrôle", "Réseau"]] },
+    hms4x: { nom: "HMS-4X", type: "Station principale HelixNet", t: "Clear-Com HelixNet HMS-4X · station principale 4 voies", re: /\bhms\s*-?\s*4x/i, clk: "none", ports: [["Réseau (HelixNet)", "Réseau"], ["Partyline A", "Intercom"], ["Partyline B", "Intercom"], ["4 fils", "Intercom"], ["Program in", "Analogique"]] },
+    hrm4x: { nom: "HRM-4X", type: "Poste rackable HelixNet", t: "Clear-Com HelixNet HRM-4X · poste rackable 4 voies", re: /\bhrm\s*-?\s*4x/i, clk: "none", ports: [["Réseau (HelixNet)", "Réseau"]] },
+    vpanel: { nom: "Panneau V-Series", type: "Poste d'intercom 12 touches", t: "Clear-Com V-Series · poste Eclipse 12 touches à écran", re: /v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, clk: "none", ports: [["Matrice (4 fils RJ45)", "Intercom"], ["Réseau (IVC)", "Réseau"]] },
+    lqr: { nom: "LQ-R 4W8", type: "Interface IP 4 fils", t: "Clear-Com LQ-R 4W8 · 8 ports 4 fils sur IP", re: /\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, clk: "none", ports: [["Réseau", "Réseau"], ...Array.from({ length: 8 }, (_, i) => [`4 fils ${i + 1}`, "Intercom"])] },
+    micron: { nom: "MicroN", type: "Nœud MediorNet", t: "Riedel MediorNet MicroN · vidéo, audio, données sur fibre", re: /micro\s*-?\s*n\b|mediornet/i, ports: [["Fibre (MediorNet)", "Autre"], ["MADI", "MADI"], ["Réseau", "Réseau"]] },
+    c44: { nom: "C44 Plus", type: "Poste Performer 4 canaux", t: "Riedel Performer C44 Plus · 4 DPL, 8 AIO", re: /\bc\s*-?\s*44\b/i, clk: "none", ports: [...Array.from({ length: 4 }, (_, i) => [`DPL ${i + 1}`, "Intercom"]), ...Array.from({ length: 8 }, (_, i) => [`AIO ${i + 1}`, "Intercom"])] },
+    rsp2318: { nom: "RSP-2318", type: "SmartPanel Artist 18 touches", t: "Riedel RSP-2318 · SmartPanel 18 touches", re: /rsp\s*-?\s*2318/i, clk: "none", ports: [["Matrice (AES3)", "AES"], ["Réseau (AES67)", "Réseau"]] },
+    nsa002: { nom: "NSA-002A", type: "Interface 4 fils vers AES67", t: "Riedel NSA-002A · 4 entrées, 4 sorties analogiques sur AES67", re: /nsa\s*-?\s*002/i, clk: "none", ports: [...Array.from({ length: 4 }, (_, i) => [`In ${i + 1}`, "Analogique"]), ...Array.from({ length: 4 }, (_, i) => [`Out ${i + 1}`, "Analogique"]), ["Réseau (AES67)", "Réseau"]] },
+    artist32: { nom: "Artist 32", type: "Matrice intercom 32 ports", t: "Riedel Artist 32 · matrice intercom", re: /artist\s*-?\s*32/i, clk: "none", ports: [["Fibre (anneau Artist)", "Autre"], ["Réseau", "Réseau"], ...Array.from({ length: 8 }, (_, i) => [`Port ${i + 1}`, "Intercom"])] },
+    tango: { nom: "Tango TNG-200", type: "Plateforme intercom réseau", t: "Riedel Tango TNG-200 · intercom AES67 / AVB", re: /\btango\b|tng\s*-?\s*200/i, clk: "none", ports: [["AES67 / AVB 1", "Réseau"], ["AES67 / AVB 2", "Réseau"]] },
+    eclipsedelta: { nom: "Eclipse HX-Delta", type: "Matrice intercom", t: "Clear-Com Eclipse HX-Delta · matrice 3 U", re: /hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, ports: [["E-MADI", "MADI"], ["IVC (réseau)", "Réseau"], ...Array.from({ length: 8 }, (_, i) => [`Port 4 fils ${i + 1}`, "Intercom"])] },
+    eclipsemedian: { nom: "Eclipse HX-Median", type: "Matrice intercom", t: "Clear-Com Eclipse HX-Median · matrice 6 U", re: /hx\s*-?\s*median|eclipse\s*-?\s*median/i, ports: [["E-MADI", "MADI"], ["IVC (réseau)", "Réseau"], ...Array.from({ length: 8 }, (_, i) => [`Port 4 fils ${i + 1}`, "Intercom"])] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
   const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7 };
   function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3582,6 +3594,7 @@ label.p48 input:checked + span { border-style: solid; }
     const scr = (x, y, r) => C(x, y, r || 1.3, "#8a8f94") + C(x, y, (r || 1.3) * 0.45, "#4b4f55");
     const ecn = (x, y, r) => C(x, y, r, "#9aa3ab") + C(x, y, r * 0.78, "#1d2023") + R(x - r * 0.36, y - r * 0.34, r * 0.72, r * 0.62, "#c9ced3", 0.5);
     const yam = (x, y) => C(x, y, 2.4, "none", ' stroke="#f3f4f6" stroke-width="0.6"') + R(x - 0.3, y - 1.8, 0.6, 3.6, "#f3f4f6") + T(x + 4, y + 1.6, "YAMAHA", 4.6, "#f3f4f6", 900);
+    const Ti = (x, y, t, sz, c, w, anc) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-style="italic" font-size="${sz}" font-weight="${w || 700}" fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     const Tf = (x, y, t, sz, c, anc, it) => `<text x="${x}" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-size="${sz}"${it ? ' font-style="italic"' : ""} fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
@@ -3898,17 +3911,24 @@ label.p48 input:checked + span { border-style: solid; }
         s += R(431, 7, 30, 30, "#9aa3ab", 4) + C(446, 22, 12, "#2563eb") + C(446, 22, 8, "#1e3a8a") + R(441, 18, 10, 8, "#0b0d0f", 1);
         return s;
       }
-      // Clear-Com MS-702 : 1 U bleu nuit, micro de panneau et casque XLR-4 à gauche, canaux A et B (volume, Talk, Call), program, haut-parleur à droite
+      // Clear-Com MS-702 (redessiné d'après photo) : 1 U noir, micro de panneau et casque XLR-4 à gauche, canaux A et B (volume, Talk, Call), program, haut-parleur à droite
       case "ms702": {
-        let s = ears("#2a3a5c") + face("#1f2d4d");
-        s += C(36, 22, 10, "#c9cfd4") + C(36, 22, 7.5, "#2f3439") + T(36, 9, "Panel Mic", 3, "#e5e7eb", 600, 0, "middle");
-        s += xlrM(66, 23, 0.9) + C(66, 23, 3, "#d8dee3") + T(66, 9, "Headset", 3, "#e5e7eb", 600, 0, "middle");
-        s += C(92, 15, 3, "#e5e7eb") + R(88, 26, 8, 8, "#e5e7eb", 1) + T(100, 17, "Announce", 2.6, "#e5e7eb", 600) + T(100, 33, "Party Line", 2.6, "#e5e7eb", 600);
-        ["A", "B"].forEach((ch, k) => { const x = 128 + k * 112; s += R(x, 4, 104, 36, "none", 2, ' stroke="#9aa3ab" stroke-width="0.8"') + T(x + 52, 8.5, "Channel " + ch, 3.4, "#e5e7eb", 700, 0, "middle") + C(x + 18, 18, 6.5, "#0b0d0f") + C(x + 18, 18, 5, "#3a4046") + R(x + 17.5, 12, 1, 5, "#e5e7eb") + T(x + 18, 30, "Volume", 2.6, "#e5e7eb", 600, 0, "middle") + R(x + 42, 11, 18, 18, "#e5e7eb", 1.5) + R(x + 44, 13, 14, 14, "#f8fafc", 1) + T(x + 51, 35, "Call", 2.6, "#e5e7eb", 600, 0, "middle") + T(x + 66, 21, "Talk", 2.8, "#e5e7eb", 700) + C(x + 86, 18, 2.8, "#9aa3ab") + T(x + 86, 30, "Sidetone", 2.4, "#e5e7eb", 600, 0, "middle"); });
-        s += C(366, 17, 6.5, "#0b0d0f") + C(366, 17, 5, "#3a4046") + R(365.5, 11, 1, 5, "#e5e7eb") + T(366, 8.5, "Program", 3, "#e5e7eb", 700, 0, "middle") + T(366, 30, "Level", 2.6, "#e5e7eb", 600, 0, "middle");
-        s += led(390, 14, "#ef4444", 1.6) + led(390, 21, "#ef4444", 1.6) + T(395, 15, "Ch. A", 2.4, "#e5e7eb", 600) + T(395, 22, "Ch. B", 2.4, "#e5e7eb", 600) + T(392, 36, "Remote Mic Kill", 2.4, "#e5e7eb", 600);
-        s += Array.from({ length: 6 }, (_, i) => Array.from({ length: 7 }, (_, j) => C(426 + j * 5.5, 12 + i * 4.5, 1.2, "#0f1626")).join("")).join("");
-        s += T(464, 9, "Clear-Com", 3.6, "#e5e7eb", 800, 0, "end") + T(464, 38, "MS-702", 3.2, "#e5e7eb", 700, 0, "end");
+        const lab = (x, y, t, sz, anc) => T(x, y, t, sz || 2.3, "#e5e7eb", 700, 0, anc || "middle"), sw = (x, y) => R(x - 1.3, y - 3, 2.6, 6, "#0b0c0e", 1.2, ' stroke="#9aa3ab" stroke-width="0.4"') + C(x, y - 1.2, 1, "#e5e7eb");
+        const knob = (x, y, r, a) => C(x, y, r, "#0b0c0e") + C(x, y, r * 0.85, "#d9dcdf") + `<line x1="${x}" y1="${y}" x2="${x + Math.cos(a) * r * 0.8}" y2="${y + Math.sin(a) * r * 0.8}" stroke="#141516" stroke-width="0.8"/>`;
+        let s = earsO("#151618", "#e5e7eb") + R(13, 0, 457, H, "#141518", 1);
+        s += lab(52, 6, "Panel Mic") + C(52, 23, 10, "#c9ced3") + C(52, 23, 7.8, "#8a9096") + C(52, 23, 6.6, "#2b2e33") + lab(84, 6, "Headset") + C(84, 23, 10, "#141516", ' stroke="#c9ced3" stroke-width="1.6"') + [[-3, -2.6], [3, -2.6], [-3, 2.6], [3, 2.6]].map(([a, b]) => C(84 + a, 23 + b, 1.3, "#e8c25a")).join("");
+        s += lab(114, 6, "Panel Mic") + sw(122, 14) + lab(114, 23, "Headset") + C(137, 11, 3.4, "#9aa3ab") + lab(137, 18.5, "Announce") + C(137, 31, 3.4, "#9aa3ab") + lab(137, 38, "Party Line") + lab(137, 41.5, "Link (A + B)", 1.9);
+        [["A", 155, 203, 210, 183, 161, 170, 195, 227], ["B", 231, 236, 244, 271, 293, 283, 259, 227]].forEach(([c, bx, tx, cx, vx, swx, lx, snx, tl], k) => {
+          s += `<path d="M${bx} 10 V7.5 H${bx + 69} V10" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>` + R(bx + 22, 5, 25, 5, "#141518") + lab(bx + 34.5, 8.8, "Channel " + c, 2.6);
+          s += knob(vx, 15, 6.2, k ? -0.6 : -2.4) + lab(k ? vx + 17 : vx - 20, 16, "Volume", 2.6) + R(tx, 7, 15, 15, "#f3f4f6", 1, ' stroke="#9aa3ab" stroke-width="0.6"') + R(tx + 2, 9, 11, 11, "#e5e7eb", 0.8) + C(cx, 34, 3.6, "#9aa3ab");
+          s += sw(swx, 30) + T(swx + (k ? 2.5 : -2.5), 28, "On", 1.6, "#e5e7eb", 700, 0, k ? "start" : "end") + T(swx + (k ? 2.5 : -2.5), 30.5, "Off", 1.6, "#e5e7eb", 700, 0, k ? "start" : "end") + T(swx + (k ? 2.5 : -2.5), 33, "Intrpt", 1.6, "#e5e7eb", 700, 0, k ? "start" : "end");
+          s += C(lx, 29, 1.8, "#0b0c0e", ' stroke="#55595e" stroke-width="0.4"') + lab(lx, 35.5, "Level") + lab(lx, 39, "Program") + C(snx, 28, 1.8, "#0b0c0e", ' stroke="#55595e" stroke-width="0.4"') + lab(snx, 35.5, "Sidetone") + lab(snx, 39, "Null");
+        });
+        s += lab(227, 17, "Talk", 2.8) + lab(227, 36.5, "Call", 2.8);
+        s += lab(319, 5, "Program", 2.6) + knob(319, 15, 6.2, -1.2) + lab(319, 27, "Level") + C(319, 33.5, 3.2, "#9aa3ab") + lab(319, 41, "Tone Alert");
+        s += led(333, 12, "#7f1d1d", 1.1) + led(333, 17, "#7f1d1d", 1.1) + T(336, 12.8, "Ch. A", 2.3, "#e5e7eb", 700) + T(336, 17.8, "Ch. B", 2.3, "#e5e7eb", 700) + sw(352, 14) + T(355, 12, "On", 1.8, "#e5e7eb", 700) + T(355, 17.5, "Off", 1.8, "#e5e7eb", 700) + lab(337, 24, "Short") + lab(353, 24, "Speaker") + C(352, 33.5, 3.2, "#9aa3ab") + lab(352, 41, "Remote Mic Kill");
+        s += Array.from({ length: 12 }, (_, i) => { const h = 30 - Math.abs(i - 5.5) * 2.4; return R(380 + i * 4.3, 22 - h / 2, 1.7, h, "#03040a", 0.8); }).join("");
+        s += C(438, 6.6, 2.1, "none", ' stroke="#f3f4f6" stroke-width="0.6"') + Ti(441.5, 8.5, "Clear-Com", 4.6, "#f3f4f6", 900) + Ti(466, 29, "2-Channel", 3, "#e5e7eb", 700, "end") + Ti(466, 34, "Main Station", 3, "#e5e7eb", 700, "end") + Ti(466, 39, "MS-702", 3, "#e5e7eb", 700, "end");
         return s;
       }
       // ---------- Lot photos 08/11 : HF d'après les photos d'Eddy (Dropbox Plan de Rack/Machine) ----------
@@ -4293,6 +4313,121 @@ label.p48 input:checked + span { border-style: solid; }
         s += `<path d="M${top.join(" L")} L${bot.join(" L")} Z" fill="#b5c934" stroke="#0b0c0d" stroke-width="1.5" stroke-linejoin="round"/>`;
         for (let x = 156; x < 377; x += 4.6) for (let y = 14; y < 84; y += 4) { const xx = x + (Math.round((y - 14) / 4) % 2) * 2.3; if (Math.abs(y - cy(xx)) < hh(xx) - 2.2) s += C(xx, y, 1.45, "#1d200a"); }
         s += `<path d="M397 54 q6 -11 14 -5 q7 6 15 -4 M404 41 q4 -6 10 -2" fill="none" stroke="#e5e600" stroke-width="2.6" stroke-linecap="round"/>`;
+        return s;
+      }
+      // ——— Lot intercom : façades dessinées d'après les photos du parc (Plan de Rack/Machine/Intercom) ———
+      // Clear-Com HelixNet HMS-4X (station principale) et HRM-4X (poste rackable) : 1 U ardoise, casque à gauche, 4 voies (écran, molette, Call, Talk), haut-parleur à droite
+      case "hms4x": case "hrm4x": {
+        const ccLogo = (x, y, sz) => C(x, y - sz * 0.33, sz * 0.42, "none", ` stroke="#f3f4f6" stroke-width="${sz * 0.12}"`) + Ti(x + sz * 0.6, y, "Clear-Com", sz, "#f3f4f6", 900);
+        let s = earsO("#2b2f36", "#f3f4f6") + R(13, 0, 457, H, "#4a5363", 1) + R(13, 0, 457, 1.2, "#5b6577");
+        s += ccLogo(28, 9.5, 5) + C(43, 24, 9.5, "#9aa3ab") + C(43, 24, 7.8, "#2b3a33") + [[-3, -2.5], [3, -2.5], [-3, 2.5], [3, 2.5]].map(([a, b]) => C(43 + a, 24 + b, 1.2, "#c9d1d8")).join("");
+        s += C(71, 12, 8, "#9aa3ab") + C(71, 12, 6.4, "#1d2023") + [[-2.4, -1.2], [2.4, -1.2], [-2.4, 2], [2.4, 2]].map(([a, b]) => C(71 + a, 12 + b, 0.9, "#9aa3ab")).join("") + R(66, 27.5, 10, 5, "#c9d1d8", 0.6) + R(67.5, 29, 7, 2, "#2b2f36") + R(68, 37.5, 6, 3, "#1d2023", 1);
+        s += Ti(26, 42, "HelixNet", 4, "#f3f4f6", 800) + T(47, 42, type === "hms4x" ? "HMS-4X" : "HRM-4X", 3.2, "#e5e7eb", 400);
+        s += ["Mic On", "HSet", "Menu"].map((t, i) => R(86, 5 + i * 13.5, 9, 7, "#d5dbe3", 1.8) + T(90.5, 9.3 + i * 13.5, t, 1.6, "#1f2937", 700, 0, "middle")).join("");
+        for (let k = 0; k < 4; k++) {
+          const x = 102 + k * 65.5;
+          s += R(x, 3, 40, 27, "#0b0c0e", 1.5) + R(x + 1, 4, 38, 25, "#15181c", 1) + knurl(x + 49, 10, 4.8);
+          s += R(x + 1.5, 33.5, 15, 8.5, "#d5dbe3", 2.5) + T(x + 9, 39.3, "Call", 3, "#1f2937", 700, 0, "middle") + `<path d="M${x + 32} 32 H${x + 47} Q${x + 51} 32 ${x + 50} 37 L${x + 48} 41 Q${x + 47} 42.5 ${x + 44} 42.5 H${x + 32} Q${x + 30} 42.5 ${x + 30} 40 V34 Q${x + 30} 32 ${x + 32} 32Z" fill="#d5dbe3"/>` + T(x + 40, 39.3, "Talk", 3, "#1f2937", 700, 0, "middle");
+        }
+        s += (type === "hms4x" ? ["SA", "All Talk", "RMK"] : ["SA", "All Talk", "Opt"]).map((t, i) => R(361, 5 + i * 13.5, 9, 7, "#d5dbe3", 1.8) + T(365.5, 9.3 + i * 13.5, t, 1.5, "#1f2937", 700, 0, "middle")).join("");
+        s += (type === "hms4x" ? ["Line", "1", "2"] : ["Line", "LAN", "Spkr"]).map((t, i) => T(381, 6 + i * 5, t, 1.7, "#e5e7eb", 700, 0, "end") + C(383.5, 5.4 + i * 5, 1, "#1d2023")).join("");
+        s += [5, 8.5, 12, 15.5, 19].map((r) => C(414, 17, r, "none", ' stroke="#1d2023" stroke-width="1.6"')).join("") + knurl(384, 35, 4.6) + knurl(446, 35, 4.6) + T(393, 32, "Main", 1.8, "#e5e7eb", 700) + T(437, 32, "PGM", 1.8, "#e5e7eb", 700, 0, "end") + `<path d="M447 6 l3 6 l-6 0z" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>`;
+        return s;
+      }
+      // Clear-Com V-Series (panneau à 12 touches et écrans) : 1 U noir, casque et touches bleues à gauche, 2 rangées de 6 touches à écran (nom du correspondant), haut-parleur et molettes à droite
+      case "vpanel": {
+        let s = earsO("#2b2e33", "#e5e7eb") + R(13, 0, 457, H, "#1b1d22", 1) + Array.from({ length: 6 }, (_, i) => R(15 + i * 1.4, 6, 0.7, 32, "#0b0c0e") + R(459 + i * 1.4, 6, 0.7, 32, "#0b0c0e")).join("");
+        s += xlrF(43, 13, 0.75) + xlrM(43, 34, 0.8) + [[62, 11, "MIC ON"], [75, 11, "SHIFT"], [62, 25, "HS"], [75, 25, "MENU"]].map(([x, y, t]) => C(x, y, 3.6, "#3b82f6") + C(x, y, 2.6, "#5b9bf8") + T(x, y - 4.6, t, 1.2, "#cbd5e1", 700, 0, "middle")).join("") + C(68.5, 18, 1.3, "#0b0c0e") + R(63, 33, 10, 4.5, "#c9d1d8", 0.5) + R(64.5, 34.3, 7, 1.8, "#2b2f36");
+        const keys = [["Audio A-1", "#f3f4f6"], ["Director", "#f3f4f6"], ["", "#f3f4f6"], ["Audio PL", "#facc15"], ["Carpenters", "#4ade80"], ["All Call", "#60a5fa"], ["REPLY", "#f3f4f6"], ["IFB001", "#ef4444"], ["Stage Mgr", "#f3f4f6"], ["Spots PL", "#facc15"], ["PYRO !!", "#ef4444"], ["Stage Annc", "#f3f4f6"]];
+        keys.forEach(([t, c], i) => {
+          const x = 86 + (i % 6) * 47.3, y = i < 6 ? 3 : 23;
+          s += R(x, y, 45.5, 18.5, "#2b2e33", 1.2) + R(x + 1, y + 3.5, 6, 11, "#0b0c0e", 1) + R(x + 9, y + 1, 35.5, 16.5, "#050607", 1) + T(x + 26.5, y + 6.5, t, 3.2, c, 700, 0, "middle");
+          s += Array.from({ length: 10 }, (_, j) => R(x + 13 + j * 2.2, y + 9.5, 1.6, 0.8, j < 6 ? "#22c55e" : j < 8 ? "#facc15" : "#3f4549")).join("") + tri(x + 31, y + 14.5, 1.5, false, "#3b82f6") + tri(x + 39, y + 14.5, 1.5, true, "#3b82f6");
+        });
+        s += R(379, 2, 73, 40, "#24272c", 2) + [6, 10, 14, 18].map((r) => `<ellipse cx="415" cy="18" rx="${r * 1.7}" ry="${r}" fill="none" stroke="#0b0c0e" stroke-width="1.8"/>`).join("") + `<ellipse cx="415" cy="18" rx="10" ry="4" fill="#1d4ed8"/>` + T(415, 19.3, "Clear-Com", 2.6, "#f3f4f6", 800, 0, "middle");
+        s += knurl(384, 35, 4.6) + knurl(446, 35, 4.6) + led(392, 35, "#f59e0b", 1.4) + led(438, 35, "#f59e0b", 1.4) + T(392, 41.5, "MAIN", 1.4, "#9aa3ab", 700, 0, "middle") + T(438, 41.5, "AUX", 1.4, "#9aa3ab", 700, 0, "middle");
+        return s;
+      }
+      // Clear-Com LQ-R 4W8 : 1 U ardoise, nom LQ-R à gauche, petit écran, pavé de navigation rond, logo à droite
+      case "lqr": {
+        let s = earsO("#2b2f36", "#f3f4f6") + R(13, 0, 457, H, "#465063", 1) + R(16, 2, 451, 40.5, "#4d586c", 2, ' stroke="#3a4352" stroke-width="0.6"');
+        s += T(29, 16, "LQ-R", 9, "#f3f4f6", 900) + R(60, 10.5, 16, 4.5, "#3a4352", 0.6, ' stroke="#6b7690" stroke-width="0.4"') + T(68, 13.9, "4W8", 2.3, "#e5e7eb", 700, 0, "middle") + R(27, 27, 28, 9, "#262b33", 2) + `<path d="M96 22 l3 6 l-6 0z" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>` + T(96, 31, "LV.Core", 1.5, "#e5e7eb", 700, 0, "middle");
+        s += R(300, 10, 36, 20, "#0b0c0e", 1.5) + C(376, 21, 14, "#9aa3b2") + C(376, 21, 12.5, "#c7ccd6") + C(376, 21, 5, "#e5e7eb", ' stroke="#9aa3b2" stroke-width="0.6"') + C(376, 21, 1.5, "#4b5563") + [[376, 12.5, 0], [376, 29.5, 180], [367.5, 21, 270], [384.5, 21, 90]].map(([x, y, a]) => `<path transform="translate(${x} ${y}) rotate(${a})" d="M-1.6 1 L0 -1.6 L1.6 1Z" fill="#4b5563"/>`).join("");
+        s += C(410, 10.5, 2.4, "none", ' stroke="#f3f4f6" stroke-width="0.7"') + Ti(414, 12.5, "Clear-Com", 5.4, "#f3f4f6", 900);
+        return s;
+      }
+      // Riedel MediorNet MicroN : 1 U gris, afficheur, gros bouton rouge, trois ventilateurs, LED d'état
+      case "micron": {
+        let s = earsO("#4a5059", "#e5e7eb") + R(13, 0, 457, H, "#5a606a", 1) + Array.from({ length: 4 }, (_, i) => R(16, 30 + i * 3, 266, 0.5, "#454a52")).join("");
+        s += R(210, 8, 45, 17, "#3a3f46", 1.5) + R(212.5, 10.5, 40, 12, "#14161a", 1) + C(269, 16, 8, "#7f1d1d") + C(269, 16, 6.8, "#dc2626") + C(267, 14, 2.5, "#f87171") + scr(293, 22, 2.4) + scr(466, 22, 2.4);
+        s += [322, 391, 436].map((x) => C(x, 22, 18.5, "#4b5059") + C(x, 22, 17, "#2a2d33") + Array.from({ length: 6 }, (_, i) => `<path transform="translate(${x} 22) rotate(${i * 60})" d="M3 -3 Q12 -12 15 -4 Q10 -2 4 0Z" fill="#5f656e"/>`).join("") + C(x, 22, 4, "#4b5059")).join("");
+        s += ["PSU 1", "PSU 2", "FAN", "PWR"].map((t, i) => led(222 + i * 15, 30, "#22c55e", 0.8) + T(222 + i * 15, 34, t, 1.5, "#d1d5db", 700, 0, "middle")).join("") + ["SYNC MASTER", "LINKS", "SDI", "MADI"].map((t, i) => T(222 + i * 15, 39, t, 1.4, "#d1d5db", 700, 0, "middle")).join("") + T(466, 42, "RIEDEL MEDIORNET", 1.6, "#d1d5db", 800, 0, "end");
+        return s;
+      }
+      // Riedel Performer C44 Plus : 1 U gris clair, 4 XLR DPL, 8 RJ45 AIO, USB et micro-interrupteurs de programmation
+      case "c44": {
+        let s = earsO("#b9bec2", "#f3f4f6") + R(13, 0, 457, H, "#c8ccce", 1) + Tf(16, 18, "C44 plus", 4.4, "#4b5563", "start");
+        s += ["DC ext", "DC int", "DC ok"].map((t, i) => led(33, 20 + i * 6.5, "#16a34a", 1) + T(36, 21.3 + i * 6.5, t, 3.4, "#4b5563", 400)).join("");
+        s += [67, 119, 171, 224].map((x, i) => T(x, 7, `DPL ${i + 1}`, 3.4, "#f3f4f6", 400, 0, "middle") + C(x, 23, 11, "#141516") + C(x, 23, 9, "#5b4a1d") + C(x, 23, 7.5, "#1d1a12") + [[-3, -2], [3, -2], [0, 3]].map(([a, b]) => C(x + a, 23 + b, 1.3, "#e8c25a")).join("") + C(x - 11, 35, 1.4, "#1d2023") + led(x - 15, 32, "#16a34a", 0.8)).join("");
+        s += Array.from({ length: 8 }, (_, i) => { const x = 267 + i * 17.8; return T(x + 7, 18, `AIO ${i + 1}`, 3.2, "#f3f4f6", 400, 0, "middle") + R(x, 24, 14.5, 12, "#e5e7eb", 0.6, ' stroke="#4b5563" stroke-width="0.5"') + R(x + 2, 26, 10.5, 8, "#2a2d33", 0.4) + R(x + 4.5, 34, 5.5, 1.6, "#2a2d33"); }).join("");
+        s += T(418, 18, "USB", 3.2, "#f3f4f6", 400, 0, "middle") + R(413, 25, 10, 9, "#e5e7eb", 0.8, ' stroke="#4b5563" stroke-width="0.5"') + R(415, 27, 6, 5, "#2a2d33", 0.5) + T(443, 18, "Program", 3.2, "#f3f4f6", 400, 0, "middle") + R(432, 26, 22, 6, "#3b82f6", 0.5) + Array.from({ length: 8 }, (_, i) => R(433 + i * 2.6, 27, 1.4, 2.2, "#e5e7eb")).join("");
+        s += `<path d="M458 22 l3 -10 h5 q4 0 3 4 q-1 3 -4 3 l3 3 z" fill="#b91c1c"/>`;
+        return s;
+      }
+      // Riedel Artist RSP-2318 : 1 U sombre, casque, 18 touches autour de 3 écrans couleur, encodeur rouge, haut-parleur
+      case "rsp2318": {
+        let s = earsO("#2b2e33", "#e5e7eb") + R(13, 0, 457, H, "#2a2d33", 1) + R(16, 2, 451, 40.5, "#1f2226", 1.5);
+        s += xlrF(34, 10, 0.55) + xlrM(34, 31, 0.75);
+        const key = (x, y) => R(x, y, 9, 7.5, "#3a3d43", 1, ' stroke="#55595e" stroke-width="0.3"');
+        const scr3 = (x, rows) => R(x, 3.5, 58, 37, "#050607", 1.5) + rows.map(([a, ca, b, cb], i) => T(x + 3, 11 + i * 11.5, a, 3.4, ca, 700) + T(x + 31, 11 + i * 11.5, b, 3.4, cb, 700) + R(x + 3, 13 + i * 11.5, 24, 0.5, "#3f4549") + R(x + 31, 13 + i * 11.5, 24, 0.5, "#3f4549")).join("");
+        s += [6, 17.5, 29].map((y) => key(55, y)).join("") + scr3(70, [["Studio 1", "#ef4444", "Talent", "#facc15"], ["Camera 1", "#4ade80", "Rotate!", "#facc15"], ["Studio 2", "#60a5fa", "Studio 3", "#facc15"]]);
+        s += [6, 17.5, 29].map((y) => key(133, y) + key(144, y) + key(229, y) + key(240, y)).join("") + scr3(161, [["Director", "#f3f4f6", "Vid.Eng.", "#4ade80"], ["MCR", "#4ade80", "Prod.", "#facc15"], ["Aud.Eng.", "#f3f4f6", "Floor", "#facc15"]]);
+        s += scr3(258, [["MCR", "#4ade80", "<REPLY>", "#f3f4f6"], ["Light", "#4ade80", "Program", "#60a5fa"], ["Stage", "#f3f4f6", "Fingers!", "#f3f4f6"]]) + [6, 17.5, 29].map((y) => key(321, y)).join("");
+        s += C(383, 16, 10, "#3a3d43") + Array.from({ length: 24 }, (_, i) => C(383 + Math.cos(i * Math.PI / 12) * 8.6, 16 + Math.sin(i * Math.PI / 12) * 8.6, 0.55, "#ef4444")).join("") + C(383, 16, 7, "#b91c1c") + C(383, 16, 6, "#dc2626") + C(381, 14, 2, "#f87171");
+        s += [366, 383, 400].map((x) => R(x - 5, 33, 10, 5, "#3a3d43", 1)).join("") + R(403, 4, 6, 11, "#c9d1d8", 0.6) + R(404.5, 5.5, 3, 8, "#2b2f36") + R(414, 4, 42, 30, "#26292e", 1.5) + Array.from({ length: 9 }, (_, i) => Array.from({ length: 13 }, (_, j) => C(417 + j * 3.1, 7 + i * 3.1, 0.7, "#0b0c0e")).join("")).join("") + T(456, 41, "RIEDEL RSP-2318", 1.8, "#9aa3ab", 800, 0, "end");
+        return s;
+      }
+      // Riedel NSA-002A : 2 U gris, ouïes en haut et en bas, 4 entrées XLR femelles (PUSH) et 4 sorties XLR mâles, logo
+      case "nsa002": {
+        let s = earsO("#33373d", "#e5e7eb") + R(13, 0, 457, H, "#3d4249", 1) + [9, 82].map((y) => Array.from({ length: 34 }, (_, i) => R(17 + i * 13.4, y - 1.2, 9, 2.4, "#1b1d21", 1.2)).join("")).join("");
+        s += [62, 114, 165, 216].map((x, i) => T(x - 19, 18, `IN ${i + 1}`, 5.4, "#f3f4f6", 700) + R(x - 2, 9.5, 14, 8.5, "#b8bfc5", 2.5) + T(x + 5, 16.6, "PUSH", 3.8, "#1d2023", 900, 0, "middle") + xlrF(x, 45, 2.05)).join("");
+        s += [267, 318, 368, 419].map((x, i) => T(x - 19, 18, `OUT ${i + 1}`, 5.4, "#f3f4f6", 700) + xlrM(x, 45, 2.05)).join("");
+        s += R(16, 72.5, 377, 0.8, "#1b1d21") + T(470, 76, "NSA-002A", 5.6, "#e5e7eb", 800, 0.4, "end") + T(431, 76, "RIEDEL", 5.6, "#e5e7eb", 400, 0.6, "end") + `<path d="M400 76 l2 -6 h3 q3 0 2 3 q-1 1.5 -3 1.5 l2 1.5 z" fill="#e5e7eb"/>`;
+        return s;
+      }
+      // Riedel Artist 32 : 2 U gris, LED par baie et par CPU, bloc noir des alimentations à droite
+      case "artist32": {
+        let s = earsO("#5b6169", "#f3f4f6") + R(13, 0, 457, H, "#6b727b", 1) + R(21, 79, 441, 9.9, "#7c838c") + scr(122, 5, 2.2) + scr(359, 5, 2.2);
+        s += `<path d="M40 22 l3 -9 h5 q4 0 3 4 q-1 3 -4 3 l3 2 z" fill="#f3f4f6"/>`;
+        const row = (x, y, t, cols, lab) => T(x, y + 0.8, t, 2.1, "#1f2937", 800, 0, "end") + cols.map((c, i) => led(x + 8 + i * 8, y, c, 1.3) + T(x + 8 + i * 8, y + 4.4, lab[i], 1.4, "#1f2937", 700, 0, "middle")).join("");
+        const bay = ["#ef4444", "#facc15", "#f97316"], cpu = ["#ef4444", "#facc15", "#f97316", "#f97316", "#f97316", "#f97316"];
+        s += [["BAY 4", 19], ["BAY 3", 40], ["BAY 2", 60]].map(([t, y]) => row(104, y, t, bay, ["ERR", "STAT 1", "STAT 2"])).join("") + row(265, 19, "BAY 1", bay, ["ERR", "STAT 1", "STAT 2"]) + row(265, 40, "CPU B", cpu, ["ERR", "CLK", "FO+", "FO-", "TX", "RX"]) + row(265, 60, "CPU A", cpu, ["ERR", "CLK", "FO+", "FO-", "TX", "RX"]);
+        s += R(398, 1, 61, 78, "#15161a", 1.5) + T(455, 12, "RIEDEL ARTIST-32", 2.8, "#f3f4f6", 800, 0, "end") + [["PSU 2", 20], ["PSU 1", 64]].map(([t, y]) => T(410, y + 0.8, t, 2.2, "#f3f4f6", 800) + [431, 438, 445].map((x, i) => led(x, y, "#facc15", 1.2) + T(x, y + 4.4, ["AC", "DC", "FAN"][i], 1.4, "#f3f4f6", 700, 0, "middle")).join("")).join("");
+        return s;
+      }
+      // Riedel Tango TNG-200 : 1 U sombre, LED d'état et USB en bas à gauche, écran à bandeau rouge, anneau de navigation rouge, touches HOME / MENU
+      case "tango": {
+        let s = earsO("#2b2e33", "#e5e7eb") + R(13, 0, 457, H, "#33363b", 1) + R(21, 2, 439, 40.5, "#2a2d31", 1.5);
+        s += R(331, 8, 48, 27, "#14161a", 1) + R(331, 8, 48, 5, "#b91c1c", 1) + T(376, 11.9, "RIEDEL", 2.4, "#f3f4f6", 800, 0, "end") + Array.from({ length: 5 }, (_, i) => R(334, 16 + i * 3.6, 30 - (i % 2) * 8, 0.8, "#9aa3ab")).join("");
+        s += C(401, 21, 10.5, "#1d2023") + C(401, 21, 9.5, "#3a3d43") + C(401, 21, 6, "#1d2023") + C(401, 21, 5.2, "#dc2626") + [0, 90, 180, 270].map((a) => `<path transform="translate(401 21) rotate(${a})" d="M-1 -8.4 L1 -8.4 L0 -9.6Z" fill="#9aa3ab"/>`).join("") + R(421, 8, 13, 4, "#4b4f55", 1) + R(421, 29, 13, 4, "#4b4f55", 1) + T(427.5, 7, "HOME", 1.4, "#9aa3ab", 700, 0, "middle") + T(427.5, 36.5, "MENU", 1.4, "#9aa3ab", 700, 0, "middle");
+        s += [["POWER", 68.5, ["AC 1", "AC 2"], [64, 73]], ["STATUS", 102, ["FAILURE", "WARNING", "ACTIVE"], [92, 102, 112]], ["", 0, ["ETH 1", "ETH 2"], [146, 155]], ["", 0, ["AES67/AVB 1", "AES67/AVB 2"], [171, 185]], ["", 0, ["SFP 1", "SFP 2"], [206, 215]]].map(([h, hx, l, xs]) => (h ? T(hx, 29, h, 1.6, "#9aa3ab", 700, 0, "middle") : "") + l.map((t, i) => T(xs[i], 34, t, 1.3, "#9aa3ab", 700, 0, "middle") + led(xs[i], 38, i === 1 && h === "STATUS" ? "#f59e0b" : "#22c55e", 0.8)).join("")).join("");
+        s += R(124, 28, 10, 9, "#c9d1d8", 0.8) + R(126, 30, 6, 5, "#2a2d31", 0.5) + T(129, 26, "USB", 1.4, "#9aa3ab", 700, 0, "middle") + T(458, 41, "RIEDEL TANGO", 1.6, "#6b7280", 800, 0, "end");
+        return s;
+      }
+      // Clear-Com Eclipse HX-Delta (3 U) et HX-Median (6 U) : châssis bleu nuit, modules d'interface à gauche, cartes à loquets bleus, panneau EclipseHX à droite
+      case "eclipsedelta": case "eclipsemedian": {
+        const med = type === "eclipsemedian", NV = "#1f2a44", LB = "#8aa6d8";
+        let s = earsU("#18203a", "#d5dade") + R(13, 0, 457, H, NV, 1) + [4, 473].map((x) => R(x, H * 0.22, 6, H * 0.56, "#2b3550", 3)).join("");
+        const mod = (x, y, w, h, t) => R(x, y, w, h, "#25314f", 1, ' stroke="#3b4a72" stroke-width="0.6"') + `<text x="0" y="0" transform="translate(${x + 4.5} ${y + h / 2 + 8}) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="3.2" font-weight="700" fill="#cbd5e1">${t}</text>` + [0, 1, 2].map((i) => C(x + w * 0.45 + i * w * 0.18, y + h * 0.45, Math.min(w, h) * 0.07, "#0f1526", ' stroke="#9aa3ab" stroke-width="0.5"')).join("");
+        if (!med) {
+          s += mod(18, 4, 132, 38, "TEL-14") + mod(18, 44, 132, 46, "CCI-22") + mod(18, 92, 132, 38, "FOR-22") + R(126, 6, 9, 7, "#d5dade", 0.6) + T(140, 10, "LAN", 1.6, "#cbd5e1", 700);
+          for (let i = 0; i < 6; i++) { const y = 6 + i * 20.5; s += R(154, y, 262, 18, "#2a3550", 1.5, ' stroke="#3b4a72" stroke-width="0.5"') + R(156, y + 3, 9, 12, LB, 2) + R(405, y + 3, 9, 12, LB, 2) + R(175, y + 7, 220, 3.5, "#3b4a72", 1) + [0, 1, 2, 3].map((j) => led(240 + j * 30, y + 9, "#60a5fa", 0.8)).join(""); }
+          s += R(420, 4, 48, 126, "#1a2340", 1.5) + Ti(466, 18, "EclipseHX", 6, "#e5e7eb", 800, "end") + C(444, 8, 3.5, "#9aa3ab") + ["MAIN", "HUB", "ACTIVE", "FAULT", "FAN", "PSU 1", "PSU 2"].map((t, i) => led(431, 30 + i * 6, i > 2 ? "#ef4444" : "#22c55e", 1.1) + T(435, 31 + i * 6, t, 2, "#cbd5e1", 700)).join("") + R(428, 80, 34, 3, "#0f1526", 1);
+        } else {
+          s += mod(31, 4, 63, 120, "FOR-22") + mod(100, 4, 73, 120, "TEL-14") + mod(31, 128, 63, 134, "GPI-6") + mod(100, 128, 73, 134, "AES-6") + [[33, 58], [102, 58]].map(([x, y]) => R(x, y + 52, 59, 9, "#e5e7eb", 0.8)).join("");
+          for (let i = 0; i < 10; i++) { const x = 182 + i * 18.4; s += R(x, 6, 16.5, 255, "#2a3550", 1.5, ' stroke="#3b4a72" stroke-width="0.5"') + R(x + 2.5, 6, 11.5, 22, LB, 3) + R(x + 2.5, 239, 11.5, 22, LB, 3) + R(x + 7, 36, 2.5, 196, "#3b4a72", 1) + [0, 1, 2, 3, 4].map((j) => led(x + 8.2, 60 + j * 36, "#60a5fa", 0.9)).join(""); }
+          s += R(368, 6, 42, 30, "#25314f", 1) + R(414, 6, 42, 30, "#25314f", 1) + R(368, 40, 90, 222, "#162038", 3) + T(413, 82, "Clear-Com", 6, "#e5e7eb", 800, 0, "middle") + Ti(413, 112, "EclipseHX", 11, "#f3f4f6", 800, "middle") + R(380, 130, 66, 88, "#0f1526", 4) + Array.from({ length: 14 }, (_, i) => R(386, 140 + i * 5.5, 54, 2.2, "#25314f", 1)).join("");
+        }
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -6083,7 +6218,7 @@ label.p48 input:checked + span { border-style: solid; }
     "Intercom": [
       ["Bolero", "Riedel", "Intercom sans fil · 1,9 GHz · boîtiers 6 touches BL-BPK · antennes BL-ANT"],
       ["Bolero BL-BPK", "Riedel", "Boîtier ceinture Bolero · 6 touches"],
-      ["Bolero NSA-002A", "Riedel", "Interface 4 fils analogique vers AES67 · GPIO"],
+      ["Bolero NSA-002A", "Riedel", "Interface 4 fils analogique vers AES67 · 4 in / 4 out XLR · GPIO · 2 U"],
       ["PRO-D1", "Riedel", "Casque micro 1 oreille"],
       ["PRO-D2", "Riedel", "Casque micro 2 oreilles"],
       ["FreeSpeak", "Clear-Com", "Intercom sans fil"],
@@ -6275,15 +6410,16 @@ label.p48 input:checked + span { border-style: solid; }
       ["Clavier Mac", "Apple", "Clavier"]
     ],
     "Intercom": [
-      ["Eclipse HX-Delta", "Clear-Com", "Matrice intercom numérique · cartes E-MADI / IVC / analogiques"],
-      ["Eclipse HX-Median", "Clear-Com", "Matrice intercom numérique · grande capacité"],
+      ["Eclipse HX-Delta", "Clear-Com", "Matrice intercom numérique · cartes E-MADI / IVC / analogiques · 3 U"],
+      ["Eclipse HX-Median", "Clear-Com", "Matrice intercom numérique · grande capacité · 6 U"],
       ["HMS-4X", "Clear-Com", "Station principale HelixNet · 4 canaux · 1 U"],
       ["HRM-4X", "Clear-Com", "Poste rackable HelixNet · 4 canaux · 1 U"],
       ["HXII-BP", "Clear-Com", "Boîtier ceinture HelixNet · 2 canaux"],
       ["FreeSpeak II BP", "Clear-Com", "Boîtier ceinture sans fil 1,9 GHz"],
       ["Antenne FreeSpeak II", "Clear-Com", "Transceiver FreeSpeak II 1,9 GHz"],
       ["Splitter FreeSpeak II", "Clear-Com", "Répartiteur d'antennes FreeSpeak II"],
-      ["LQ-4W8", "Clear-Com", "Interface IP LQ · 8 ports 4 fils"],
+      ["LQ-4W8", "Clear-Com", "Interface IP LQ (LQ-R rackable) · 8 ports 4 fils · 1 U"],
+      ["Panneau V-Series", "Clear-Com", "Poste d'intercom Eclipse · 12 touches à écran · haut-parleur · 1 U"],
       ["Artist 32", "Riedel", "Matrice intercom · 32 ports · 2 U"],
       ["Antenne Bolero", "Riedel", "Antenne active Bolero · AES67 · 1,9 GHz"],
       ["Performer C3", "Riedel", "Poste partyline numérique Performer"],
