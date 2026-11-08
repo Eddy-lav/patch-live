@@ -1,6 +1,6 @@
 // Patch Live : fonctionne hors ligne. La page est toujours prise sur le réseau quand il y en a (mises à jour immédiates),
 // sinon dans le cache ; les bibliothèques et polices sont gardées en cache.
-const CACHE = "patch-live-19d5e9fae1";
+const CACHE = "patch-live-1fa921b2f6";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

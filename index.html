@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "19d5e9fae1";</script>
+<script>window.PL_VER = "1fa921b2f6";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -3487,7 +3487,7 @@ label.p48 input:checked + span { border-style: solid; }
   // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   // Façades dessinées d'après les photos du parc, reconnues au nom (stage racks, I/O, appareils du synoptique, horloges)
-  const FACE_BY_NAME = [[/portico\s*5045|\b5045\b/i, "p5045"], [/8\s*mx\s*2/i, "ati8mx2"], [/960\s*l\b/i, "lex960l"], [/api\s*7600/i, "api7600"], [/apollo\s*quad/i, "apolloquad"], [/eventide\s*eclipse|^\s*eclipse\s*$/i, "eclipse"], [/klang\s*:?\s*fabrik/i, "klang"], [/\bm\s*-?\s*3000\b/i, "m3000"], [/reverb\s*4000/i, "rev4000"], [/\bm\s*-?\s*6000\b|system\s*6000/i, "m6000"], [/bricasti|\bm7\b/i, "m7"], [/xl\s*88/i, "xl88"], [/\b5024\b/i, "neve5024"], [/1073\s*-?\s*opx/i, "neve1073opx"], [/pcm\s*70/i, "pcm70"], [/pcm\s*96/i, "pcm96"], [/pcm\s*92/i, "pcm92"], [/ta\s*-?\s*1\s*vp|auto\s*-?\s*tune/i, "ta1vp"], [/transient\s*designer\s*4/i, "td4"], [/transient\s*designer\s*2|^\s*(spl\s*)?transient(\s*designer)?\s*$/i, "td2"], [/xl\s*42/i, "xl42"], [/xl\s*48/i, "xl48"], [/api\s*2500/i, "api2500"], [/1073\s*-?\s*dpd/i, "neve1073dpd"], [/rb\s*-?\s*dda/i, "rbdda6a"], [/apollo\s*x\s*-?\s*16(?!\s*d)/i, "apollox16"], [/madi\s*\.?\s*src/i, "madisrc"], [/\bpc\s*(rack\s*)?1\s*u\b/i, "pc1u"], [/\bpc\s*(rack\s*)?2\s*u\b/i, "pc2u"], [/redbox|sonifex|rb\s*-?\s*aes/i, "redbox"], [/fireface\s*-?\s*802/i, "fireface802"], [/madi\s*-?\s*router/i, "madirouter"], [/madi\s*-?\s*bri?dge/i, "madibridge"], [/rack\s*-?\s*mac\s*mini/i, "rackmacmini"], [/xmac/i, "xmacmini"], [/gs\s*-?\s*724/i, "gs724t"], [/sg\s*-?\s*350/i, "sg350x"], [/uad.*live|live\s*rack/i, "uadlive"], [/echo\s*(iii|3)\b/i, "echo3"], [/exbox\s*\.?\s*blds/i, "exboxblds"], [/exbox\s*\.?\s*md/i, "exboxmd"], [/\bmgb\b/i, "mgb"], [/ultra\s*-?\s*lite/i, "motuul3"], [/x\s*-?\s*440|summit|extreme\s*networks/i, "x440"], [/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
+  const FACE_BY_NAME = [[/\bps\s*-?\s*32\s*tm\b/i, "ps32tm"], [/\bps\s*-?\s*32\s*t\b/i, "ps32t"], [/\bps\s*-?\s*32\s*m\b|plaque\s*distri\s*32/i, "ps32m"], [/\bps\s*-?\s*16\b|multiprise\s*rackable/i, "ps16"], [/ps\s*-?\s*332\s*ts/i, "ps332ts"], [/\bps\s*-?\s*63\s*tl?\b/i, "ps63t"], [/\bpsm?\s*-?\s*316\s*m\b/i, "psm316m"], [/\bpsm\s*-?\s*332\s*m\b/i, "psm332m"], [/psm\s*-?\s*610/i, "psm610s"], [/p\s*-?\s*12\s*mf/i, "p12mf"], [/pa\s*-?\s*60\s*m/i, "pa60m"], [/\bpa\s*-?\s*20\b/i, "pa20"], [/plaque\s*p\s*-?\s*20\b|^\s*p\s*-?\s*20\s*$/i, "p20"], [/split\s*-?\s*20/i, "split20"], [/alc\s*-?\s*161/i, "alc161"], [/onduleur|\bups\b|eaton/i, "ups"], [/\bpb\s*-?\s*11\b|power\s*brite/i, "pb11"], [/plaque\s*bnc/i, "pbnc"], [/travers.*xlr\s*-?\s*5/i, "trav_xlr5"], [/travers.*xlr.*m[aâ]le/i, "trav_xlrm"], [/travers.*xlr/i, "trav_xlrf"], [/travers.*bnc/i, "trav_bnc"], [/travers.*(rj\s*-?\s*45|ethercon)/i, "trav_rj45"], [/smart\s*-?\s*beam/i, "trav_sb"], [/travers.*\bn\b/i, "trav_n"], [/tiroir/i, "drawer"], [/tablette/i, "shelf"], [/balai|brosse|brush/i, "brush"], [/plaque.*trou/i, "perfo"], [/bouchage|plaque\s*pleine/i, "blank"], [/portico\s*5045|\b5045\b/i, "p5045"], [/8\s*mx\s*2/i, "ati8mx2"], [/960\s*l\b/i, "lex960l"], [/api\s*7600/i, "api7600"], [/apollo\s*quad/i, "apolloquad"], [/eventide\s*eclipse|^\s*eclipse\s*$/i, "eclipse"], [/klang\s*:?\s*fabrik/i, "klang"], [/\bm\s*-?\s*3000\b/i, "m3000"], [/reverb\s*4000/i, "rev4000"], [/\bm\s*-?\s*6000\b|system\s*6000/i, "m6000"], [/bricasti|\bm7\b/i, "m7"], [/xl\s*88/i, "xl88"], [/\b5024\b/i, "neve5024"], [/1073\s*-?\s*opx/i, "neve1073opx"], [/pcm\s*70/i, "pcm70"], [/pcm\s*96/i, "pcm96"], [/pcm\s*92/i, "pcm92"], [/ta\s*-?\s*1\s*vp|auto\s*-?\s*tune/i, "ta1vp"], [/transient\s*designer\s*4/i, "td4"], [/transient\s*designer\s*2|^\s*(spl\s*)?transient(\s*designer)?\s*$/i, "td2"], [/xl\s*42/i, "xl42"], [/xl\s*48/i, "xl48"], [/api\s*2500/i, "api2500"], [/1073\s*-?\s*dpd/i, "neve1073dpd"], [/rb\s*-?\s*dda/i, "rbdda6a"], [/apollo\s*x\s*-?\s*16(?!\s*d)/i, "apollox16"], [/madi\s*\.?\s*src/i, "madisrc"], [/\bpc\s*(rack\s*)?1\s*u\b/i, "pc1u"], [/\bpc\s*(rack\s*)?2\s*u\b/i, "pc2u"], [/redbox|sonifex|rb\s*-?\s*aes/i, "redbox"], [/fireface\s*-?\s*802/i, "fireface802"], [/madi\s*-?\s*router/i, "madirouter"], [/madi\s*-?\s*bri?dge/i, "madibridge"], [/rack\s*-?\s*mac\s*mini/i, "rackmacmini"], [/xmac/i, "xmacmini"], [/gs\s*-?\s*724/i, "gs724t"], [/sg\s*-?\s*350/i, "sg350x"], [/uad.*live|live\s*rack/i, "uadlive"], [/echo\s*(iii|3)\b/i, "echo3"], [/exbox\s*\.?\s*blds/i, "exboxblds"], [/exbox\s*\.?\s*md/i, "exboxmd"], [/\bmgb\b/i, "mgb"], [/ultra\s*-?\s*lite/i, "motuul3"], [/x\s*-?\s*440|summit|extreme\s*networks/i, "x440"], [/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
   const faceByName = (t) => (FACE_BY_NAME.find(([re]) => re.test(t || "")) || [])[1] || "";
   function devType(n) {
     if (!n) return "box";
@@ -3589,9 +3589,9 @@ label.p48 input:checked + span { border-style: solid; }
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
   const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5, mgb: 154, motuul3: 218, x440: 304 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45, p5045: 44.45, ati8mx2: 44.45, lex960l: 177.8, api7600: 44.45, apolloquad: 44.45, eclipse: 44.45, klang: 88.9, m3000: 44.45, rev4000: 44.45, m6000: 88.9, m7: 44.45, xl88: 177.8, neve5024: 44.45, neve1073opx: 88.9, pcm70: 44.45, pcm96: 44.45, pcm92: 44.45, ta1vp: 44.45, td2: 44.45, td4: 44.45, xl42: 44.45, xl48: 44.45, api2500: 44.45, neve1073dpd: 44.45, rbdda6a: 44.45 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45, p5045: 44.45, ati8mx2: 44.45, lex960l: 177.8, api7600: 44.45, apolloquad: 44.45, eclipse: 44.45, klang: 88.9, m3000: 44.45, rev4000: 44.45, blank: 44.45, perfo: 44.45, brush: 44.45, drawer: 88.9, shelf: 88.9, trav_xlrf: 44.45, trav_xlrm: 44.45, trav_xlr5: 44.45, trav_bnc: 44.45, trav_n: 44.45, trav_rj45: 44.45, trav_sb: 44.45, pbnc: 44.45, p12mf: 88.9, p20: 133.35, pa20: 266.7, pa60m: 133.35, split20: 88.9, ps16: 44.45, ps32m: 177.8, ps32t: 266.7, ps32tm: 266.7, ps332ts: 400.05, ps63t: 266.7, psm316m: 133.35, psm332m: 133.35, psm610s: 133.35, alc161: 44.45, ups: 44.45, pb11: 44.45, m6000: 88.9, m7: 44.45, xl88: 177.8, neve5024: 44.45, neve1073opx: 88.9, pcm70: 44.45, pcm96: 44.45, pcm92: 44.45, ta1vp: 44.45, td2: 44.45, td4: 44.45, xl42: 44.45, xl48: 44.45, api2500: 44.45, neve1073dpd: 44.45, rbdda6a: 44.45 };
   function devArt(type, label, ref) {
-    const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
+    const H = (ref && ref.__H) || DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
     const ears = (c) => R(0, 0, 13, H, c || "#5d646b", 1.5) + R(470, 0, 13, H, c || "#5d646b", 1.5) + C(6.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(6.5, H - Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, Math.min(8, H / 4), 2.6, "#1d2125") + C(476.5, H - Math.min(8, H / 4), 2.6, "#1d2125");
     const face = (c) => R(11, 0, 461, H, c || "#24282c", 2);
@@ -3632,6 +3632,28 @@ label.p48 input:checked + span { border-style: solid; }
     const yam = (x, y) => C(x, y, 2.4, "none", ' stroke="#f3f4f6" stroke-width="0.6"') + R(x - 0.3, y - 1.8, 0.6, 3.6, "#f3f4f6") + T(x + 4, y + 1.6, "YAMAHA", 4.6, "#f3f4f6", 900);
     const Ti = (x, y, t, sz, c, w, anc) => `<text x="${x}" y="${y}" font-family="Arial, Helvetica, sans-serif" font-style="italic" font-size="${sz}" font-weight="${w || 700}" fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
     const Tf = (x, y, t, sz, c, anc, it) => `<text x="${x}" y="${y}" font-family="Georgia, 'Times New Roman', serif" font-size="${sz}"${it ? ' font-style="italic"' : ""} fill="${c}"${anc ? ` text-anchor="${anc}"` : ""}>${esc(t)}</text>`;
+    // Accessoires (plaques secteur BEST, plaques audio) : prises CEE, Schuko, socle rouge, disjoncteurs, multipaire Harting, embase D
+    const cee = (x, y, s, base) => (base === false ? "" : R(x - 11 * s, y - 11 * s, 22 * s, 22 * s, typeof base === "string" ? base : "#c9ccd0", 2 * s) + [[-9, -9], [9, -9], [-9, 9], [9, 9]].map(([a, b]) => C(x + a * s, y + b * s, 0.7 * s, "#6b7280")).join("")) + C(x, y, 9 * s, "#2048c8") + R(x - 6 * s, y - 12.5 * s, 12 * s, 6 * s, "#2048c8", 1.5 * s) + C(x, y, 7.4 * s, "#1e3fae") + [[-3.4, 1.6], [3.4, 1.6], [0, -4]].map(([a, b]) => C(x + a * s, y + b * s, 0.9 * s, "#0b1a4d")).join("");
+    const schuko = (x, y, s) => R(x - 8 * s, y - 8 * s, 16 * s, 16 * s, "#2563eb", 3 * s) + C(x, y, 6.2 * s, "#1d4ed8") + C(x - 2.6 * s, y, 0.8 * s, "#0b1a4d") + C(x + 2.6 * s, y, 0.8 * s, "#0b1a4d") + R(x - 0.7 * s, y - 6 * s, 1.4 * s, 1.6 * s, "#c9ccd0");
+    const inlet = (x, y, w, h) => R(x, y, w, h * 0.38, "#eceae2", 2) + R(x + w * 0.12, y + h * 0.36, w * 0.76, h * 0.56, "#dc2626", 3) + R(x + w * 0.2, y + h * 0.88, w * 0.6, h * 0.12, "#b91c1c", 2) + C(x + w / 2, y + h * 0.19, Math.min(w, h) * 0.1, "#d6d3c8");
+    const brk = (x, y, n, w, h) => R(x, y, n * w, h, "#e7e1cf", 0.6) + Array.from({ length: n }, (_, i) => R(x + i * w + w * 0.3, y + h * 0.42, w * 0.4, h * 0.22, "#1d2023", 0.3) + R(x + i * w + w * 0.2, y + h * 0.12, w * 0.6, h * 0.14, "#ef6c33", 0.3) + R(x + i * w, y, 0.3, h, "#9aa3ab")).join("");
+    const ceBolt = (x, y, s) => T(x, y, "CE", 6 * s, "#f3f4f6", 400) + `<path d="M${x + 12 * s} ${y - 6 * s} l-2.4 ${4 * s} h${2.4 * s} l-2.4 ${4.6 * s}" fill="none" stroke="#f3f4f6" stroke-width="${0.6 * s}"/>`;
+    const warn = (x, y, s, t) => `<path d="M${x} ${y - 5 * s} L${x + 5 * s} ${y + 4 * s} L${x - 5 * s} ${y + 4 * s}Z" fill="none" stroke="#f3f4f6" stroke-width="${0.5 * s}"/>` + T(x, y + 2.6 * s, "!", 5 * s, "#f3f4f6", 900, 0, "middle") + (t ? R(x + 6 * s, y - 2 * s, t.length * 1.25 * s + 2, 5 * s, "none", 0, ` stroke="#f3f4f6" stroke-width="${0.3 * s}"`) + T(x + 7 * s, y + 2 * s, t, 2.4 * s, "#f3f4f6", 400) : "");
+    const bestV = (x, y, sz, c) => `<text x="0" y="0" transform="translate(${x} ${y}) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-style="italic" font-size="${sz}" font-weight="900" fill="${c || "#f3f4f6"}" text-anchor="middle">BEST</text>`;
+    const hart = (x, y, w, h, light) => R(x, y, w, h, light ? "#f3f4f6" : "#7a8288", 3, ' stroke="#4b5563" stroke-width="0.6"') + R(x + w * 0.18, y - h * 0.04, w * 0.64, h * 0.1, light ? "#f3f4f6" : "#6b7280", 2, ' stroke="#4b5563" stroke-width="0.5"') + R(x + w * 0.18, y + h * 0.94, w * 0.64, h * 0.1, light ? "#f3f4f6" : "#6b7280", 2, ' stroke="#4b5563" stroke-width="0.5"') + R(x + w * 0.2, y + h * 0.16, w * 0.6, h * 0.68, light ? "#ffffff" : "#ece6d3", 2, ' stroke="#4b5563" stroke-width="0.5"') + (light ? "" : Array.from({ length: 12 }, (_, r) => [0.36, 0.5, 0.64].map((f) => C((x + w * f).toFixed(2), (y + h * (0.22 + r * 0.05)).toFixed(2), Math.min(w, h) * 0.022, "#8a7f6c")).join("")).join("") + R(x + w * 0.24, y + h * 0.78, w * 0.12, h * 0.05, "#dc2626"));
+    // Embase format D (traversée de panneau) : XLR femelle / mâle / 5 points, BNC, N, etherCON, SmartBeam
+    const dtype = (x, y, k, s) => {
+      s = s || 1; const pl = (c) => R(x - 12 * s, y - 13 * s, 24 * s, 26 * s, c, 2 * s) + C(x - 9 * s, y + 10 * s, 1.3 * s, "#3a3d41") + C(x + 9 * s, y - 10 * s, 1.3 * s, "#3a3d41");
+      if (k === "bnc") return pl("#1d2023") + C(x, y, 9 * s, "#2a2d31") + C(x, y, 7 * s, "#c9ced3") + C(x, y, 5 * s, "#9aa3ab") + C(x, y, 3.4 * s, "#e5e2d8") + C(x, y, 0.9 * s, "#c8a24a");
+      if (k === "n") return pl("#d1d5db") + C(x, y, 9 * s, "#c9ccd0", ' stroke="#9aa3ab" stroke-width="0.5"') + C(x, y, 5.6 * s, "#e5e7eb") + C(x, y, 3.8 * s, "#f3efe6") + C(x, y, 1.1 * s, "#c8a24a");
+      if (k === "rj45") return pl("#d1d5db") + R(x - 3 * s, y - 15 * s, 6 * s, 4 * s, "#c9ccd0", 1 * s) + C(x, y + 1 * s, 9.4 * s, "#1d2023") + R(x - 4.2 * s, y - 2.6 * s, 8.4 * s, 7 * s, "#0b0c0e", 0.6) + R(x - 2.6 * s, y + 3.8 * s, 5.2 * s, 1.6 * s, "#0b0c0e");
+      if (k === "sb") return pl("#2a2d31") + C(x, y, 8 * s, "#1d2023", ' stroke="#55595e" stroke-width="0.6"') + C(x, y, 4.4 * s, "#3a3d41") + C(x, y, 1.6 * s, "#0b0c0e") + `<path d="M${x - 9 * s} ${y - 9 * s} Q${x - 22 * s} ${y + 4 * s} ${x - 6 * s} ${y + 8 * s}" fill="none" stroke="#9aa3ab" stroke-width="${0.5 * s}"/>`;
+      let o = pl("#c9ccd0") + C(x, y + 1 * s, 9.6 * s, "#9aa3ab") + C(x, y + 1 * s, 8.6 * s, "#1d2023");
+      if (k === "xlrf") o += R(x - 4 * s, y - 15 * s, 8 * s, 5 * s, "#c9ccd0", 1 * s) + T(x, y - 11.2 * s, "PUSH", 2.2 * s, "#4b5563", 800, 0, "middle") + [[-3.2, -1], [3.2, -1], [0, 4]].map(([a, b]) => C(x + a * s, y + b * s, 1.3 * s, "#0b0c0e", ' stroke="#4b5563" stroke-width="0.3"')).join("");
+      else if (k === "xlr5") o += [[-4, -1], [4, -1], [-2.5, 4], [2.5, 4], [0, 1.4]].map(([a, b]) => C(x + a * s, y + b * s, 0.9 * s, "#d8dee3")).join("");
+      else o += [[-3.2, -1], [3.2, -1], [0, 4]].map(([a, b]) => C(x + a * s, y + b * s, 1.1 * s, "#d8dee3")).join("");
+      return o;
+    };
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
       case "sd": {
@@ -4846,6 +4868,124 @@ label.p48 input:checked + span { border-style: solid; }
         s += `<ellipse cx="110" cy="21" rx="62" ry="12" fill="#fbbf24"/><ellipse cx="110" cy="21" rx="58" ry="9.5" fill="#fde68a"/>` + T(110, 21, "SONIFEX", 9, "#1d4ed8", 900, 0.4, "middle") + Ti(118, 30, "Redbox", 7.5, "#b91c1c", 900, "middle") + led(70, 34, "#7f1d1d", 1.2) + T(458, 30, ref && ref.nom ? String(ref.nom).slice(0, 14) : "RB-DDA6A", 3, "#fde68a", 800, 0, "end");
         return s;
       }
+      // ——— Lot accessoires : façades dessinées d'après les photos du parc (Plan de Rack/Machine/ACCESOIRE) ———
+      // Plaques pleine, trouée, à brosse ; tiroirs ; tablette : hauteur au choix (H suit le nombre d'U)
+      case "blank": return earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1) + R(13, 0, 457, 1.2, "#2a2c30");
+      case "perfo": { let s = earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1); for (let u = 0; u < Math.round(H / 44.45); u++) { s += R(26, u * 44.45 + 7, 431, 30, "#0b0c0e", 2); for (let x = 29; x < 455; x += 3.4) for (let y = 9.5; y < 36; y += 3.2) s += C((x + ((Math.round((y - 9.5) / 3.2) % 2) * 1.7)).toFixed(1), (u * 44.45 + y).toFixed(1), 1, "#5b6167"); } return s; }
+      case "brush": { let s = earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1); for (let u = 0; u < Math.round(H / 44.45); u++) { s += R(42, u * 44.45 + 8, 399, 28, "#2a2c30", 1) + R(44, u * 44.45 + 10, 395, 24, "#0b0c0e", 0.6); for (let x = 46; x < 437; x += 2.2) s += R(x, u * 44.45 + 10.5, 0.5, 23, "#26282b"); } return s; }
+      case "drawer": {
+        const u = Math.round(H / 44.45), top = u >= 4;
+        let s = earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1) + R(13, 0, 457, 1.2, "#2a2c30");
+        const hy = top ? 14 : H / 2, hw = top ? 36 : 60, hh = top ? 15 : 24;
+        s += R(241.5 - hw / 2, hy - hh / 2, hw, hh, "#2a2c30", 3) + R(241.5 - hw / 2 + 4, hy - hh / 2 + 4, hw - 8, hh - 8, "#050607", 2) + (u === 3 ? C(245, hy, 3, "#c9ccd0") + R(244, hy, 2, 14, "#9aa3ab", 1) : top ? C(296, 14, 3, "#c9ccd0") + C(296, 14, 1.4, "#3a3d41") : "");
+        if (top) s += [[38, 30], [445, 30], [38, H - 30], [445, H - 30]].map(([x, y]) => C(x, y, 1.6, "#2f3236")).join("");
+        return s;
+      }
+      case "shelf": {
+        let s = earsU("#141517", "#e5e7eb") + `<path d="M13 0 L470 0 L462 ${H - 9} L21 ${H - 9}Z" fill="#26282c"/>` + R(13, H - 9, 457, 9, "#17181b", 1) + R(13, H - 9, 457, 1, "#3a3d41");
+        return s + [[70, H * 0.25], [413, H * 0.25], [60, H * 0.7], [423, H * 0.7]].map(([x, y]) => C(x, y, 1.6, "#55595e")).join("");
+      }
+      // Plaque de traversées 1 U : n embases D du même type (XLR, XLR 5, BNC, N, etherCON, SmartBeam), plaque BNC 4 trous
+      case "trav_xlrf": case "trav_xlrm": case "trav_xlr5": case "trav_bnc": case "trav_n": case "trav_rj45": case "trav_sb": {
+        const k = type.slice(5), def = { n: 8, sb: 4 }[k] || 16, n = Math.max(1, Math.min(16, (ref && +ref.n) || def)), w = 423 / n;
+        let s = earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1);
+        for (let u = 0; u < Math.round(H / 44.45); u++) for (let i = 0; i < n; i++) s += dtype(30 + w * (i + 0.5), u * 44.45 + 22.2, k, Math.min(1, w / 26));
+        return s;
+      }
+      case "pbnc": return earsU("#141517", "#e5e7eb") + R(13, 0, 457, H, "#17181b", 1) + [57, 176, 313.5, 430].map((x) => `<path d="M${x - 6} ${22} l3 -5.2 h6 l3 5.2 l-3 5.2 h-6z" fill="#9aa3ab"/>` + sbnc(x, 22, 4.4)).join("");
+      // Plaque P12MF (Dushow) : 2 U gris foncé, deux multipaires rondes, 12 XLR femelles et 12 mâles (1-10, A, B)
+      case "p12mf": {
+        const mp = (x) => C(x, 41, 30, "#2a2d31") + C(x, 41, 26, "#1d2023", ' stroke="#55595e" stroke-width="1"') + C(x, 41, 21, "#26282b") + Array.from({ length: 37 }, (_, i) => { const r = i < 1 ? 0 : i < 7 ? 6 : i < 19 ? 12 : 17.5, n = i < 1 ? 1 : i < 7 ? 6 : i < 19 ? 12 : 18, k = i < 1 ? 0 : i < 7 ? i - 1 : i < 19 ? i - 7 : i - 19, a = (k / n) * 2 * Math.PI; return C((x + r * Math.cos(a)).toFixed(2), (41 + r * Math.sin(a)).toFixed(2), 1, "#9a8f7c"); }).join("");
+        let s = R(0, 0, 483, H, "#2b2e33", 1.5) + R(2, 2, 479, H - 4, "#313439", 1) + mp(42) + mp(438.5);
+        [98.7, 126, 153, 180, 207.6, 234, 259, 285, 311, 339, 364, 391].forEach((x, i) => { s += C(x, 21.5, 12, "#55595e") + xlrF(x, 21.5, 1.02) + T(x, 49, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "A", "B"][i], 8, "#f3f4f6", 400, 0, "middle") + C(x, 69, 12, "#55595e") + xlrM(x, 69, 1.02); });
+        return s + `<text x="0" y="0" transform="translate(475 43) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="5" font-weight="400" fill="#e5e7eb" text-anchor="middle" letter-spacing="0.6">DUSHOW</text>`;
+      }
+      // Plaques audio BEST (dessins du fabricant : plaque claire) : P20, PA20, PA60M 40F ; SPLIT20 noire (5 multipaires, Link / Out)
+      case "p20": case "pa20": case "pa60m": {
+        const pale = R(0, 0, 483, H, "#fbfbfb", 1, ' stroke="#4b5563" stroke-width="0.8"') + Array.from({ length: Math.round(H / 44.45) }, (_, u) => [0, 483].map((x) => R(x - 4, u * 44.45 + 16, 8, 6, "#ffffff", 3, ' stroke="#4b5563" stroke-width="0.6"')).join("")).join("");
+        const dx = (x, y) => R(x - 11, y - 11, 22, 22, "#f3f4f6", 1.5, ' stroke="#4b5563" stroke-width="0.5"') + C(x, y, 8.5, "#f3f4f6", ' stroke="#4b5563" stroke-width="0.6"') + C(x, y, 3, "#86efac", ' stroke="#4b5563" stroke-width="0.4"');
+        const tog = (x, y) => T(x - 6, y - 5, "OFF", 3, "#374151", 400) + T(x - 6, y + 9, "ON", 3, "#374151", 400) + `<ellipse cx="${x}" cy="${y}" rx="2.2" ry="4" fill="#111"/>`;
+        let s = pale;
+        if (type === "p20") {
+          s += hart(34, 12, 56, 109, true) + hart(394, 12, 56, 109, true) + tog(94, 64) + tog(390, 64);
+          [112.7, 141, 169.6, 199, 227.6, 256, 284.5, 314.7, 341, 370].forEach((x, i) => { s += dx(x, 33) + T(x, 15, String(i + 1), 4.4, "#374151", 400, 0, "middle") + dx(x, 91) + T(x, 74, String(i + 11), 4.4, "#374151", 400, 0, "middle"); });
+          s += R(100, 50.6, 282, 11, "#ffffff", 5.5, ' stroke="#4b5563" stroke-width="0.5"') + R(100, 107, 282, 11, "#ffffff", 5.5, ' stroke="#4b5563" stroke-width="0.5"') + bestV(462, 69, 11, "#2b9fb3");
+        } else if (type === "pa20") {
+          s += hart(35, 14, 52, 114, true) + hart(35, 123, 52, 117, true) + hart(400, 137, 55, 104, true) + tog(96, 71) + tog(96, 191) + tog(392, 191);
+          for (let i = 0; i < 10; i++) { const x = 114 + i * 28.7; s += [44.5, 90, 173, 218].map((y) => dx(x, y)).join("") + T(x, 69, String(i + 1), 4, "#374151", 400, 0, "middle") + T(x, 194, String(i + 11), 4, "#374151", 400, 0, "middle"); }
+          s += bestV(435, 71, 12, "#2b9fb3");
+        } else s += [92, 161.6, 277, 345, 413].map((x) => hart(x - 27, 13, 54, 107, true)).join("") + bestV(18, 63, 12, "#2b9fb3");
+        return s;
+      }
+      case "split20": return R(0, 0, 483, H, "#050607", 1) + [46.6, 148, 243.6, 362, 452].map((x) => hart(x - 22, 5, 44, 79)).join("") + [[95, 25, "LINK"], [193, 25, "LINK"], [313.5, 28, "OUT1"], [410, 28, "OUT2"]].map(([x, y, t]) => T(x, y, t, 12, "#f3f4f6", 400, 0, "middle")).join("");
+      // Plaques secteur BEST : prises 16 A françaises (PS16), CEE 16 / 32 A bleues, Schuko, socle rouge 32 / 63 A, disjoncteurs, voyants de phase
+      case "ps16": {
+        let s = R(0, 0, 483, H, "#2f3236", 2) + [0, 466].map((x) => R(x, 0, 17, H, "#3a3d41", 1.5) + [9, 22, 35].map((y) => R(x + 3, y - 2.5, 11, 5, "#e5e7eb", 2.5)).join("")).join("") + R(17, 2, 449, H - 4, "#1d2023", 2);
+        for (let i = 0; i < 9; i++) { const x = 47 + i * 48.5; s += C(x, 22, 18, "#26282b") + C(x, 22, 15.5, "#2b1d20") + C(x - 5, 23, 1.6, "#0b0c0e") + C(x + 5, 23, 1.6, "#0b0c0e") + C(x, 15, 1.6, "#c9ccd0"); }
+        return s;
+      }
+      case "ps32m": {
+        let s = earsU("#0b0c0e", "#e5e7eb") + R(13, 0, 457, H, "#0b0c0e", 1);
+        s += [63, 120, 177, 234].map((x) => schuko(x, 39, 3.2) + schuko(x, 118, 3.2)).join("") + cee(317, 43.5, 3.1, "#ece6cf") + R(300, 116, 46, 22, "#e7e1cf", 0.6) + brk(300, 116, 2, 11, 22) + T(352, 122, "Disjoncteur", 2.4, "#f3f4f6", 400);
+        s += R(408 - 30, 122 - 30, 60, 60, "#c9ccd0", 4) + C(408, 122, 25, "#2048c8") + C(408, 122, 20, "#1e3fae") + [[-8, 4], [8, 4], [0, -9]].map(([a, b]) => C(408 + a, 122 + b, 3, "#c8a24a")).join("");
+        s += R(415, 20, 50, 8, "none", 0, ' stroke="#f3f4f6" stroke-width="0.5"') + T(418, 26, "PS32M  N°", 4, "#f3f4f6", 400) + R(370, 63, 9, 9, "#ef6c33") + ceBolt(395, 66, 1.4) + bestV(455, 90, 13);
+        return s;
+      }
+      case "ps32t": case "ps32tm": {
+        const tm = type === "ps32tm", bg = tm ? "#c9d3d6" : "#0b0c0e", fg = tm ? "#1d2023" : "#f3f4f6";
+        let s = earsU(tm ? "#b8c2c5" : "#0b0c0e", tm ? "#f3f4f6" : "#e5e7eb") + R(13, 0, 457, H, bg, 1);
+        if (tm) {
+          s += brk(40, 30, 6, 9, 30) + [168, 262, 360].map((x) => brk(x, 30, 3, 10, 30)).join("") + inlet(55, 98, 83, 134) + [208, 298, 399].map((x) => cee(x, 147, 3.4, "#dfe7c8")).join("") + [185, 232, 275, 322, 368, 414].map((x) => schuko(x, 232, 2.8)).join("");
+          s += `<text x="0" y="0" transform="translate(28 75) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="5" fill="${fg}" text-anchor="middle">PS32TM N°</text>` + T(41, 72, "Ne pas déconnecter en charge", 3.4, fg, 400) + [126, 161].map((y, i) => i ? T(15, y, "⚡", 8, fg, 400) : `<path d="M21 ${y - 6} L27 ${y + 4} L15 ${y + 4}Z" fill="none" stroke="${fg}" stroke-width="0.8"/>`).join("") + T(14, 210, "CE", 9, fg, 400) + [210, 222, 234].map((y) => R(42, y - 4, 9, 7, "#ef6c33")).join("");
+        } else {
+          s += brk(18, 25, 10, 15, 60) + T(18, 93, "Ne pas déconnecter en charge", 3.4, fg, 400) + inlet(63, 98, 97, 155) + [209, 303, 400].map((x) => schuko(x, 35, 3) + schuko(x, 103, 3) + R(x - 22, 140, 9, 7, "#ef6c33") + T(x - 10, 145.5, "16 A", 4, fg, 400) + cee(x, 204, 3.6, "#ece6cf")).join("");
+          s += `<path d="M25 120 L32 132 L18 132Z" fill="none" stroke="${fg}" stroke-width="0.8"/>` + T(19, 168, "⚡", 10, fg, 400) + T(15, 206, "CE", 9, fg, 400);
+        }
+        return s + bestV(450, 63, 15, tm ? "#1d2023" : "#f3f4f6");
+      }
+      case "ps332ts": {
+        let s = earsU("#0b0c0e", "#e5e7eb") + R(13, 0, 457, H, "#0b0c0e", 1);
+        s += [[84, "« A » Circuits 1 à 6"], [220, "« B » Circuits 7 à 12"]].map(([x, t]) => R(x - 26, 6, 52, 12, "none", 0, ' stroke="#f3f4f6" stroke-width="0.6"') + T(x, 14.5, t, 4.4, "#f3f4f6", 400, 0, "middle") + C(x, 52, 27, "#c9ccd0") + C(x, 52, 22, "#9ca3af") + Array.from({ length: 19 }, (_, i) => { const r = i < 1 ? 0 : i < 7 ? 7 : 14, n = i < 1 ? 1 : i < 7 ? 6 : 12, k = i < 1 ? 0 : i < 7 ? i - 1 : i - 7, a = (k / n) * 2 * Math.PI; return C((x + r * Math.cos(a)).toFixed(2), (52 + r * Math.sin(a)).toFixed(2), 1.8, "#4b5563"); }).join("")).join("") + [138, 151, 164].map((x) => R(x - 5, 48, 10, 8, "#ef6c33")).join("") + brk(283, 31, 4, 13, 52) + inlet(357, 10, 84, 125);
+        s += [73, 151, 227].map((x) => cee(x, 142, 3.3)).join("") + warn(300, 140, 2.4) + ceBolt(318, 145, 1.6) + brk(38, 192, 16, 25, 48);
+        s += [63, 126, 189, 252, 315, 378].map((x) => cee(x, 292, 3, "#ece6cf") + schuko(x, 368, 2.4)).join("") + bestV(451, 73, 18);
+        return s;
+      }
+      case "ps63t": {
+        let s = earsU("#0b0c0e", "#e5e7eb") + R(13, 0, 457, H, "#0b0c0e", 1);
+        s += R(17, 14, 114, 87, "#eceae2", 4) + R(35, 101, 90, 98, "#dc2626", 4) + R(30, 190, 100, 12, "#b91c1c", 3) + C(74, 50, 9, "#d6d3c8");
+        s += R(152, 31, 56, 63, "#facc15", 2) + C(180, 62, 14, "#dc2626") + R(176, 45, 8, 34, "#b91c1c", 3) + R(214, 8, 14, 12, "#22d3ee") + [45, 66, 87].map((y) => R(214, y - 6, 14, 12, "#f59e0b")).join("") + R(214, 120, 14, 12, "#ec4899");
+        s += R(238, 31, 125, 63, "#2a2d31", 1) + brk(250, 40, 4, 12, 45) + R(367, 31, 97, 63, "#2a2d31", 1) + brk(380, 40, 4, 12, 45) + T(408, 112, "BEST", 13, "#f3f4f6", 900, 0, "middle").replace("<text ", '<text font-style="italic" ');
+        s += R(140, 160, 325, 50, "#1d2023", 1, ' stroke="#f3f4f6" stroke-width="0.4"') + C(166, 183, 15, "#d6d3c8") + C(161, 185, 1.6, "#0b0c0e") + C(171, 185, 1.6, "#0b0c0e") + R(228, 171, 125, 28, "#14b8a6", 1.5) + R(232, 175, 117, 20, "#0f766e", 1) + [365, 380, 395, 410].map((x) => C(x, 185, 3, "#9aa3ab")).join("") + R(434, 172, 20, 22, "#dc2626", 1);
+        s += T(14, 160, "CE", 10, "#f3f4f6", 400) + T(17, 195, "⚡", 12, "#f3f4f6", 400) + warn(79, 236, 2.6, "Ne pas déconnecter en charge");
+        return s;
+      }
+      case "psm316m": case "psm332m": case "psm610s": {
+        let s = earsU("#0b0c0e", "#e5e7eb") + R(13, 0, 457, H, "#0b0c0e", 1) + `<text x="0" y="0" transform="translate(27 71) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="5" fill="#f3f4f6" text-anchor="middle">${type.toUpperCase()} N°</text>` + R(21, 45, 10, 52, "none", 0, ' stroke="#f3f4f6" stroke-width="0.5"');
+        s += R(40, 25, 70, 8, "none", 0, ' stroke="#f3f4f6" stroke-width="0.5"') + T(75, 31, "Interrupteur différentiel", 3.4, "#f3f4f6", 400, 0, "middle") + brk(40, 44, 4, 17, 44) + [45, 65, 89].map((y) => R(120, y - 5, 10, 10, "#ef6c33")).join("") + brk(141, 44, type === "psm610s" ? 6 : 3, type === "psm610s" ? 17.5 : 18, 44) + ceBolt(40, 120, 2) + warn(128, 114, 2.4, "Ne pas déconnecter en charge");
+        if (type === "psm316m") s += [252, 330, 406].map((x) => cee(x, 34, 2.8) + cee(x, 102, 2.8)).join("");
+        else if (type === "psm332m") s += [249, 327, 405].map((x, i) => cee(x, 68, 3.4) + R(x - 30, 12, 20, 7, "none", 0, ' stroke="#f3f4f6" stroke-width="0.5"') + T(x - 20, 17.5, `Prise ${i + 1}`, 3.4, "#f3f4f6", 400, 0, "middle")).join("");
+        else s += R(283, 35, 82, 61, "#0b0c0e", 0, ' stroke="#f3f4f6" stroke-width="0.4"') + Array.from({ length: 7 }, (_, r) => R(283, 35 + r * 8.7, 82, 0.4, "#f3f4f6")).join("") + C(399, 67, 26, "#9aa3ab") + C(399, 67, 21, "#d1d5db") + C(399, 67, 15, "#9ca3af") + Array.from({ length: 19 }, (_, i) => { const r = i < 1 ? 0 : i < 7 ? 5 : 10, n = i < 1 ? 1 : i < 7 ? 6 : 12, k = i < 1 ? 0 : i < 7 ? i - 1 : i - 7, a = (k / n) * 2 * Math.PI; return C((399 + r * Math.cos(a)).toFixed(2), (67 + r * Math.sin(a)).toFixed(2), 1.2, "#4b5563"); }).join("");
+        return s + bestV(453, 68, 16);
+      }
+      // Fischer Amps ALC 161 (chargeur de piles AA / AAA), onduleur Eaton 1 U, Samson PowerBrite Pro15
+      case "alc161": {
+        let s = earsO("#111214", "#e5e7eb") + R(13, 0, 457, H, "#141517", 1) + Ti(15, 15, "FISCHER AMPS", 4.4, "#f3f4f6", 900) + Ti(15, 19.5, "PROFESSIONAL CHARGER", 1.8, "#e5e7eb", 700) + Ti(15, 22.5, "FOR AA / AAA CELLS", 1.8, "#e5e7eb", 700) + Ti(33, 40, "ALC 161", 5, "#f3f4f6", 900) + led(47, 9, "#60a5fa", 1.1) + T(47, 5, "POWER ON", 1.6, "#e5e7eb", 700, 0, "middle") + R(44, 13, 6, 12, "#0b0c0e", 1);
+        s += [[70, 142], [169.5, 241.5], [269, 341], [368.5, 440.6]].map(([a, b], i) => R(a, 12, b - a, 26, "#0b0c0e", 3, ' stroke="#2a2d31" stroke-width="0.6"') + (i < 3 ? `<path d="M${b + 4} 12 L${b + 24} 38 M${b + 24} 12 L${b + 4} 38" stroke="#2a2d31" stroke-width="0.6"/>` : "")).join("") + Ti(462, 28, "FA", 9, "#e5e7eb", 400, "middle");
+        return s;
+      }
+      case "ups": {
+        let s = R(0, 0, 13, H, "#2a2c30", 1.5) + R(470, 0, 13, H, "#c9ccd0", 1.5) + [9, 22, 35].map((y) => R(472, y - 2.5, 9, 5, "#3a3d41", 2.5)).join("") + R(13, 0, 457, H, "#1d1f22", 1.5) + R(140, 5, 190, 34, "#8a8f94", 2);
+        for (let x = 143; x < 328; x += 4) for (let y = 7.5; y < 38; y += 3.6) s += C((x + ((Math.round((y - 7.5) / 3.6) % 2) * 2)).toFixed(1), y.toFixed(1), 1.2, "#2a2c30");
+        s += R(212, 17, 42, 11, "#1d1f22", 1) + T(233, 26, "EATON", 7, "#f3f4f6", 900, 0.6, "middle") + R(352, 8, 54, 28, "#0b0c0e", 2) + R(356, 11, 46, 22, "#1e40af", 1) + R(370, 15, 18, 14, "#93c5fd", 0.5) + R(414, 8, 34, 28, "#0b0c0e", 2) + T(431, 15, "⏻", 4, "#e5e7eb", 400, 0, "middle") + tri(424, 23, 1.4, true) + tri(424, 31, 1.4, false) + T(437, 24, "ESC", 1.8, "#e5e7eb", 700) + T(437, 32, "↵", 3, "#e5e7eb", 700);
+        return s;
+      }
+      case "pb11": {
+        let s = earsO("#111214", "#e5e7eb") + R(13, 0, 457, H, "#16171a", 1) + Ti(241, 9.5, "SAMSON", 6, "#9aa3ab", 900, "middle") + T(17, 24, "PowerBrite Pro15", 4, "#c9ccd0", 700) + R(46, 18, 8, 10, "#0b0c0e", 1, ' stroke="#3a3d41" stroke-width="0.4"') + T(54, 36, "15 AMPERES  PUSH TO RESET", 1.6, "#9aa3ab", 700, 0, "middle");
+        s += C(90, 22, 5.6, "#1d2023") + C(90, 22, 4.4, "#3b82f6") + T(90, 36, "DIMMER", 1.6, "#9aa3ab", 700, 0, "middle") + C(133, 22, 8.5, "#0b0c0e") + C(133, 22, 7.2, "#1d2023") + T(146, 36, "LAMP", 1.6, "#9aa3ab", 700, 0, "middle");
+        s += [[169, "VOLTMETER"], [258, "AMMETER"]].map(([x, t]) => R(x, 10, 58, 20, "#0b0c0e", 1, ' stroke="#2a2d31" stroke-width="0.6"') + T(x + 29, 36, t, 1.6, "#9aa3ab", 700, 0, "middle")).join("") + Array.from({ length: 6 }, (_, i) => R(230 + i * 4.4, 12, 2, 18, "#0b0c0e")).join("") + Array.from({ length: 40 }, (_, i) => R(160 + i * 4, 38, 2, 2, "#0b0c0e")).join("");
+        s += C(347, 22, 8.5, "#0b0c0e") + C(347, 22, 7.2, "#1d2023") + R(377, 13, 22, 22, "#e5e2d8", 2) + R(382, 18, 2, 7, "#1d2023") + R(392, 18, 2, 7, "#1d2023") + C(388, 30, 1.4, "#1d2023") + T(388, 9, "UNSWITCHED", 1.6, "#9aa3ab", 700, 0, "middle") + T(388, 40, "115 VAC", 1.6, "#9aa3ab", 700, 0, "middle") + R(418, 13, 16, 20, "#3a3d41", 1) + R(420, 15, 12, 16, "#ef4444", 0.8) + T(426, 9, "OUTLETS", 1.6, "#9aa3ab", 700, 0, "middle");
+        return s;
+      }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
       case "switch": {
         let s = ears() + face("#22262a");
@@ -5413,7 +5553,15 @@ label.p48 input:checked + span { border-style: solid; }
   // ---------- Plans de rack ----------
   // Des flight racks comptés en U (numérotés depuis le haut). On y range les appareils de Racks et I/O, les éléments du synoptique
   // et des éléments libres (tiroir, distribution…). Chaque appareil garde sa façade dessinée (ou la photo perso).
-  const RP_FREE = [["vide", "Panneau vide", 1], ["tiroir", "Tiroir", 2], ["distro", "Distribution électrique", 1], ["passe", "Passe-câbles", 1], ["patch", "Patch panel", 1], ["autre", "Autre élément", 1]];
+  // [clé, nom, U, façade dessinée, groupe de la liste « Ajouter… »] ; « autre » reste en 6e position
+  const RP_FREE = [["vide", "Plaque de bouchage", 1, "blank", "Plaques et tiroirs"], ["tiroir", "Tiroir", 2, "drawer", "Plaques et tiroirs"], ["distro", "Distribution électrique", 1, "", "Énergie"], ["passe", "Plaque à brosse", 1, "brush", "Plaques et tiroirs"], ["patch", "Patch panel", 1, "", "Traversées et plaques audio"], ["autre", "Autre élément", 1, "", "Autres"],
+    ["trou", "Plaque trouée", 1, "perfo", "Plaques et tiroirs"], ["tablette", "Tablette", 2, "shelf", "Plaques et tiroirs"],
+    ["tr_xlrf", "Traversées XLR F", 1, "trav_xlrf", "Traversées et plaques audio"], ["tr_xlrm", "Traversées XLR M", 1, "trav_xlrm", "Traversées et plaques audio"], ["tr_xlr5", "Traversées XLR 5 points", 1, "trav_xlr5", "Traversées et plaques audio"], ["tr_bnc", "Traversées BNC", 1, "trav_bnc", "Traversées et plaques audio"], ["tr_n", "Traversées N", 1, "trav_n", "Traversées et plaques audio"], ["tr_rj45", "Traversées etherCON", 1, "trav_rj45", "Traversées et plaques audio"], ["tr_sb", "Traversées SmartBeam", 1, "trav_sb", "Traversées et plaques audio"], ["pbnc", "Plaque BNC × 4", 1, "pbnc", "Traversées et plaques audio"],
+    ["p12mf", "Plaque P12MF (12N)", 2, "p12mf", "Traversées et plaques audio"], ["p20", "Plaque P20", 3, "p20", "Traversées et plaques audio"], ["pa20", "Plaque PA20", 6, "pa20", "Traversées et plaques audio"], ["pa60m", "Plaque PA60M 40F", 3, "pa60m", "Traversées et plaques audio"], ["split20", "Plaque SPLIT20", 2, "split20", "Traversées et plaques audio"],
+    ["ps16", "PS16 · 9 × 16 A", 1, "ps16", "Énergie"], ["ps32m", "PS32M · 32 A mono", 4, "ps32m", "Énergie"], ["ps32t", "PS32T · 32 A tri", 6, "ps32t", "Énergie"], ["ps32tm", "PS32TM · 32 A tri", 6, "ps32tm", "Énergie"], ["ps332ts", "PS332TS · 32 A tri", 9, "ps332ts", "Énergie"], ["ps63t", "PS63T / PS63TL", 6, "ps63t", "Énergie"], ["psm316m", "PS316M / PSM316M", 3, "psm316m", "Énergie"], ["psm332m", "PSM332M · 3 × 32 A", 3, "psm332m", "Énergie"], ["psm610s", "PSM610S · 6 circuits", 3, "psm610s", "Énergie"],
+    ["ups", "Onduleur 1 U", 1, "ups", "Énergie"], ["pb11", "PowerBrite Pro15", 1, "pb11", "Énergie"], ["alc161", "Chargeur ALC 161", 1, "alc161", "Autres"]];
+  // Façades qui suivent la hauteur choisie (plaques, tiroirs, traversées) ; les autres gardent leurs proportions
+  const RP_VARH = new Set(["blank", "perfo", "brush", "drawer", "shelf", "trav_xlrf", "trav_xlrm", "trav_xlr5", "trav_bnc", "trav_n", "trav_rj45", "trav_sb", "pbnc"]);
   const RP_UH = 44.45, RP_SIDE = 30, RP_TOP = 24, RP_LW = 390;
   let rpSel = null, rpDrag = null, rpFresh = null;
   // Nouvel appareil du catalogue (AS 80, DN9680, MS-702…) : créé dans le synoptique, l'élément du plan pointe dessus
@@ -5455,7 +5603,8 @@ label.p48 input:checked + span { border-style: solid; }
     if (hs.length) h += `<optgroup label="HF (récepteurs, émetteurs)">${hs.map((d) => `<option value="hf|${d.id}">${esc(d.nom)} · ${rpDefaultU("hf", d.id)} U</option>`).join("")}</optgroup>`;
     if (xs.length) h += `<optgroup label="Synoptique">${xs.map((x) => `<option value="extra|${x.id}">${esc(x.nom || "Élément")}</option>`).join("")}</optgroup>`;
     h += `<optgroup label="Nouvel appareil (ajouté au synoptique)">${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="newx|${k}">${esc(m.t)} · ${Math.max(1, Math.round((DEV_H[k] || 44.45) / 44.45))} U</option>`).join("")}</optgroup>`;
-    h += `<optgroup label="Autres">${RP_FREE.map(([k, t, u]) => `<option value="free|${k}">${t} · ${u} U</option>`).join("")}</optgroup>`;
+    const grp = {}; RP_FREE.forEach((f) => (grp[f[4] || "Autres"] = grp[f[4] || "Autres"] || []).push(f));
+    h += Object.entries(grp).map(([g, L]) => `<optgroup label="${esc(g)}">${L.map(([k, t, u]) => `<option value="free|${k}">${esc(t)} · ${u} U</option>`).join("")}</optgroup>`).join("");
     return h;
   }
   // Façades des éléments libres
@@ -5480,6 +5629,9 @@ label.p48 input:checked + span { border-style: solid; }
     }
     if (it.kind === "extra") { const x = rpExtra(it.ref); return devImg({ kind: "extra", ref: x || {} }, w, H, 0, 0); }
     if (it.kind === "hf") return devImg({ kind: "hf", ref: hfDevById(it.ref) || {} }, w, H, 0, 0);
+    // Accessoire dessiné (plaque, tiroir, traversées, plaque secteur…), choisi dans la liste ou reconnu à son nom
+    const fr = RP_FREE.find((f) => f[0] === it.free), ft = (fr && fr[3]) || faceByName(it.label || "");
+    if (ft) { const vh = RP_VARH.has(ft) ? H : DEV_H[ft] || H, n = (/(\d+)/.exec(it.label || "") || [])[1]; return `<svg x="0" y="0" width="${w}" height="${H}" viewBox="0 0 483 ${vh}" preserveAspectRatio="none">${devArt(ft, "", { __H: RP_VARH.has(ft) ? H : 0, n, nom: it.label || "" })}</svg>`; }
     return `<svg x="0" y="0" width="${w}" height="${H}" viewBox="0 0 483 ${H}" preserveAspectRatio="none">${rpFreeArt(it, H)}</svg>`;
   }
   const RP_GAP = 18, RP_CW = 483 + RP_SIDE * 2, rpX = (col) => col * (RP_CW + RP_GAP);
@@ -6532,7 +6684,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["LM 6070", "Sennheiser", "Module L 6000 pour 2 BA 70"],
       ["CHG 70N-C", "Sennheiser", "Chargeur 2 BA 70 · alim NT 12-35"],
       ["ACM50", "Wisycom", "Chargeur rackable 10 batteries MPR50"],
-      ["ALC161", "", "Chargeur rackable 16 piles AA / AAA"],
+      ["ALC161", "Fischer Amps", "Chargeur rackable de piles AA / AAA · 16 piles en 4 tiroirs · 1 U"],
       ["Piles AA", "", "Piles LR06"],
       ["Piles 9V", "", "Piles 9 V (DI, pédales)"]
     ],
@@ -6877,22 +7029,35 @@ label.p48 input:checked + span { border-style: solid; }
       ["Plaque 1U trouée", "", "Plaque ventilée / passage de câbles · 1 U"],
       ["Tiroir 2U", "", "Tiroir rackable 2 U"],
       ["Tiroir 3U", "", "Tiroir rackable 3 U"],
-      ["Tiroir 4U", "", "Tiroir rackable 4 U"],
-      ["Tablette rackable", "", "Tablette coulissante pour clavier / ordinateur"],
-      ["Plaque BNC", "", "Plaque de traversées BNC · 1 U"],
+      ["Tiroir 4U", "", "Tiroir rackable 4 U · fermeture à clé"],
+      ["Tablette rackable", "", "Tablette fixe ou coulissante pour clavier / ordinateur · 2 U"],
+      ["Plaque BNC", "", "Plaque 1 U · 4 traversées BNC (word clock, vidéo, MADI)"],
       ["Traversée XLR", "", "Traversée de panneau XLR femelle / mâle"],
       ["Traversée XLR5", "", "Traversée de panneau XLR 5 points"],
       ["Traversée BNC", "", "Traversée de panneau BNC"],
       ["Traversée N", "", "Traversée de panneau N (antenne HF)"],
       ["Traversée RJ45", "", "Traversée de panneau etherCON"],
       ["Traversée SmartBeam", "", "Traversée de panneau fibre SmartBeam"],
-      ["Plaque P12MF", "", "Plaque de patch audio rackable (12N)"],
-      ["Plaque P20", "", "Plaque de patch audio rackable"],
-      ["Plaque PA20", "", "Plaque de patch audio rackable"],
-      ["Plaque PA60M 40F", "", "Plaque de patch audio rackable"],
-      ["Plaque SPLIT20", "", "Plaque de split audio rackable"]
+      ["Plaque P12MF", "Dushow", "Plaque de patch 2 U · 2 multipaires 12N · 12 XLR femelles + 12 mâles (1-10, A, B)"],
+      ["Plaque P20", "Best Audio", "Plaque de patch 3 U · 2 multipaires Harting · 20 XLR · inverseurs ON / OFF"],
+      ["Plaque PA20", "Best Audio", "Plaque de patch 6 U · 3 multipaires Harting · 40 XLR · inverseurs ON / OFF"],
+      ["Plaque PA60M 40F", "Best Audio", "Plaque 3 U · 5 multipaires Harting (60 M / 40 F)"],
+      ["Plaque SPLIT20", "Best Audio", "Split 2 U · 5 multipaires Harting (entrée, 2 Link, 2 Out)"]
     ],
-    "Énergie": ["PS16", "PS32M", "PS32T", "PS32TM", "PS63T", "PS63TL", "PS316M", "PS332TS", "PSM316M", "PSM332M", "PSM610S"].map((n) => [n, "", "Plaque secteur rackable"])
+    "Énergie": [
+      ["PS16", "Best Audio", "Plaque secteur 1 U · 9 prises 16 A françaises"],
+      ["PS32M", "Best Audio", "Distribution 32 A mono · socle CEE 32 A · 8 Schuko + 1 CEE 16 A · 2 disjoncteurs · 4 U"],
+      ["PS32T", "Best Audio", "Distribution 32 A tri · socle CEE 32 A · 3 × (2 Schuko + 1 CEE 16 A) · différentiel · 6 U"],
+      ["PS32TM", "Best Audio", "Distribution 32 A tri · socle CEE 32 A · 3 CEE 16 A + 6 Schuko · disjoncteur par prise · 6 U"],
+      ["PS63T", "Best Audio", "Distribution 63 A tri · socle CEE 63 A · sectionneur, différentiel, voyants de phase, PC16 de service · 6 U"],
+      ["PS63TL", "Best Audio", "Distribution 63 A tri modulaire (comme PS63T) · 6 U"],
+      ["PS316M", "Best Audio", "Distribution 3 × 16 A · 6 CEE 16 A · différentiel + 3 disjoncteurs · voyants de phase · 3 U"],
+      ["PS332TS", "Best Audio", "Distribution 32 A tri · 2 voltmètres · 9 CEE 16 A + 6 Schuko · 16 disjoncteurs · 9 U"],
+      ["PSM316M", "Best Audio", "Distribution modulaire 3 × 16 A · 6 CEE 16 A · différentiel + 3 disjoncteurs · 3 U"],
+      ["PSM332M", "Best Audio", "Distribution modulaire 3 × 32 A · 3 CEE 32 A · différentiel + 3 disjoncteurs · 3 U"],
+      ["PSM610S", "Best Audio", "Distribution 6 circuits sur multipaire (19 points) · différentiel + 6 disjoncteurs · 3 U"],
+      ["PowerBrite Pro15", "Samson", "Distribution secteur 1 U · voltmètre / ampèremètre · 2 lampes de rack · prises 115 V US"]
+    ]
   };
   Object.entries(BANQUE_PLUS).forEach(([c, it]) => { BANQUE[c] = BANQUE[c] || []; const have = new Set(BANQUE[c].map((x) => x[0].toLowerCase())); it.forEach((x) => { if (!have.has(x[0].toLowerCase())) BANQUE[c].push(x); }); });
   // Une fiche par nom (le premier rencontré l'emporte), avec sa catégorie
