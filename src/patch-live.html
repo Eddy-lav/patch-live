@@ -922,6 +922,44 @@ table.cards td[data-l]::before, body:not(.rows) table.master td::before, .hfg td
 @media (max-width: 760px) { .doc-name { font-size: 24px; } nav.spaces button { font-size: 16px; } }
 @media (prefers-reduced-motion: reduce) { .box h3 > span:first-child { transform: none; } }
 @media print { .box h3 > span:first-child, .rt > summary h3, .example-tag { clip-path: none; transform: none; } }
+
+/* ---------- Corrections de la critique (v104) ---------- */
+/* Champs : contour à 3:1 au moins pour qu'on voie où écrire */
+:root { --field-line: #748a93; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --field-line: #6f7b80; } }
+:root[data-theme="dark"] { --field-line: #6f7b80; }
+.field input, .field select, input.search, .hfdev input, .hfdev select, .hfg input, .hfg select, .panel input[type="text"], .panel input[type="number"], .panel select, .actions > select, .actions > input, .toolbar input, .toolbar select { border-color: var(--field-line); }
+.doc-name { border-color: var(--field-line); background: var(--surface); }
+/* 48V éteint : lisible (4,5:1) et marqué par un contour pointillé, pas seulement par la couleur */
+label.p48 span { opacity: 1; color: var(--muted); border-style: dashed; border-color: var(--field-line); background: transparent; }
+label.p48 input:checked + span { border-style: solid; }
+/* Ajout d'un récepteur / émetteur en tête d'écran */
+.hdadd { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-end; margin: 4px 0 12px; }
+.hdadd .field select { min-width: min(320px, 100%); padding: 6px 8px; }
+.hdadd .field input { width: 72px; padding: 6px 8px; }
+/* Téléphone : le nom du dossier prend toute la ligne, la salle du jour passe dessous */
+@media (max-width: 760px) {
+  .doc-fields { width: 100%; grid-template-columns: minmax(0, 1fr); }
+  .doc-fields > .field.lieu > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .doc-fields > .field.lieu input { width: 100%; }
+  .doc-name { width: 100%; }
+}
+/* Écran tactile : cibles de 44 px (rien ne change à la souris) */
+@media (pointer: coarse) {
+  .btn, .actions > select, .actions > input, .field input, .field select, input.search, .hdadd .field select, .hdadd .field input { min-height: 44px; }
+  .btn.small { min-height: 40px; min-width: 40px; }
+  input[type="number"], input[type="search"] { min-height: 44px; }
+  nav.tabs button { min-height: 40px; }
+  table.master td input[type="text"], table.master td input[type="number"], table.master td select, table.master select.addr,
+  .hfdev input, .hfdev select, .hfg input, .hfg select, table.rack td input, table.rack td select { min-height: 44px; }
+  .btn.xdel, .hfdev td.x button, .hfg td.x button, .acc .tag button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .box li { min-height: 40px; align-items: center; }
+  .box li button, .box li input.bquick { min-height: 36px; align-items: center; }
+  .box h3 .unb { min-height: 34px; padding: 4px 10px; }
+  label.p48 span { display: inline-flex; align-items: center; min-height: 32px; padding: 2px 10px; }
+  label.p48 { min-height: 44px; align-items: center; }
+  .cover.empty .cbtn.add { min-height: 36px; }
+}
 </style>
 
 <div id="cover" class="cover empty">
@@ -943,7 +981,7 @@ table.cards td[data-l]::before, body:not(.rows) table.master td::before, .hfg td
       <input id="docName" class="doc-name" type="text" aria-label="Nom du dossier">
     </div>
     <label class="field lieu"><span>Salle du jour</span>
-      <input id="docLieu" type="text" size="14" placeholder="pour le journal">
+      <input id="docLieu" type="text" size="14" placeholder="pour le journal" data-ph-tel="Salle du jour (pour le journal)">
     </label>
   </div>
   <div class="actions">
@@ -1323,6 +1361,7 @@ table.cards td[data-l]::before, body:not(.rows) table.master td::before, .hfg td
     const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { const w = hfSlotWho(d, j + 1); return `<span class="hdu${w ? "" : " free"}"><b>${rx ? j + 1 : `${j + 1} L/R`}</b> ${esc(w || "libre")}</span>`; }).join("");
     return `<div class="hfdev">
       <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack." : "Émetteurs des ears, en liaisons stéréo L/R. Chaque liaison devient une arrivée dans Sorties (« P10T #1 · 2 L » et « 2 R ») et l'appareil se range dans les plans de rack."}</p>
+      <div class="hdadd"><label class="field"><span>Ajouter ${rx ? "un récepteur" : "un émetteur"}</span><select data-hdmodel>${opt}</select></label><label class="field"><span>Nombre</span><input type="number" data-hdn min="1" max="24" value="1" inputmode="numeric"></label><button class="btn primary" type="button" data-hdadd>+ Ajouter</button></div>
       ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Modèle</th><th>Nom</th><th>Plage</th><th>${rx ? "Voies" : "Liaisons"}</th><th>${rx ? "Sources du master" : "Mix des sorties"}</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
         <td data-l="Modèle" style="width:150px"><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" list="dlHfDevModel" autocomplete="off"></td>
         <td data-l="Nom" style="width:160px"><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
@@ -1330,8 +1369,7 @@ table.cards td[data-l]::before, body:not(.rows) table.master td::before, .hfg td
         <td data-l="${rx ? "Voies" : "Liaisons"}" style="width:${rx ? 64 : 120}px">${rx ? `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">` : `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">stéréo</span></span>`}</td>
         <td data-l="${rx ? "Sources du master" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
         <td data-l="Notes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
-        <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle et clique « + Ajouter ».</div>`}
-      <div class="actions" style="margin-top:8px"><select data-hdmodel aria-label="Appareil à ajouter">${opt}</select><input type="number" data-hdn min="1" max="24" value="1" style="width:56px" aria-label="Combien" title="Combien d'appareils ajouter"><button class="btn small" type="button" data-hdadd>+ Ajouter</button></div>
+        <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle au-dessus et clique « + Ajouter ».</div>`}
       <datalist id="dlHfDevModel">${[...new Set(HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]))].map((m) => `<option value="${esc(m)}">`).join("")}</datalist></div>`;
   }
   function renderHfDev(kind) { const host = $(kind === "rx" ? "#hfRxOut" : "#hfTxOut"); host.innerHTML = hfDevHtml(kind); }
@@ -5822,6 +5860,7 @@ table.cards td[data-l]::before, body:not(.rows) table.master td::before, .hfg td
     $("#docType").addEventListener("change", (e) => { state.dossier.type = e.target.value; commit(false); });
     $("#docVersion").addEventListener("change", (e) => { state.dossier.version = e.target.value.trim(); commit(false); });
     $("#docLieu").addEventListener("change", (e) => { state.dossier.lieu = e.target.value.trim(); commit(false); });
+    { const mq = matchMedia("(max-width: 760px)"), li = $("#docLieu"), ph = () => { li.placeholder = mq.matches ? li.dataset.phTel : "pour le journal"; }; ph(); mq.addEventListener("change", ph); }
     $("#masterTbl").addEventListener("change", onMasterChange);
     $("#masterTbl").addEventListener("click", onMasterClick);
     $("#masterTbl").addEventListener("keydown", onMasterKey);
