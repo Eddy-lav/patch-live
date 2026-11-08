@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "7db3ba431d";</script>
+<script>window.PL_VER = "f1227c4f2a";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -6118,10 +6118,10 @@ label.p48 input:checked + span { border-style: solid; }
     if (!root) return;
     const gs = freeGroups(k);
     const dl = k === "locaux" ? ["Rack FX FOH", "Rack FX MON", "Playback", "Splitter"] : ["Bolero", "Riedel Artist", "Clear-Com HelixNet", "Green-GO", "Matrice"];
-    $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = [...new Set([...dl, ...S.groups.map((g) => g.nom).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
+    $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = uniqCi([...dl, ...S.groups.map((g) => g.nom).filter(Boolean), ...(k === "locaux" ? [] : banqueNoms("Intercom"))]).map(optFiche).join("");
     const apps = k === "locaux" ? ["SPL Transient Designer", "Bricasti M7", "TC Electronic M6000", "Lexicon PCM 96", "Eventide H3000", "Empirical Labs Distressor", "Tube-Tech CL 1B", "Rupert Neve 5045", "Ordinateur playback", "Talkback"] : ["Pupitre talk DM1", "Sennheiser e835 à interrupteur", "Casque Beyerdynamic DT 109", "Yamaha MSP3", "Genelec 8020", "Talk HF (EW)", "Beltpack Bolero", "Pédale de talk"];
-    $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = [...new Set([...apps, ...S.rows.map((r) => r.app).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
-    $("#dlFxModel").innerHTML = [...new Set([...CONS_MODELS, ...LOCAL_EXTRA_MODELS])].map((m) => `<option value="${esc(m)}">`).join("");
+    $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = uniqCi([...apps, ...S.rows.map((r) => r.app).filter(Boolean), ...(k === "locaux" ? banqueNoms("Périphériques et effets", "Ordinateurs et logiciels") : banqueNoms("Intercom", "DI et talkback", "Diffusion et retours"))]).map(optFiche).join("");
+    $("#dlFxModel").innerHTML = uniqCi([...consSugg(), ...LOCAL_EXTRA_MODELS]).map(optFiche).join("");
     if (k === "com") $("#comAddCons").hidden = consoleKeys().includes("COM");
     root.innerHTML = gs.length ? gs.map((g) => freeGroupHtml(k, g)).join("") : `<div class="panel empty-state"><p>${esc(K.empty)}</p></div>`;
     root.querySelectorAll("table.fxt").forEach(labelCells);
