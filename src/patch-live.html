@@ -746,6 +746,9 @@ details.spxres[open] > summary { margin-bottom: 8px; }
 @media (max-width: 520px) { .journal li { grid-template-columns: 1fr; } }
 .empty-state { padding: 24px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; }
 .suggest { position: fixed; z-index: 50; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--surface); border: 1px solid var(--accent); border-radius: 4px; box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); padding: 2px 0; }
+.bqico { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; color: var(--muted); }
+#manTbl .bqn { display: flex; align-items: center; gap: 8px; } #manTbl .bqn input { flex: 1; min-width: 0; }
+table.bq td.bq-nom .bqn { display: flex; align-items: center; gap: 8px; } table.bq tr.bq-cat .bqico { color: inherit; margin-right: 6px; width: 18px; height: 18px; }
 .bq-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .bq-bar input { flex: 1 1 220px; } .bq-bar select { flex: 0 1 240px; }
 table.bq td.bq-nom { font-weight: 600; white-space: nowrap; } table.bq td.bq-car { color: var(--muted); }
@@ -5671,6 +5674,35 @@ label.p48 input:checked + span { border-style: solid; }
   Object.entries(BANQUE).forEach(([cat, items]) => items.forEach(([nom, marque, carac]) => { const k = nom.toLowerCase(); if (!BANQUE_FICHE.has(k)) BANQUE_FICHE.set(k, { nom, marque, carac, cat }); }));
   const banqueFiche = (v) => BANQUE_FICHE.get(String(v || "").trim().toLowerCase()) || null;
   const banqueNoms = (...cats) => cats.flatMap((c) => (BANQUE[c] || []).map((x) => x[0]));
+  // Icône par catégorie (traits 24 × 24, couleur du texte), pour ce qui n'a pas de façade
+  const BQ_ICO = {
+    micro: '<rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4.5M8.5 21.5h7"/>',
+    di: '<rect x="4" y="6" width="16" height="12" rx="2"/><circle cx="8.5" cy="12" r="1.6"/><circle cx="15.5" cy="12" r="1.6"/>',
+    pied: '<path d="M12 3v11M12 14l-6 7M12 14l6 7M12 14v7M12 3l7 3"/>',
+    clip: '<path d="M6 7l6-4 6 4M12 3v18M8 21h8"/><circle cx="12" cy="10" r="2"/>',
+    hfmic: '<rect x="9" y="2.5" width="6" height="7" rx="3"/><path d="M10 9.5l.6 12h2.8l.6-12M17 4.5a5 5 0 0 1 0 5M19.5 2.5a8 8 0 0 1 0 9"/>',
+    rx: '<rect x="2.5" y="9" width="19" height="9" rx="1"/><path d="M6 9V3M18 9V3"/><circle cx="7" cy="13.5" r="1.3"/><path d="M11 13.5h7"/>',
+    pack: '<rect x="6" y="6" width="12" height="15" rx="2"/><path d="M9 6V2.5M10 11h4M10 14h4"/>',
+    ear: '<path d="M5 13a7 7 0 0 1 14 0"/><path d="M5 13v4a2 2 0 0 0 4 0v-3a1.5 1.5 0 0 0-1.5-1.5H5M19 13v4a2 2 0 0 1-4 0v-3a1.5 1.5 0 0 1 1.5-1.5H19"/>',
+    ant: '<path d="M12 21V9M12 9L5 3M12 9l7-6M8 21h8"/>',
+    batt: '<rect x="3" y="7" width="16" height="10" rx="1.5"/><path d="M21 10.5v3M9 9.5l-2 3h4l-2 3"/>',
+    console: '<rect x="2.5" y="5" width="19" height="14" rx="1.5"/><path d="M6 15V9M10 15v-3M14 15V8M18 15v-5"/>',
+    rack: '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M6 6h4M6 12h4M6 18h4"/>',
+    fibre: '<path d="M3 12h4l3-6 4 12 3-6h4"/>',
+    fx: '<rect x="2.5" y="8" width="19" height="8" rx="1"/><circle cx="7" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><path d="M16 12h3"/>',
+    pc: '<rect x="4" y="4" width="16" height="11" rx="1"/><path d="M2 19h20"/>',
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
+    com: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2.5" y="13" width="4" height="6" rx="1.5"/><path d="M20 15v2a4 4 0 0 1-4 4h-3"/>',
+    net: '<rect x="3" y="4" width="18" height="6" rx="1"/><path d="M12 10v4M5 14h14M5 14v3M12 14v3M19 14v3"/><rect x="3" y="17" width="4" height="3"/><rect x="10" y="17" width="4" height="3"/><rect x="17" y="17" width="4" height="3"/>',
+    hp: '<rect x="5" y="2.5" width="14" height="19" rx="1.5"/><circle cx="12" cy="14.5" r="4"/><circle cx="12" cy="6.5" r="1.5"/>',
+    ampli: '<rect x="2.5" y="7" width="19" height="10" rx="1"/><path d="M6 14l2-4 2 4 2-4 2 4"/><circle cx="18" cy="12" r="1.5"/>',
+    cable: '<path d="M4 20c0-7 4-8 8-8s8-1 8-8"/><rect x="2" y="18" width="4" height="4" rx="1"/><rect x="18" y="2" width="4" height="4" rx="1"/>',
+    power: '<path d="M13 2.5L5 13.5h6l-1 8 8-11h-6z"/>',
+    malle: '<rect x="2.5" y="7" width="19" height="13" rx="1.5"/><path d="M9 7V4.5h6V7M2.5 12h19"/>',
+    tape: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/><path d="M20.5 12H22"/>'
+  };
+  const BQ_CAT_ICO = { "Micros": "micro", "DI et talkback": "di", "Pieds et fixations": "pied", "Accessoires micros": "clip", "Micros HF": "hfmic", "Récepteurs HF": "rx", "Ears HF": "pack", "Écouteurs": "ear", "Antennes et distribution HF": "ant", "Batteries et chargeurs": "batt", "Consoles": "console", "Stage racks et cartes": "rack", "Transport audio et convertisseurs": "fibre", "Périphériques et effets": "fx", "Ordinateurs et logiciels": "pc", "Horloge et timecode": "clock", "Intercom": "com", "Réseau": "net", "Diffusion et retours": "hp", "Amplification": "ampli", "Câblage": "cable", "Énergie": "power", "Racks et malles": "malle", "Consommables": "tape", "HF": "rx", "Ears": "pack", "Console": "console", "Rack": "malle", "Accessoires": "clip" };
+  const bqIco = (cat) => { const k = BQ_CAT_ICO[cat]; return k ? `<svg class="bqico" viewBox="0 0 24 24" aria-hidden="true">${BQ_ICO[k]}</svg>` : ""; };
   const banqueLabel = (f) => [f.marque, f.carac].filter(Boolean).join(" · ");
   const MAN_CATS = ["Câblage", "Réseau", "HF", "Ears", "Console", "Rack", "Accessoires", "Divers"];
   // En cartes sur téléphone : chaque cellule reprend le titre de sa colonne
@@ -5692,7 +5724,7 @@ label.p48 input:checked + span { border-style: solid; }
     const man = state.materiel || [];
     $("#manTbl").innerHTML = `<thead><tr><th>Désignation</th><th>Qté</th><th>Catégorie</th><th>Notes</th><th></th></tr></thead><tbody>${man.map((x) => `
       <tr data-mid="${x.id}">
-        <td style="min-width:180px"><input type="text" data-mf="nom" value="${esc(x.nom)}" aria-label="Désignation" placeholder="ex. Câble BNC 75 Ω 10 m" autocomplete="off" data-suggest="dlBanque">${banqueFiche(x.nom) ? `<span class="prov">${esc(banqueLabel(banqueFiche(x.nom)))}</span>` : ""}</td>
+        <td style="min-width:180px"><span class="bqn">${bqIco((banqueFiche(x.nom) || {}).cat || x.cat)}<input type="text" data-mf="nom" value="${esc(x.nom)}" aria-label="Désignation" placeholder="ex. Câble BNC 75 Ω 10 m" autocomplete="off" data-suggest="dlBanque"></span>${banqueFiche(x.nom) ? `<span class="prov">${esc(banqueLabel(banqueFiche(x.nom)))}</span>` : ""}</td>
         <td style="width:76px"><input type="number" min="0" data-mf="qte" value="${Number(x.qte) || 0}" aria-label="Quantité"></td>
         <td style="min-width:120px"><input type="text" data-mf="cat" value="${esc(x.cat)}" aria-label="Catégorie" autocomplete="off" data-suggest="dlCat"></td>
         <td style="min-width:160px"><input type="text" data-mf="notes" value="${esc(x.notes)}" aria-label="Notes"></td>
@@ -5721,7 +5753,7 @@ label.p48 input:checked + span { border-style: solid; }
     const groups = Object.entries(BANQUE).filter(([c]) => !cat || c === cat).map(([c, items]) => [c, items.filter((it) => { const h = bqNorm(it.join(" ") + " " + c); return words.every((w) => h.includes(w)); })]).filter(([, it]) => it.length);
     const total = groups.reduce((n, [, it]) => n + it.length, 0), max = q || cat ? 400 : 60;
     let shown = 0;
-    const rows = groups.map(([c, items]) => { if (shown >= max) return ""; const part = items.slice(0, max - shown); shown += part.length; return `<tr class="bq-cat"><td colspan="3">${esc(c)}</td></tr>` + part.map(([nom, marque, carac]) => { const n = have.get(nom.toLowerCase()); return `<tr><td class="bq-nom">${esc(nom)}${marque ? `<span class="prov">${esc(marque)}</span>` : ""}</td><td class="bq-car">${esc(carac)}</td><td class="bq-add">${n ? `<span class="bq-in">${n} dans la liste</span>` : ""}<button class="btn small" type="button" data-bqadd="${esc(nom)}" aria-label="Ajouter ${esc(nom)} à la liste" title="Ajouter à la liste">+</button></td></tr>`; }).join(""); }).join("");
+    const rows = groups.map(([c, items]) => { if (shown >= max) return ""; const part = items.slice(0, max - shown); shown += part.length; return `<tr class="bq-cat"><td colspan="3">${bqIco(c)}${esc(c)}</td></tr>` + part.map(([nom, marque, carac]) => { const n = have.get(nom.toLowerCase()); return `<tr><td class="bq-nom"><span class="bqn">${bqIco(c)}<span>${esc(nom)}${marque ? `<span class="prov">${esc(marque)}</span>` : ""}</span></span></td><td class="bq-car">${esc(carac)}</td><td class="bq-add">${n ? `<span class="bq-in">${n} dans la liste</span>` : ""}<button class="btn small" type="button" data-bqadd="${esc(nom)}" aria-label="Ajouter ${esc(nom)} à la liste" title="Ajouter à la liste">+</button></td></tr>`; }).join(""); }).join("");
     $("#bqTbl").innerHTML = rows ? `<tbody>${rows}</tbody>` : `<tbody><tr><td class="hint">Rien trouvé dans la banque. Tu peux l'ajouter à la main au-dessus.</td></tr></tbody>`;
     $("#bqInfo").textContent = total > shown ? `${shown} sur ${total} : affine la recherche ou choisis une catégorie.` : `${total} appareil${total > 1 ? "s" : ""} sur ${BANQUE_FICHE.size} dans la banque.`;
   }
