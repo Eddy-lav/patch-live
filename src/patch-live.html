@@ -1179,14 +1179,68 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   nav.tabs button, nav.tabs button:hover { padding: 12px 10px 9px; }
   .panel { padding: 12px; }
   /* En-tête plus court : le mot « Dossier » s'efface, l'étiquette exemple et l'état Dropbox restent */
-  header.top .doc-fields > .field:first-child > span { font-size: 0; }
-  header.top .doc-fields > .field:first-child > span > * { font-size: 12.5px; margin-left: 0; margin-right: 6px; }
-  header.top .doc-fields > .field:first-child > span:not(:has(> :not([hidden]))) { display: none; }
   header.top .field.lieu input { min-height: 40px; }
 }
 /* Interrupteurs à deux positions (Tableaux / Kanban…) : texte lisible en clair comme en sombre */
 .seg { border-radius: var(--r); border-color: var(--btn-line); }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+/* ---------- Parcours (nov. 2026) ---------- */
+/* Menu « Dossier ▾ » au-dessus du nom : nouveau, ouvrir, Dropbox */
+.docline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.docmenu { display: inline-flex; align-items: center; gap: 4px; margin-left: -6px; padding: 2px 6px; border: 1px solid transparent; border-radius: var(--r); background: transparent; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.docmenu:hover, .docmenu[aria-expanded="true"] { border-color: var(--btn-line); background: var(--surface); }
+.docline .example-tag, .docline .dbxstate { margin-left: 0; }
+#docMenu .mi > span { display: flex; flex-direction: column; }
+#docMenu small { color: var(--muted); font-size: 12.5px; font-weight: 400; }
+#docMenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+/* Enregistré ou pas */
+.savestate { font-size: 13px; font-weight: 500; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.savestate::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.savestate.dirty { color: var(--ink); }
+.savestate.dirty::before { background: transparent; border: 2px solid #c27a00; width: 9px; height: 9px; }
+body.dbxfile #saveState { display: none; }
+/* Écrans vides : le bouton qui emmène au bon endroit */
+.empty-state .es-go { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+/* Guide de démarrage */
+.guide { margin-top: 12px; border: 1px solid var(--btn-line); border-left: 4px solid var(--case); border-radius: var(--r); background: var(--surface); padding: 10px 12px 12px; }
+.guide.min { padding-bottom: 10px; }
+.guide-h { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.guide-h strong { font-family: var(--font-head); font-size: 17px; }
+.guide-n { color: var(--muted); font-size: 14px; margin-right: auto; }
+.guide-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.guide-steps button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 10px; align-items: center; width: 100%; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); }
+.guide-steps button:hover { border-color: var(--muted); background: var(--rowhover); }
+.guide-steps button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.guide-steps .gk { flex: none; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--r); background: var(--surface); border: 1px solid var(--btn-line); font-family: var(--font-head); font-weight: 700; }
+.guide-steps .gt { display: flex; flex-direction: column; min-width: 0; }
+.guide-steps .gt b { font-weight: 600; }
+.guide-steps .gt small { color: var(--muted); font-size: 12.5px; }
+.guide-steps li.done .gk { background: var(--tea); border-color: var(--tea); color: #1f4d2c; }
+.guide-steps li.done .gt b { color: var(--muted); font-weight: 500; }
+.guide-steps li[aria-current="step"] button { border-color: var(--case); background: var(--surface); box-shadow: inset 0 -3px 0 var(--tape); }
+@media (max-width: 1100px) and (min-width: 761px) { .guide-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  /* Téléphone : les étapes défilent sur une ligne, sans sous-titre */
+  .guide-h { flex-wrap: nowrap; }
+  .guide-h strong { font-size: 16px; }
+  .guide-n { white-space: nowrap; }
+  .guide-steps { display: flex; overflow-x: auto; scrollbar-width: none; margin-inline: -12px; padding-inline: 12px; scroll-padding-inline: 12px; }
+  .guide-steps::-webkit-scrollbar { display: none; }
+  .guide-steps li { flex: 0 0 auto; }
+  .guide-steps button { min-height: 48px; padding: 6px 12px 6px 8px; }
+  .guide-steps .gt small { display: none; }
+}
+#rackOut > .empty-state, #gridOut > .empty-state { margin-top: 12px; }
+.actions > select { max-width: 100%; }
+/* Aides repliées : une ligne, « ? » pour déplier */
+.hint.clamp { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; padding-left: 24px; position: relative; max-width: 100ch; }
+.hint.clamp::before { content: "?"; position: absolute; left: 0; top: 0.1em; width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--btn-line); border-radius: 50%; font-size: 11px; font-weight: 700; color: var(--ink); background: var(--surface); }
+.hint.clamp:hover { color: var(--ink); }
+.hint.clamp.open { display: block; -webkit-line-clamp: unset; }
+.hint.clamp:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Contrastes relevés au contrôle automatique */
+table.master td.nopad input { opacity: 0.8; }
+.rt > summary h3 .used { opacity: 1; }
 @media (pointer: coarse) { nav.tabs button { min-height: 44px; } }
 </style>
 
@@ -1205,7 +1259,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
 <header class="top">
   <div class="doc-fields">
     <div class="field" style="flex: 1 1 260px; min-width: 0;">
-      <span>Dossier <span id="exampleTag" class="example-tag" hidden>exemple</span><button id="dbxState" class="dbxstate" type="button" hidden></button></span>
+      <span class="docline"><button id="docMenuBtn" class="docmenu" type="button" aria-haspopup="menu" aria-expanded="false" title="Nouveau dossier, ouvrir un Excel, Dropbox">Dossier<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span id="exampleTag" class="example-tag" hidden>exemple</span><button id="dbxState" class="dbxstate" type="button" hidden></button><span id="saveState" class="savestate" role="status" hidden></span></span>
       <input id="docName" class="doc-name" type="text" aria-label="Nom du dossier">
     </div>
     <label class="field lieu"><span>Salle du jour</span>
@@ -1223,15 +1277,17 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   </div>
 </header>
 <div id="appMenu" class="dbxmenu appmenu" role="menu" hidden>
-  <label class="mi file-btn" role="menuitem">Ouvrir un fichier Excel de l'appareil…<input id="fileIn" type="file" accept=".xlsx"></label>
   <button id="exportBtn" type="button" role="menuitem" hidden>Enregistrer une copie Excel sur l'appareil</button>
   <button id="printBtn" type="button" role="menuitem" aria-expanded="false">Imprimer ou faire un PDF…</button>
   <hr>
   <button id="themeMi" type="button" role="menuitem">Changer de thème</button>
   <button id="densBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes serrées</button>
   <button id="colsBtn" type="button" role="menuitem">Colonnes à afficher…</button>
-  <hr>
-  <button id="newBtn" type="button" role="menuitem" class="dangerish">Nouveau dossier</button>
+</div>
+<div id="docMenu" class="dbxmenu appmenu" role="menu" hidden>
+  <button id="newBtn" type="button" role="menuitem">Nouveau dossier</button>
+  <label class="mi file-btn" role="menuitem"><span>Ouvrir un fichier Excel de l'appareil…<small>fait par l'appli, ou un ancien patch à reprendre</small></span><input id="fileIn" type="file" accept=".xlsx"></label>
+  <div id="docDbx"></div>
 </div>
 <div id="dbxMenu" class="dbxmenu" role="menu" hidden></div>
 <div id="ctxMenu" class="dbxmenu appmenu" role="menu" hidden></div>
@@ -1302,6 +1358,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
 </nav>
 </div>
 <div id="notice" hidden></div>
+<div id="guide" class="guide" hidden></div>
 <form id="printForm" class="newbox printform" hidden>
   <strong>Imprimer ou faire un PDF</strong>
   <div class="prchecks" id="prChecks"></div>
@@ -2771,7 +2828,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
     const tbl = $("#masterTbl");
     renderDatalists();
     if (!state.lignes.length) {
-      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune source pour l'instant. Commence par créer tes stage racks (Régie › Réglages racks) et tes boîtiers (Patch › Réglages boîtiers), puis ajoute une source avec « + Source ».</div></td></tr></tbody>`;
+      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune source pour l'instant. Commence par créer tes stage racks et tes boîtiers, puis ajoute une source avec « + Source ».<div class="es-go"><button class="btn small" type="button" data-go="materiel">Créer les stage racks</button><button class="btn small" type="button" data-go="reglbox">Créer les boîtiers</button></div></div></td></tr></tbody>`;
       return;
     }
     let h = `<thead>${masterHead(cols, "")}</thead><tbody>`;
@@ -3107,7 +3164,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
     renderDatalists();
     const outs = state.sorties || [];
     if (!outs.length) {
-      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune sortie pour l'instant. Donne d'abord des sorties à tes stage racks (onglet « Réglages racks », colonne Sorties), puis ajoute une sortie avec « + Sortie ».<br><br><button class="btn small" type="button" id="loadExample">Recharger le dossier d'exemple</button></div></td></tr></tbody>`;
+      tbl.innerHTML = `<tbody><tr><td><div class="empty-state">Aucune sortie pour l'instant. Donne d'abord des sorties à tes stage racks (colonne Sorties des réglages), puis ajoute une sortie avec « + Sortie ».<div class="es-go"><button class="btn small" type="button" data-go="materiel">Ouvrir Réglages racks</button><button class="btn small" type="button" id="loadExample">Recharger le dossier d'exemple</button></div></div></td></tr></tbody>`;
       return;
     }
     const occ = occupancy();
@@ -3344,7 +3401,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   }
   function renderGrid() {
     const out = $("#gridOut");
-    if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier. Crée-les dans l'onglet « Réglages boîtiers ».</div>`; return; }
+    if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier pour l'instant.<div class="es-go"><button class="btn small primary" type="button" data-go="reglbox">Créer les boîtiers</button></div></div>`; return; }
     const occ = occupancy();
     const sides = [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]];
     // Liste de recherche des cases libres : sources (N° du master) et sorties ; d'abord celles qui n'ont pas encore de boîtier
@@ -3573,7 +3630,8 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
     const out = $("#rackOut");
     $("#hideFree").checked = hideFree; out.classList.toggle("hidefree", hideFree);
     $("#spxSuggest").hidden = !spxBases().length; renderSpxPatch();
-    if (!state.racks.length) { out.innerHTML = `<div class="empty-state">Aucun stage rack. Crée-les dans l'onglet « Réglages racks ».</div>`; return; }
+    const noRack = !state.racks.length; $("#rackTools").hidden = noRack; $("#v-racks .loopbar").hidden = noRack; $("#spxPatch").hidden = noRack; // sans rack, la barre d'outils ne sert à rien
+    if (noRack) { out.innerHTML = `<div class="empty-state">Aucun stage rack pour l'instant.<div class="es-go"><button class="btn small primary" type="button" data-go="materiel">Créer les stage racks</button></div></div>`; return; }
     const occ = occupancy();
     const ks = consoleKeys(), split = ks.length > 0, ord = (c) => (c === "Partagé" ? 99 : ks.indexOf(c));
     $("#groupCons").checked = groupCons; $("#groupCons").closest("label").hidden = !split;
@@ -5796,7 +5854,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
         for (let s = 0; s < cells.length; s += 8) {
           const part = cells.slice(s, s + 8);
           const lbl = r.ports ? (s ? "" : (r.ports[c - 1] || {}).nom || "") : r.flat ? String(part[0].i) : String(c);
-          rows += `<div class="occ-row"><span class="lbl">${esc(lbl)}</span>${part.map(({ i }) => { const x = get(c, i); return `<span class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`;
+          rows += `<div class="occ-row"><span class="lbl">${esc(lbl)}</span>${part.map(({ i }) => { const x = get(c, i); return `<span role="img" class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`;
         }
       });
       return rows;
@@ -6718,7 +6776,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   function renderSyn() {
     const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
     if (synMulti.size) { const have = new Set(nodes.map((q) => q.id)); [...synMulti].forEach((id) => { if (!have.has(id)) synMulti.delete(id); }); if (synMulti.size < 2) synSetSel([...synMulti]); }
-    if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Ajoute tes stage racks et I/O dans « Réglages racks » : le synoptique se dessine tout seul à partir d'eux.</div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
+    if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Le synoptique se dessine tout seul à partir de tes stage racks et I/O.<div class="es-go"><button class="btn small primary" type="button" data-go="materiel">Créer les stage racks</button></div></div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
     stage.innerHTML = synSvg(false).replace("<svg ", `<svg id="synSvg" role="img" aria-label="Synoptique" `);
     $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
     const opts = (cur) => `<option value="">—</option>` + nodes.map((n) => `<option value="${esc(n.id)}"${n.id === cur ? " selected" : ""}>${esc(n.title)}</option>`).join("");
@@ -8567,7 +8625,53 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
     $("#cHf").textContent = hfState().reduce((n, g) => n + g.rows.length, 0) || "";
     $("#cHfRx").textContent = hfDevs().filter((d) => d.kind === "rx").length || ""; $("#cHfTx").textContent = hfDevs().filter((d) => d.kind === "tx").length || "";
     $("#cJournal").textContent = state.journal.length;
+    paintSave(); renderGuide();
   }
+  // ---------- Enregistré ou pas ? (hors Dropbox, qui a son propre état) ----------
+  const SAVE_KEY = "patch-live-savestate";
+  let saveInfo = {}; try { saveInfo = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}") || {}; } catch (e) { /* ignore */ }
+  function paintSave() {
+    const el = $("#saveState"); if (!el) return;
+    if (state.exemple) { el.hidden = true; return; }
+    el.hidden = false;
+    if (saveInfo.dirty) { el.textContent = "Modifs non enregistrées"; el.className = "savestate dirty"; return; }
+    if (!saveInfo.t) { el.textContent = "Pas encore enregistré"; el.className = "savestate dirty"; return; }
+    const d = new Date(saveInfo.t), today = d.toDateString() === new Date().toDateString();
+    const h = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ");
+    el.textContent = `${saveInfo.how === "opened" ? "Ouvert" : "Enregistré"} ${today ? "à " + h : "le " + d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}`;
+    el.className = "savestate ok";
+  }
+  function markSave(how) {
+    saveInfo = how === "dirty" ? { ...saveInfo, dirty: true } : how === "new" ? {} : { dirty: false, t: new Date().toISOString(), how };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(saveInfo)); } catch (e) { /* ignore */ }
+    paintSave();
+  }
+  // ---------- Guide de démarrage d'un dossier vide : souple, chaque étape se fait dans l'ordre qu'on veut ----------
+  function renderGuide() {
+    const el = $("#guide"); if (!el) return;
+    const g = state.dossier.guide, saved = !!saveInfo.t || document.body.classList.contains("dbxfile");
+    const steps = [
+      ["Stage racks et I/O", "Régie › Réglages racks", "materiel", state.racks.length > 0],
+      ["Boîtiers", "Patch › Réglages boîtiers", "reglbox", state.boites.length > 0],
+      ["Sources", showMaster ? "Patch › Master patch" : "Régie › Racks et I/O", homeView(), state.lignes.length > 0],
+      ["Sorties", "Patch › Sorties", "sorties", (state.sorties || []).length > 0],
+      ["Enregistrer", "En Excel ou dans Dropbox", "", saved]
+    ];
+    const done = steps.filter((x) => x[3]).length;
+    if (state.exemple || !g || g === "off" || done === steps.length) { el.hidden = true; return; }
+    const next = steps.findIndex((x) => !x[3]);
+    el.hidden = false; el.classList.toggle("min", g === "min");
+    el.innerHTML = `<div class="guide-h"><strong>Pour démarrer</strong><span class="guide-n">Fait : ${done} sur ${steps.length}</span>
+      <button class="btn small" type="button" data-guide="${g === "min" ? "on" : "min"}" aria-expanded="${g === "min" ? "false" : "true"}">${g === "min" ? "Afficher les étapes" : "Replier"}</button>
+      <button class="btn small icon" type="button" data-guide="off" title="Ne plus afficher le guide pour ce dossier" aria-label="Ne plus afficher le guide">×</button></div>` +
+      (g === "min" ? "" : `<ol class="guide-steps">${steps.map(([t, w, v, ok], i) => `<li${ok ? ' class="done"' : ""}${i === next ? ' aria-current="step"' : ""}><button type="button" ${v ? `data-go="${v}"` : 'data-guide="save"'}><span class="gk" aria-hidden="true">${ok ? "✓" : i + 1}</span><span class="gt"><b>${t}</b><small>${ok ? "Fait" : w}</small></span></button></li>`).join("")}</ol>`);
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-guide]"); if (!b) return;
+    const a = b.dataset.guide;
+    if (a === "save") { if (!$("#dbxBtn").hidden) $("#dbxBtn").click(); else save(); return; }
+    state.dossier.guide = a; persist(); renderGuide();
+  });
   function render() {
     // Les tableaux reconstruits gardent leur défilement horizontal (sinon on revient tout à gauche à chaque modif)
     const sc = [...document.querySelectorAll("section:not([hidden]) .table-wrap, section:not([hidden]) .hftw, section:not([hidden]) .kb")].map((w) => w.scrollLeft);
@@ -8603,12 +8707,12 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   function travel(from, to) {
     if (!from.length) return;
     to.push(lastSnap); lastSnap = from.pop(); state = JSON.parse(lastSnap);
-    persist(); paintHistory(); dbxDirty();
+    persist(); paintHistory(); dbxDirty(); markSave("dirty");
     ["#newBoxForm", "#rangeForm"].forEach((f) => { $(f).hidden = true; });
     render();
   }
   const undo = () => travel(undoStack, redoStack), redo = () => travel(redoStack, undoStack);
-  function commit(rerender) { record(); persist(); if (rerender) render(); else renderHeader(); dbxDirty(); }
+  function commit(rerender) { record(); persist(); markSave("dirty"); if (rerender) render(); else renderHeader(); dbxDirty(); }
   // Hauteur des onglets collants, pour placer les barres de sélection juste dessous
   function syncNavH() { const n = document.querySelector(".navs"); if (n) { document.documentElement.style.setProperty("--navh", Math.max(0, n.getBoundingClientRect().bottom) + "px"); document.documentElement.style.setProperty("--navstick", n.offsetHeight + "px"); } }
   addEventListener("scroll", syncNavH, { passive: true }); addEventListener("resize", syncNavH);
@@ -8633,9 +8737,19 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   // Téléphone : les longues aides tiennent sur 2 lignes, une touche les déplie
   const phone = matchMedia("(max-width: 760px)");
   function clampHints() {
-    document.querySelectorAll("section .hint, .panel > p.hint, .spxres > p.hint").forEach((h) => { if (h.id === "searchHint") return; h.classList.toggle("clamp", phone.matches && h.textContent.length > 110); });
+    // Les longues explications se replient sur une ligne, sur tous les écrans : « ? » les déplie (souris, doigt ou clavier)
+    document.querySelectorAll("section .hint, .panel > p.hint, .spxres > p.hint").forEach((h) => {
+      if (h.id || h.closest("form, .empty-state, #guide")) return;
+      const on = h.textContent.length > (phone.matches ? 90 : 140); h.classList.toggle("clamp", on);
+      if (on) { if (!h.hasAttribute("tabindex")) { h.tabIndex = 0; h.setAttribute("role", "button"); } h.setAttribute("aria-expanded", h.classList.contains("open") ? "true" : "false"); }
+      else if (h.getAttribute("role") === "button") { h.removeAttribute("tabindex"); h.removeAttribute("role"); h.removeAttribute("aria-expanded"); }
+    });
   }
-  document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
+  const toggleHint = (h) => { h.classList.toggle("open"); h.setAttribute("aria-expanded", h.classList.contains("open") ? "true" : "false"); };
+  document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) toggleHint(h); });
+  document.addEventListener("keydown", (e) => { const h = e.target.closest && e.target.closest(".hint.clamp"); if (h && h === e.target && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleHint(h); } });
+  // Boutons « aller à » des écrans vides et du guide
+  document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
   const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
@@ -8901,6 +9015,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
       const name = `${state.dossier.nom.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Dossier"} ${state.dossier.version || ""}`.trim() + ".xlsx";
       try {
         await saveBlob(name, blob);
+        markSave("saved");
         notice(`Fichier « ${esc(name)} » enregistré.`);
       } catch (err) {
         if (err && err.code === "declined") return;
@@ -8958,6 +9073,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
       dbxDetach();
       state = next;
       record(); persist(); render();
+      markSave("opened");
       notice(`Dossier « ${esc(state.dossier.nom)} » ouvert.` + openReport(report), report.problems.length > 0);
     } catch (e) {
       if (e && e.code === "autre-dossier") { notice("Ce fichier a perdu les données de l'appli (il a sans doute été réenregistré par Numbers ou un autre tableur). On ne peut le récupérer que sur l'appareil où ce dossier est encore ouvert dans l'appli : ouvre-le depuis cet appareil.", true); return; }
@@ -9307,8 +9423,8 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
       if (!armedNew) { armedNew = true; e.target.textContent = DBX_ON && dbx.file ? "Confirmer : nouveau dossier (l'actuel reste dans Dropbox)" : "Confirmer : tout effacer (enregistre d'abord en Excel si besoin)"; e.target.classList.add("danger", "armed"); setTimeout(() => { armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed"); }, 4000); return; }
       armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed");
       const was = DBX_ON && dbx.file ? (state.dossier && state.dossier.nom) || "le dossier" : "";
-      dbxDetach(); state = vide(); record(); persist(); setView("materiel");
-      notice(`Dossier vide créé.${was ? ` « ${esc(was)} » est intact dans Dropbox : « Ouvrir depuis Dropbox » pour y revenir.` : ""} Commence par tes stage racks et tes boîtiers, puis passe au master patch.`);
+      dbxDetach(); state = vide(); state.dossier.guide = "on"; markSave("new"); record(); persist(); closeMenus(); setView("materiel");
+      notice(`Dossier vide créé.${was ? ` « ${esc(was)} » est intact dans Dropbox : « Ouvrir depuis Dropbox » pour y revenir.` : ""} Les étapes sont ci-dessous, dans l'ordre que tu veux.`);
     });
   }
   function focusLastIn(tbl, n, f) {
@@ -9869,7 +9985,18 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   const pref = (k, d) => { try { const v = localStorage.getItem("patch-live-" + k); return v == null ? d : v; } catch (e) { return d; } };
   const setPref = (k, v) => { try { localStorage.setItem("patch-live-" + k, v); } catch (e) { /* ignore */ } };
   // Menu « … » de l'en-tête
-  function closeMenus() { $("#appMenu").hidden = true; $("#menuBtn").setAttribute("aria-expanded", "false"); $("#ctxMenu").hidden = true; }
+  function closeMenus() { $("#appMenu").hidden = true; $("#menuBtn").setAttribute("aria-expanded", "false"); $("#ctxMenu").hidden = true; $("#docMenu").hidden = true; $("#docMenuBtn").setAttribute("aria-expanded", "false"); }
+  // Menu « Dossier ▾ » : tout ce qui change de dossier (nouveau, ouvrir un Excel, Dropbox)
+  $("#docMenuBtn").addEventListener("click", (e) => {
+    e.stopPropagation(); const m = $("#docMenu"); if (!m.hidden) { closeMenus(); return; }
+    closeMenus();
+    const on = typeof DBX_ON !== "undefined" && DBX_ON;
+    $("#docDbx").innerHTML = !on ? "" : `<hr>${!dbx.tok ? `<button type="button" role="menuitem" data-dbx="login">Se connecter à Dropbox</button>` : `<button type="button" role="menuitem" data-dbx="open">Ouvrir depuis Dropbox…</button><button type="button" role="menuitem" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>`}`;
+    const r = e.currentTarget.getBoundingClientRect(); placeMenu(m, r.left, r.bottom + 4); m.style.width = "300px";
+    e.currentTarget.setAttribute("aria-expanded", "true");
+    const f = m.querySelector("button, label"); if (f && e.detail === 0) f.focus();
+  });
+  $("#docMenu").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTimeout(() => { if (!(b.id === "newBtn" && b.classList.contains("armed"))) closeMenus(); }, 0); });
   function placeMenu(m, x, y) { m.hidden = false; m.style.top = Math.max(8, Math.min(y, innerHeight - m.offsetHeight - 8)) + "px"; m.style.left = Math.max(8, Math.min(x, innerWidth - m.offsetWidth - 8)) + "px"; }
   $("#menuBtn").addEventListener("click", (e) => {
     e.stopPropagation(); const m = $("#appMenu"); if (!m.hidden) { closeMenus(); return; }
@@ -9878,7 +10005,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
     const r = e.currentTarget.getBoundingClientRect(); placeMenu(m, r.right - 290, r.bottom + 4); m.style.width = "290px";
     $("#menuBtn").setAttribute("aria-expanded", "true");
   });
-  document.addEventListener("click", (e) => { if (!e.composedPath().some((n) => n.id === "appMenu" || n.id === "ctxMenu")) closeMenus(); });
+  document.addEventListener("click", (e) => { if (!e.composedPath().some((n) => n.id === "appMenu" || n.id === "ctxMenu" || n.id === "docMenu")) closeMenus(); });
   $("#selPanne").addEventListener("click", (e) => { e.stopPropagation(); const l = state.lignes.find((x) => selection.has(x.id)); const r = e.currentTarget.getBoundingClientRect(); if (l) panneMenu(l, r.left, r.bottom + 4); });
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-unhs]"); if (!b || !state.hs) return; delete state.hs[b.dataset.unhs]; const [bid, i] = b.dataset.unhs.split(":"), bx = boxById(bid); log(`${bx ? boxName(bx) : "Boîtier"} → ${i} réparée, remise en service.`); commit(true); });
   $("#appMenu").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTimeout(() => { if (!(b.id === "newBtn" && b.classList.contains("armed"))) closeMenus(); }, 0); });
@@ -10352,7 +10479,7 @@ table.master tr.sel td.ch { color: var(--accent-ink); background: var(--accent);
   });
   // Modifs pas encore arrivées dans Dropbox : le navigateur demande confirmation avant de fermer ou de quitter
   addEventListener("beforeunload", (e) => { if (DBX_ON && dbx.file && /pending|sync|offline|err/.test(dbx.status || "")) { e.preventDefault(); e.returnValue = ""; } });
-  if (state.exemple) notice("Ceci est un dossier d'exemple pour tester l'appli. « Nouveau dossier » repart de zéro, « Ouvrir un fichier Excel » relit un fichier enregistré par l'appli.");
+  if (state.exemple) notice("Ceci est un dossier d'exemple pour tester l'appli. Pour commencer le tien ou ouvrir un Excel, clique sur « Dossier » en haut, au-dessus du nom.");
   dbxInit();
 })();
 </script>
