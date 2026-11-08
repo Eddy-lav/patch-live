@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "f1227c4f2a";</script>
+<script>window.PL_VER = "62ab5937b5";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1477,8 +1477,8 @@ label.p48 input:checked + span { border-style: solid; }
   const HF_MODELS = [["SKM6000", "tx", "Sennheiser SKM6000 (main)"], ["SK6000", "tx", "Sennheiser SK6000 (ceinture)"], ["SKM9000", "tx", "Sennheiser SKM9000 (main)"], ["SK9000", "tx", "Sennheiser SK9000 (ceinture)"], ["AD2", "tx", "Shure Axient AD2 (main)"], ["AD1", "tx", "Shure Axient AD1 (ceinture)"], ["EW-DX SKM", "tx", "Sennheiser EW-DX (main)"], ["P10R+", "iem", "Shure PSM1000 P10R+ (ear)"], ["EK 2000 IEM", "iem", "Sennheiser EK 2000 IEM (ear)"], ["SEK", "spx", "Sennheiser Spectera SEK (bidirectionnel)"], ["SKM Spectera", "spxm", "Sennheiser Spectera SKM (micro main)"], ["Émetteur", "tx", "Autre micro HF"], ["Récepteur", "iem", "Autre ear HF"]];
   // Récepteurs (micros HF) et émetteurs (ears) en rack. Leurs voies servent de provenance au master, d'arrivée aux sorties,
   // et ils se rangent dans les plans de rack. n = voies audio (sorties d'un récepteur, entrées d'un émetteur)
-  const HFDEV_MODELS = [["EM 6000", "rx", 2, "Sennheiser EM 6000"], ["EM 9046", "rx", 8, "Sennheiser EM 9046"], ["EW-DX EM 4 Dante", "rx", 4, "Sennheiser EW-DX EM 4 Dante"], ["EW-DX EM 2", "rx", 2, "Sennheiser EW-DX EM 2"], ["AD4Q", "rx", 4, "Shure Axient AD4Q"], ["AD4D", "rx", 2, "Shure Axient AD4D"], ["ULXD4Q", "rx", 4, "Shure ULX-D ULXD4Q"], ["ULXD4D", "rx", 2, "Shure ULX-D ULXD4D"], ["Récepteur", "rx", 2, "Autre récepteur"],
-    ["SR 2050 IEM", "tx", 4, "Sennheiser SR 2050 IEM"], ["P10T", "tx", 4, "Shure PSM1000 P10T"], ["SR IEM G4", "tx", 2, "Sennheiser SR IEM G4"], ["MTK952", "tx", 4, "Wisycom MTK952"], ["Émetteur", "tx", 2, "Autre émetteur"]];
+  const HFDEV_MODELS = [["EM 6000", "rx", 2, "Sennheiser EM 6000"], ["EM 9046", "rx", 8, "Sennheiser EM 9046"], ["EW-DX EM 4 Dante", "rx", 4, "Sennheiser EW-DX EM 4 Dante"], ["EW-DX EM 2", "rx", 2, "Sennheiser EW-DX EM 2"], ["AD4Q", "rx", 4, "Shure Axient AD4Q"], ["AD4D", "rx", 2, "Shure Axient AD4D"], ["ULXD4Q", "rx", 4, "Shure ULX-D ULXD4Q"], ["ULXD4D", "rx", 2, "Shure ULX-D ULXD4D"], ["UR4D+", "rx", 2, "Shure UHF-R UR4D+"], ["AXT400", "rx", 2, "Shure Axient AXT400"], ["EM 3732", "rx", 2, "Sennheiser EM 3732"], ["MRK960", "rx", 2, "Wisycom MRK960"], ["TG 1000", "rx", 2, "Beyerdynamic TG 1000"], ["Récepteur", "rx", 2, "Autre récepteur"],
+    ["SR 2050 IEM", "tx", 4, "Sennheiser SR 2050 IEM"], ["P10T", "tx", 4, "Shure PSM1000 P10T"], ["SR IEM G4", "tx", 2, "Sennheiser SR IEM G4"], ["MTK952", "tx", 4, "Wisycom MTK952"], ["ADTQ", "tx", 8, "Shure Axient Digital PSM ADTQ"], ["Émetteur", "tx", 2, "Autre émetteur"]];
   // Plages des récepteurs et émetteurs en rack (mêmes plages que les packs qui vont avec)
   const BANDS_G4 = [["A1", "470–516 MHz"], ["A", "516–558 MHz"], ["AS", "520–558 MHz"], ["G", "566–608 MHz"], ["GB", "606–648 MHz"], ["B", "626–668 MHz"], ["C", "734–776 MHz"], ["D", "780–822 MHz"], ["E", "823–865 MHz"]];
   const HFDEV_BANDS = () => ({ "EM6000": BANDS_D6000, "EM9046": BANDS_D9000, "EW-DXEM4DANTE": BANDS_EWDX, "EW-DXEM2": BANDS_EWDX, "AD4Q": BANDS_AXD, "AD4D": BANDS_AXD, "P10T": BANDS_PSM1000, "SR2050IEM": BANDS_EK2000, "SRIEMG4": BANDS_G4, "MTK952": [["0W2", "470–798 MHz"]] });
@@ -3512,10 +3512,15 @@ label.p48 input:checked + span { border-style: solid; }
     ad8c: { nom: "AD8C", type: "Combineur d'antennes PSM", t: "Shure AD8C · combineur d'antennes Axient Digital PSM", re: /\bad\s*-?\s*8c\b/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`Entrée ${i + 1}`, "Antenne"]), ["Out A", "Antenne"], ["Out B", "Antenne"], ["Réseau", "Réseau"]] },
     csi16t: { nom: "CSI16T/W", type: "Combineur 16 émetteurs", t: "Wisycom CSI16T/W · combineur 16 émetteurs", re: /csi\s*-?\s*16/i, clk: "none", ports: [...Array.from({ length: 16 }, (_, i) => [`Entrée ${i + 1}`, "Antenne"]), ...Array.from({ length: 4 }, (_, i) => [`Sortie ${"ABCD"[i]}`, "Antenne"])] },
     rfamp: { nom: "Booster HF", type: "Ampli d'antenne 2 voies", t: "Sennheiser RF-Amplifier · booster d'antenne 2 voies", re: /rf\s*-?\s*amplifier|booster/i, clk: "none", ports: [["Entrée I", "Antenne"], ["Sortie I", "Antenne"], ["Entrée II", "Antenne"], ["Sortie II", "Antenne"]] },
+    axt600: { nom: "AXT600", type: "Analyseur de spectre HF", t: "Shure AXT600 · Spectrum Manager (Axient)", re: /\baxt\s*-?\s*600\b/i, clk: "none", ports: [["Antenne A", "Antenne"], ["Antenne B", "Antenne"], ["Réseau", "Réseau"]] },
+    axt630: { nom: "AXT630", type: "Distribution d'antennes", t: "Shure AXT630 · distribution d'antennes Axient", re: /\baxt\s*-?\s*63\d\b/i, clk: "none", ports: [["Antenne A in", "Antenne"], ["Antenne B in", "Antenne"], ...Array.from({ length: 4 }, (_, i) => [`Sortie ${i + 1} (A/B)`, "Antenne"]), ["Réseau", "Réseau"]] },
+    axt900: { nom: "AXT900", type: "Chargeur de batteries", t: "Shure AXT900 · chargeur rack Axient (8 batteries)", re: /\baxt\s*-?\s*900\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
+    sbrc: { nom: "SBRC", type: "Chargeur de batteries", t: "Shure SBRC · chargeur rack (8 batteries SB900 / SB910)", re: /\bsbrc\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
+    l6000: { nom: "L 6000", type: "Chargeur de batteries", t: "Sennheiser L 6000 · chargeur rack (4 modules)", re: /\bl\s*-?\s*6000\b/i, clk: "none", ports: [["Réseau", "Réseau"]] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
-  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050" };
+  const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5 };
   const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210 };
   function devArt(type, label, ref) {
@@ -3542,6 +3547,16 @@ label.p48 input:checked + span { border-style: solid; }
       + [0, 1, 2, 3].map((i) => R(361, 8 + i * 7.4, 8.5, 4, "#5b6167", 0.8) + R(361, 8 + i * 7.4, 8.5, 1, "#7a8288", 0.5)).join("")
       + R(377.5, 8, 10, 5, "#1f3a2a", 1) + T(382.5, 11.4, "ENTER", 1.7, "#86efac", 700, 0, "middle") + T(382.5, 22.8, "PUSH –", 1.9, "#9aa3ab", 600, 0, "middle") + R(377.5, 30.5, 10, 5, "#3f1414", 1) + T(382.5, 33.9, "EXIT", 1.7, "#fca5a5", 700, 0, "middle")
       + knurl(406, 22, 11) + R(428, 7.5, 13, 29, "#0b0d0f", 1.5) + R(430.5, 10, 8, 24, "#2a2e33", 1) + R(430.5, 10, 8, 11, "#3d4349", 1) + R(434, 12.5, 1, 4, "#e5e7eb");
+    // Aides des façades dessinées d'après photo : oreilles à trous ovales ou ronds, écran, touche, colonne de LED, flèche, interrupteur, logo texte, nom de la source par voie
+    const earsO = (c, hc) => [0, 470].map((x) => R(x, 0, 13, H, c || "#1c1d1f", 1.5) + R(x + 2.2, 3.5, 8.6, 6.4, hc || "#d5dade", 3.2) + R(x + 2.2, H - 9.9, 8.6, 6.4, hc || "#d5dade", 3.2)).join("");
+    const earsR = (c, hc) => [0, 470].map((x) => R(x, 0, 13, H, c || "#1c1d1f", 1.5) + C(x + 6.5, 8.5, 4.1, hc || "#d5dade") + C(x + 6.5, H - 8.5, 4.1, hc || "#d5dade")).join("");
+    const lcd = (x, y, w, h, bg, lines, fg, fs) => R(x, y, w, h, bg, 0.8) + lines.map((t, i) => T(x + 1.5, y + fs + 0.8 + i * (fs + 0.9), t, fs, fg, 700)).join("");
+    const kb = (x, y, w, h, c, t, tc) => R(x, y, w, h, c || "#2a2d31", 0.9, ' stroke="#55595e" stroke-width="0.35"') + (t ? T(x + w / 2, y + h / 2 + 0.7, t, Math.min(2, h * 0.42), tc || "#cbd5e1", 700, 0, "middle") : "");
+    const ledCol = (x, y, n, dy, cols) => Array.from({ length: n }, (_, i) => led(x, y + i * dy, cols[i] || cols[cols.length - 1], 0.8)).join("");
+    const tri = (x, y, s, up, c) => `<path d="M${x - s} ${up ? y + s * 0.6 : y - s * 0.6} L${x + s} ${up ? y + s * 0.6 : y - s * 0.6} L${x} ${up ? y - s * 0.6 : y + s * 0.6}Z" fill="${c || "#e5e7eb"}"/>`;
+    const rocker = (x, y, w, h) => R(x, y, w, h, "#0b0d0f", 1.2) + R(x + 1, y + 1.2, w - 2, h - 2.4, "#2b2f33", 1) + R(x + w / 2 - 0.4, y + 3.5, 0.8, 3.5, "#e5e7eb") + C(x + w / 2, y + h - 6, 1.6, "none", ' stroke="#e5e7eb" stroke-width="0.45"');
+    const shLogo = (x, y, sz) => T(x, y, "SHURE", sz || 4, "#f3f4f6", 900, 0.3);
+    const who = (k, dflt) => (ref && ref.id && ref.kind ? (hfSlotWho(ref, k) || "—").slice(0, 12) : dflt);
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
       case "sd": {
@@ -3890,6 +3905,159 @@ label.p48 input:checked + span { border-style: solid; }
         s += led(390, 14, "#ef4444", 1.6) + led(390, 21, "#ef4444", 1.6) + T(395, 15, "Ch. A", 2.4, "#e5e7eb", 600) + T(395, 22, "Ch. B", 2.4, "#e5e7eb", 600) + T(392, 36, "Remote Mic Kill", 2.4, "#e5e7eb", 600);
         s += Array.from({ length: 6 }, (_, i) => Array.from({ length: 7 }, (_, j) => C(426 + j * 5.5, 12 + i * 4.5, 1.2, "#0f1626")).join("")).join("");
         s += T(464, 9, "Clear-Com", 3.6, "#e5e7eb", 800, 0, "end") + T(464, 38, "MS-702", 3.2, "#e5e7eb", 700, 0, "end");
+        return s;
+      }
+      // ---------- Lot photos 08/11 : HF d'après les photos d'Eddy (Dropbox Plan de Rack/Machine) ----------
+      // Shure ULX-D ULXD4Q / ULXD4D : écran gris à gauche, ENTER/EXIT/SCAN, molette, une tranche par voie (SEL, sync, LED RF A/B et audio, gain)
+      case "ulxd4q": case "ulxd4d": {
+        const n = type === "ulxd4q" ? 4 : 2;
+        let s = earsO("#141517") + R(13, 0, 457, H, "#16181a", 1.2) + shLogo(44, 8.8, 5.2) + T(44, 13.6, n === 4 ? "ULXD4Q" : "ULXD4D", 3.6, "#d1d5db", 400) + T(44, 16.4, "Digital Wireless Receiver", 1.5, "#9ca3af", 600);
+        s += R(44, 27.5, 26, 3.6, "none", 0.4, ' stroke="#6b7280" stroke-width="0.35"') + T(57, 30.2, ref && ref.band ? ref.band : "G50 470-534 MHz", 1.6, "#9ca3af", 600, 0, "middle");
+        s += R(72.5, 14, 9.5, 19, "#2a0f10", 0.8) + T(77.2, 36.5, "IR", 1.6, "#9ca3af", 600, 0, "middle") + R(91, 36, 4, 2.4, "#6b7280", 0.4) + R(98, 36.4, 4, 1.6, "#6b7280", 0.4);
+        s += lcd(90, 11.5, 46, 22, "#d9dcd6", Array.from({ length: n }, (_, i) => `${i + 1} ${who(i + 1, `G01CH0${i + 1}`)}`), "#1f2937", n === 4 ? 3.6 : 4.4);
+        s += kb(140, 14.4, 14, 5.5, "#14532d", "ENTER", "#86efac") + kb(140, 23.8, 14, 5.5, "#450a0a", "EXIT", "#fca5a5") + kb(140, 33.2, 14, 5.5, "#1f2226", "SCAN");
+        s += T(170, 6, "control", 2.2, "#d1d5db", 600, 0, "middle") + knurl(170, 21.5, 8.5) + T(170, 37.5, "push", 1.8, "#9ca3af", 600, 0, "middle");
+        for (let k = 0; k < n; k++) {
+          const d = k * 58, au = ["#ef4444", "#f59e0b", "#f59e0b", "#22c55e", "#22c55e", "#22c55e"];
+          s += (k ? R(188 + d, 3, 0.4, 38, "#3a3d41") : "") + T(193 + d, 6.4, `RX${k + 1}`, 2.8, "#e5e7eb", 700) + T(208 + d, 6.4, "RF", 1.9, "#d1d5db", 600) + T(214 + d, 6.4, "audio", 1.9, "#d1d5db", 600) + T(229 + d, 6.4, "gain", 1.9, "#d1d5db", 600);
+          s += kb(193 + d, 13.8, 10.5, 8.5, "#202326", "SEL") + kb(193 + d, 27.3, 10.5, 5, "#202326", "sync") + T(209 + d, 10, "A", 1.5, "#9ca3af", 600, 0, "middle") + T(214 + d, 10, "B", 1.5, "#9ca3af", 600, 0, "middle");
+          s += led(209 + d, 12.4, "#e5e7eb", 0.8) + led(214 + d, 12.4, "#60a5fa", 0.8) + ledCol(209 + d, 16, 6, 3.2, ["#f97316"]) + ledCol(217 + d, 16, 6, 3.2, au) + ledCol(222 + d, 16, 6, 3.2, au);
+          s += kb(229 + d, 13.8, 8.5, 7, "#202326") + tri(233.2 + d, 17.3, 2, true) + kb(229 + d, 25.8, 8.5, 7, "#202326") + tri(233.2 + d, 29.3, 2, false);
+        }
+        return s + T(428, 6.4, "power", 2, "#d1d5db", 600, 0, "middle") + rocker(423, 13, 10.5, 22);
+      }
+      // Shure UHF-R UR4D+ : façade grise, 2 écrans verts rétroéclairés avec 4 touches, colonnes de LED, ENTER/EXIT et molette, monitor, power
+      case "ur4d": {
+        let s = earsR("#26272a") + R(13, 0, 457, H, "#323336", 1.2) + R(13, 0, 457, 1.2, "#45474b") + shLogo(43, 9.5, 5.2) + T(43, 19, "UR4D", 3.4, "#e5e7eb", 400) + ["Dual Wireless Receiver", "with Audio Reference", "Companding"].map((t, i) => T(43, 22.4 + i * 2, t, 1.4, "#a3a6ab", 600)).join("") + T(48, 36.5, "sync", 1.4, "#a3a6ab", 600, 0, "middle");
+        [0, 1].forEach((k) => {
+          const d = k * 122;
+          s += R(77 + d, 4, 116, 37, "#1f2022", 1.5) + T(81 + d, 7.4, "RF", 1.4, "#a3a6ab", 600) + T(91 + d, 7.4, "audio", 1.4, "#a3a6ab", 600);
+          s += led(81 + d, 11, "#60a5fa", 0.9) + led(86 + d, 11, "#60a5fa", 0.9) + ledCol(81 + d, 15, 8, 3, ["#f59e0b", "#f59e0b", "#f59e0b", "#facc15", "#facc15", "#22c55e"]) + ledCol(86 + d, 15, 8, 3, ["#f59e0b", "#f59e0b", "#f59e0b", "#facc15", "#facc15", "#22c55e"]) + ledCol(95 + d, 12, 9, 3, ["#ef4444", "#facc15", "#facc15", "#facc15", "#22c55e"]);
+          s += lcd(111 + d, 10.5, 65, 27.5, "#a3d65a", [who(k + 1, k ? "Ronnie R" : "Bobby J"), k ? "675.500 MHz" : "675.075 MHz", k ? "G9 Ch18" : "G9 Ch17", "+25dB ||||||| 8h"], "#1a2e05", 3.6) + ["Radio", "Audio", "Utility", "Sync"].map((t, i) => T(175 + d, 15 + i * 6.6, t, 2.9, "#1a2e05", 700, 0, "end")).join("");
+          s += [0, 1, 2, 3].map((i) => R(180 + d, 10.5 + i * 7, 11, 5.4, "#1c1d1f", 1, ' stroke="#c4e17a" stroke-width="0.5"')).join("");
+        });
+        s += R(322, 6, 52, 34, "#1f2022", 1.5) + kb(326, 11, 9, 6, "#14532d", "ENTER", "#86efac") + kb(326, 26, 9, 6, "#450a0a", "EXIT", "#fca5a5") + T(357, 8.6, "control", 1.6, "#a3a6ab", 600, 0, "middle") + knurl(357, 23, 11);
+        s += R(377, 6, 32, 34, "#1f2022", 1.5) + T(397, 8.6, "monitor", 1.6, "#a3a6ab", 600, 0, "middle") + led(383, 13, "#facc15", 0.9) + knurl(397, 17, 5) + jack(396, 32.5, 3.6, "#b8bfc5");
+        return s + R(418, 6, 18, 34, "#1f2022", 1.5) + T(427, 8.6, "power", 1.6, "#a3a6ab", 600, 0, "middle") + rocker(422, 11, 10, 25);
+      }
+      // Shure Axient Digital PSM ADTQ : grille d'aération à gauche, casque, grand écran 4 canaux au centre, gabarit Shure à droite
+      case "adtq": {
+        let s = shureBody(true) + T(64, 3.6, "ADTQ", 2.6, "#e5e7eb", 700) + R(42, 6, 82, 32, "#0e1012", 1);
+        for (let j = 0; j < 6; j++) for (let i = 0; i < 16; i++) s += C(45.5 + i * 5 + (j % 2) * 2.5, 9.5 + j * 5, 1.7, "#2b2f33");
+        s += knurl(137, 14, 4.5) + jack(137, 29, 3.5, "#b8bfc5") + R(151.5, 8, 5, 9, "#3b0a0a", 1) + led(154, 21, "#ef4444", 0.6) + R(152, 27, 4, 7, "#e5e7eb", 0.8) + R(163.5, 9, 10, 26, "#0b0d0f", 1.2) + R(165, 11, 7, 22, "#2b2f33", 1);
+        s += R(186, 5, 168, 35, "#0a0b0c", 1.2) + R(189, 7.5, 24, 4.2, "#14532d", 0.6) + T(190, 10.6, "MAIN MENU", 2, "#bbf7d0", 700) + T(190, 15.4, ref && ref.band ? `Band ${ref.band}` : "Frequency 470.000 MHz", 1.6, "#d1d5db", 600);
+        for (let k = 0; k < 4; k++) {
+          const x = 189 + k * 41;
+          s += R(x, 17.5, 39, 3.8, "#3f6e3a", 0.5) + T(x + 1, 20.4, `Channel ${k + 1}`, 2, "#e5e7eb", 700) + T(x + 5, 24.4, who(k + 1, "Bodypack"), 1.7, "#e5e7eb", 600) + R(x + 0.5, 23, 1.2, 14, "#22c55e") + R(x + 2.2, 23, 1.2, 14, "#22c55e") + R(x + 5, 31, 33, 3, "#26292d", 0.5) + T(x + 21.5, 33.2, "No receiver linked", 1.3, "#9ca3af", 600, 0, "middle");
+        }
+        return s + shureRight();
+      }
+      // Shure Axient AXT400 / AXT600 / AXT630 : même famille (panneau gauche, écrans bleus, touches de navigation, ENTER/EXIT, molette, monitor, power)
+      case "axt400": case "axt600": case "axt630": {
+        const sub = { axt400: ["A 470-698 MHz", "Dual Wireless Receiver"], axt600: ["470-952 MHz", "Spectrum Manager"], axt630: ["470-698 MHz", "Antenna Distribution", "Amplifier"] }[type];
+        let s = earsR("#26272a") + R(13, 0, 457, H, "#2b2d30", 1.2) + R(13, 0, 457, 4.5, "#3a3c40") + T(44, 3.9, "SHURE", 4, "#f3f4f6", 900, 0.3) + R(36, 5, 39, 36, "#232528", 1) + T(40, 10, type.toUpperCase(), 3.8, "#e5e7eb", 400) + T(40, 12.6, sub[0], 1.2, "#a3a6ab", 600) + T(40, 31, "Axient™ Wireless", 2.1, "#e5e7eb", 700) + sub.slice(1).map((t, i) => T(40, 33.8 + i * 2.2, t, 1.6, "#c4c7cc", 600)).join("");
+        const nav = (x) => T(x + 5, 3.6, "navigate", 1.5, "#a3a6ab", 600, 0, "middle") + [0, 1, 2, 3].map((i) => R(x, 9 + i * 7.2, 10, 5.4, "#e5e7eb", 0.8) + R(x + 1, 10 + i * 7.2, 8, 3.4, "#2b2d30", 0.6)).join("");
+        if (type === "axt630") {
+          s += R(77, 5, 131, 36, "#232528", 1) + lcd(166, 14, 25, 13, "#1d4ed8", ["Wideband", "470-698 MHz"], "#e0f2fe", 3.4) + [["▲", 12], ["Ent", 21.5], ["▼", 31]].map(([t, y]) => kb(197, y, 7.5, 5, "#e5e7eb", t, "#1f2937")).join("");
+          return s + T(429, 3.6, "power", 1.6, "#a3a6ab", 600, 0, "middle") + rocker(424, 8, 12, 28);
+        }
+        [0, 1].forEach((k) => {
+          const d = k * 139;
+          s += R(77 + d, 5, 131, 36, "#232528", 1);
+          if (type === "axt400") {
+            s += R(79 + d, 7, 4.5, 31, "#9ca3af", 0.8) + T(89 + d, 3.6, "sync", 1.5, "#a3a6ab", 600, 0, "middle") + T(97 + d, 3.6, "RF", 1.5, "#a3a6ab", 600, 0, "middle") + T(106 + d, 3.6, "audio", 1.5, "#a3a6ab", 600, 0, "middle");
+            s += led(95 + d, 9, "#e5e7eb", 0.8) + led(99 + d, 9, "#e5e7eb", 0.8) + ledCol(95 + d, 13, 8, 3, ["#f59e0b"]) + ledCol(99 + d, 13, 8, 3, ["#f59e0b"]) + ledCol(106 + d, 10, 9, 3, ["#ef4444", "#f59e0b", "#f59e0b", "#facc15", "#22c55e"]);
+            s += lcd(123 + d, 10, 66, 28, "#1d4ed8", [`${who(k + 1, `Vox${k + 1}`)}`, k ? "579.575 MHz" : "591.575 MHz", "", "AXT200    9:40"], "#e0f2fe", 4) + ["Radio", "Audio", "Util", "Tx"].map((t, i) => T(187 + d, 15 + i * 6.4, t, 3, "#e0f2fe", 700, 0, "end")).join("");
+          } else {
+            s += R(79 + d, 7, k ? 41 : 39, 31, "#9ca3af", 0.8) + R(80 + d, 8, k ? 39 : 37, 29, "#b4b8bd", 0.6);
+            s += k ? lcd(262, 10, 66, 28, "#1d4ed8", ["Sweep: Single", "Peak Hold: Off", "Exclusion", "Threshold > -85 dBm"], "#e0f2fe", 3.4) + ["Start", "", "Recall", "Store"].map((t, i) => T(327, 15 + i * 6.4, t, 2.8, "#e0f2fe", 700, 0, "end")).join("")
+              : R(123, 10, 66, 28, "#1d4ed8", 0.8) + Array.from({ length: 22 }, (_, i) => R(127 + i * 2.3, 33 - ((i * 37) % 17) - (i % 5 === 2 ? 4 : 0), 1.2, 3 + ((i * 37) % 17) + (i % 5 === 2 ? 4 : 0), "#e0f2fe")).join("") + ["Cursor", "Zoom", "Peak", "Listen"].map((t, i) => T(188, 15 + i * 6.4, t, 2.8, "#e0f2fe", 700, 0, "end")).join("");
+          }
+          s += nav(194 + d);
+        });
+        s += kb(349, 11, 8.5, 6, "#14532d", "ENTER", "#86efac") + kb(349, 26, 8.5, 6, "#450a0a", "EXIT", "#fca5a5") + T(370, 3.6, "control", 1.6, "#a3a6ab", 600, 0, "middle") + knurl(370, 22, 9);
+        s += T(407, 3.6, "monitor", 1.6, "#a3a6ab", 600, 0, "middle") + led(392, 8.5, "#9ca3af", 0.6) + led(392, 13.5, "#f59e0b", 0.7) + led(392, 18.5, "#9ca3af", 0.6) + knurl(408, 14, 5) + jack(407, 31, 3.5, "#b8bfc5");
+        return s + T(429, 3.6, "power", 1.6, "#a3a6ab", 600, 0, "middle") + rocker(424, 8, 12, 28);
+      }
+      // Shure AXT900 (chargeur Axient) et SBRC (chargeur rack ADX/SB900) : petit écran et 3 touches à gauche, 4 modules de charge
+      case "axt900": case "sbrc": {
+        const axt = type === "axt900";
+        let s = earsR("#202124") + R(13, 0, 457, H, "#1d1e21", 1.2) + R(36, 1.5, 58, 41, "#26282b", 1) + T(40, 5.4, "SHURE", 4, "#f3f4f6", 900, 0.3) + T(40, 10.2, axt ? "AXT 900" : "SBRC", 3.4, "#e5e7eb", axt ? 700 : 400);
+        s += lcd(47, 15.5, 28, 11, "#1d4ed8", ["1 ▮▮ 5 ▮▮", "2 ▮▮ 6 ▮▮", "3 ▮▮ 7 ▮▮", "4 ▮▮ 8 ▮▮"], "#e0f2fe", 2) + [["▲", 9], ["Ent", 19.5], ["▼", 30]].map(([t, y]) => kb(80, y, 7, 4.8, "#e5e7eb", t, "#1f2937")).join("") + T(42, 33.5, axt ? "Charger System" : "Rack Mount Charger", 1.7, "#c4c7cc", 600);
+        for (let k = 0; k < 4; k++) {
+          const x = 96 + k * 86.5, sc = (a, b) => C(a, b, 1, "#0b0d0f");
+          s += R(x, 1, 85.5, 42, "#26282b", 1) + sc(x + 3, 3.5) + sc(x + 82.5, 3.5) + sc(x + 3, 40.5) + sc(x + 82.5, 40.5);
+          if (axt && k < 2) s += [22, 61].map((o) => `<path d="M${x + o - 13} 38 V16 Q${x + o - 13} 6 ${x + o} 6 Q${x + o + 13} 6 ${x + o + 13} 16 V38 Z" fill="#0d0e10"/>` + R(x + o - 9, 30, 18, 6, "#3a3c40", 1) + tri(x + o, 33, 1.4, true, "#9ca3af")).join("") + led(x + 6, 8, "#e5e7eb", 0.8) + led(x + 6, 12, "#a3e635", 0.7) + led(x + 80, 33, "#a3e635", 0.7);
+          else if (axt) s += [6, 22].map((y) => R(x + 12, y, 62, 13, "#0d0e10", 4) + R(x + 16, y + 2, 54, 8, "#2a2c30", 3)).join("") + led(x + 6, 9, "#a3e635", 0.7) + led(x + 80, 30, "#a3e635", 0.7);
+          else s += R(x + 6, 2.5, 74, 14, "#0d0e10", 1) + Array.from({ length: 30 }, (_, i) => R(x + 8 + i * 2.4, 3.3, 1.2, 1.2, "#3a3c40")).join("") + C(x + 28, 11, 5, "#2a2c30") + C(x + 56, 11, 5, "#2a2c30") + R(x + 70, 7, 6, 8, "#3a3c40", 0.6) + R(x + 10, 18, 66, 20, "#3a3c40", 0.8) + Array.from({ length: 9 }, (_, i) => R(x + 10, 19.5 + i * 2.1, 66, 0.4, "#4a4c50")).join("") + led(x + 5, 9, k === 3 ? "#ef4444" : "#e5e7eb", 0.8) + led(x + 5, 13, "#a3e635", 0.7) + led(x + 81, 30, k === 3 ? "#ef4444" : "#a3e635", 0.7);
+        }
+        return s;
+      }
+      // Sennheiser L 6000 : chargeur rack, 4 modules (2 pour batteries BA 60, 2 pour packs SK)
+      case "l6000": {
+        let s = earsO("#3a3c40", "#d5dade") + R(13, 0, 457, H, "#1e1f22", 1.2) + sennLogo(30, 4) + T(38, 26, "◇", 2.6, "#cbd5e1", 700, 0, "middle") + led(38, 30, "#e5e7eb", 0.9) + T(38, 35, "▯", 2, "#9ca3af", 700, 0, "middle");
+        for (let k = 0; k < 4; k++) {
+          const x = 55 + k * 100, sc = (a, b) => C(a, b, 1.2, "#0b0d0f");
+          s += R(x, 1.5, 99, 41, "#28292d", 1) + sc(x + 4, 4.5) + sc(x + 95, 4.5) + sc(x + 4, 39.5) + sc(x + 95, 39.5);
+          s += k % 2 === 0 ? [6, 23].map((y) => R(x + 15, y, 70, 14, "#0d0e10", 2) + R(x + 18, y + 2, 64, 9, "#38393d", 1.5)).join("") + led(x + 10, 12, "#22c55e", 0.8) + led(x + 88, 34, "#22c55e", 0.8)
+            : [24, 61].map((o) => R(x + o - 12, 6, 24, 30, "#0d0e10", 2) + R(x + o - 6, 9, 12, 22, "#3a3b3f", 1.5) + R(x + o - 4.5, 11, 9, 8, "#4a4b4f", 1)).join("") + led(x + 6, 9, "#22c55e", 0.8) + led(x + 92, 33, "#22c55e", 0.8);
+        }
+        return s;
+      }
+      // Sennheiser EM 3732 : logo et casque à gauche, 2 écrans ambre avec bargraphes RF / % DEV, molettes, touches rondes, horloge et power rouge à droite
+      case "em3732": {
+        let s = earsO("#141516") + R(13, 0, 457, H, "#0f1011", 1.2) + sennLogo(46, 5) + T(53, 9.6, "SENNHEISER", 4.2, "#f3f4f6", 800, 0.2) + T(47, 14, "True Diversity Receiver EM 3732", 1.6, "#d1d5db", 600) + jack(52, 29, 3.5, "#b8bfc5") + C(80, 29, 4.6, "#d1d5db") + C(80, 29, 3.6, "#2b2d30") + R(79.6, 25, 0.8, 3.6, "#e5e7eb");
+        [0, 1].forEach((k) => {
+          const d = k * 166, A = "#f5b400";
+          s += R(107 + d, 13, 25, 28, "#000", 0.6) + T(108 + d, 16, "RF", 1.6, A, 700) + T(121 + d, 16, "% DEV", 1.6, A, 700) + R(108.5 + d, 19, 4, 20, "#3d2e00") + R(108.5 + d, 27, 4, 12, A) + R(124 + d, 19, 3.5, 20, "#3d2e00") + R(124 + d, 22, 3.5, 17, A);
+          s += R(133 + d, 13, 47, 28, "#000", 0.6) + (k === 0 ? T(135, 24, ref && ref.id ? who(1, "790.100").slice(0, 9) : "790.100", 7.2, A, 400) + T(171, 19, "MHz", 1.8, A, 700) + T(135, 37, "U.01", 6, A, 400) + T(158, 33, "BANK", 1.6, A, 700) + T(158, 36, "CH", 1.6, A, 700) + R(166, 31, 13, 8, "none", 0.4, ` stroke="${A}" stroke-width="0.5"`) + T(172.5, 34.6, "AF", 2.6, A, 700, 0, "middle") + T(172.5, 38.2, "COM", 2.6, A, 700, 0, "middle")
+            : [["Display", 134], ["IP-Addr", 151], ["MAC", 168]].map(([t, x], i) => R(x + 1 + d, 16, 11, 13, A, 0.5) + T(x + 6.5 + d, 37, ref && ref.id && i === 0 ? who(2, t).slice(0, 7) : t, 2.6, A, 700, 0, "middle")).join(""));
+          s += (k ? `<path d="M${193.5 + d} 15 L${197 + d} 8 L${200.5 + d} 15 Z" fill="#f97316"/>` : `<path d="M${193.5 + d} 15 L${197 + d} 8 L${200.5 + d} 15 Z" fill="#f3f4f6"/>`) + C(196 + d, 35, 3, "#2b2d30", ' stroke="#9ca3af" stroke-width="0.5"') + T(196 + d, 30.6, "esc", 1.6, "#d1d5db", 600, 0, "middle");
+          s += `<path d="M${205 + d} 16 A10 10 0 0 1 ${221 + d} 16" fill="none" stroke="#9ca3af" stroke-width="0.6"/>` + knurl(213 + d, 27, 8.5);
+          s += R(224 + d, 3, 15, 39, "#3a3c40", 7) + C(231.5 + d, 10, 3.3, "#1a1b1d", ' stroke="#9ca3af" stroke-width="0.5"') + C(231.5 + d, 22, 3.3, "#1a1b1d", ' stroke="#9ca3af" stroke-width="0.5"') + C(231.5 + d, 34, 3.3, "#1a1b1d", ' stroke="#d9f99d" stroke-width="1"') + T(237 + d, 10.6, "save", 1.3, "#d1d5db", 600) + T(237 + d, 22.6, "sync", 1.3, "#d1d5db", 600);
+        });
+        s += T(263, 7, "digital audio", 1.7, "#d1d5db", 600, 0, "middle") + T(263, 9.6, "processing", 1.7, "#d1d5db", 600, 0, "middle") + R(255.5, 14, 15, 14, "#0b0b0c", 1.5, ' stroke="#4b5563" stroke-width="0.5"') + T(263, 33, "sync", 1.6, "#d1d5db", 600, 0, "middle");
+        s += T(429, 6.5, "clock", 1.8, "#d1d5db", 600, 0, "middle") + `<path d="M424 14 h3 v-4 h4 v4 h3" fill="none" stroke="#d1d5db" stroke-width="0.6"/>` + C(429, 33, 5.6, "#f87171") + C(429, 33, 4.2, "#2b2d30") + T(437, 38, "power", 1.6, "#d1d5db", 600);
+        return s;
+      }
+      // Sennheiser EW-DX EM 4 Dante : panneau clair (casque) à gauche, 2 paires de voies : LED, touches 1-4, écran double, molette, touches ESC/SET, power rouge
+      case "ewdxem4": {
+        let s = earsO("#1a1b1d") + R(13, 0, 457, H, "#c9c8c1", 1.2) + R(76, 2.5, 378, 39.5, "#0e0f10", 1.5) + jack(43, 21, 3.4, "#6b7280") + C(61, 21, 4, "#2b2d30") + C(61, 21, 3, "#4b5563") + T(43, 30, "phones", 1.4, "#4b5563", 600, 0, "middle") + T(61, 30, "volume", 1.4, "#4b5563", 600, 0, "middle") + sennLogo(79, 5.5);
+        [0, 1].forEach((k) => {
+          const d = k * 212;
+          s += [0, 1].map((j) => led(93 + d, 16 + j * 16, "#22c55e", 0.9) + C(103 + d, 16 + j * 16, 3.4, "#2b2d30", ' stroke="#6b7280" stroke-width="0.4"') + T(103 + d, 17 + j * 16, String(k * 2 + j + 1), 2.6, "#e5e7eb", 700, 0, "middle")).join("");
+          s += R(114 + d, 5.5, 69, 32, "#1f2226", 1.5, ' stroke="#4b5563" stroke-width="0.4"') + [0, 1].map((j) => { const x = 116 + d + j * 33.5, v = k * 2 + j + 1; return R(x, 7.5, 31, 28, "#0b0c0d", 0.6) + T(x + 3, 12, `${v} ${who(v, "CH" + v)}`.slice(0, 11), 2.2, "#e5e7eb", 700) + T(x + 3, 17, "470.200", 2.6, "#e5e7eb", 400) + R(x + 1, 21, 1.2, 12, "#9ca3af") + R(x + 28.5, 21, 1.2, 12, "#9ca3af") + R(x + 4, 31, 22, 2.4, "#4b5563", 0.4); }).join("");
+          s += `<path d="M${190 + d} 16 A9 9 0 0 0 ${190 + d} 32" fill="none" stroke="#9ca3af" stroke-width="0.6"/>` + knurl(197 + d, 24, 6.4) + C(215 + d, 15, 3, "#2b2d30", ' stroke="#6b7280" stroke-width="0.4"') + C(215 + d, 32, 3, "#2b2d30", ' stroke="#6b7280" stroke-width="0.4"') + T(215 + d, 15.8, "ESC", 1.3, "#e5e7eb", 700, 0, "middle") + T(215 + d, 32.8, "SET", 1.3, "#e5e7eb", 700, 0, "middle");
+        });
+        return s + C(442, 15, 3.4, "#2b2d30", ' stroke="#ef4444" stroke-width="0.7"') + T(442, 39.5, "EW-DX EM 4 DANTE", 1.3, "#6b7280", 700, 0, "middle");
+      }
+      // Wisycom MRK960 : 2 panneaux récepteur (bargraphes, écran jaune, 3 touches, molette), monitor et booster à droite
+      case "mrk960": {
+        let s = earsO("#141516", "#f3f4f6") + R(13, 0, 457, H, "#0d0e0f", 1.2) + C(59, 8, 3.6, "#c4c7cc") + C(59, 20, 3.6, "#c4c7cc") + T(59, 8.6, "SLM", 1.3, "#1f2937", 700, 0, "middle") + T(59, 20.6, "SQ", 1.5, "#1f2937", 700, 0, "middle") + R(54.5, 30, 9, 8, "#1f2022", 0.6, ' stroke="#9ca3af" stroke-width="0.4"');
+        [0, 1].forEach((k) => {
+          const d = k * 145, Y = "#facc15";
+          s += R(67 + d, 1.5, 143, 41, "none", 0.8, ' stroke="#9ca3af" stroke-width="0.45"') + T(138 + d, 4.4, `RECEIVER ${k + 1}`, 1.8, "#d1d5db", 700, 0, "middle") + led(70 + d, 5, "#3b82f6", 0.9) + led(85 + d, 5, k ? "#3b82f6" : "#ef4444", 0.9);
+          s += [70, 74, 85, 89].map((x, i) => R(x - 1 + d, 9 + (i % 2) * 6, 2, 24 - (i % 2) * 6, "#22c55e")).join("") + led(72 + d, 37, "#22c55e", 0.7) + led(87 + d, 37, "#22c55e", 0.7);
+          s += R(94 + d, 4.5, 63, 24, "#000", 0.5) + R(95 + d, 5.5, 34, 4.6, Y) + T(96 + d, 9.4, who(k + 1, `RECEIVER-${k + 1}`).slice(0, 13), 3.6, "#000", 800) + T(96 + d, 15.5, `CH01: ${k ? "630.000" : "470.000"}`, 3.2, Y, 700) + T(96 + d, 20.5, "GR01: GROUP01", 3.2, Y, 700) + T(96 + d, 25, "TX01: MTP41 UF", 2.4, Y, 600);
+          s += [0, 1, 2, 3].map((i) => R(158 + d, 5.5 + i * 5.5, 14, 4.2, "none", 0.4, ` stroke="${Y}" stroke-width="0.35"`)).join("") + T(126 + d, 40.8, "HIGH PERFORMANCE DUAL WIRELESS RECEIVER", 1.2, "#9ca3af", 600, 0, "middle");
+          s += [9, 21, 33].map((y) => C(183 + d, y, 3.6, "#d1d5db")).join("") + `<path d="M${196.5 + d} 11 L${200 + d} 4.5 L${203.5 + d} 11 Z" fill="${k ? "#f59e0b" : "#e5e7eb"}"/>` + C(200 + d, 26, 8.6, "#0b0c0d") + C(200 + d, 26, 7.8, "#1c1d1f");
+        });
+        s += R(357, 1.5, 47, 30, "none", 0.8, ' stroke="#9ca3af" stroke-width="0.45"') + T(380, 4.4, "MONITOR", 1.8, "#d1d5db", 700, 0, "middle") + C(366, 14, 3, "#c4c7cc") + C(376, 14, 3, "#c4c7cc") + T(366, 14.7, "1", 2, "#1f2937", 700, 0, "middle") + T(376, 14.7, "2", 2, "#1f2937", 700, 0, "middle") + C(372, 25, 4.5, "#c4c7cc") + C(372, 25, 3.4, "#1f2022") + jack(390, 22, 3.2, "#9ca3af");
+        s += R(406, 1.5, 28, 14, "none", 0.8, ' stroke="#9ca3af" stroke-width="0.45"') + T(420, 4.4, "BOOSTER", 1.6, "#d1d5db", 700, 0, "middle") + C(420, 10, 3, "#c4c7cc") + R(406, 17, 28, 15, "none", 0.8, ' stroke="#9ca3af" stroke-width="0.45"') + R(408.5, 20, 12, 7, "#9ca3af", 0.6) + led(426, 21, "#22c55e", 0.8) + led(426, 25, "#22c55e", 0.8) + T(420, 30.6, "POWER", 1.5, "#d1d5db", 700, 0, "middle");
+        return s + T(372, 39.5, "MRK960", 3.4, "#e5e7eb", 800, 0, "middle") + C(395, 38.3, 2, "#dc2626") + T(398, 39.5, "Wisycom", 3, "#e5e7eb", 700);
+      }
+      // Beyerdynamic TG 1000 : façade anthracite, grand écran 2 canaux au centre, touches ch1/ch2, molette, fnc/esc, casque
+      case "tg1000": {
+        let s = earsR("#2a2b2e") + R(13, 0, 457, H, "#2c2d30", 1.2) + C(36, 20, 7.5, "#0d0e10") + C(36, 20, 6.5, "#17181a") + C(447, 20, 7.5, "#0d0e10") + C(447, 20, 6.5, "#17181a");
+        s += T(52, 6.4, "TG 1000", 2.6, "#c4c7cc", 600) + R(51.5, 9.5, 9, 15, "#0b0c0d", 1) + R(53, 11, 6, 6, "#e5e7eb", 0.5) + T(56, 32, "power", 1.5, "#9ca3af", 600, 0, "middle");
+        s += R(88, 4, 204, 35, "#0a0a0b", 2.5) + R(100, 11, 15, 15, "#2a2b2e", 1) + T(107.5, 31.5, "sync", 1.5, "#6b7280", 600, 0, "middle") + kb(128, 8, 8, 6, "#1a1b1d", "1", "#f87171") + kb(128, 21, 8, 6, "#1a1b1d", "2", "#e5e7eb");
+        [0, 1].forEach((k) => {
+          const x = k ? 222 : 180, mx = k ? 268 : 155;
+          s += Array.from({ length: 6 }, (_, i) => R(mx, 11 + i * 3, 5, 2.2, "#f3f4f6") + R(mx + 6, 11 + i * 3, 2.2, 2.2, i > 2 ? "#a3e635" : "#3f3f46")).join("");
+          s += T(x, 13.5, `Ch${k + 1}`, 5, "#f3f4f6", 700) + T(x, 18.5, who(k + 1, k ? "471.675MHz" : "729.900MHz").slice(0, 12), 2.4, "#e5e7eb", 600) + T(x, 22.5, k ? "GR/CH 01/02" : "GR/CH --/--", 2.2, "#e5e7eb", 600) + R(x, 26.5, 10, 2.6, "#e5e7eb", 1.2) + R(x + 30, 26.5, 9, 3, "#e5e7eb", 0.4);
+        });
+        s += kb(312, 12, 11, 7, "#1d1e21", "ch1") + kb(312, 25, 11, 7, "#1d1e21", "ch2") + `<path d="M335 12 A11 11 0 0 1 353 12" fill="none" stroke="#9ca3af" stroke-width="0.6"/>` + knurl(344, 22, 9.5) + kb(362, 12, 11, 7, "#1d1e21", "fnc") + kb(362, 25, 11, 7, "#1d1e21", "esc");
+        s += kb(390, 12, 10, 7, "#1d1e21", "♫1") + kb(390, 25, 10, 7, "#1d1e21", "♫2") + jack(418, 22, 4.4, "#6b7280") + T(440, 6.4, "beyerdynamic", 2.4, "#c4c7cc", 600, 0, "end") + T(418, 33, "phones", 1.5, "#9ca3af", 600, 0, "middle");
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -5803,6 +5971,136 @@ label.p48 input:checked + span { border-style: solid; }
       ["Lingettes ears", "", "Nettoyage des écouteurs"]
     ]
   };
+  // Ajouts du 08/11 : appareils présents dans les photos de Plan de Rack/Machine mais absents des dossiers relus (fiches fabricants)
+  const BANQUE_PLUS = {
+    "Consoles": [
+      ["DiGiCo SD5", "DiGiCo", "Console · 253 canaux · 3 écrans tactiles · MADI / Optocore"],
+      ["DiGiCo SD7", "DiGiCo", "Console · 253 canaux · 128 bus · double moteur · Optocore"],
+      ["DiGiCo SD10", "DiGiCo", "Console · 96 canaux extensibles · MADI / Optocore"],
+      ["Avid S6L-32D", "Avid", "Console VENUE S6L · 32 faders · moteur E6L · AVB"],
+      ["E6L-144", "Avid", "Moteur VENUE S6L · 144 canaux · AVB · 4 U"],
+      ["Yamaha QL1", "Yamaha", "Console compacte · 32 voies mono + 8 stéréo · Dante"]
+    ],
+    "Stage racks et cartes": [
+      ["Stage 64", "Avid", "Stage rack VENUE · 64 entrées micro / 32 sorties · AVB"],
+      ["Stage 32", "Avid", "Stage rack VENUE · 32 entrées micro / 16 sorties · AVB"],
+      ["MADI Rack", "DiGiCo", "Stage rack MADI · ancienne génération"],
+      ["Rio3224-D2", "Yamaha", "Stage rack Dante · 32 entrées / 16 sorties + AES · 3 U"],
+      ["Rio1608-D2", "Yamaha", "Stage rack Dante · 16 entrées / 8 sorties · 2 U"],
+      ["RPio622", "Yamaha", "Stage rack Rivage · 6 cartes RY · TWINLANe / Dante · 6 U"],
+      ["RO8-D", "Yamaha", "Boîtier Dante · 8 sorties ligne · 1 U"]
+    ],
+    "Transport audio et convertisseurs": [
+      ["MADI Router", "RME", "Routeur MADI · ports coaxiaux, optiques et RJ45 · 1 U"],
+      ["MADI Bridge", "RME", "Matrice MADI · 8 ports coaxiaux et optiques · 1 U"],
+      ["Fireface 802", "RME", "Interface USB · 30 entrées / 30 sorties · 4 préamplis · 1 U"],
+      ["UltraLite mk3", "MOTU", "Interface FireWire / USB · 10 entrées / 14 sorties · demi-rack"],
+      ["Apollo Quad", "Universal Audio", "Interface Thunderbolt · 4 DSP UAD · 1 U"],
+      ["MediorNet MicroN", "Riedel", "Nœud MediorNet · vidéo, audio et données sur fibre · 1 U"]
+    ],
+    "Horloge et timecode": [
+      ["Big Ben", "Apogee", "Générateur word clock maître · sorties BNC · demi-rack"],
+      ["Nanosyncs HD", "Rosendahl", "Générateur word clock et synchro vidéo · 1 U"]
+    ],
+    "Périphériques et effets": [
+      ["960L", "Lexicon", "Réverbération multicanal · télécommande LARC2"],
+      ["PCM 96", "Lexicon", "Réverbération / effets stéréo · 1 U"],
+      ["PCM 92", "Lexicon", "Réverbération / effets stéréo · 1 U"],
+      ["PCM 70", "Lexicon", "Réverbération numérique (vintage) · 1 U"],
+      ["TC M3000", "TC Electronic", "Réverbération double moteur · 1 U"],
+      ["Reverb 4000", "TC Electronic", "Réverbération stéréo · 1 U"],
+      ["Eclipse", "Eventide", "Harmoniseur / multi-effet · 1 U"],
+      ["API 7600", "API", "Tranche : préampli, EQ 550A, compresseur · 1 U"],
+      ["API 2500", "API", "Compresseur de bus stéréo"],
+      ["Portico 5024", "Rupert Neve Designs", "4 préamplis micro · 1 U"],
+      ["1073 OPX", "AMS Neve", "8 préamplis 1073 pilotables à distance · 1 U"],
+      ["1073 DPD", "AMS Neve", "2 préamplis 1073 · sorties numériques"],
+      ["Transient Designer 2", "SPL", "Modeleur de transitoires · 2 canaux"],
+      ["Midas XL88", "Midas", "Matrice de mixage ligne · 8 voies"],
+      ["Midas XL48", "Midas", "Mélangeur / matrice ligne"],
+      ["TA-1VP", "Tascam", "Processeur vocal Auto-Tune (Antares) · 1 U"],
+      ["Eurorack Pro RX1602", "Behringer", "Mélangeur ligne · 16 entrées · 1 U"],
+      ["SoundGrid Impact Server", "Waves", "Serveur DSP SoundGrid"],
+      ["SoundGrid Server One", "Waves", "Serveur DSP SoundGrid · 1 U"]
+    ],
+    "DI et talkback": [
+      ["REDDI", "A-Designs", "DI à lampes · basse"]
+    ],
+    "Ordinateurs et logiciels": [
+      ["MacBook Pro", "Apple", "Ordinateur portable"],
+      ["PC rack 1U", "", "Ordinateur rackable · 1 U"],
+      ["PC rack 2U", "", "Ordinateur rackable · 2 U"],
+      ["Echo III", "Sonnet", "Châssis Thunderbolt · 3 cartes PCIe · rackable"],
+      ["xMac mini Server", "Sonnet", "Rack 1 U pour Mac mini · 3 cartes PCIe"],
+      ["RackMac mini", "Sonnet", "Rack 1 U pour 2 Mac mini"],
+      ["MIDI Express XT", "MOTU", "Interface MIDI USB · 8 entrées / 8 sorties · 1 U"],
+      ["mioXM", "iConnectivity", "Interface MIDI USB / réseau (RTP-MIDI) · 4 DIN in / out"],
+      ["Écran", "", "Moniteur informatique"],
+      ["Clavier Mac", "Apple", "Clavier"]
+    ],
+    "Intercom": [
+      ["Eclipse HX-Delta", "Clear-Com", "Matrice intercom numérique · cartes E-MADI / IVC / analogiques"],
+      ["Eclipse HX-Median", "Clear-Com", "Matrice intercom numérique · grande capacité"],
+      ["HMS-4X", "Clear-Com", "Station principale HelixNet · 4 canaux · 1 U"],
+      ["HRM-4X", "Clear-Com", "Poste rackable HelixNet · 4 canaux · 1 U"],
+      ["HXII-BP", "Clear-Com", "Boîtier ceinture HelixNet · 2 canaux"],
+      ["FreeSpeak II BP", "Clear-Com", "Boîtier ceinture sans fil 1,9 GHz"],
+      ["Antenne FreeSpeak II", "Clear-Com", "Transceiver FreeSpeak II 1,9 GHz"],
+      ["Splitter FreeSpeak II", "Clear-Com", "Répartiteur d'antennes FreeSpeak II"],
+      ["LQ-4W8", "Clear-Com", "Interface IP LQ · 8 ports 4 fils"],
+      ["Artist 32", "Riedel", "Matrice intercom · 32 ports · 2 U"],
+      ["Antenne Bolero", "Riedel", "Antenne active Bolero · AES67 · 1,9 GHz"],
+      ["Performer C3", "Riedel", "Poste partyline numérique Performer"],
+      ["C44 Plus", "Riedel", "Poste rackable Performer · 4 canaux · 1 U"],
+      ["RSP-2318", "Riedel", "SmartPanel Artist · 18 touches · 1 U"],
+      ["Tango TNG-200", "Riedel", "Plateforme intercom réseau AES67 · 1 U"]
+    ],
+    "Réseau": [
+      ["SG350X-48", "Cisco", "Switch administrable · 48 ports gigabit · 1 U"],
+      ["CCR2004-16G-2S+", "MikroTik", "Routeur · 16 ports gigabit + 2 SFP+ · 1 U"]
+    ],
+    "Diffusion et retours": [
+      ["Galaxy 408", "Meyer Sound", "Processeur de diffusion · 4 entrées / 8 sorties · AVB"],
+      ["Galaxy 816", "Meyer Sound", "Processeur de diffusion · 8 entrées / 16 sorties · AVB"],
+      ["Galileo 616", "Meyer Sound", "Processeur de diffusion · 6 entrées / 16 sorties"]
+    ],
+    "Récepteurs HF": [
+      ["AXT400", "Shure", "Récepteur double Axient · 2 voies · 1 U"],
+      ["EM 550 G2", "Sennheiser", "Récepteur evolution 500 · 1 voie · demi-rack"]
+    ],
+    "Antennes et distribution HF": [
+      ["A 5000-CP", "Sennheiser", "Antenne à polarisation circulaire · passive · 470–1075 MHz"],
+      ["PA705WB", "Shure", "Antenne directionnelle large bande · 470–952 MHz"]
+    ],
+    "Batteries et chargeurs": [
+      ["AXT900", "Shure", "Chargeur rack Axient · 8 batteries · 1 U"]
+    ],
+    "Racks et malles": [
+      ["Plaque de bouchage 1U", "", "Plaque pleine 1 U"],
+      ["Plaque de bouchage 2U", "", "Plaque pleine 2 U"],
+      ["Plaque de bouchage 3U", "", "Plaque pleine 3 U"],
+      ["Plaque balai 1U", "", "Passage de câbles à brosse · 1 U"],
+      ["Plaque 1U trouée", "", "Plaque ventilée / passage de câbles · 1 U"],
+      ["Tiroir 2U", "", "Tiroir rackable 2 U"],
+      ["Tiroir 3U", "", "Tiroir rackable 3 U"],
+      ["Tiroir 4U", "", "Tiroir rackable 4 U"],
+      ["Tablette rackable", "", "Tablette coulissante pour clavier / ordinateur"],
+      ["Plaque BNC", "", "Plaque de traversées BNC · 1 U"],
+      ["Traversée XLR", "", "Traversée de panneau XLR femelle / mâle"],
+      ["Traversée XLR5", "", "Traversée de panneau XLR 5 points"],
+      ["Traversée BNC", "", "Traversée de panneau BNC"],
+      ["Traversée N", "", "Traversée de panneau N (antenne HF)"],
+      ["Traversée RJ45", "", "Traversée de panneau etherCON"],
+      ["Traversée SmartBeam", "", "Traversée de panneau fibre SmartBeam"],
+      ["Plaque P12MF", "", "Plaque de patch audio rackable (12N)"],
+      ["Plaque P20", "", "Plaque de patch audio rackable"],
+      ["Plaque PA20", "", "Plaque de patch audio rackable"],
+      ["Plaque PA60M 40F", "", "Plaque de patch audio rackable"],
+      ["Plaque SPLIT20", "", "Plaque de split audio rackable"]
+    ],
+    "Énergie": ["PS16", "PS32M", "PS32T", "PS32TM", "PS63T", "PS63TL", "PS316M", "PS332TS", "PSM316M", "PSM332M", "PSM610S"].map((n) => [n, "", "Plaque secteur rackable"])
+  };
+  Object.entries(BANQUE_PLUS).forEach(([c, it]) => { BANQUE[c] = BANQUE[c] || []; const have = new Set(BANQUE[c].map((x) => x[0].toLowerCase())); it.forEach((x) => { if (!have.has(x[0].toLowerCase())) BANQUE[c].push(x); }); });
   // Une fiche par nom (le premier rencontré l'emporte), avec sa catégorie
   const BANQUE_FICHE = new Map();
   Object.entries(BANQUE).forEach(([cat, items]) => items.forEach(([nom, marque, carac]) => { const k = nom.toLowerCase(); if (!BANQUE_FICHE.has(k)) BANQUE_FICHE.set(k, { nom, marque, carac, cat }); }));
