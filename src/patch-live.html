@@ -746,7 +746,25 @@ details.spxres[open] > summary { margin-bottom: 8px; }
 @media (max-width: 520px) { .journal li { grid-template-columns: 1fr; } }
 .empty-state { padding: 24px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; }
 .suggest { position: fixed; z-index: 50; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: var(--surface); border: 1px solid var(--accent); border-radius: 4px; box-shadow: 0 6px 18px rgb(0 0 0 / 0.18); padding: 2px 0; }
-.suggest div { padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+.bq-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.bq-bar input { flex: 1 1 220px; } .bq-bar select { flex: 0 1 240px; }
+table.bq td.bq-nom { font-weight: 600; white-space: nowrap; } table.bq td.bq-car { color: var(--muted); }
+table.bq td.bq-add { width: 1%; text-align: right; } table.bq tr.bq-cat td { background: var(--accent-soft); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+table.bq .bq-in { color: var(--muted); font-size: 12px; margin-right: 6px; white-space: nowrap; }
+@media (max-width: 720px) {
+  .bq-bar select { flex: 1 1 100%; min-height: 44px; }
+  .panel .tbl table.bq, table.bq tbody { display: block; width: 100%; min-width: 0; }
+  table.bq tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; border-bottom: 1px solid var(--line, #d6e2e6); }
+  table.bq tr.bq-cat { display: block; } table.bq tr.bq-cat td { display: block; }
+  table.bq td { display: block; border: 0; min-width: 0; padding: 4px 6px; }
+  table.bq td.bq-nom { grid-column: 1; grid-row: 1; white-space: normal; padding-bottom: 0; }
+  table.bq td.bq-car { grid-column: 1; grid-row: 2; padding-top: 0; font-size: 14px; }
+  table.bq td.bq-add { grid-column: 2; grid-row: 1 / span 2; width: auto; }
+  table.bq td.bq-add .btn { min-width: 44px; min-height: 44px; }
+  table.bq .bq-in { display: block; margin: 0 0 4px; }
+}
+.suggest { max-width: min(560px, calc(100vw - 8px)); }
+.suggest div { padding: 5px 10px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .suggest div:hover, .suggest div.on { background: var(--accent-soft); }
 .suggest div b { font-weight: 700; }
 .suggest div .sl { color: var(--muted); font-size: 12px; margin-left: 6px; }
@@ -1224,6 +1242,16 @@ label.p48 input:checked + span { border-style: solid; }
     <p class="hint">Tout ce que le patch ne connaît pas : câblage, réseau, HF, ears, consoles, accessoires…</p>
     <div class="tbl"><table id="manTbl" class="cards"></table></div>
     <div class="actions" style="margin-top:8px"><button id="addMan" class="btn small" type="button">+ Ligne</button></div>
+  </div>
+  <div class="panel" id="banquePanel" style="margin-top:12px">
+    <h2>Banque de matériel</h2>
+    <p class="hint">Le matériel son relevé dans tes anciens dossiers, avec sa fiche. « + » l'ajoute à la liste ci-dessus.</p>
+    <div class="bq-bar">
+      <input type="search" id="bqQ" placeholder="Chercher : SM 58, Shure, 12N, Dante…" aria-label="Chercher dans la banque" autocomplete="off">
+      <select id="bqCat" aria-label="Catégorie"></select>
+    </div>
+    <div class="tbl"><table id="bqTbl" class="bq"></table></div>
+    <p class="hint" id="bqInfo"></p>
   </div>
 </section>
 
@@ -2568,20 +2596,24 @@ label.p48 input:checked + span { border-style: solid; }
     const rest = [...new Set([...used, "Ferrofish A32", "Base HF", "Séquence (playback)", "Talkback", "Ordre / intercom", "Click", "Ambiance"])].filter((v) => !isHfv.has(v.toLowerCase())).sort((a, b) => a.localeCompare(b, "fr"));
     return [...hfv.filter((v) => !taken.has(v.toLowerCase())), ...rest];
   }
+  // Sans doublon, sans tenir compte des majuscules (le premier écrit l'emporte)
+  function uniqCi(arr) { const seen = new Set(); return arr.filter((v) => { const k = String(v || "").trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; }); }
+  const optFiche = (v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc(banqueLabel(f))}"` : ""}>`; };
   function renderDatalists() {
     let dl = document.getElementById("dls");
     if (!dl) { dl = document.createElement("div"); dl.id = "dls"; dl.hidden = true; document.body.appendChild(dl); }
     const pieds = [...new Set([...lib.pieds, ...Object.keys(PIEDS_LEGENDE), "Bras magique", "Clamp"])].sort((a, b) => a.localeCompare(b, "fr"));
     const mus = [...(state.musiciens || [])].sort((a, b) => a.localeCompare(b, "fr"));
     dl.innerHTML = `<datalist id="dlMus">${mus.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlMic">${lib.micros.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlPied">${pieds.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+      <datalist id="dlMic">${uniqCi([...lib.micros, ...banqueNoms("Micros", "DI et talkback", "Micros HF")]).map(optFiche).join("")}</datalist>
+      <datalist id="dlPied">${uniqCi([...pieds, ...banqueNoms("Pieds et fixations")]).map(optFiche).join("")}</datalist>
+      <datalist id="dlBanque">${uniqCi([...(state.materiel || []).map((x) => x.nom).filter(Boolean), ...[...BANQUE_FICHE.values()].map((f) => f.nom)]).map((v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc([f.cat, f.marque].filter(Boolean).join(" · "))}"` : ""}>`; }).join("")}</datalist>
       <datalist id="dlAcc">${lib.acc.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlCat">${[...new Set([...MAN_CATS, ...(state.materiel || []).map((x) => x.cat).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+      <datalist id="dlCat">${[...new Set([...MAN_CATS, ...Object.keys(BANQUE), ...(state.materiel || []).map((x) => x.cat).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlFree">${state.lignes.filter((l) => !Object.values(l.sr || {}).some(Boolean)).map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlSrc">${state.lignes.map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlMix">${[...new Set((state.sorties || []).map((o) => o.mix).filter(Boolean))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip"])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+      <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlProv">${provSuggestions().map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`;
   }
 
@@ -5122,6 +5154,521 @@ label.p48 input:checked + span { border-style: solid; }
   }
   function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); hfDevs().forEach((d) => { const k = `${d.model || "Appareil HF"}\u0000${HFDEV_KIND[d.kind] || "HF"} · ${hfVoiesTxt(d)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
   function countMultis() { const m = new Map(); state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()]; }
+  // Banque de matériel : tout le matériel son relevé dans les dossiers de /01_WORK (listes Dushow, Solotech, S Group, patchs, conduites HF),
+  // dédupliqué et classé. Chaque fiche : [nom tel qu'on l'écrit dans un patch, marque, caractéristiques]
+  const BANQUE = {
+    "Micros": [
+      ["SM 57", "Shure", "Dynamique · cardioïde · instrument"],
+      ["SM 58", "Shure", "Dynamique · cardioïde · voix"],
+      ["SM 58 S", "Shure", "Dynamique · cardioïde · avec interrupteur (talk)"],
+      ["SM 7B", "Shure", "Dynamique · cardioïde · large membrane"],
+      ["SM 81", "Shure", "Statique · cardioïde · petite membrane · 48V"],
+      ["SM 91", "Shure", "Statique · demi-cardioïde · surface (PZM) · 48V"],
+      ["SM 98", "Shure", "Statique · cardioïde · miniature à pince · 48V"],
+      ["Beta 52", "Shure", "Dynamique · supercardioïde · grosse caisse · articulé"],
+      ["Beta 56", "Shure", "Dynamique · supercardioïde · caisse claire / toms · articulé"],
+      ["Beta 57", "Shure", "Dynamique · supercardioïde · instrument"],
+      ["Beta 58", "Shure", "Dynamique · supercardioïde · voix"],
+      ["Beta 91A", "Shure", "Statique · demi-cardioïde · surface grosse caisse · 48V"],
+      ["Beta 98", "Shure", "Statique · supercardioïde · miniature à pince (percus, cuivres) · 48V"],
+      ["Beta 54", "Shure", "Statique · supercardioïde · serre-tête"],
+      ["KSM 137", "Shure", "Statique · cardioïde · petite membrane · pad 0/-15/-25 · 48V"],
+      ["Nexadyne 2", "Shure", "Dynamique · supercardioïde · grosse caisse · articulé (NXN2)"],
+      ["Nexadyne 5", "Shure", "Dynamique · supercardioïde · caisse claire / toms (NXN5)"],
+      ["Nexadyne 6", "Shure", "Dynamique · supercardioïde · toms / ampli (NXN6)"],
+      ["E 604", "Sennheiser", "Dynamique · cardioïde · toms à pince"],
+      ["E 835 S", "Sennheiser", "Dynamique · cardioïde · voix · avec interrupteur (talk)"],
+      ["E 904", "Sennheiser", "Dynamique · cardioïde · toms / caisse claire à pince"],
+      ["E 905", "Sennheiser", "Dynamique · cardioïde · caisse claire"],
+      ["E 906", "Sennheiser", "Dynamique · supercardioïde · ampli guitare · filtre 3 positions"],
+      ["E 935", "Sennheiser", "Dynamique · cardioïde · voix (talk)"],
+      ["E 945", "Sennheiser", "Dynamique · supercardioïde · voix"],
+      ["MD 421", "Sennheiser", "Dynamique · cardioïde · toms, ampli, cuivres · filtre 5 positions"],
+      ["MD 421 Kompakt", "Sennheiser", "Dynamique · cardioïde · version compacte du MD 421"],
+      ["MD 441", "Sennheiser", "Dynamique · supercardioïde · voix / instrument · filtres"],
+      ["MKH 416", "Sennheiser", "Statique · canon court · 48V"],
+      ["MKH 8018", "Sennheiser", "Statique · stéréo M/S · ambiance · 48V"],
+      ["MKH 8040", "Sennheiser", "Statique · cardioïde · petite membrane · 48V"],
+      ["MKH 8060", "Sennheiser", "Statique · canon court supercardioïde · 48V"],
+      ["MKH 8070", "Sennheiser", "Statique · canon long · 48V"],
+      ["KM 184", "Neumann", "Statique · cardioïde · petite membrane · 48V"],
+      ["TLM 102", "Neumann", "Statique · cardioïde · large membrane · 48V"],
+      ["TLM 107", "Neumann", "Statique · 5 directivités · large membrane · 48V"],
+      ["C414", "AKG", "Statique · 9 directivités · large membrane · pad, coupe-bas · 48V"],
+      ["C451", "AKG", "Statique · cardioïde · petite membrane · 48V"],
+      ["C535", "AKG", "Statique · cardioïde · voix / overhead · 48V"],
+      ["C214", "AKG", "Statique · cardioïde · large membrane · pad, coupe-bas · 48V"],
+      ["C636", "AKG", "Statique · cardioïde · voix · 48V"],
+      ["D2", "Audix", "Dynamique · hypercardioïde · toms"],
+      ["D4", "Audix", "Dynamique · hypercardioïde · tom basse / grosse caisse"],
+      ["D6", "Audix", "Dynamique · cardioïde · grosse caisse"],
+      ["SCX 25", "Audix", "Statique · cardioïde · piano / overhead · suspendu · 48V"],
+      ["M 88", "Beyerdynamic", "Dynamique · hypercardioïde · voix / grosse caisse (M 88 TG)"],
+      ["M 160", "Beyerdynamic", "Ruban double · hypercardioïde · overhead / ampli"],
+      ["M 201", "Beyerdynamic", "Dynamique · hypercardioïde · caisse claire / instrument (M 201 TG)"],
+      ["TG D58C", "Beyerdynamic", "Statique · cardioïde · batterie à pince sur flexible · 48V"],
+      ["TG D71C", "Beyerdynamic", "Statique · demi-cardioïde · grosse caisse (intérieur) · 48V"],
+      ["TGX 60", "Beyerdynamic", "Dynamique · hypercardioïde · voix"],
+      ["DPA 2011", "DPA", "Statique · cardioïde · twin diaphragm · caisse claire, HH, ride · 48V"],
+      ["DPA 2015", "DPA", "Statique · cardioïde large · overhead / ambiance · 48V"],
+      ["DPA 4011", "DPA", "Statique · cardioïde · petite membrane · 48V"],
+      ["DPA 4055", "DPA", "Statique · cardioïde · grosse caisse · 48V"],
+      ["DPA 4099", "DPA", "Statique · supercardioïde · instrument à pince · MicroDot · bague jaune -2 mV/Pa (extrême SPL) ou rouge 6 mV/Pa (loud)"],
+      ["DPA 4060", "DPA", "Statique · omni · miniature (cravate, percus) · MicroDot"],
+      ["DPA 4066", "DPA", "Statique · omni · serre-tête · MicroDot"],
+      ["DPA 4088", "DPA", "Statique · cardioïde · serre-tête · MicroDot"],
+      ["DPA 4488", "DPA", "Statique · cardioïde · serre-tête CORE · MicroDot"],
+      ["AT 4047/SV", "Audio-Technica", "Statique · cardioïde · large membrane · pad, coupe-bas · 48V"],
+      ["AT 4050", "Audio-Technica", "Statique · 3 directivités · large membrane · pad, coupe-bas · 48V"],
+      ["AT 8035", "Audio-Technica", "Statique · canon · 48V ou pile"],
+      ["AT 897", "Audio-Technica", "Statique · canon court · 48V ou pile"],
+      ["ATM 250", "Audio-Technica", "Dynamique · hypercardioïde · cuivres / ampli"],
+      ["AE 3000", "Audio-Technica", "Statique · cardioïde · grosse caisse / cuivres · 48V"],
+      ["CMC6 + MK4", "Schoeps", "Statique · cardioïde · petite membrane (chœur, cordes) · 48V"],
+      ["BLM 3", "Schoeps", "Statique · demi-cardioïde · surface (piano) · 48V"],
+      ["R-121", "Royer", "Ruban · bidirectionnel · ampli guitare"],
+      ["M80", "Telefunken", "Dynamique · supercardioïde · voix"],
+      ["DM20", "Earthworks", "Statique · hypercardioïde · batterie à pince · 48V"],
+      ["PM40", "Earthworks", "Statique · piano (barre PianoMic) · 48V"],
+      ["RE20", "Electro-Voice", "Dynamique · cardioïde · grosse caisse / basse"],
+      ["NTG1", "Rode", "Statique · canon court · 48V"],
+      ["CPS-PF1S", "Yamahiko", "Capteur piano (micro de contact)"],
+      ["Schertler", "Schertler", "Capteur de contact (cordes, bouzouki, piano P48)"],
+      ["Subkick", "Yamaha", "Haut-parleur en micro devant la grosse caisse (sub kick)"],
+      ["EMX-7150", "Isemcon", "Statique · omni · mesure · 48V"],
+      ["MM1", "Beyerdynamic", "Statique · omni · mesure · 48V"]
+    ],
+    "DI et talkback": [
+      ["DI J48", "Radial", "DI active · 1 canal · pad -15 dB · 48V"],
+      ["DI JDI", "Radial", "DI passive · 1 canal · transfo Jensen"],
+      ["DI JDI Duplex", "Radial", "DI passive · 2 canaux (stéréo)"],
+      ["ProD8", "Radial", "DI passive · 8 canaux · rackable 1 U"],
+      ["JRack-8", "Radial", "Châssis 19\" pour 8 DI Radial"],
+      ["RNDI", "Rupert Neve Designs", "DI active · 1 canal · transfo · 48V"],
+      ["RNDI-S", "Rupert Neve Designs", "DI active · stéréo · 48V"],
+      ["DN100", "Klark Teknik", "DI active · 1 canal · 48V ou pile"],
+      ["AR-133", "BSS", "DI active · 1 canal · 48V ou pile"],
+      ["Type 85", "Countryman", "DI active FET · 1 canal · 48V"],
+      ["DI Hacienda Labs", "Hacienda Labs", "DI active pour guitares / basse"],
+      ["Solo 610", "Universal Audio", "Préampli / DI à lampe · 1 canal"],
+      ["VTDI", "Kahn Audio", "DI à lampe · 1 canal"],
+      ["IT-1", "ProCo", "Transfo d'isolement XLR 600/600 Ω"],
+      ["HotShot DM1", "Radial", "Pédale de talk · coupe le micro ou l'envoie sur une 2e sortie"],
+      ["DMS", "Palmer", "Pédale de switch micro · 1 entrée vers 2 sorties"],
+      ["Optogate", "Optogate", "Gate optique de micro de talk (ouvre quand on s'approche)"],
+      ["Shout Box", "", "Boîte de talk (ordre vers un groupe)"],
+      ["Trigger RT-30H", "Roland", "Trigger acoustique pour caisse claire / toms"]
+    ],
+    "Pieds et fixations": [
+      ["TPPM", "K&M", "Très petit pied micro avec perchette (25200)"],
+      ["PPM", "K&M", "Petit pied micro avec perchette (259)"],
+      ["PPM ER", "K&M", "Petit pied micro embase ronde (233B)"],
+      ["GPM", "K&M", "Grand pied micro avec perchette (210/9)"],
+      ["GPM ER", "K&M", "Grand pied micro embase ronde (260)"],
+      ["Pied de table", "K&M", "Pied micro de table (232)"],
+      ["Pied orchestre", "K&M", "Pied micro télescopique pour orchestre (21411)"],
+      ["Perchette", "K&M", "Perchette supplémentaire 460–765 mm (211/1)"],
+      ["Barre de couplage", "K&M", "Barre stéréo pour 2 micros · 3/8\" (23550)"],
+      ["Gooseneck 30 cm", "K&M", "Col de cygne noir 30 cm · 3/8\" (224)"],
+      ["Gooseneck 60 cm", "K&M", "Col de cygne noir 60 cm · 3/8\" (228)"],
+      ["Pince de table", "K&M", "Pince de table ou piano · 3/8\" (237)"],
+      ["Fixation K&M 238", "K&M", "Fixation déportée sur tube de 30 mm · 3/8\""],
+      ["Fixation K&M 240/5", "K&M", "Fixation à tige coudée pour support < 48 mm"],
+      ["Bras magique", "Manfrotto", "Bras articulé à friction · 3/8\" et 1/4\" (244N)"],
+      ["Super Clamp", "Manfrotto", "Pince 13–55 mm · charge 15 kg (035)"],
+      ["Spigot rapide", "Manfrotto", "Adaptateur spigot (MA014)"],
+      ["Clamp", "", "Pince micro sur fût ou rack"],
+      ["LP Claw", "Latin Percussion", "Fixation de micro sur fût (LP592A)"],
+      ["Z-Bar", "", "Support de micro posé sur ampli guitare"],
+      ["Kelly SHU", "Kelly SHU", "Suspension de micro dans la grosse caisse"],
+      ["Pied d'antenne", "Manfrotto", "Pied alu 1,24–3,66 m · mini spigot · 9 kg (1004BAC)"],
+      ["Pied d'enceinte", "K&M", "Pied d'enceinte 2,23 m (21435)"]
+    ],
+    "Accessoires micros": [
+      ["DAD6001", "DPA", "Adaptateur MicroDot vers XLR avec alimentation 48V"],
+      ["DAD6003", "DPA", "Adaptateur MicroDot vers Lemo 3 (packs Sennheiser)"],
+      ["DC4099", "DPA", "Pince batterie pour 4099"],
+      ["PC4099", "DPA", "Pince piano magnétique pour 4099"],
+      ["AC4099", "DPA", "Pince accordéon pour 4099"],
+      ["STC4099", "DPA", "Clip cordes pour 4099"],
+      ["H85", "AKG", "Suspension élastique pour C414"],
+      ["AT8449", "Audio-Technica", "Suspension pour AT40xx"],
+      ["Bonnette", "", "Bonnette anti-vent"],
+      ["Pochette ceinture", "Ursa Straps", "Pochette pour pack P10R / AD1 · tailles S, M, L"],
+      ["Câble TA4F", "", "Câble jack vers mini XLR TA4F (pack guitare)"],
+      ["Câble Y", "", "Câble en Y XLR"],
+      ["Inverseur XLR", "", "Inverseur de genre XLR F/F ou M/M"]
+    ],
+    "Micros HF": [
+      ["AD2", "Shure", "Émetteur main Axient Digital · numérique · G56 470–636 MHz · capsule au choix · SB920"],
+      ["AD1", "Shure", "Émetteur ceinture Axient Digital · numérique · TA4F · SB900"],
+      ["ADX1M", "Shure", "Micro-émetteur ceinture Axient Digital · ShowLink"],
+      ["ULXD2", "Shure", "Émetteur main ULX-D · numérique"],
+      ["UR1M", "Shure", "Émetteur ceinture UHF-R miniature"],
+      ["SKM 6000", "Sennheiser", "Émetteur main Digital 6000 · A1–A4 470–558 MHz · capsule au choix · BA 60"],
+      ["SK 6000", "Sennheiser", "Émetteur ceinture Digital 6000 · Lemo 3 · BA 61"],
+      ["SKM 9000", "Sennheiser", "Émetteur main Digital 9000 · A5–A8 · capsule au choix"],
+      ["SK 9000", "Sennheiser", "Émetteur ceinture Digital 9000"],
+      ["SKM 5200", "Sennheiser", "Émetteur main analogique · N 614–798 MHz · existe avec PTT (talks)"],
+      ["SK 5212", "Sennheiser", "Émetteur ceinture analogique miniature"],
+      ["EW-DX SKM", "Sennheiser", "Émetteur main EW-DX · Q1-9 470–550 MHz · BA 70"],
+      ["EW-DX SKM-S", "Sennheiser", "Émetteur main EW-DX avec interrupteur · BA 70"],
+      ["EW-D SKM", "Sennheiser", "Émetteur main EW-D · R4-9"],
+      ["SEK Spectera", "Sennheiser", "Pack bidirectionnel Spectera · ear + micro (Lemo 3) · large bande 470–698 MHz"],
+      ["SKM Spectera", "Sennheiser", "Émetteur main Spectera"],
+      ["MTH400", "Wisycom", "Émetteur main · existe avec PTT"],
+      ["MTP40S", "Wisycom", "Émetteur ceinture"],
+      ["TG 1000", "Beyerdynamic", "Émetteur main ou ceinture numérique · 470–789 MHz"],
+      ["Capsule SM 58", "Shure", "Tête micro dynamique cardioïde (AD2, ULXD2)"],
+      ["Capsule Beta 58A", "Shure", "Tête micro dynamique supercardioïde (AD2, ULXD2)"],
+      ["Capsule Beta 87C", "Shure", "Tête micro statique cardioïde"],
+      ["Capsule KSM9", "Shure", "Tête micro statique cardio / supercardio"],
+      ["Capsule MM 435", "Sennheiser", "Tête micro dynamique cardioïde (SKM 6000/9000, EW)"],
+      ["Capsule MMD 835", "Sennheiser", "Tête micro dynamique cardioïde (talks)"],
+      ["Capsule MMD 935", "Sennheiser", "Tête micro dynamique cardioïde"],
+      ["Capsule MD 9235", "Sennheiser", "Tête micro dynamique supercardioïde"],
+      ["Capsule MD 5235", "Sennheiser", "Tête micro dynamique cardioïde"],
+      ["Capsule ME 9005", "Sennheiser", "Tête micro statique"],
+      ["Capsule KK 104", "Neumann", "Tête micro statique cardioïde"],
+      ["Capsule KK 204", "Neumann", "Tête micro statique supercardioïde"],
+      ["Capsule d:facto", "DPA", "Tête micro statique supercardioïde (adaptateur SL1 Shure ou Sennheiser)"],
+      ["Capsule DPA 4018", "DPA", "Tête micro statique supercardioïde"],
+      ["Capsule SR40V", "Earthworks", "Tête micro statique hypercardioïde"],
+      ["Capsule W9", "Lewitt", "Tête micro statique"]
+    ],
+    "Récepteurs HF": [
+      ["AD4Q", "Shure", "Récepteur quad Axient Digital · 4 voies · G56 470–636 MHz · Dante · 1 U"],
+      ["AD4D", "Shure", "Récepteur double Axient Digital · 2 voies · Dante · 1 U"],
+      ["ULXD4Q", "Shure", "Récepteur quad ULX-D · 4 voies · Dante · 1 U"],
+      ["ULXD4D", "Shure", "Récepteur double ULX-D · 2 voies · Dante · 1 U"],
+      ["UR4D+", "Shure", "Récepteur double UHF-R · 2 voies · 1 U"],
+      ["EM 6000", "Sennheiser", "Récepteur double Digital 6000 · 2 voies · 470–714 MHz · Dante · 1 U"],
+      ["EM 9046", "Sennheiser", "Récepteur 8 voies Digital 9000 · MADI · 3 U"],
+      ["EM 3732", "Sennheiser", "Récepteur double analogique · version COM II avec sortie com · 1 U"],
+      ["EW-DX EM 4 Dante", "Sennheiser", "Récepteur quad EW-DX · 4 voies · Q1-9 470–550 MHz · Dante · 1 U"],
+      ["EW-DX EM 2", "Sennheiser", "Récepteur double EW-DX · 2 voies · 1 U"],
+      ["EW-D EM", "Sennheiser", "Récepteur 1 voie EW-D · demi-rack"],
+      ["Spectera Base Station", "Sennheiser", "Base Spectera · 32 in / 32 out · MADI ou Dante · 1 U"],
+      ["MRK960", "Wisycom", "Récepteur double · 1 U"],
+      ["TG 1000 DR", "Beyerdynamic", "Récepteur double numérique · 470–789 MHz · 1 U"],
+      ["ACT-848", "Mipro", "Récepteur quad numérique large bande · Dante · 1 U"]
+    ],
+    "Ears HF": [
+      ["P10T", "Shure", "Émetteur PSM1000 · 2 liaisons stéréo · G10E 470–542, J8E 554–626, L8E… · 1 U"],
+      ["P10R+", "Shure", "Récepteur ceinture PSM1000 · SB900"],
+      ["P10R", "Shure", "Récepteur ceinture PSM1000 (ancienne version) · SB900"],
+      ["ADTQ", "Shure", "Émetteur Axient Digital PSM · 4 liaisons · 1 U"],
+      ["ADXR", "Shure", "Récepteur ceinture Axient Digital PSM · SB910"],
+      ["P9HW", "Shure", "Ampli ceinture ear filaire"],
+      ["SR 2050 IEM", "Sennheiser", "Émetteur double ear 2000 · 2 liaisons · 1 U"],
+      ["EK 2000 IEM", "Sennheiser", "Récepteur ceinture ear 2000"],
+      ["SR IEM G4", "Sennheiser", "Émetteur ear G4 · 1 liaison"],
+      ["EK IEM G4", "Sennheiser", "Récepteur ceinture ear G4"],
+      ["MTK952", "Wisycom", "Émetteur ear double · 470–800 MHz · jusqu'à 2 W · master / slave · 1 U"],
+      ["MTK982", "Wisycom", "Émetteur ear double large bande · option slave · 1 U"],
+      ["MPR50", "Wisycom", "Récepteur ceinture ear · batterie MPR50"],
+      ["AMP912", "Earsonics", "Ampli ear filaire (boîtier ceinture)"],
+      ["RNHP", "Rupert Neve Designs", "Ampli casque de précision"]
+    ],
+    "Écouteurs": [
+      ["SE215", "Shure", "Écouteur 1 voie"],
+      ["SE535", "Shure", "Écouteur 3 voies"],
+      ["IE 100 Pro", "Sennheiser", "Écouteur 1 voie (embouts de toutes tailles)"],
+      ["EM32", "Earsonics", "Écouteur moulé"],
+      ["EM64", "Earsonics", "Écouteur moulé"],
+      ["EM96", "Earsonics", "Écouteur moulé"],
+      ["EM3 Pro", "Earsonics", "Écouteur moulé 3 voies"],
+      ["ES4", "Earsonics", "Écouteur 3 voies"],
+      ["ES5", "Earsonics", "Écouteur"],
+      ["Velvet", "Earsonics", "Écouteur à basses réglables"],
+      ["64 Audio", "64 Audio", "Écouteur moulé"],
+      ["Ultimate Ears", "Ultimate Ears", "Écouteur moulé"],
+      ["Variphone", "Variphone", "Écouteur moulé"],
+      ["Écouteurs génériques", "", "Écouteurs de prêt (danseurs, prod)"]
+    ],
+    "Antennes et distribution HF": [
+      ["UA874E", "Shure", "Antenne directive active · gain -6/+12 dB · 470–790 MHz · BNC"],
+      ["UA874US", "Shure", "Antenne directive active · 470–698 MHz · BNC"],
+      ["UA860SWB", "Shure", "Antenne omni passive large bande"],
+      ["PA805WB", "Shure", "Antenne directive passive large bande"],
+      ["HA-8089", "Shure", "Antenne hélicoïdale passive · 470–900 MHz · BNC (ears)"],
+      ["UA845", "Shure", "Distribution d'antennes active · 5 récepteurs · 1 U"],
+      ["UA220/UA221", "Shure", "Splitter / combiner d'antennes passif"],
+      ["PA821A", "Shure", "Combineur d'antennes actif · 8 émetteurs PSM · 470–952 MHz · 1 U"],
+      ["PA421B", "Shure", "Combineur d'antennes · 4 émetteurs PSM · 470–865 MHz"],
+      ["AXT630", "Shure", "Distribution d'antennes Axient · 1 U"],
+      ["ASA 3000", "Sennheiser", "Distribution d'antennes active · 8 récepteurs · 470–870 MHz · 1 U"],
+      ["AD 3700", "Sennheiser", "Antenne directive active · 470–866 MHz"],
+      ["A 1031-U", "Sennheiser", "Antenne omni passive · 450–960 MHz"],
+      ["AC 3000", "Sennheiser", "Combineur actif · 8 émetteurs · 1 U"],
+      ["Spectera DAD", "Sennheiser", "Antenne numérique bidirectionnelle Spectera · 470–608 / 630–698 MHz · etherCON"],
+      ["LFA", "Wisycom", "Antenne directive active · gain -12/+27 dB · 410–1300 MHz · filtre de bande · BNC"],
+      ["ADFA", "Wisycom", "Antenne omni active large bande · filtre et gain"],
+      ["ADN2", "Wisycom", "Antenne omni · 400–940 MHz"],
+      ["LNN2", "Wisycom", "Antenne directive passive large bande"],
+      ["LNNA", "Wisycom", "Antenne directive active large bande"],
+      ["LBN2", "Wisycom", "Antenne cardioïde 140°"],
+      ["CSI16T", "Wisycom", "Combineur passif · 16 émetteurs MTK · 470–800 MHz · 1 U"],
+      ["MAT288", "Wisycom", "Matrice d'antennes · jusqu'à 8 zones en diversity · 150–1160 MHz · 1 U"],
+      ["MAT244", "Wisycom", "Matrice d'antennes 4 entrées"],
+      ["SPL2208", "Wisycom", "Distribution d'antennes active"],
+      ["SPL2216", "Wisycom", "Distribution d'antennes active large bande"],
+      ["MFL-TTRR", "Wisycom", "HF sur fibre (côté distant) · 470–960 MHz · SC-APC · 1 U"],
+      ["MFL-RRTT", "Wisycom", "HF sur fibre (côté régie) · 470–960 MHz · SC-APC · 1 U"],
+      ["AXT600", "Shure", "Analyseur de spectre Axient · 470–865 et 925–952 MHz · 1 U"],
+      ["AD600", "Shure", "Analyseur de spectre Axient Digital · 174–2000 MHz · 1 U"],
+      ["WR-G33WSM", "WinRadio", "Analyseur de spectre"],
+      ["EazyRF", "EazyRF", "Logiciel de calcul de fréquences (dongle)"],
+      ["SoundBase Pro", "Showcode", "Logiciel de calcul de fréquences"]
+    ],
+    "Batteries et chargeurs": [
+      ["SB900", "Shure", "Batterie Li-ion · P10R, AD1, ULXD"],
+      ["SB910", "Shure", "Batterie Li-ion · ADX, ADXR"],
+      ["SB920", "Shure", "Batterie Li-ion · AD2, ULXD2"],
+      ["SBC200", "Shure", "Chargeur 2 SB900 · alim PS60"],
+      ["SBRC", "Shure", "Chargeur rackable 8 baies · 1 U"],
+      ["SBC-AX", "Shure", "Module de charge 2 SB900 pour SBRC"],
+      ["SBM910 / SBM920", "Shure", "Module de charge 2 SB910 / SB920 pour SBRC"],
+      ["BA 60", "Sennheiser", "Batterie SKM 6000 / 9000"],
+      ["BA 61", "Sennheiser", "Batterie SK 6000"],
+      ["BA 70", "Sennheiser", "Batterie EW-D / EW-DX"],
+      ["L 6000", "Sennheiser", "Station de charge modulaire · 4 modules · 1 U"],
+      ["LM 6060", "Sennheiser", "Module L 6000 pour 2 BA 60"],
+      ["LM 6061", "Sennheiser", "Module L 6000 pour 2 BA 61"],
+      ["LM 6070", "Sennheiser", "Module L 6000 pour 2 BA 70"],
+      ["CHG 70N-C", "Sennheiser", "Chargeur 2 BA 70 · alim NT 12-35"],
+      ["ACM50", "Wisycom", "Chargeur rackable 10 batteries MPR50"],
+      ["ALC161", "", "Chargeur rackable 16 piles AA / AAA"],
+      ["Piles AA", "", "Piles LR06"],
+      ["Piles 9V", "", "Piles 9 V (DI, pédales)"]
+    ],
+    "Consoles": [
+      ["DiGiCo Quantum 7", "DiGiCo", "Console · 256 in / 128 out · 52 faders · Optocore / BNC"],
+      ["DiGiCo SD7 Quantum", "DiGiCo", "Console · 253 canaux · 128 bus · Optocore"],
+      ["DiGiCo Quantum 852", "DiGiCo", "Console · 384 in / 192 out · 40 faders · Optocore / BNC"],
+      ["DiGiCo Quantum 338", "DiGiCo", "Console · 38 faders · Optocore / BNC · Pulse"],
+      ["DiGiCo Quantum 326", "DiGiCo", "Console · 156 in / 72 out · 26 faders · Optocore / BNC"],
+      ["DiGiCo Quantum 225", "DiGiCo", "Console compacte"],
+      ["DiGiCo SD12", "DiGiCo", "Console · SD12-96"],
+      ["SSL L550 Plus", "SSL", "Console Live · 32 in mic + 32 out analog · 36+2 faders · Dante · Blacklight II"],
+      ["SSL L350 Plus", "SSL", "Console Live · 16 in mic + 16 out analog · 24+2 faders · Dante"],
+      ["Allen & Heath SQ-5", "Allen & Heath", "Console · 48 canaux · 17 faders (com)"],
+      ["Behringer X32", "Behringer", "Console · 32 canaux (com, repet)"],
+      ["Midas XL42", "Midas", "Tranche de console stéréo / préampli (HF musiciens)"]
+    ],
+    "Stage racks et cartes": [
+      ["SD-Rack", "DiGiCo", "Stage rack · 2 × 7 slots · MADI BNC et Optocore · 10 U"],
+      ["SD-Mini Rack", "DiGiCo", "Stage rack compact · MADI / fibre"],
+      ["MOD-SDR-ADC32B", "DiGiCo", "Carte SD-Rack · 8 entrées micro/ligne 32 bits"],
+      ["MOD-SDR-DAC32B", "DiGiCo", "Carte SD-Rack · 8 sorties analogiques 32 bits"],
+      ["MOD-SDR-AESO", "DiGiCo", "Carte SD-Rack · 8 sorties AES"],
+      ["MOD-SDR-AES-I/O", "DiGiCo", "Carte SD-Rack · 8 in / 8 out AES"],
+      ["MOD-SDR-AESSRC", "DiGiCo", "Carte SD-Rack · AES avec SRC"],
+      ["DMI-DANTE64@96", "DiGiCo", "Carte DMI Dante · 64 canaux à 96 kHz · 2 etherCON"],
+      ["DMI-KLANG", "DiGiCo", "Carte DMI Klang · 16 mix"],
+      ["DMI-MADI-B", "DiGiCo", "Carte DMI MADI BNC · 64 canaux"],
+      ["DMI-OPTO", "DiGiCo", "Carte DMI Optocore"],
+      ["MOD-WAVES", "DiGiCo", "Carte SoundGrid pour plugins Waves (Q3, Q852)"],
+      ["Orange Box", "DiGiCo", "Convertisseur de format · 2 slots DMI · 1 U"],
+      ["ML32.32", "SSL", "Stage rack Live · 32 in mic/ligne + 32 out + 32 out split · MADI · 5 U"],
+      ["Blacklight II", "SSL", "Concentrateur BLII.D · 256 ou 512 in/out MADI · 2 U"],
+      ["DL431", "Midas", "Stage rack · 24 in (split 5 voies) / 8 out · 6 U"],
+      ["AS 80", "Midas", "Convertisseur HMAC vers double HMAC redondant · 1 U"],
+      ["DN9680", "Klark Teknik", "Extender AES50 · 8 ports sur un snake · 1 U"]
+    ],
+    "Transport audio et convertisseurs": [
+      ["DD4MR-FX", "Optocore", "Interface MADI · 2 MADI BNC in/out · 64 canaux par port · SANE · 1 U"],
+      ["M8", "Optocore", "Routeur MADI · 256 in/out · mode DiGiCo 128 ch à 48k · 1 U"],
+      ["A32", "Ferrofish", "Convertisseur 32 AD/DA · MADI / ADAT"],
+      ["PRODIGY.MX", "DirectOut", "Processeur multiformat · matrice 1664 in/out · 8 slots · 2 U"],
+      ["EXBOX.MD", "DirectOut", "Convertisseur MADI / Dante · 64 canaux"],
+      ["EXBOX.BLDS", "DirectOut", "Redondance MADI automatique · BNC / SC"],
+      ["ANDIAMO", "DirectOut", "Convertisseur 32 AD/DA · MADI"],
+      ["MGB", "DiGiGrid", "Interface MADI vers SoundGrid · 128 in/out à 48k · 2 BNC"],
+      ["MADIface XT", "RME", "Interface USB · MADI BNC / optique · 394 in/out"],
+      ["MADIface USB", "RME", "Interface USB · MADI · 128 canaux"],
+      ["UMD192", "SSL", "Interface USB · Dante / MADI · 192 canaux"],
+      ["Apollo X16D", "Universal Audio", "Interface Dante avec plugins UAD"],
+      ["Apollo 16", "Universal Audio", "Interface Thunderbolt · ligne / AES / MADI · 1 U"],
+      ["Dante Virtual Soundcard", "Audinate", "Carte son virtuelle Dante · 64 in/out"]
+    ],
+    "Périphériques et effets": [
+      ["Bricasti M7", "Bricasti", "Réverbération stéréo · analogique / AES · 1 U"],
+      ["TC M6000", "TC Electronic", "Multi-effets · 4 DSP · AES · 2 U · télécommande ICON"],
+      ["Reverb 6000 MKII", "TC Electronic", "Réverbération · 8 in / 8 out AES"],
+      ["TC M-One", "TC Electronic", "Multi-effets · 1 U"],
+      ["Portico 5045", "Rupert Neve Designs", "Anti-larsen / réducteur de bruit · stéréo · 1 U"],
+      ["SSL Fusion", "SSL", "Processeur stéréo analogique · 2 U"],
+      ["Creamliner", "Sonic Farm", "Préampli ligne classe A · 2 canaux"],
+      ["EL8 Distressor", "Empirical Labs", "Compresseur 1 canal"],
+      ["Transient Designer 4", "SPL", "Processeur de transitoires · 4 canaux"],
+      ["Vitalizer MK2-T", "SPL", "Enhancer stéréo · 1 U"],
+      ["UAD-2 Live Rack", "Universal Audio", "Processeur de plugins UAD · 16 in/out MADI · 1 U"],
+      ["SoundGrid Extreme Server", "Waves", "Serveur de plugins Waves · 2 U"],
+      ["SuperRack SoundGrid", "Waves", "Logiciel hôte de plugins Waves"],
+      ["Fourier transform.engine", "Fourier Audio", "Serveur de plugins VST3 · 64 in/out · Dante · 2 U"],
+      ["Klang Fabrik", "Klang", "Processeur de mix ears 3D · option MADI"],
+      ["L-ISA Processor II", "L-Acoustics", "Processeur de spatialisation"],
+      ["P1", "L-Acoustics", "Processeur de système · AVB · AES"]
+    ],
+    "Ordinateurs et logiciels": [
+      ["Mac mini", "Apple", "Ordinateur (record, virtual soundcheck, séquences, contrôle)"],
+      ["Mac Studio", "Apple", "Ordinateur (defeedback, plugins)"],
+      ["Rack Mac mini", "Sonnet", "Baie 19\" pour 2 Mac mini · 1 U"],
+      ["PC portable Dell Latitude", "Dell", "PC de contrôle (son, HF) · en tiroir 2 U"],
+      ["NeoRack", "Neobox PC", "Ordinateur rackable · 1 U"],
+      ["Écran tactile 17\"", "Beetronics", "Écran tactile en tiroir (SuperRack)"],
+      ["Stream Deck XL", "Elgato", "Surface de 32 touches"],
+      ["iPad", "Apple", "Contrôle à distance de console"],
+      ["Pro Tools", "Avid", "Logiciel d'enregistrement / séquences"],
+      ["Ableton Live", "Ableton", "Logiciel de séquences"],
+      ["Reaper", "Cockos", "Logiciel d'enregistrement / virtual soundcheck"],
+      ["LiveTrax", "Harrison", "Logiciel d'enregistrement / virtual soundcheck"],
+      ["MainStage", "Apple", "Logiciel (defeedback, instruments)"],
+      ["Smaart", "Rational Acoustics", "Logiciel de mesure"],
+      ["Flux Mira", "Flux", "Logiciel d'analyse"],
+      ["WaveTool", "WaveTool", "Logiciel de surveillance HF / ears"],
+      ["Wireless Workbench", "Shure", "Logiciel de gestion HF Shure"]
+    ],
+    "Horloge et timecode": [
+      ["iClock", "Mutec", "Générateur d'horloge · AES, vidéo SD/HD, S/PDIF · 1 U"],
+      ["Nanoclocks", "Rosendahl", "Distributeur d'horloge · 2 in / 12 out · 1 U"],
+      ["MIF4", "Rosendahl", "Interface MIDI / timecode USB"],
+      ["mioXL", "iConnectivity", "Interface MIDI · USB / RJ45 · 8 in / 12 out · 1 U"],
+      ["MIDISPORT 2x2", "M-Audio", "Interface MIDI USB · 2 in / 2 out"]
+    ],
+    "Intercom": [
+      ["Bolero", "Riedel", "Intercom sans fil · 1,9 GHz · boîtiers 6 touches BL-BPK · antennes BL-ANT"],
+      ["Bolero BL-BPK", "Riedel", "Boîtier ceinture Bolero · 6 touches"],
+      ["Bolero NSA-002A", "Riedel", "Interface 4 fils analogique vers AES67 · GPIO"],
+      ["PRO-D1", "Riedel", "Casque micro 1 oreille"],
+      ["PRO-D2", "Riedel", "Casque micro 2 oreilles"],
+      ["FreeSpeak", "Clear-Com", "Intercom sans fil"],
+      ["MS-702", "Clear-Com", "Station principale 2 canaux · 1 U"],
+      ["RM-704", "Clear-Com", "Poste rackable 4 canaux"],
+      ["RS-601", "Clear-Com", "Poste ceinture 1 canal"],
+      ["IF4W4", "Clear-Com", "Interface 4 canaux 4 fils"],
+      ["TW-12C", "Clear-Com", "Interface Clear-Com vers RTS"],
+      ["Talkie R2", "Motorola", "Talkie-walkie numérique"],
+      ["Talkie XPR6550", "Motorola", "Talkie-walkie UHF"],
+      ["SRM150", "Mackie", "Enceinte amplifiée de com avec mixette mic/ligne · 5,25\""],
+      ["Behringer B205D", "Behringer", "Enceinte amplifiée de com · 5,25\""]
+    ],
+    "Réseau": [
+      ["GS724T", "Netgear", "Switch manageable · 24 RJ45 1 Gb · 2 SFP · 1 U (Dante primaire / secondaire)"],
+      ["GS110TP", "Netgear", "Switch manageable PoE · 8 RJ45 · 2 SFP"],
+      ["GS108", "Netgear", "Switch non manageable · 8 RJ45 1 Gb (SoundGrid)"],
+      ["M4250-10G2F-POE+", "Netgear", "Switch AV manageable · 8 PoE+ · 2 SFP"],
+      ["M4250-26G4F-POE+", "Netgear", "Switch AV manageable · 24 PoE+ · 4 SFP"],
+      ["GigaCore 10", "Luminex", "Switch · 8 etherCON · 2 opticalCON · 1/2 U"],
+      ["GigaCore 16", "Luminex", "Switch · 12 ports · 4 SFP"],
+      ["GigaCore 26i", "Luminex", "Switch · 24 ports · 6 SFP"],
+      ["GigaCore 30i", "Luminex", "Switch · 24 ports · 6 SFP 10 G"],
+      ["LS10", "L-Acoustics", "Switch AVB Milan · 10 etherCON · 1/2 U"],
+      ["SG300", "Cisco", "Switch · 16 ports · 2 SFP"],
+      ["Module SFP SX", "", "SFP 1000BASE-SX multimode LC · 550 m"],
+      ["Module SFP CWDM", "", "SFP monomode LC · 20 km"],
+      ["Borne WiFi", "MikroTik / Ubiquiti", "Point d'accès pour le contrôle des consoles"]
+    ],
+    "Diffusion et retours": [
+      ["X15 HiQ", "L-Acoustics", "Retour coaxial 15\" + 3\""],
+      ["X12", "L-Acoustics", "Retour coaxial 12\""],
+      ["X8", "L-Acoustics", "Enceinte coaxiale 8\" (lip fill, retour)"],
+      ["5XT", "L-Acoustics", "Enceinte coaxiale 5\""],
+      ["A15 Focus / Wide", "L-Acoustics", "Enceinte line source 15\""],
+      ["A10 Focus", "L-Acoustics", "Enceinte line source 10\""],
+      ["KS21", "L-Acoustics", "Sub 21\""],
+      ["KS28", "L-Acoustics", "Sub 2 × 18\""],
+      ["SB18", "L-Acoustics", "Sub 18\""],
+      ["K1 / K1-SB", "L-Acoustics", "Line array grand format et sub"],
+      ["K2", "L-Acoustics", "Line array"],
+      ["K3", "L-Acoustics", "Line array"],
+      ["Kara II", "L-Acoustics", "Line array"],
+      ["L2 / L2D", "L-Acoustics", "Line array actif 16 voies · 8 × 10\""],
+      ["M212", "Adamson", "Retour 2 × 12\""],
+      ["CS10 / CS10P / CS7P", "Adamson", "Line array et point source actifs"],
+      ["CS119", "Adamson", "Sub actif 19\""],
+      ["VGT / VGS / VGX", "Adamson", "Line array, sub et sub cardio actifs"],
+      ["Genelec 8341A", "Genelec", "Écoute active 6,5\" (régie)"],
+      ["Genelec 1030", "Genelec", "Écoute active (régie)"],
+      ["Genelec 7360A", "Genelec", "Sub d'écoute"],
+      ["Amie / Amie Sub", "Amphion", "Écoute de régie"],
+      ["ButtKicker", "ButtKicker", "Transducteur de siège (batteur)"]
+    ],
+    "Amplification": [
+      ["LA12X", "L-Acoustics", "Contrôleur amplifié · 4 × 3300 W · 4 entrées"],
+      ["LA4X", "L-Acoustics", "Contrôleur amplifié · 4 canaux"],
+      ["LA8", "L-Acoustics", "Contrôleur amplifié · 4 canaux"],
+      ["LA7.16", "L-Acoustics", "Contrôleur amplifié · 16 × 1,3 kW · AVB Milan · 2 U"],
+      ["LA-RAK II / III", "L-Acoustics", "Rack de 3 contrôleurs + switchs LS10"],
+      ["PLM12K44", "Lab Gruppen", "Ampli 4 × 3 kW · processeurs Lake"]
+    ],
+    "Câblage": [
+      ["Câble XLR", "", "XLR3 · 1, 2, 3, 5, 10, 15, 20 m"],
+      ["Multi 2P / 4P / 8P", "", "Multipaire XLR 2, 4 ou 8 paires · 5 à 50 m"],
+      ["Câble 12N", "", "Multi 12 paires 110 Ω · RMP37 (LINK37) · 5 à 25 m"],
+      ["Boîtier 12N", "", "Boîtier de scène 12 paires · 12 XLR M + 12 XLR F"],
+      ["Épanoui 12N", "", "Épanoui 12N vers 12 XLR mâles ou femelles · 1,2 m"],
+      ["Multi 20H", "", "Harting 20 paires"],
+      ["Multi H72", "", "Multi 24 paires H72 · 3 à 30 m"],
+      ["Multi AES CA-COM", "", "8 paires AES · CA-COM 25"],
+      ["Épanoui SubD25", "", "SubD25 (Yamaha / Tascam) vers 8 XLR"],
+      ["Fibre SmartBeam DUAL", "", "Fibre multimode 2 brins · 5 à 20 m"],
+      ["Fibre SmartBeam QUAD", "", "Fibre multimode 4 brins · 5 à 200 m (touret)"],
+      ["Fibre opticalCON DUAL", "Neutrik", "Fibre multimode PC · 150 m (touret) ou APC monomode pour HF"],
+      ["Épanoui fibre QUAD", "Klotz", "QUAD vers 4 LC ou 4 SC · 1 m"],
+      ["Câble BNC 75 Ω", "", "MADI / word clock · 5 à 10 m"],
+      ["Câble BNC 50 Ω RG58", "", "Antenne · souple · 1 à 3 m"],
+      ["Câble BNC 50 Ω RG213 / RG8", "", "Antenne · rigide · 5 à 50 m"],
+      ["Câble etherCON Cat5e / Cat6", "", "RJ45 · 5 à 100 m"],
+      ["Câble speakON NL4", "", "Enceinte · 5 à 30 m"],
+      ["Câble SC32", "L-Acoustics", "32 × 1,5 mm² · 25 ou 50 m"],
+      ["Câble TA4F / jack", "", "Pack HF guitare"],
+      ["Eau chaude / eau froide", "", "Adaptateurs XLR vers jack (rouge / bleu)"]
+    ],
+    "Énergie": [
+      ["Onduleur 1U", "Eaton", "5P850iR 850 VA ou 5P1550iR 1550 VA · rackable"],
+      ["Multiprise rackable", "", "9 × PC16 · 1 U"],
+      ["Plaque distri 32M", "", "32M vers 16 × PC16 · 4 U"],
+      ["Boîtier distri 32M", "", "32M vers 9 × PC16"],
+      ["Powerbox 32T", "", "32T vers 3 × 32M + 6 × PC16"],
+      ["Rallonge PC16", "", "3G2,5 · 1 à 50 m"],
+      ["Rallonge P17 32A", "", "Mono 3G6 ou tétra 5G6 · 2,5 à 50 m"],
+      ["Quadruplette", "", "4 × PC16"],
+      ["Câble powerCON TRUE1", "", "PC16 vers powerCON TRUE1"]
+    ],
+    "Racks et malles": [
+      ["RK212", "", "Rack 2 × 12 U suspendu · portes escamotables"],
+      ["RK312", "", "Rack 3 × 12 U"],
+      ["RK220", "", "Rack 2 × 20 U suspendu"],
+      ["RK226", "", "Rack 2 × 26 U (HF, IEM, stage racks)"],
+      ["RK224", "", "Rack 2 × 24 U"],
+      ["RK13", "", "Rack 13 U suspendu"],
+      ["RK19 eurobacs", "", "Rack 19 U avec bacs Euro (side up micros / HF)"],
+      ["Side up", "", "Malle à tiroirs pour micros et HF"],
+      ["Tool HF", "", "Malle HF ouverture par le haut"],
+      ["Tiroir rackable", "", "Tiroir 2 ou 3 U"],
+      ["MCCP", "", "Malle de câbles 120 × 60 cm"],
+      ["MCR", "", "Malle de câbles 80 × 80 cm"],
+      ["Flight pieds micros", "", "Caisse pour 20 GPM, 14 PPM, 8 GPM ER"],
+      ["Touret", "Schill", "Touret de fibre Ø 310 ou 380 mm"]
+    ],
+    "Consommables": [
+      ["Gaffer noir mat", "", "Ruban 50 mm"],
+      ["Gaffer blanc", "", "Ruban 50 mm"],
+      ["Gaffer fluo", "", "Rose, orange, jaune, bleu, vert"],
+      ["Barnier", "", "Ruban isolant de couleur (×10)"],
+      ["Tapis de danse transparent", "", "Ruban PVC pour tapis de danse"],
+      ["Velcro", "", "Bande auto-agrippante"],
+      ["Lingettes ears", "", "Nettoyage des écouteurs"]
+    ]
+  };
+  // Une fiche par nom (le premier rencontré l'emporte), avec sa catégorie
+  const BANQUE_FICHE = new Map();
+  Object.entries(BANQUE).forEach(([cat, items]) => items.forEach(([nom, marque, carac]) => { const k = nom.toLowerCase(); if (!BANQUE_FICHE.has(k)) BANQUE_FICHE.set(k, { nom, marque, carac, cat }); }));
+  const banqueFiche = (v) => BANQUE_FICHE.get(String(v || "").trim().toLowerCase()) || null;
+  const banqueNoms = (...cats) => cats.flatMap((c) => (BANQUE[c] || []).map((x) => x[0]));
+  const banqueLabel = (f) => [f.marque, f.carac].filter(Boolean).join(" · ");
   const MAN_CATS = ["Câblage", "Réseau", "HF", "Ears", "Console", "Rack", "Accessoires", "Divers"];
   // En cartes sur téléphone : chaque cellule reprend le titre de sa colonne
   function labelCells(tbl) {
@@ -5142,7 +5689,7 @@ label.p48 input:checked + span { border-style: solid; }
     const man = state.materiel || [];
     $("#manTbl").innerHTML = `<thead><tr><th>Désignation</th><th>Qté</th><th>Catégorie</th><th>Notes</th><th></th></tr></thead><tbody>${man.map((x) => `
       <tr data-mid="${x.id}">
-        <td style="min-width:180px"><input type="text" data-mf="nom" value="${esc(x.nom)}" aria-label="Désignation" placeholder="ex. Câble BNC 75 Ω 10 m"></td>
+        <td style="min-width:180px"><input type="text" data-mf="nom" value="${esc(x.nom)}" aria-label="Désignation" placeholder="ex. Câble BNC 75 Ω 10 m" autocomplete="off" data-suggest="dlBanque">${banqueFiche(x.nom) ? `<span class="prov">${esc(banqueLabel(banqueFiche(x.nom)))}</span>` : ""}</td>
         <td style="width:76px"><input type="number" min="0" data-mf="qte" value="${Number(x.qte) || 0}" aria-label="Quantité"></td>
         <td style="min-width:120px"><input type="text" data-mf="cat" value="${esc(x.cat)}" aria-label="Catégorie" autocomplete="off" data-suggest="dlCat"></td>
         <td style="min-width:160px"><input type="text" data-mf="notes" value="${esc(x.notes)}" aria-label="Notes"></td>
@@ -5156,7 +5703,24 @@ label.p48 input:checked + span { border-style: solid; }
     const accP = (() => { const m = new Map(); state.lignes.forEach((l) => accList(l).forEach((v) => m.set(v, (m.get(v) || 0) + 1))); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); })();
     $("#accPTbl").innerHTML = `<thead><tr><th>Accessoire</th><th style="text-align:right">Qté</th></tr></thead><tbody>${accP.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="q">${n}</td></tr>`).join("") || `<tr><td colspan="2" class="hint">Aucun accessoire dans le master (colonne Accessoire : pédale de talk, câble Y…).</td></tr>`}</tbody>`;
     const used = pieds.map(([k]) => k).filter((k) => PIEDS_LEGENDE[k]);
+    renderBanque();
     $("#piedLegend").innerHTML = used.length ? used.map((k) => `<div><b>${esc(k)}</b> = ${esc(PIEDS_LEGENDE[k])}</div>`).join("") : "";
+  }
+
+  // ---------- Banque de matériel ----------
+  const bqNorm = (v) => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  function renderBanque() {
+    const sel = $("#bqCat"); if (!sel) return;
+    if (!sel.options.length) sel.innerHTML = `<option value="">Toutes les catégories</option>` + Object.keys(BANQUE).map((c) => `<option value="${esc(c)}">${esc(c)} (${BANQUE[c].length})</option>`).join("");
+    const q = bqNorm($("#bqQ").value.trim()), cat = sel.value;
+    const have = new Map((state.materiel || []).map((x) => [String(x.nom || "").trim().toLowerCase(), Number(x.qte) || 0]));
+    const words = q.split(/\s+/).filter(Boolean);
+    const groups = Object.entries(BANQUE).filter(([c]) => !cat || c === cat).map(([c, items]) => [c, items.filter((it) => { const h = bqNorm(it.join(" ") + " " + c); return words.every((w) => h.includes(w)); })]).filter(([, it]) => it.length);
+    const total = groups.reduce((n, [, it]) => n + it.length, 0), max = q || cat ? 400 : 60;
+    let shown = 0;
+    const rows = groups.map(([c, items]) => { if (shown >= max) return ""; const part = items.slice(0, max - shown); shown += part.length; return `<tr class="bq-cat"><td colspan="3">${esc(c)}</td></tr>` + part.map(([nom, marque, carac]) => { const n = have.get(nom.toLowerCase()); return `<tr><td class="bq-nom">${esc(nom)}${marque ? `<span class="prov">${esc(marque)}</span>` : ""}</td><td class="bq-car">${esc(carac)}</td><td class="bq-add">${n ? `<span class="bq-in">${n} dans la liste</span>` : ""}<button class="btn small" type="button" data-bqadd="${esc(nom)}" aria-label="Ajouter ${esc(nom)} à la liste" title="Ajouter à la liste">+</button></td></tr>`; }).join(""); }).join("");
+    $("#bqTbl").innerHTML = rows ? `<tbody>${rows}</tbody>` : `<tbody><tr><td class="hint">Rien trouvé dans la banque. Tu peux l'ajouter à la main au-dessus.</td></tr></tbody>`;
+    $("#bqInfo").textContent = total > shown ? `${shown} sur ${total} : affine la recherche ou choisis une catégorie.` : `${total} appareil${total > 1 ? "s" : ""} sur ${BANQUE_FICHE.size} dans la banque.`;
   }
 
   function renderInfos() {
@@ -5507,10 +6071,11 @@ label.p48 input:checked + span { border-style: solid; }
     if (countAcc().length) { mat.addRow([]); styleHead(mat.addRow(["Accessoires HF", "Qté", "", "", ""])); countAcc().forEach(([k, n]) => mat.addRow([k, n])); }
     if ((state.materiel || []).length) {
       mat.addRow([]);
-      styleHead(mat.addRow(["Ajouté à la main", "Qté", "", "Catégorie", "Notes"]));
-      state.materiel.forEach((x) => mat.addRow([x.nom, Number(x.qte) || 0, "", x.cat, x.notes]));
+      styleHead(mat.addRow(["Ajouté à la main", "Qté", "", "Catégorie", "Notes", "Fiche (banque)"]));
+      state.materiel.forEach((x) => { const f = banqueFiche(x.nom); mat.addRow([x.nom, Number(x.qte) || 0, "", x.cat, x.notes, f ? banqueLabel(f) : ""]); });
     }
     mat.getColumn(5).width = 30;
+    if ((state.materiel || []).some((x) => banqueFiche(x.nom))) mat.getColumn(6).width = 48;
     page(mat, false);
 
     if (hfState().length || hfDevs().length) {
@@ -5771,12 +6336,12 @@ label.p48 input:checked + span { border-style: solid; }
   function sugOpen(input, all) {
     if (!sug.el) { sug.el = document.createElement("div"); sug.el.className = "suggest"; sug.el.setAttribute("role", "listbox"); sug.el.hidden = true; document.body.appendChild(sug.el); sug.el.addEventListener("mousedown", (e) => { e.preventDefault(); const d = e.target.closest("div[data-k]"); if (d) sugPick(+d.dataset.k); }); }
     const q = all ? "" : input.value.trim().toLowerCase();
-    const opts = sugOptions(input);
-    const starts = opts.filter((v) => v.toLowerCase().startsWith(q)), rest = opts.filter((v) => !v.toLowerCase().startsWith(q) && v.toLowerCase().includes(q));
-    sug.items = [...starts, ...rest].filter((v) => v !== input.value || !q);
+    const opts = sugOptions(input), dl0 = document.getElementById(input.dataset.suggest), lab0 = new Map(dl0 ? [...dl0.options].filter((o) => o.label && o.label !== o.value).map((o) => [o.value, o.label.toLowerCase()]) : []);
+    const starts = opts.filter((v) => v.toLowerCase().startsWith(q)), rest = opts.filter((v) => !v.toLowerCase().startsWith(q) && v.toLowerCase().includes(q)), byLab = q ? opts.filter((v) => !v.toLowerCase().includes(q) && (lab0.get(v) || "").includes(q)) : [];
+    sug.items = [...starts, ...rest, ...byLab].filter((v) => v !== input.value || !q);
     sug.input = input; sug.on = -1;
     if (!sug.items.length) { sugClose(); return; }
-    const hl = (v) => { if (!q) return esc(v); const i = v.toLowerCase().indexOf(q); return esc(v.slice(0, i)) + "<b>" + esc(v.slice(i, i + q.length)) + "</b>" + esc(v.slice(i + q.length)); };
+    const hl = (v) => { const i = q ? v.toLowerCase().indexOf(q) : -1; if (i < 0) return esc(v); return esc(v.slice(0, i)) + "<b>" + esc(v.slice(i, i + q.length)) + "</b>" + esc(v.slice(i + q.length)); };
     const dl = document.getElementById(input.dataset.suggest), labs = new Map(dl ? [...dl.options].filter((o) => o.label && o.label !== o.value).map((o) => [o.value, o.label]) : []);
     sug.el.innerHTML = sug.items.map((v, k) => `<div role="option" data-k="${k}">${hl(v)}${labs.has(v) ? ` <span class="sl">${esc(labs.get(v))}</span>` : ""}</div>`).join("");
     const r = input.getBoundingClientRect();
@@ -5956,7 +6521,19 @@ label.p48 input:checked + span { border-style: solid; }
       const x = (state.materiel || []).find((m) => m.id === tr.dataset.mid); if (!x) return;
       x[t.dataset.mf] = t.dataset.mf === "qte" ? Math.max(0, Number(t.value) || 0) : t.value.trim();
       if (t.dataset.mf === "cat") renderDatalists();
+      // Appareil connu de la banque : catégorie reprise si vide, fiche affichée sous la désignation
+      if (t.dataset.mf === "nom") { const f = banqueFiche(x.nom); if (f && !x.cat) x.cat = f.cat; commit(true); return; }
       commit(false);
+    });
+    $("#bqQ").addEventListener("input", renderBanque);
+    $("#bqCat").addEventListener("change", renderBanque);
+    $("#bqTbl").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-bqadd]"); if (!b) return;
+      const f = banqueFiche(b.dataset.bqadd); if (!f) return;
+      state.materiel = state.materiel || [];
+      const x = state.materiel.find((m) => String(m.nom || "").trim().toLowerCase() === f.nom.toLowerCase());
+      if (x) x.qte = (Number(x.qte) || 0) + 1; else state.materiel.push({ id: nid(), nom: f.nom, qte: 1, cat: f.cat, notes: "" });
+      commit(true);
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
     planBind(); rackplanBind();
