@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "4658a4257a";</script>
+<script>window.PL_VER = "1c821655d0";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -3488,10 +3488,13 @@ label.p48 input:checked + span { border-style: solid; }
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   // Façades dessinées d'après les photos du parc, reconnues au nom (stage racks, I/O, appareils du synoptique, horloges)
   const FACE_BY_NAME = [[/\bem\s*-?\s*550/i, "em550"], [/\bew\s*-?\s*d\s*-?\s*em\b/i, "ewdem"], [/spl\s*-?\s*218\b/i, "spl218"], [/spl\s*-?\s*22(16|08)/i, "spl2216"], [/ach\s*-?\s*642/i, "ach642"], [/adh\s*-?\s*400/i, "adh400"], [/mat\s*-?\s*288/i, "mat288"], [/\bmfl\b/i, "mfl"], [/acm\s*-?\s*50/i, "acm50"], [/x\s*-?\s*32\s*-?\s*rack/i, "x32rack"], [/dl\s*-?\s*431/i, "dl431"], [/stage\s*-?\s*64/i, "stage64"], [/\bla\s*-?\s*12\s*x\b/i, "la12x"], [/\bla\s*-?\s*4\s*x\b/i, "la4x"], [/ach\s*-?\s*862/i, "ach862"], [/1001\s*-?\s*rb|gallien/i, "gk1001rb"], [/rx\s*-?\s*1602|eurorack\s*pro/i, "rx1602"], [/ferrofish|^\s*a\s*-?\s*32(\s*dante)?\s*$/i, "a32"], [/galileo\s*-?\s*616/i, "galileo616"], [/galaxy\s*-?\s*816/i, "galaxy816"], [/galaxy\s*-?\s*408/i, "galaxy408"], [/kemper|profiler\s*rack/i, "kemper"], [/midi\s*-?\s*express|express\s*xt/i, "midixt"], [/\bplm|lab\s*-?\s*gruppen/i, "plm12k44"], [/pro\s*-?\s*d\s*-?\s*8/i, "prod8"], [/madi\s*\.\s*bridge|direct\s*-?\s*out.*bridge/i, "dobridge"], [/mio\s*-?\s*xl/i, "mioxl"], [/mio\s*-?\s*xm/i, "mioxm"], [/ccr\s*-?\s*2004/i, "ccr2004"], [/\bps\s*-?\s*32\s*tm\b/i, "ps32tm"], [/\bps\s*-?\s*32\s*t\b/i, "ps32t"], [/\bps\s*-?\s*32\s*m\b|plaque\s*distri\s*32/i, "ps32m"], [/\bps\s*-?\s*16\b|multiprise\s*rackable/i, "ps16"], [/ps\s*-?\s*332\s*ts/i, "ps332ts"], [/\bps\s*-?\s*63\s*tl?\b/i, "ps63t"], [/\bpsm?\s*-?\s*316\s*m\b/i, "psm316m"], [/\bpsm\s*-?\s*332\s*m\b/i, "psm332m"], [/psm\s*-?\s*610/i, "psm610s"], [/p\s*-?\s*12\s*mf/i, "p12mf"], [/pa\s*-?\s*60\s*m/i, "pa60m"], [/\bpa\s*-?\s*20\b/i, "pa20"], [/plaque\s*p\s*-?\s*20\b|^\s*p\s*-?\s*20\s*$/i, "p20"], [/split\s*-?\s*20/i, "split20"], [/alc\s*-?\s*161/i, "alc161"], [/onduleur|\bups\b|eaton/i, "ups"], [/\bpb\s*-?\s*11\b|power\s*brite/i, "pb11"], [/plaque\s*bnc/i, "pbnc"], [/travers.*xlr\s*-?\s*5/i, "trav_xlr5"], [/travers.*xlr.*m[aâ]le/i, "trav_xlrm"], [/travers.*xlr/i, "trav_xlrf"], [/travers.*bnc/i, "trav_bnc"], [/travers.*(rj\s*-?\s*45|ethercon)/i, "trav_rj45"], [/smart\s*-?\s*beam/i, "trav_sb"], [/travers.*\bn\b/i, "trav_n"], [/tiroir/i, "drawer"], [/tablette/i, "shelf"], [/balai|brosse|brush/i, "brush"], [/plaque.*trou/i, "perfo"], [/bouchage|plaque\s*pleine/i, "blank"], [/portico\s*5045|\b5045\b/i, "p5045"], [/8\s*mx\s*2/i, "ati8mx2"], [/960\s*l\b/i, "lex960l"], [/api\s*7600/i, "api7600"], [/apollo\s*quad/i, "apolloquad"], [/eventide\s*eclipse|^\s*eclipse\s*$/i, "eclipse"], [/klang\s*:?\s*fabrik/i, "klang"], [/\bm\s*-?\s*3000\b/i, "m3000"], [/reverb\s*4000/i, "rev4000"], [/\bm\s*-?\s*6000\b|system\s*6000/i, "m6000"], [/bricasti|\bm7\b/i, "m7"], [/xl\s*88/i, "xl88"], [/\b5024\b/i, "neve5024"], [/1073\s*-?\s*opx/i, "neve1073opx"], [/pcm\s*70/i, "pcm70"], [/pcm\s*96/i, "pcm96"], [/pcm\s*92/i, "pcm92"], [/ta\s*-?\s*1\s*vp|auto\s*-?\s*tune/i, "ta1vp"], [/transient\s*designer\s*4/i, "td4"], [/transient\s*designer\s*2|^\s*(spl\s*)?transient(\s*designer)?\s*$/i, "td2"], [/xl\s*42/i, "xl42"], [/xl\s*48/i, "xl48"], [/api\s*2500/i, "api2500"], [/1073\s*-?\s*dpd/i, "neve1073dpd"], [/rb\s*-?\s*dda/i, "rbdda6a"], [/apollo\s*x\s*-?\s*16(?!\s*d)/i, "apollox16"], [/madi\s*\.?\s*src/i, "madisrc"], [/\bpc\s*(rack\s*)?1\s*u\b/i, "pc1u"], [/\bpc\s*(rack\s*)?2\s*u\b/i, "pc2u"], [/redbox|sonifex|rb\s*-?\s*aes/i, "redbox"], [/fireface\s*-?\s*802/i, "fireface802"], [/madi\s*-?\s*router/i, "madirouter"], [/madi\s*-?\s*bri?dge/i, "madibridge"], [/rack\s*-?\s*mac\s*mini/i, "rackmacmini"], [/xmac/i, "xmacmini"], [/gs\s*-?\s*724/i, "gs724t"], [/sg\s*-?\s*350/i, "sg350x"], [/uad.*live|live\s*rack/i, "uadlive"], [/echo\s*(iii|3)\b/i, "echo3"], [/exbox\s*\.?\s*blds/i, "exboxblds"], [/exbox\s*\.?\s*md/i, "exboxmd"], [/\bmgb\b/i, "mgb"], [/ultra\s*-?\s*lite/i, "motuul3"], [/x\s*-?\s*440|summit|extreme\s*networks/i, "x440"], [/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
+  // Consoles dessinées d'après photo, reconnues au modèle ; les autres gardent la console générique
+  const CONS_ART = [[/\bsd\s*-?\s*7(?!\d)/i, "csd7"], [/\bsd\s*-?\s*5(?!\d)/i, "csd5"], [/\bsd\s*-?\s*10(?!\d)|\bsd\s*ten\b/i, "csd10"], [/\bsd\s*-?\s*12(?!\d)/i, "csd12"], [/\bql\s*-?\s*1(?!\d)/i, "cql1"], [/\bl\s*-?\s*550/i, "cl550"]];
+  const consArt = (m) => (CONS_ART.find(([re]) => re.test(m || "")) || [])[1] || "";
   const faceByName = (t) => (FACE_BY_NAME.find(([re]) => re.test(t || "")) || [])[1] || "";
   function devType(n) {
     if (!n) return "box";
-    if (n.kind === "console") return "console";
+    if (n.kind === "console") return consArt((synState().cons[n.cons] || {}).model) || "console";
     if (n.kind === "hf") { const m = normModel((n.ref || {}).model); return HF_ART[m] || ((n.ref || {}).kind === "tx" ? "hftx" : "hfrx"); }
     if (n.kind === "extra") { const x = n.ref || {}; if (extraModel(x)) return extraModel(x); if (x.gen) return x.gen.model === "nanosyncs" ? "nanosyncs" : x.gen.model === "bigben" ? "bigben" : faceByName(x.nom) || "clock"; if (x.model !== "none" && faceByName(x.nom)) return faceByName(x.nom); return x.type === "Réseau" || /switch/i.test(x.nom || "") ? "switch" : "box"; }
     const r = n.kind === "rack" ? rackById(n.id) : n; if (!r) return "box";
@@ -3615,7 +3618,7 @@ label.p48 input:checked + span { border-style: solid; }
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
   const HF_ART = { EM550G2: "em550", EM550: "em550", "EW-DEM": "ewdem", EWDEM: "ewdem", EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5, mgb: 154, motuul3: 218, x440: 304, mioxm: 241, em550: 241.5, ewdem: 222 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45, p5045: 44.45, ati8mx2: 44.45, lex960l: 177.8, api7600: 44.45, apolloquad: 44.45, eclipse: 44.45, klang: 88.9, m3000: 44.45, rev4000: 44.45, blank: 44.45, perfo: 44.45, brush: 44.45, drawer: 88.9, shelf: 88.9, trav_xlrf: 44.45, trav_xlrm: 44.45, trav_xlr5: 44.45, trav_bnc: 44.45, trav_n: 44.45, trav_rj45: 44.45, trav_sb: 44.45, pbnc: 44.45, p12mf: 88.9, p20: 133.35, pa20: 266.7, pa60m: 133.35, split20: 88.9, ps16: 44.45, ps32m: 177.8, ps32t: 266.7, ps32tm: 266.7, ps332ts: 400.05, ps63t: 266.7, psm316m: 133.35, psm332m: 133.35, psm610s: 133.35, alc161: 44.45, ups: 44.45, pb11: 44.45, m6000: 88.9, m7: 44.45, xl88: 177.8, neve5024: 44.45, neve1073opx: 88.9, pcm70: 44.45, pcm96: 44.45, pcm92: 44.45, ta1vp: 44.45, td2: 44.45, td4: 44.45, xl42: 44.45, xl48: 44.45, api2500: 44.45, neve1073dpd: 44.45, rbdda6a: 44.45, la12x: 88.9, la4x: 88.9, ach862: 44.45, gk1001rb: 88.9, rx1602: 44.45, a32: 44.45, galileo616: 88.9, galaxy816: 88.9, galaxy408: 44.45, kemper: 133.35, midixt: 44.45, plm12k44: 88.9, prod8: 44.45, dobridge: 44.45, mioxl: 44.45, ccr2004: 44.45, mioxm: 44.45, em550: 44.45, ewdem: 44.45, spl218: 44.45, spl2216: 44.45, ach642: 44.45, adh400: 44.45, mat288: 44.45, mfl: 44.45, acm50: 44.45, x32rack: 133.35, dl431: 266.7, stage64: 444.5 };
+  const DEV_H = { csd7: 241.5, csd5: 190.8, csd10: 130.5, csd12: 242, cql1: 586, cl550: 182.6, ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45, p5045: 44.45, ati8mx2: 44.45, lex960l: 177.8, api7600: 44.45, apolloquad: 44.45, eclipse: 44.45, klang: 88.9, m3000: 44.45, rev4000: 44.45, blank: 44.45, perfo: 44.45, brush: 44.45, drawer: 88.9, shelf: 88.9, trav_xlrf: 44.45, trav_xlrm: 44.45, trav_xlr5: 44.45, trav_bnc: 44.45, trav_n: 44.45, trav_rj45: 44.45, trav_sb: 44.45, pbnc: 44.45, p12mf: 88.9, p20: 133.35, pa20: 266.7, pa60m: 133.35, split20: 88.9, ps16: 44.45, ps32m: 177.8, ps32t: 266.7, ps32tm: 266.7, ps332ts: 400.05, ps63t: 266.7, psm316m: 133.35, psm332m: 133.35, psm610s: 133.35, alc161: 44.45, ups: 44.45, pb11: 44.45, m6000: 88.9, m7: 44.45, xl88: 177.8, neve5024: 44.45, neve1073opx: 88.9, pcm70: 44.45, pcm96: 44.45, pcm92: 44.45, ta1vp: 44.45, td2: 44.45, td4: 44.45, xl42: 44.45, xl48: 44.45, api2500: 44.45, neve1073dpd: 44.45, rbdda6a: 44.45, la12x: 88.9, la4x: 88.9, ach862: 44.45, gk1001rb: 88.9, rx1602: 44.45, a32: 44.45, galileo616: 88.9, galaxy816: 88.9, galaxy408: 44.45, kemper: 133.35, midixt: 44.45, plm12k44: 88.9, prod8: 44.45, dobridge: 44.45, mioxl: 44.45, ccr2004: 44.45, mioxm: 44.45, em550: 44.45, ewdem: 44.45, spl218: 44.45, spl2216: 44.45, ach642: 44.45, adh400: 44.45, mat288: 44.45, mfl: 44.45, acm50: 44.45, x32rack: 133.35, dl431: 266.7, stage64: 444.5 };
   function devArt(type, label, ref) {
     const H = (ref && ref.__H) || DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -3682,6 +3685,13 @@ label.p48 input:checked + span { border-style: solid; }
       else o += [[-3.2, -1], [3.2, -1], [0, 4]].map(([a, b]) => C(x + a * s, y + b * s, 1.1 * s, "#d8dee3")).join("");
       return o;
     };
+    // Consoles dessinées d'après photo (vue de face, en perspective comme les photos) : faders, rangées de boutons rotatifs, touches, écrans tactiles, vu-mètres
+    const P = (pts, c, extra) => `<path d="M${pts.map((p) => p.join(" ")).join(" L")}Z" fill="${c}"${extra || ""}/>`;
+    const cFad = (x, y, n, dx, h, o) => { o = o || {}; let s = ""; for (let i = 0; i < n; i++) { const fx = x + i * dx, cy = y + h * (0.32 + ((i * 37 + (o.seed || 0)) % 22) / 100); s += R(fx - 0.45, y, 0.9, h, o.slot || "#050607") + (o.meter ? Array.from({ length: 6 }, (_, k) => led(fx + dx * 0.34, y + h - 1.2 - k * h / 7.5, k > 4 ? "#facc15" : "#22c55e", Math.min(0.55, dx * 0.07))).join("") : "") + R(fx - dx * 0.28, cy - h * 0.07, dx * 0.56, h * 0.14, (o.caps && o.caps[i]) || o.cap || "#d8dde2", 0.5) + R(fx - dx * 0.28, cy - 0.2, dx * 0.56, 0.4, "#6b7280"); } return s; };
+    const cKnobs = (x, y, n, dx, dy, r, ring) => Array.from({ length: n }, (_, i) => { const px = x + i * dx, py = y + i * dy, c = Array.isArray(ring) ? ring[i % ring.length] : ring; return C(px, py, r, c) + C(px, py, r * 0.68, "#c9ced3") + C(px, py - r * 0.34, r * 0.16, "#1f2937"); }).join("");
+    const cKeys = (x, y, n, dx, dy, w, h, cols) => Array.from({ length: n }, (_, i) => R(x + i * dx, y + i * dy, w, h, Array.isArray(cols) ? cols[i % cols.length] : cols, Math.min(w, h) * 0.2)).join("");
+    const cTouch = (x, y, w, h, n, bg, ink, bez) => { let s = R(x - 1.3, y - 1.3, w + 2.6, h + 2.6, bez || "#e5e7eb", 1.5) + R(x, y, w, h, bg); for (let i = 0; i < n; i++) { const sx = x + 1 + (i * (w - 2)) / n, sw = (w - 2) / n - 0.8; s += R(sx, y + 1, sw, h - 2, ink, 0.4, ' opacity="0.45"') + [0.18, 0.36, 0.54].map((f, k) => C(sx + sw / 2, y + h * f, Math.min(sw * 0.26, 1.5), ["#a855f7", "#ec4899", "#3b82f6"][(i + k) % 3])).join("") + R(sx + sw * 0.25, y + h * 0.68, sw * 0.5, h * 0.2, "#ffffff", 0.3, ' opacity="0.55"'); } return s; };
+    const cMeter = (x, y, w, h, n) => { let s = ""; for (let i = 0; i < n; i++) { const mx = x + (i * w) / n, mw = (w / n) * 0.62, lv = 0.35 + ((i * 29) % 50) / 100; s += R(mx, y, mw, h, "#2a2d31", 0.4) + R(mx + mw * 0.3, y + h * (1 - lv * 0.8), mw * 0.4, h * lv * 0.7, "#22c55e") + R(mx + mw * 0.3, y + h * (1 - lv * 0.8), mw * 0.4, h * 0.05, "#facc15"); } return s; };
     switch (type) {
       // SD-Rack : 10 U, panneau de contrôle et 2 alimentations en haut, 14 cartes verticales de 8 XLR (entrées puis sorties)
       case "sd": {
@@ -5350,6 +5360,162 @@ label.p48 input:checked + span { border-style: solid; }
         for (let i = 0; i < 12; i++) for (let j = 0; j < 2; j++) s += R(110 + i * 22, 7 + j * 16, 18, 13, "#0f1113", 1.5) + R(113 + i * 22, 9 + j * 16, 12, 2, "#9aa3ab") + led(114 + i * 22, 18 + j * 16, "#22c55e", 1) + led(124 + i * 22, 18 + j * 16, "#f59e0b", 1);
         s += [0, 1, 2, 3].map((i) => R(385 + i * 19, 9, 15, 26, "#3a4046", 1.5) + R(388 + i * 19, 12, 9, 20, "#0f1113")).join("");
         s += R(24, 10, 60, 24, "#0b0d0f", 2) + R(30, 16, 30, 3, "#38bdf8") + led(92, 14, "#22c55e", 2) + led(92, 28, "#22c55e", 2);
+        return s;
+      }
+      // DiGiCo SD7 d'après photo : capot argent, pont de vu-mètres (3 groupes + petit écran vidéo), 3 écrans tactiles, deux baies d'encodeurs lavande,
+      // 3 baies de 12 faders + 2 masters au centre, accoudoir noir ; « SD7 » écrit en texte
+      case "csd7": {
+        let s = P([[40, 18], [445, 18], [478, 212], [6, 212]], "#141518") + P([[46, 46], [438, 46], [466, 208], [18, 208]], "#26282c");
+        s += R(32, 1, 18, 30, "#141518", 7) + R(435, 1, 18, 30, "#141518", 7) + R(40, 0, 405, 17, "#c9ced3", 6) + R(40, 11, 405, 6, "#9aa3ab", 3);
+        s += R(42, 17, 401, 27, "#0b0c0e") + cMeter(68, 19, 82, 21, 16) + cMeter(186, 19, 70, 21, 14) + cMeter(256, 19, 14, 21, 2) + R(281, 18, 30, 19, "#1e3a5f", 1) + R(285, 27, 10, 9, "#475569", 1) + cMeter(326, 19, 80, 21, 16);
+        s += Ti(424, 36, "SD7", 11, "#e5e7eb", 900, "middle") + R(44, 44, 397, 2, "#8a9096");
+        const side = (x0, y0) => cKnobs(x0, y0, 15, 0, 6.4, 1.8, ["#ec4899", "#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7"]);
+        // baie gauche
+        s += cKnobs(60, 52, 12, 7.6, 0, 2.1, "#ec4899") + cTouch(55, 59, 93, 51, 12, "#c7c3e8", "#6d5fc0") + side(153, 52) + side(161, 55);
+        s += R(42, 118, 98, 34, "#c4b5d9", 2) + cKnobs(49, 124, 12, 7.8, 0, 2.3, "#db2777") + cKnobs(49, 134, 12, 7.8, 0, 2.3, ["#a855f7", "#22c55e", "#3b82f6"]) + cKnobs(49, 144, 12, 7.8, 0, 2.3, "#a855f7") + R(141, 128, 10, 12, "#3a3d42", 1.5) + R(145, 130, 2, 7, "#c9ced3");
+        // centre : écran, panneau de commandes, touches orange, 12 faders courts, touches de couleur et 2 faders
+        s += cTouch(180, 59, 90, 53, 10, "#5c6bc0", "#c7d2fe") + R(273, 50, 48, 66, "#1f2125", 2);
+        for (let j = 0; j < 6; j++) s += cKnobs(277, 55 + j * 8.5, 5, 9, 0, 1.6, "#6b7280");
+        s += cKeys(276, 106, 5, 9, 0, 6, 3.5, "#16a34a");
+        s += cKeys(173, 114, 12, 8.6, 0, 6, 4, "#f97316") + cKeys(292, 114, 2, 9, 0, 6, 4, "#f97316");
+        s += cFad(176, 125, 12, 8.6, 25) + cKeys(280, 125, 4, 0, 5.2, 7, 4, ["#facc15", "#f9a8d4", "#f9a8d4", "#bae6fd"]) + cFad(296, 125, 2, 9, 25);
+        // baie droite
+        s += cKnobs(327, 52, 12, 7.6, 0, 2.1, "#ec4899") + cTouch(324, 59, 94, 51, 12, "#c7c3e8", "#6d5fc0") + side(423, 52) + side(431, 55);
+        s += R(322, 118, 98, 34, "#c4b5d9", 2) + cKnobs(329, 124, 12, 7.8, 0, 2.3, ["#facc15", "#84cc16"]) + cKnobs(329, 134, 12, 7.8, 0, 2.3, ["#f59e0b", "#facc15"]) + cKnobs(329, 144, 12, 7.8, 0, 2.3, "#d946ef") + R(423, 128, 10, 12, "#3a3d42", 1.5);
+        // faders du bas
+        s += R(30, 155, 425, 1.2, "#4b5056");
+        s += cKeys(44, 162, 12, 8.3, 0, 6, 3.5, "#e5e7eb") + cFad(47, 173, 12, 8.3, 30) + cKeys(136, 170, 6, 0, 6, 7, 4, ["#facc15", "#e5e7eb"]);
+        s += cKeys(170, 162, 12, 8.8, 0, 6, 3.5, "#e5e7eb") + cFad(173, 173, 12, 8.8, 30) + R(281, 170, 9, 40, "#3a3d42", 1.5) + cKeys(282, 172, 6, 0, 6, 7, 4, ["#e5e7eb", "#fca5a5", "#facc15", "#bae6fd", "#e5e7eb", "#f0abfc"]) + cKeys(297, 162, 2, 9, 0, 6, 3.5, "#fca5a5") + cFad(300, 173, 2, 9, 30);
+        s += cKeys(333, 162, 12, 8.5, 0, 6, 3.5, "#e5e7eb") + cFad(336, 173, 12, 8.5, 30) + cKeys(432, 170, 6, 0, 6, 7, 4, ["#e5e7eb", "#e5e7eb", "#e5e7eb", "#e5e7eb", "#facc15", "#e5e7eb"]);
+        s += R(6, 210, 472, 31, "#121315", 9) + R(12, 211, 460, 1.5, "#5b6167") + R(230, 213, 1, 26, "#26282c") + R(330, 213, 1, 26, "#26282c");
+        return s;
+      }
+      // DiGiCo SD5 d'après photo : 2 ponts de vu-mètres, grand moniteur central (« DiGiCo SD5 » en texte), 2 écrans tactiles, panneau central à touches de couleur,
+      // 3 baies de faders et l'accoudoir noir avec sa station d'accueil
+      case "csd5": {
+        let s = P([[50, 10], [432, 10], [481, 160], [2, 160]], "#0f1012") + P([[54, 43], [428, 43], [468, 156], [14, 156]], "#1c1e24");
+        s += R(48, 0, 386, 10, "#c9ced3", 4) + R(48, 6, 386, 4, "#9aa3ab", 2) + R(44, 1, 10, 16, "#141518", 4) + R(428, 1, 10, 16, "#141518", 4);
+        s += cMeter(72, 13, 78, 24, 10) + R(70, 37, 82, 2, "#9aa3ab") + cMeter(316, 13, 77, 24, 10) + R(314, 37, 82, 2, "#9aa3ab");
+        s += R(176, 11, 132, 80, "#050608", 2) + R(198, 13, 86, 6, "#1e3a5f", 1) + T(242, 42, "DiGiCo", 7.5, "#93c5fd", 800, 0.3, "middle") + Ti(242, 53, "SD5", 11, "#60a5fa", 900, "middle");
+        s += R(54, 41, 122, 2, "#9aa3ab") + R(308, 41, 122, 2, "#9aa3ab");
+        s += [80, 100, 120, 140, 344, 364, 384, 404].map((x) => led(x, 46, "#3b82f6", 1.2)).join("");
+        s += cTouch(57, 52, 95, 43, 12, "#dbeafe", "#60a5fa") + cTouch(316, 52, 95, 43, 12, "#dbeafe", "#60a5fa");
+        s += cKnobs(158, 50, 12, 0, 5.5, 1.5, ["#e5e7eb", "#22c55e", "#ef4444"]) + cKnobs(166, 52, 12, 0, 5.5, 1.5, "#e5e7eb") + cKnobs(415, 50, 12, 0, 5.5, 1.5, ["#e5e7eb", "#22c55e", "#ef4444"]) + cKnobs(423, 52, 12, 0, 5.5, 1.5, "#e5e7eb");
+        s += R(52, 100, 96, 14, "#c9c3d9", 1.5) + cKnobs(57, 104, 12, 7.8, 0, 1.6, "#a1a1aa") + cKnobs(57, 110, 12, 7.8, 0, 1.6, "#a1a1aa") + R(146, 102, 6, 4, "#ef4444", 0.8);
+        s += R(324, 100, 96, 14, "#c9c3d9", 1.5) + cKnobs(329, 104, 12, 7.8, 0, 1.6, "#a1a1aa") + cKnobs(329, 110, 12, 7.8, 0, 1.6, "#a1a1aa") + R(414, 102, 6, 4, "#ef4444", 0.8);
+        s += R(174, 88, 134, 30, "#15171c", 1.5) + cKeys(203, 94, 9, 9.5, 0, 7.5, 5, ["#e0f2fe", "#e0f2fe", "#ef4444", "#38bdf8", "#e0f2fe", "#e0f2fe", "#7dd3fc", "#e0f2fe", "#e0f2fe"]);
+        for (let j = 0; j < 3; j++) s += cKnobs(182, 92 + j * 8, 2, 7, 0, 1.6, "#9ca3af") + cKnobs(292, 92 + j * 8, 2, 7, 0, 1.6, "#9ca3af");
+        s += cKnobs(198, 108, 10, 9, 0, 1.5, "#9ca3af") + R(272, 104, 10, 5, "#e0f2fe", 1);
+        s += R(28, 120, 428, 1.2, "#3b4048");
+        s += cKeys(35, 124, 12, 8.6, 0, 6, 3, "#c7d2fe") + cFad(38, 130, 12, 8.6, 21, { cap: "#e5e7eb" }) + cKeys(143, 132, 5, 0, 4.5, 7, 3, "#93c5fd");
+        s += cKeys(172, 124, 12, 9.2, 0, 6.5, 3, "#c7d2fe") + cFad(175, 130, 12, 9.2, 21, { cap: "#e5e7eb" }) + cKeys(289, 132, 5, 0, 4.5, 7, 3, "#93c5fd") + cFad(300, 130, 1, 9, 21);
+        s += cKeys(330, 124, 12, 8.6, 0, 6, 3, "#c7d2fe") + cFad(333, 130, 12, 8.6, 21, { cap: "#e5e7eb" }) + cKeys(431, 132, 5, 0, 4.5, 7, 3, "#93c5fd");
+        s += R(2, 158, 479, 21, "#141518", 7) + R(4, 159, 475, 1.5, "#9aa3ab") + R(186, 179, 112, 12, "#18191c", 2) + [200, 228, 256, 284].map((x) => led(x, 182, "#bfdbfe", 1.4)).join("");
+        return s;
+      }
+      // DiGiCo SD10 d'après photo : coque noire, « DiGiCo » et « SD TEN » écrits en texte, écran central entre les deux zones libres,
+      // 3 baies d'encodeurs acier, touches de couleur à droite, 3 baies de 12 faders et accoudoir
+      case "csd10": {
+        let s = P([[57, 1], [426, 1], [470, 96], [12, 96]], "#0c0d0f") + R(18, 108, 447, 22, "#0e0f11", 2);
+        s += R(80, 9, 22, 5, "none", 1, ' stroke="#6b7280" stroke-width="0.6"') + T(91, 12.8, "STEALTH", 2.6, "#9ca3af", 700, 0.2, "middle");
+        s += C(86, 37, 1, "#e5e7eb") + C(89, 35, 1, "#e5e7eb") + C(91.5, 38, 1, "#e5e7eb") + T(100, 41, "DiGiCo", 9.5, "#f3f4f6", 900);
+        s += cKnobs(186, 6, 12, 7.7, 0, 1.6, "#9ca3af") + cTouch(184, 14, 92, 33, 12, "#e9d5ff", "#a78bfa", "#cbd5e1");
+        s += R(279, 8, 18, 40, "#1a1c1f", 1) + cKnobs(283, 13, 5, 0, 7.5, 1.6, "#9ca3af") + cKnobs(292, 13, 5, 0, 7.5, 1.6, "#9ca3af") + R(299, 8, 13, 40, "#1a1c1f", 1);
+        s += Ti(372, 12, "SD TEN", 7, "none", 300, "middle").replace('fill="none"', 'fill="none" stroke="#9ca3af" stroke-width="0.35"');
+        s += cKeys(331, 22, 11, 7.8, 0, 5.5, 3.5, ["#e5e7eb", "#86efac", "#bbf7d0", "#e5e7eb", "#93c5fd", "#facc15", "#f9a8d4", "#fdba74", "#fef08a", "#e5e7eb", "#93c5fd"]);
+        for (let j = 0; j < 3; j++) s += cKnobs(318 + j * 33, 32, 3, 8, 0, 1.5, "#9ca3af") + cKnobs(318 + j * 33, 40, 3, 8, 0, 1.5, ["#ef4444", "#9ca3af", "#22c55e"]);
+        const enc = (x) => R(x, 50, 100, 19, "#5b6067", 1.5) + cKnobs(x + 6, 54, 12, 8, 0, 1.6, "#d1d5db") + cKnobs(x + 6, 60, 12, 8, 0, 1.6, "#d1d5db") + cKnobs(x + 6, 66, 12, 8, 0, 1.6, "#d1d5db");
+        s += enc(58) + cKeys(160, 52, 3, 0, 5, 7, 3, "#f3f4f6") + enc(177) + cKeys(280, 52, 3, 0, 5, 7, 3, "#f3f4f6") + R(296, 50, 14, 16, "#1a1c1f", 1) + led(303, 62, "#ef4444", 1.5) + enc(318) + cKeys(420, 52, 3, 0, 5, 7, 3, "#f3f4f6");
+        s += cKeys(42, 76, 12, 8.9, 0, 6, 3, "#c7d2fe") + cFad(45, 81, 12, 8.9, 17, { meter: 1 }) + cKeys(150, 78, 4, 0, 4.5, 7, 3, "#f3f4f6");
+        s += cKeys(173, 76, 12, 8.6, 0, 6, 3, "#c7d2fe") + cFad(176, 81, 12, 8.6, 17, { meter: 1 }) + cKeys(282, 78, 4, 0, 4.5, 7, 3, ["#fde68a", "#fca5a5", "#93c5fd", "#e5e7eb"]) + R(292, 74, 8, 5, "#38bdf8", 1.5) + cFad(305, 80, 1, 8, 18);
+        s += cKeys(324, 76, 12, 9, 0, 6, 3, "#fde68a") + cFad(327, 81, 12, 9, 17, { meter: 1 }) + R(429, 74, 5, 3, "#ef4444", 0.8) + cKeys(433, 78, 4, 0, 4.5, 7, 3, "#f3f4f6");
+        s += R(0, 96, 483, 13, "#121315", 6) + R(6, 96.5, 471, 1, "#3a3d42") + R(420, 124, 12, 3, "#4b5056", 0.5);
+        return s;
+      }
+      // DiGiCo SD12 d'après photo : coque grise, rampe de LED sous le capot, « DiGiCo SD12 » en texte, 2 écrans tactiles avec « quick select » et
+      // « channel processing », 2 rangées de 12 encodeurs violets par écran, macros à droite, 2 baies de 12 faders + 2 masters, accoudoir à rainures
+      case "csd12": {
+        let s = P([[62, 4], [421, 4], [438, 148], [46, 148]], "#2f3237") + P([[46, 148], [438, 148], [467, 213], [16, 213]], "#202226");
+        s += R(60, 0, 363, 12, "#5f646b", 4) + R(60, 9, 363, 3, "#3a3d42") + [80, 110, 140, 170, 200, 230, 260, 290, 320, 350, 380, 405].map((x) => led(x, 15, "#f8fafc", 1.2)).join("");
+        s += R(220.5, 18, 1.2, 128, "#1d1f22");
+        s += C(77, 22, 0.8, "#e5e7eb") + C(79, 21, 0.8, "#e5e7eb") + T(82, 24, "DiGiCo", 4.5, "#f3f4f6", 900) + Ti(104, 24.5, "SD12", 5.5, "#f3f4f6", 900);
+        const half = (x0) => {
+          let h = cKeys(x0, 33, 5, 0, 9, 4.5, 3.5, "#a3a3a3") + R(x0, 72, 4.5, 4, "#ef4444", 0.8) + R(x0, 83, 4.5, 3.5, "#a3a3a3", 0.8);
+          h += cTouch(x0 + 9, 30, 114, 69, 12, "#ddd6fe", "#7c3aed", "#dfe3ea");
+          h += cKnobs(x0 + 131, 37, 7, 0, 9, 2.2, ["#22d3ee", "#22c55e", "#facc15", "#ef4444", "#22c55e", "#facc15", "#a855f7"]) + cKnobs(x0 + 143, 33, 12, 0, 5.5, 1.8, ["#a855f7", "#3b82f6", "#22d3ee", "#22c55e", "#facc15", "#ef4444"]);
+          h += cKnobs(x0 + 16, 110, 12, 9.1, 0, 2.5, "#c026d3") + cKnobs(x0 + 16, 123, 12, 9.1, 0, 2.5, "#c026d3") + cKeys(x0 + 125, 113, 2, 0, 9, 7, 5, "#e5e7eb") + cKnobs(x0 + 141, 110, 3, 0, 6, 1.5, "#9ca3af") + cKnobs(x0 + 148, 110, 3, 0, 6, 1.5, "#9ca3af");
+          return h;
+        };
+        s += half(70) + half(231);
+        s += cKeys(392, 30, 5, 0, 12, 7, 5, "#f5f5f5") + cKnobs(385, 45, 4, 3, 5, 1.5, "#9ca3af") + cKnobs(393, 92, 3, 8, 0, 2, "#9ca3af") + cKnobs(397, 82, 3, 8, 0, 1.6, "#9ca3af") + cKnobs(386, 112, 3, 9, 0, 1.6, "#9ca3af") + R(404, 117, 7, 5, "#e5e7eb", 0.8) + R(412, 117, 5, 5, "#991b1b", 0.8);
+        s += `<path d="M397 131.5 L397 138.5 L390.5 135Z" fill="#ef4444"/>` + `<path d="M415 131.5 L415 138.5 L421.5 135Z" fill="#22d3ee"/>`;
+        const fb = (x0, n) => cKeys(x0, 153, n, 9.2, 0, 7, 4, "#bae6fd") + cFad(x0 + 3.5, 162, n, 9.2, 38, { meter: 1, cap: "#e5e7eb", caps: [, , , "#ef4444", , , , , "#ef4444"] });
+        s += fb(66, 12) + cKeys(193, 167, 5, 0, 8.5, 7, 4.5, ["#bae6fd", "#fdba74", "#bae6fd", "#bae6fd", "#bae6fd"]) + R(212, 150, 1, 60, "#1d1f22") + R(220.5, 150, 1.2, 60, "#111214");
+        s += fb(240, 12) + cKeys(375, 167, 5, 0, 8.5, 7, 4.5, "#bae6fd") + R(373, 152, 6, 4, "#22d3ee", 1) + R(402, 153, 7, 4, "#ef4444", 1) + R(416, 153, 7, 4, "#fde68a", 1) + cFad(410, 162, 2, 14, 38, { meter: 1, cap: "#e5e7eb" });
+        s += P([[16, 213], [467, 213], [483, 242], [0, 242]], "#555a62") + R(13, 220, 457, 2.5, "#6f757d") + R(8, 228, 467, 2.5, "#454950") + R(3, 236, 477, 4, "#6f757d", 2);
+        return s;
+      }
+      // Yamaha QL1 d'après photo (vue de dessus) : logo Yamaha et « QL1 » en texte, touches « sends on fader », écran tactile, section Selected Channel
+      // (gain, pan, HPF, EQ), « user defined keys », 16 tranches + 2 (ST, MONO) avec SEL, CUE, LED, ON, nom et fader
+      case "cql1": {
+        let s = R(0, 0, 483, 586, "#26282b", 16) + R(2, 2, 479, 18, "#2f3236", 14);
+        s += P([[25, 44], [408, 44], [408, 196], [350, 216], [25, 216]], "#3a3d42") + R(410, 44, 50, 140, "#2f3236", 3);
+        s += C(178, 35, 4, "none", ' stroke="#f3f4f6" stroke-width="0.9"') + R(177.6, 32, 0.8, 6, "#f3f4f6") + T(186, 39, "YAMAHA", 10, "#f3f4f6", 900);
+        s += T(312, 40, "DIGITAL MIXING CONSOLE", 2.2, "#d1d5db", 700) + Ti(380, 40, "QL1", 13, "#f3f4f6", 900, "middle") + R(428, 40, 10, 5, "none", 1, ' stroke="#d1d5db" stroke-width="0.6"') + T(445, 47, "USB", 2.8, "#d1d5db", 700);
+        s += R(30, 52, 44, 152, "#34373c", 2) + T(32, 57, "SENDS ON FADER", 2.6, "#d1d5db", 700);
+        for (let i = 0; i < 8; i++) s += [0, 1].map((c) => R(33 + c * 21, 65 + i * 17 + Math.floor(i / 2) * 2, 13, 7, i + c === 0 ? "#86efac" : "#1d1f22", 1, ' stroke="#9ca3af" stroke-width="0.4"')).join("");
+        s += R(88, 55, 223, 150, "#0b0d10", 1) + R(90, 58, 60, 140, "#16191d") + [0, 1, 2, 3, 4, 5, 6, 7].map((i) => R(93, 62 + i * 16.5, 8, 5, "#fde68a", 0.8) + C(108, 64 + i * 16.5, 3.4, i < 2 ? "#be185d" : i < 4 ? "#1d4ed8" : i < 6 ? "#0ea5e9" : "#4338ca") + C(130, 64 + i * 16.5, 3.4, i < 2 ? "#be185d" : i < 4 ? "#1d4ed8" : i < 6 ? "#0ea5e9" : "#4338ca") + R(140, 62 + i * 16.5, 8, 5, "#fde68a", 0.8)).join("");
+        s += R(152, 58, 50, 140, "#1a1d22") + [0, 1, 2, 3, 4].map((i) => C(176, 100 + i * 18, 3.6, "#0d9488")).join("") + C(158, 63, 3, "#a855f7") + R(170, 80, 9, 5, "#dc2626", 0.8);
+        s += R(204, 58, 70, 140, "#15181c") + cKnobs(212, 64, 6, 10, 0, 2.6, "#4b5563") + R(214, 97, 54, 25, "#0b0d10") + R(226, 120, 35, 70, "#1d2025") + R(268, 186, 10, 7, "#fde68a", 0.8);
+        s += R(276, 58, 33, 140, "#101216") + R(278, 60, 30, 12, "#2563eb") + T(280, 66, "CH1", 3.5, "#fff", 700) + R(278, 75, 12, 2, "#facc15") + R(282, 128, 4, 40, "#22c55e") + R(298, 128, 4, 40, "#22c55e") + R(282, 128, 4, 8, "#f59e0b") + R(298, 128, 4, 8, "#f59e0b") + T(280, 196, "SCENE 000", 2.8, "#e5e7eb", 700);
+        s += [["GAIN", 330, 56], ["DYNAMICS 1", 368, 56], ["PAN", 330, 79], ["DYNAMICS 2", 368, 79], ["HPF", 330, 102], ["EQUALIZER", 330, 122]].map(([t, x, y]) => R(x - 3, y - 1, 34, 3.5, "#4b5056", 0.5) + T(x, y + 1.8, t, 2.3, "#d1d5db", 700)).join("");
+        s += C(346, 70, 4.6, "#f3f4f6") + C(380, 70, 4.6, "#d1d5db") + C(346, 93, 4.6, "#dc2626") + C(380, 92, 4.6, "#9ca3af") + C(363, 113, 4.6, "#14b8a6") + C(339, 135, 4.6, "#14b8a6") + C(361, 141, 4.6, "#14b8a6") + C(385, 135, 4.6, "#14b8a6");
+        s += cKeys(328, 162, 4, 18, 0, 11, 6, ["#1d1f22", "#1d1f22", "#1d1f22", "#86efac"]) + T(326, 181, "TOUCH AND TURN", 2.3, "#d1d5db", 700) + C(341, 197, 6, "#d1d5db") + C(341, 197, 3.5, "#9ca3af");
+        s += T(414, 59, "USER DEFINED KEYS", 2.6, "#d1d5db", 700);
+        for (let i = 0; i < 6; i++) s += [0, 1].map((c) => R(415 + c * 22, 68 + i * 19 + Math.floor(i / 2) * 6, 12, 7, i === 1 && c === 1 ? "#fca5a5" : "#1d1f22", 1, ' stroke="#9ca3af" stroke-width="0.4"')).join("");
+        s += T(400, 193, "FADER BANK", 2.5, "#d1d5db", 700) + cKeys(380, 202, 4, 18, 0, 11, 6, ["#86efac", "#1d1f22", "#1d1f22", "#1d1f22"]);
+        s += R(33, 249, 359, 306, "none", 2, ' stroke="#d1d5db" stroke-width="0.8"') + R(402, 249, 46, 306, "none", 2, ' stroke="#d1d5db" stroke-width="0.8"');
+        const xs = [...Array.from({ length: 8 }, (_, i) => 45.5 + i * 21.5), ...Array.from({ length: 8 }, (_, i) => 230 + i * 21.5), 414, 435];
+        const nm = ["ch 1", "ch 2", "ch 3", "ch 4", "ch 5", "ch 6", "ch 7", "ch 8", "ch 9", "ch10", "ch11", "ch12", "ch13", "ch14", "ch15", "ch16", "ST L", "MONO"];
+        const bar = ["#3b82f6", "#3b82f6", "#f87171", "#f87171", "#facc15", "#facc15", "#6366f1", "#6366f1", "#2dd4bf", "#2dd4bf", "#f0abfc", "#f0abfc", "#f87171", "#f87171", "#4ade80", "#4ade80", "#f87171", "#f87171"];
+        xs.forEach((x, i) => {
+          s += T(x, 255, i < 16 ? String(i + 1) : "AB"[i - 16], 2.8, "#d1d5db", 700, 0, "middle") + R(x + 10, 250, 0.5, 92, "#4b5056");
+          s += R(x - 7, 260, 14, 9, i ? "#3a3d42" : "#14532d", 1.2, ` stroke="${i ? "#9ca3af" : "#4ade80"}" stroke-width="0.6"`) + T(x, 266.5, "SEL", 3.6, i ? "#9ca3af" : "#86efac", 700, 0, "middle");
+          s += R(x - 4.5, 279, 9, 6, i ? "#2b2e32" : "#7c2d12", 1) + T(x, 283.5, "CUE", 2.4, i ? "#9ca3af" : "#fdba74", 700, 0, "middle");
+          s += ["#ef4444", "#f59e0b", "#f59e0b", "#84cc16", "#84cc16", "#84cc16"].map((c, k) => R(x - 7, 293 + k * 4.6, 5, 2.2, c)).join("") + T(x + 0.5, 296, "OVER", 2, "#d1d5db", 700);
+          s += R(x - 7, 326, 14, 9, "#1d1f22", 1.2, ' stroke="#f97316" stroke-width="0.7"') + T(x, 333, "ON", 4, "#fb923c", 800, 0, "middle");
+          s += R(x - 8.5, 352, 17, 12, "#e0e7ff", 1) + T(x, 360.5, nm[i], 4, "#4338ca", 700, 0, "middle") + R(x - 8.5, 369, 17, 2.5, bar[i]);
+          s += R(x - 0.8, 400, 1.6, 115, "#0b0c0e") + [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => R(x + 3, 410 + k * 11, 4, 0.5, "#6b7280")).join("") + R(x - 6, 420, 12, 24, "#d1d5db", 1.5) + R(x - 6, 431.5, 12, 1, "#6b7280") + T(x, 545, i < 16 ? String(i + 1) : "AB"[i - 16], 3, "#d1d5db", 700, 0, "middle");
+        });
+        s += R(30, 342, 180, 30, "none", 1, ' stroke="#4b5056" stroke-width="0.6"') + R(215, 342, 178, 30, "none", 1, ' stroke="#4b5056" stroke-width="0.6"');
+        return s;
+      }
+      // SSL Live L550 d'après photo : capot et accoudoir en tube argent, tranches à faders motorisés en haut à gauche, grand écran tactile central,
+      // panneau de canal avec son petit écran en haut à droite (« Live L550 » en texte), 2 baies de 12 faders en bas et section master
+      case "cl550": {
+        let s = P([[40, 4], [443, 4], [478, 142], [5, 142]], "#141517") + R(38, 0, 407, 7, "#d1d5d8", 3);
+        s += P([[48, 10], [196, 10], [190, 100], [42, 100]], "#5b5f64");
+        for (let i = 0; i < 12; i++) {
+          const x = 56 + i * 10.6;
+          s += C(x, 17, 2, "#0b0c0e") + R(x - 3.5, 22, 7, 3, "#9ca3af", 0.5) + R(x - 3.5, 27, 7, 1.2, "#f0abfc") + R(x - 3.5, 31, 7, 3.5, "#a8adb3", 0.5) + R(x - 3.5, 37, 7, 3.5, "#a8adb3", 0.5) + R(x - 3.5, 44, 7, 3.5, "#a8adb3", 0.5) + R(x - 3.5, 50, 7, 3.5, "#a8adb3", 0.5);
+          s += R(x - 0.5, 58, 1, 38, "#0b0c0e") + R(x + 2, 66, 1.5, 22, "#16a34a", 0, ' opacity="0.8"') + R(x - 3, 62 + ((i * 37) % 26), 6, 5, "#e5e7eb", 0.6);
+        }
+        s += R(175, 13, 17, 85, "#4b4f54", 1) + cKeys(177, 17, 9, 0, 9, 12, 4, ["#d1d5db", "#d1d5db", "#f0abfc", "#a8adb3", "#a78bfa", "#a8adb3", "#a78bfa", "#f0abfc", "#a8adb3"]) + R(186, 73, 6, 5, "#22d3ee", 1);
+        s += T(276, 14, "Solid State Logic · Oxford · England", 2.9, "#e5e7eb", 700, 0, "middle") + R(207, 18, 138, 79, "#0b0c0d", 1);
+        s += R(209, 20, 112, 40, "#1c2b20") + Array.from({ length: 12 }, (_, i) => R(210 + i * 9.2, 21, 8.4, 38, "#3f6b45", 0.4) + R(213 + i * 9.2, 26, 3, 10 - (i % 4) * 2, "#99f6e4") + [0, 1, 2, 3, 4].map((k) => R(211 + i * 9.2, 40 + k * 3.5, 6.4, 2, "#86efac", 0.3)).join("")).join("");
+        s += R(322, 20, 21, 75, "#d1e7dd") + R(209, 61, 112, 34, "#cfe8d6") + `<path d="M230 92 L262 66 L262 92Z" fill="#5f9e86"/>` + R(268, 65, 22, 12, "#0b0c0d") + R(268, 80, 22, 12, "#0b0c0d") + R(293, 65, 26, 12, "#0b0c0d");
+        s += P([[356, 10], [443, 10], [449, 100], [354, 100]], "#5b5f64") + Ti(365, 26, "Live", 9, "#e5e7eb", 700) + Ti(384, 31, "L550", 3.8, "#e5e7eb", 700);
+        s += cKnobs(412, 16, 3, 8, 0, 2, "#111214") + R(430, 15, 4, 3, "#e5e7eb", 0.5) + R(438, 15, 5, 4, "#22d3ee", 0.8);
+        s += cKeys(362, 33, 8, 10, 0, 7, 4, "#a8adb3") + R(374, 40, 49, 30, "#3a3d42", 2) + R(377, 43, 43, 24, "#0b0c0d", 1) + `<path d="M380 58 Q392 50 398 56 T418 54" fill="none" stroke="#d1d5db" stroke-width="0.7"/>`;
+        s += cKnobs(365, 45, 5, 0, 5.5, 1.8, "#111214") + cKnobs(431, 45, 5, 0, 5.5, 1.8, "#111214") + cKeys(362, 75, 8, 10, 0, 7, 4, ["#16a34a", "#a8adb3", "#22d3ee", "#a8adb3", "#a8adb3", "#a8adb3", "#a8adb3", "#22d3ee"]) + cKeys(362, 86, 8, 10, 0, 7, 4, ["#16a34a", "#a8adb3", "#16a34a", "#a8adb3", "#a8adb3", "#16a34a", "#a8adb3", "#a8adb3"]);
+        const bay = (x0, n, dx, cols) => { let b = ""; for (let i = 0; i < n; i++) { const x = x0 + i * dx; b += C(x, 105, 2, "#0b0c0e") + R(x - 4, 109, 8, 2, cols[i % cols.length]) + R(x - 4, 113, 8, 3, "#a8adb3", 0.5) + R(x - 4, 117.5, 8, 3, "#a8adb3", 0.5) + R(x - 0.5, 122, 1, 15, "#0b0c0e") + R(x + 2.4, 124, 1.2, 10, "#16a34a") + R(x - 3, 124 + ((i * 29) % 8), 6, 4, "#e5e7eb", 0.6); } return b; };
+        s += P([[36, 101], [192, 101], [192, 138], [30, 138]], "#26282c") + bay(42, 12, 11, ["#22c55e", "#22c55e", "#22c55e", "#22c55e", "#22c55e", "#22c55e", "#22c55e", "#22c55e", "#22d3ee", "#22c55e", "#22c55e", "#22c55e"]) + cKeys(174, 106, 6, 0, 5, 12, 3.2, ["#a8adb3", "#a8adb3", "#22d3ee", "#22c55e", "#22c55e", "#a8adb3"]);
+        s += R(203, 101, 154, 37, "#26282c") + bay(211, 12, 11, ["#22c55e", "#22c55e", "#f97316", "#f97316", "#f97316", "#f97316", "#a855f7", "#a855f7", "#a855f7", "#a855f7", "#ec4899", "#ec4899"]) + R(279, 120, 5, 2.6, "#ef4444") + R(323, 120, 5, 2.6, "#ef4444") + cKeys(342, 106, 6, 0, 5, 12, 3.2, ["#22d3ee", "#a8adb3", "#22d3ee", "#22c55e", "#22c55e", "#a8adb3"]);
+        s += P([[365, 101], [448, 101], [456, 138], [362, 138]], "#7b8086");
+        for (let j = 0; j < 6; j++) s += cKeys(372 + (j % 2) * 3, 105 + j * 5.5, 9, 9.2, 0, 6, 3, j === 3 ? ["#a8adb3", "#a8adb3", "#a8adb3", "#a8adb3", "#a8adb3", "#a8adb3", "#84cc16", "#a8adb3", "#a8adb3"] : "#a8adb3");
+        s += R(431, 120, 6, 3, "#f97316", 0.5) + R(431, 125, 6, 3, "#f97316", 0.5) + R(424, 129, 6, 3, "#22d3ee", 0.5) + R(395, 128, 10, 2, "#2b2e32") + cFad(383, 118, 1, 8, 18) + cFad(450, 118, 1, 8, 18) + cKnobs(401, 104, 3, 7, 0, 1.8, "#111214");
+        s += R(2, 138, 479, 34, "#b9bec3", 13) + R(10, 141, 463, 7, "#e9ecee", 3.5) + R(10, 158, 463, 9, "#9aa0a6", 4) + R(14, 170, 455, 12, "#c9ced3", 1);
+        s += [40, 60, 72, 412, 424, 438, 460].map((x) => C(x, 176, 2.2, "#26282c")).join("");
         return s;
       }
       // Console : vue de dessus, écrans en haut, baies de faders
