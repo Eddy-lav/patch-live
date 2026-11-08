@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "1985613175";</script>
+<script>window.PL_VER = "48e669ae8e";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1055,6 +1055,9 @@ label.p48 input:checked + span { border-style: solid; }
 .impmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
 .impmap .field select { width: 100%; }
 .impmap .field i { font-style: normal; color: var(--muted); font-weight: 400; }
+.impprev tr.impgap td { color: var(--muted); font-style: italic; }
+.impgapsw { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 4px; font-size: 14px; max-width: 72ch; }
+.impgapsw input { margin-top: 3px; }
 .impprev { overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
 .impprev table { border-collapse: collapse; width: 100%; font-size: 14px; }
 .impprev th { position: sticky; top: 0; background: var(--surface-2, var(--surface)); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
@@ -1133,17 +1136,21 @@ label.p48 input:checked + span { border-style: solid; }
     <div class="impset">
       <label class="field"><span>Feuille</span><select id="impSheet"></select></label>
       <label class="field"><span>Reprendre comme</span><select id="impMode"><option value="master">Sources du master patch</option><option value="sorties">Sorties</option></select></label>
+      <label class="field" id="impTableF"><span>Tableau</span><select id="impTable"></select></label>
       <label class="field"><span>Ligne de titres</span><input id="impHead" type="number" min="1" inputmode="numeric"></label>
       <label class="field"><span>Dernière ligne</span><input id="impEnd" type="number" min="1" inputmode="numeric"></label>
     </div>
     <p id="impBlocks" class="impblocks"></p>
     <h3>Colonnes</h3>
     <div id="impMap" class="impmap"></div>
+    <label class="impgapsw"><input type="checkbox" id="impGaps" checked> Garder les trous du patch : une entrée numérotée sans source devient une ligne vide, pour que les numéros restent ceux de l'ancien patch</label>
     <h3>Aperçu</h3>
     <div id="impPrev" class="impprev"></div>
   </div>
   <div class="impfoot">
     <label class="field"><span>Où</span><select id="impDest"><option value="new">Dans un nouveau dossier</option><option value="add">Ajouter au dossier ouvert</option></select></label>
+    <label class="field" id="impRackF" hidden><span>Câbler sur</span><select id="impRack"></select></label>
+    <label class="field" id="impFromF" hidden><span>À partir de</span><select id="impFrom"></select></label>
     <button id="impGo" class="btn primary" type="button">Reprendre</button>
   </div>
 </dialog>
@@ -8140,7 +8147,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["mix", "Mix", ["MIX", "MIXES", "MIX OUT", "AUX", "OUT NAME", "LABEL", "NOM", "SORTIE", "SORTIES", "OUTPUT", "DESIGNATION"]],
       ["dest", "Destination", ["DESTINATION", "DEST", "POUR", "QUI", "MUSICIEN", "ARTISTE"]],
       ["type", "Type", ["TYPE"]],
-      ["rx", "Enceinte ou récepteur", ["ENCEINTE", "ENCEINTES", "HP", "DEVICE", "MODELE", "MODEL", "RECEPTEUR", "BODYPACK"]],
+      ["rx", "Enceinte ou récepteur", ["ENCEINTE", "ENCEINTES", "HP", "DEVICE", "MODELE", "MODEL", "RECEPTEUR", "BODYPACK", "OUT TO SOURCE"]],
       ["entree", "Sortie d'origine", ["OUT", "OUT PATCH", "CHANNEL", "CH", "N°", "N", "OUTPUT", "PORT", "SLOT"]],
       ["notes", "Notes", ["NOTES", "NOTE", "COMMENTAIRES", "COMMENTAIRE", "REMARQUES"]]
     ]
@@ -8150,16 +8157,37 @@ label.p48 input:checked + span { border-style: solid; }
   let imp = null;
   // Grille de texte d'une feuille (lignes et colonnes à partir de 1)
   function impGrid(ws) {
-    const g = [], max = Math.min(ws.rowCount, 1500);
+    const g = [], max = Math.min(ws.rowCount, 1500), down = new Set();
     let w = 0;
-    for (let r = 1; r <= max; r++) { const row = ws.getRow(r), a = []; for (let c = 1; c <= Math.min(row.cellCount, 120); c++) a[c] = cellText(row.getCell(c)).replace(/\s*\n\s*/g, " ").trim(); g[r] = a; w = Math.max(w, a.length - 1); }
-    return { g, rows: max, cols: w };
+    for (let r = 1; r <= max; r++) {
+      const row = ws.getRow(r), a = [];
+      for (let c = 1; c <= Math.min(row.cellCount, 120); c++) {
+        const cell = row.getCell(c); a[c] = cellText(cell).replace(/\s*\n\s*/g, " ").trim();
+        // Cellule fusionnée avec celle du dessus (un nom sur deux lignes = une paire stéréo)
+        if (cell.isMerged && cell.master && cell.master.row < r && cell.master.col === c) down.add(r + ":" + c);
+      }
+      g[r] = a; w = Math.max(w, a.length - 1);
+    }
+    return { g, rows: max, cols: w, down };
   }
   const impMatch = (mode, f, txt) => { const t = impNorm(txt); return !!t && IMP_FIELDS[mode].find((x) => x[0] === f)[2].includes(t); };
   function impScoreRow(mode, cells) {
     const got = new Set();
     (cells || []).forEach((v) => { if (!v) return; IMP_FIELDS[mode].forEach(([f]) => { if (impMatch(mode, f, v)) got.add(f); }); });
-    return got.has(IMP_FIELDS[mode][0][0]) ? got.size : 0;
+    if (got.has(IMP_FIELDS[mode][0][0])) return got.size;
+    // Pas de titre « source » clair (Star Ac : « INPUT » au-dessus des noms) : une ligne avec au moins trois autres titres compte quand même
+    return mode === "master" && got.size >= 3 ? got.size - 0.5 : 0;
+  }
+  // Tous les tableaux de la feuille (une ligne de titres chacun), nommés par le titre posé juste au-dessus s'il y en a un
+  function impTables(mode, G) {
+    const out = [];
+    for (let r = 1; r <= G.rows; r++) {
+      if (impScoreRow(mode, G.g[r]) < 2) continue;
+      let name = "";
+      for (let k = r - 1; k >= Math.max(1, r - 4) && !name; k--) { const t = (G.g[k] || []).filter(Boolean); if (t.length && t.length <= 3) name = t[0]; }
+      out.push({ r, name: name.replace(/\s+/g, " ").trim() });
+    }
+    return out;
   }
   function impFindHead(mode, G) {
     let best = 0, row = 0;
@@ -8189,6 +8217,17 @@ label.p48 input:checked + span { border-style: solid; }
       for (let c = imp.range[0]; c <= imp.range[1]; c++) if (!taken.has(c) && impMatch(imp.mode, f, head[c])) { imp.map[f] = c; taken.add(c); break; }
     });
     if (imp.blocks[0]) imp.map[main] = imp.blocks[0];
+    // Colonne des noms sans titre reconnu : la première colonne restante (titre « INPUT », « IN »… ou vide) remplie de texte, pas de numéros
+    if (!imp.map[main]) {
+      const used = new Set(Object.values(imp.map));
+      let best = 0, bc = 0;
+      for (let c = imp.range[0]; c <= imp.range[1]; c++) {
+        if (used.has(c) && imp.map.entree !== c) continue;
+        const n = impTexty(c); if (n > best) { best = n; bc = c; }
+      }
+      if (bc) { if (imp.map.entree === bc) delete imp.map.entree; imp.map[main] = bc; }
+      if (imp.map[main]) { const keep = { ...imp.map }; impBlocks(imp.map[main]); imp.map = keep; }
+    }
     // Pied : une colonne sans titre clair (« COM », vide…) remplie de PPM, GPM, pinces… est prise pour les pieds
     if (imp.mode === "master" && !imp.map.pied) {
       for (let c = imp.range[0]; c <= imp.range[1]; c++) {
@@ -8203,10 +8242,27 @@ label.p48 input:checked + span { border-style: solid; }
     for (let r = imp.head + 1; r <= G.rows; r++) {
       const cells = G.g[r] || [];
       if (r > imp.head + 1 && impScoreRow(imp.mode, cells) >= 2) break;
-      const any = impCols(main).some((c) => cells[c]);
+      // Titre du tableau suivant (Star Ac : « OPTOCORE DD4MR - Madi 1 ID12 ») : une seule cellule remplie, sans numéro d'entrée
+      if (imp.map.entree && imp.blocks.length < 2 && !cells[imp.map.entree]) { let n = 0; for (let c = imp.range[0]; c <= impLastCol(); c++) if (cells[c]) n++; if (n === 1 && r > imp.head + 1) break; }
+      const any = imp.blocks.length > 1 ? impCols(main).some((c) => cells[c]) || imp.blocks.some((x, b) => impRowUsed(cells, b)) : impRowUsed(cells, 0);
       if (any) { end = r; empty = 0; } else if (++empty >= 15) break;
     }
     imp.end = Math.max(end, imp.head + 1);
+  }
+  // Une colonne de noms : au moins 3 valeurs, presque toutes du texte ; on garde celle qui en a le plus (pas des numéros ni des adresses « #1 - 4 »)
+  function impTexty(c) {
+    const G = imp.grid, vals = [];
+    for (let r = imp.head + 1; r <= Math.min(G.rows, imp.head + 80); r++) { const v = (G.g[r] || [])[c]; if (v) vals.push(v); }
+    const n = vals.filter((v) => /[A-Za-zÀ-ÿ]{2,}/.test(v) && !/^#?\s*\d/.test(v)).length;
+    return vals.length >= 3 && n >= vals.length * 0.8 ? n : 0; // nombre de noms (0 : ce n'est pas une colonne de noms)
+  }
+  // Dernière colonne utile du tableau d'entrées : les cellules au-delà (sorties posées à droite…) ne font pas une ligne
+  function impLastCol() { const cs = Object.values(imp.map).filter(Boolean); return cs.length ? Math.max(...cs) : imp.range[1]; }
+  // Ligne du tableau qui porte quelque chose (un numéro d'entrée, une adresse…), même sans nom de source
+  function impRowUsed(cells, b) {
+    const nb = Math.max(1, imp.blocks.length), off = nb > 1 ? imp.blocks[b] - imp.blocks[0] : 0, last = nb > 1 ? imp.range[1] : impLastCol();
+    for (let c = imp.range[0]; c <= last; c++) if (cells[c + off]) return true;
+    return false;
   }
   // Colonnes réelles d'un champ, une par tableau côte à côte
   function impCols(f) {
@@ -8217,14 +8273,25 @@ label.p48 input:checked + span { border-style: solid; }
   const IMP_SKIP = new Set(["", "X", "-", "—", "BLANK", "VIDE", "/", "?"]);
   function impItems() {
     const G = imp.grid, F = IMP_FIELDS[imp.mode], main = F[0][0], out = [];
-    const nb = Math.max(1, imp.blocks.length);
+    const nb = Math.max(1, imp.blocks.length), blk = [];
     for (let b = 0; b < nb; b++) {
       for (let r = imp.head + 1; r <= imp.end; r++) {
         const cells = G.g[r] || [], get = (f) => { const cs = impCols(f); return cs.length ? cells[cs[Math.min(b, cs.length - 1)]] || "" : ""; };
         const name = get(main);
-        if (IMP_SKIP.has(impNorm(name)) || impMatch(imp.mode, main, name)) continue;
-        const it = { r }; F.forEach(([f]) => { it[f] = get(f); }); out.push(it);
+        if (impMatch(imp.mode, main, name)) continue;
+        const it = { r }; F.forEach(([f]) => { it[f] = get(f); });
+        const mc = impCols(main), col = mc[Math.min(b, mc.length - 1)];
+        // Nom fusionné sur deux lignes : les deux lignes forment une paire stéréo (L puis R)
+        if (name && G.down.has(r + ":" + col) && !G.down.has((r + 1) + ":" + col)) { const prev = blk[blk.length - 1]; if (prev && prev.r === r - 1 && prev[main] === name && !prev.st) { prev.st = "L"; it.st = "R"; } }
+        if (IMP_SKIP.has(impNorm(name))) {
+          // Trou : ligne numérotée du tableau, sans source. Gardé (ligne vide) pour que les numéros suivent ceux de l'ancien patch
+          if (!imp.gaps || !impRowUsed(cells, b)) continue;
+          it[main] = ""; it.gap = true;
+        }
+        blk.push(it);
       }
+      while (blk.length && blk[blk.length - 1].gap) blk.pop(); // pas de trous après la dernière source
+      out.push(...blk); blk.length = 0;
     }
     return out;
   }
@@ -8234,16 +8301,34 @@ label.p48 input:checked + span { border-style: solid; }
     $("#impFile").textContent = imp.name;
     $("#impSheet").innerHTML = imp.wb.worksheets.map((w, i) => `<option value="${i}"${i === imp.sheet ? " selected" : ""}>${esc(w.name)}</option>`).join("");
     $("#impMode").value = imp.mode; $("#impHead").value = imp.head || ""; $("#impEnd").value = imp.end || "";
+    const tabs = impTables(imp.mode, G);
+    $("#impTableF").hidden = tabs.length < 2;
+    $("#impTable").innerHTML = (tabs.some((t) => t.r === imp.head) ? "" : `<option value="">Ligne ${imp.head || "?"}</option>`) + tabs.map((t) => `<option value="${t.r}"${t.r === imp.head ? " selected" : ""}>${esc(t.name ? t.name.slice(0, 48) : "Tableau")} (ligne ${t.r})</option>`).join("");
+    impPaintRack();
     const opts = (f) => `<option value="">ignorer</option>` + (() => { let h = ""; for (let c = imp.range[0]; c <= imp.range[1]; c++) h += `<option value="${c}"${imp.map[f] === c ? " selected" : ""}>${colLetter(c)}${head[c] ? " · " + esc(head[c].slice(0, 28)) : ""}</option>`; return h; })();
     $("#impMap").innerHTML = F.map(([f, t]) => `<label class="field"><span>${esc(t)}${IMP_KEEP[f] ? ' <i>va dans les notes</i>' : ""}</span><select data-impf="${f}">${opts(f)}</select></label>`).join("");
     const items = imp.head ? impItems() : [];
     const nb = imp.blocks.length;
-    $("#impBlocks").textContent = !imp.head ? "Aucune ligne de titres reconnue dans cette feuille : indique son numéro, puis choisis les colonnes." : nb > 1 ? `${nb} tableaux côte à côte (colonnes ${imp.blocks.map(colLetter).join(", ")}) : ils sont lus l'un après l'autre.` : "Un seul tableau dans la feuille.";
+    $("#impBlocks").textContent = !imp.head ? "Aucune ligne de titres reconnue dans cette feuille : indique son numéro, puis choisis les colonnes." : nb > 1 ? `${nb} tableaux côte à côte (colonnes ${imp.blocks.map(colLetter).join(", ")}) : ils sont lus l'un après l'autre.` : tabs.length > 1 ? `${tabs.length} tableaux l'un sous l'autre dans cette feuille : choisis celui à reprendre dans « Tableau ». Pour le suivant, rouvre le fichier et « Ajouter au dossier ouvert ».` : "Un seul tableau dans la feuille.";
     const shown = F.filter(([f]) => imp.map[f]);
-    $("#impPrev").innerHTML = items.length ? `<table><thead><tr><th>Ligne</th>${shown.map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${items.slice(0, 12).map((it) => `<tr><td class="muted">${it.r}</td>${shown.map(([f]) => `<td>${esc(f === "p48" ? (impOn(it[f]) ? "48V" : "") : it[f])}</td>`).join("")}</tr>`).join("")}</tbody></table>${items.length > 12 ? `<p class="hint">… et ${items.length - 12} autres lignes.</p>` : ""}` : `<p class="empty-state">Rien à reprendre avec ces réglages. Choisis la colonne « ${esc(F[0][1])} ».</p>`;
-    const go = $("#impGo"); go.disabled = !items.length;
-    go.textContent = items.length ? `Reprendre ${items.length} ${imp.mode === "master" ? "source" : "sortie"}${items.length > 1 ? "s" : ""}` : "Reprendre";
+    $("#impPrev").innerHTML = items.length ? `<table><thead><tr><th>Ligne</th>${shown.map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${items.slice(0, 40).map((it) => `<tr${it.gap ? ' class="impgap"' : ""}><td class="muted">${it.r}</td>${shown.map(([f], k) => `<td>${it.gap && !k ? "ligne vide" : esc(f === "p48" ? (impOn(it[f]) ? "48V" : "") : !k && it.st ? `${it[f]} ${it.st}` : it[f])}${!k && it.st === "L" ? ' <span class="muted">stéréo</span>' : ""}</td>`).join("")}</tr>`).join("")}</tbody></table>${items.length > 40 ? `<p class="hint">… et ${items.length - 40} autres lignes.</p>` : ""}` : `<p class="empty-state">Rien à reprendre avec ces réglages. Choisis la colonne « ${esc(F[0][1])} ».</p>`;
+    const go = $("#impGo"); go.disabled = !items.some((it) => !it.gap);
+    const ng = items.filter((it) => it.gap).length, ns = items.length - ng;
+    go.textContent = items.length ? `Reprendre ${ns} ${imp.mode === "master" ? "source" : "sortie"}${ns > 1 ? "s" : ""}${ng ? ` et ${ng} ligne${ng > 1 ? "s" : ""} vide${ng > 1 ? "s" : ""}` : ""}` : "Reprendre";
+    $("#impGaps").checked = imp.gaps;
     if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+  }
+  // Câbler directement sur un stage rack ou un appareil du dossier ouvert : la 1re ligne reprise va sur l'entrée choisie, les suivantes à la suite
+  function impPaintRack() {
+    const add = $("#impDest").value === "add", out = imp.mode !== "master";
+    const racks = add ? state.racks.filter((r) => (out ? rackOutputs(r) : rackInputs(r)).length) : [];
+    $("#impRackF").hidden = !racks.length; $("#impFromF").hidden = !racks.length || !imp.rack;
+    if (!racks.some((r) => r.id === imp.rack)) imp.rack = "";
+    $("#impRack").innerHTML = `<option value="">Rien, je câblerai après</option>` + racks.map((r) => `<option value="${r.id}"${r.id === imp.rack ? " selected" : ""}>${esc(rackTitle(r))}${r.console ? " · " + esc(consLabel(r.console)) : ""}</option>`).join("");
+    const r = rackById(imp.rack); if (!r) return;
+    const occ = occupancy(), cells = out ? rackOutputs(r) : rackInputs(r), used = out ? occ.out : occ.rack;
+    if (imp.from == null || imp.from >= cells.length) { imp.from = cells.findIndex((a) => !used.get(kRack({ r: r.id, ...a }))); if (imp.from < 0) imp.from = 0; }
+    $("#impFrom").innerHTML = cells.map((a, k) => { const who = used.get(kRack({ r: r.id, ...a })); return `<option value="${k}"${k === imp.from ? " selected" : ""}>${out ? "out" : "in"} ${esc(rackShort(r, a.c, a.i))}${who ? " · " + esc(label(who) || "occupée") : ""}</option>`; }).join("");
   }
   function impLoadSheet(i, mode) {
     imp.sheet = i; imp.grid = impGrid(imp.wb.worksheets[i]);
@@ -8254,7 +8339,7 @@ label.p48 input:checked + span { border-style: solid; }
   async function impOpen(buf, name) {
     const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
     if (!wb.worksheets.length) { notice("Ce fichier Excel ne contient aucune feuille.", true); return; }
-    imp = { wb, name: name || "fichier Excel" };
+    imp = { wb, name: name || "fichier Excel", gaps: true };
     // Feuille de départ : celle où la ligne de titres du patch est la plus nette
     let best = 0, bi = 0;
     wb.worksheets.forEach((w, i) => { const s = impFindHead("master", impGrid(w)).score + (/patch|input|entr/i.test(w.name) ? 0.5 : 0); if (s > best) { best = s; bi = i; } });
@@ -8269,18 +8354,46 @@ label.p48 input:checked + span { border-style: solid; }
     const keep = (it) => Object.keys(IMP_KEEP).filter((f) => it[f]).map((f) => `${IMP_KEEP[f]} : ${it[f]}`);
     if (imp.mode === "master") {
       items.forEach((it) => {
-        const l = newLine(it.source); l.micro = it.micro || ""; l.pied = it.pied || ""; l.musicien = it.musicien || ""; l.p48 = impOn(it.p48);
-        l.notes = [it.notes, ...keep(it)].filter(Boolean).join(" · "); state.lignes.push(l);
+        const l = newLine(it.gap ? "" : it.st ? `${it.source} ${it.st}` : it.source); l.micro = it.micro || ""; l.pied = it.pied || ""; l.musicien = it.musicien || ""; l.p48 = impOn(it.p48);
+        l.notes = [it.notes, ...keep(it)].filter(Boolean).join(" · ");
+        if (it.st === "R") { const a = state.lignes[state.lignes.length - 1]; if (a) { a.pair = l.id; l.pair = a.id; } }
+        state.lignes.push(l);
       });
     } else {
       state.sorties = state.sorties || [];
-      items.forEach((it) => state.sorties.push({ id: nid(), mix: it.mix, dest: it.dest || "", type: it.type || "", tx: "", rx: it.rx || "", notes: [it.notes, ...keep(it)].filter(Boolean).join(" · "), out: null, box: null, pair: null }));
+      items.forEach((it) => {
+        const o = { id: nid(), mix: it.gap ? "" : it.st ? `${it.mix} ${it.st}` : it.mix, dest: it.dest || "", type: it.type || "", tx: "", rx: it.rx || "", notes: [it.notes, ...keep(it)].filter(Boolean).join(" · "), out: null, box: null, pair: null };
+        if (it.st === "R") { const a = state.sorties[state.sorties.length - 1]; if (a) { a.pair = o.id; o.pair = a.id; } }
+        state.sorties.push(o);
+      });
+    }
+    // Câblage sur le stage rack choisi : une ligne par entrée (ou sortie), dans l'ordre ; un trou garde son entrée libre
+    let cab = "";
+    const rk = !isNew && rackById(imp.rack);
+    if (rk) {
+      const out = imp.mode !== "master", cells = out ? rackOutputs(rk) : rackInputs(rk), occ = occupancy(), used = out ? occ.out : occ.rack;
+      const made = (out ? state.sorties : state.lignes).slice(-items.length), ks = consoleKeys();
+      let pos = imp.from || 0, first = null, last = null, busy = 0, over = 0;
+      made.forEach((x, k) => {
+        if (pos >= cells.length) { if (!items[k].gap) over++; return; }
+        const a = { r: rk.id, ...cells[pos++] };
+        if (items[k].gap) return;
+        if (used.get(kRack(a))) { busy++; return; }
+        if (out) x.out = a;
+        else if (!ks.length) x.sr = { ALL: a };
+        else if (rk.console === "Partagé") ks.forEach((c) => { x.sr[c] = { ...a }; });
+        else x.sr[rk.console] = a;
+        first = first || a; last = a;
+      });
+      if (first) cab = ` Câblées sur ${esc(rackTitle(rk))}, de ${out ? "out" : "in"} ${esc(rackShort(rk, first.c, first.i))} à ${esc(rackShort(rk, last.c, last.i))}.`;
+      if (busy) cab += ` ${busy} ligne${busy > 1 ? "s" : ""} non câblée${busy > 1 ? "s" : ""} : ${out ? "sortie" : "entrée"} déjà occupée.`;
+      if (over) cab += ` ${over} ligne${over > 1 ? "s" : ""} non câblée${over > 1 ? "s" : ""} : plus assez de place sur ce stage rack.`;
     }
     learnDossier(state); state.exemple = false;
     $("#impDlg").close();
     commit(true); setView(imp.mode === "master" ? homeView() : "sorties");
-    const n = items.length, what = imp.mode === "master" ? `source${n > 1 ? "s" : ""}` : `sortie${n > 1 ? "s" : ""}`;
-    notice(`${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}. ${imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre aussi les sorties, rouvre le fichier, choisis leur feuille et « Ajouter au dossier ouvert »." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`);
+    const g = items.filter((it) => it.gap).length, n = items.length - g, what = imp.mode === "master" ? `source${n > 1 ? "s" : ""}` : `sortie${n > 1 ? "s" : ""}`;
+    notice(`${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}${g ? `, avec ${g} ligne${g > 1 ? "s" : ""} vide${g > 1 ? "s" : ""} pour garder les trous du patch` : ""}. ${cab ? cab.trim() + " L'ancienne adresse reste dans les notes." : imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre un autre tableau (sorties, autre stage rack), rouvre le fichier, choisis-le et « Ajouter au dossier ouvert » : tu pourras le câbler directement." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`);
   }
   function impBind() {
     const d = $("#impDlg");
@@ -8296,6 +8409,11 @@ label.p48 input:checked + span { border-style: solid; }
       if (f === main && c) { impBlocks(c); Object.keys(imp.map).forEach((k) => { if (imp.map[k] < imp.range[0] || imp.map[k] > imp.range[1]) delete imp.map[k]; }); imp.map[main] = c; }
       impPaint();
     });
+    $("#impTable").addEventListener("change", (e) => { const n = Number(e.target.value); if (!n) return; imp.head = n; impSetup(false); impPaint(); });
+    $("#impDest").addEventListener("change", () => { impPaint(); });
+    $("#impRack").addEventListener("change", (e) => { imp.rack = e.target.value; imp.from = null; impPaint(); });
+    $("#impFrom").addEventListener("change", (e) => { imp.from = Number(e.target.value) || 0; });
+    $("#impGaps").addEventListener("change", (e) => { imp.gaps = e.target.checked; impPaint(); });
     $("#impGo").addEventListener("click", impApply);
   }
 
