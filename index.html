@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "d0138ca1eb";</script>
+<script>window.PL_VER = "19d5e9fae1";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -3487,7 +3487,7 @@ label.p48 input:checked + span { border-style: solid; }
   // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   // Façades dessinées d'après les photos du parc, reconnues au nom (stage racks, I/O, appareils du synoptique, horloges)
-  const FACE_BY_NAME = [[/apollo\s*x\s*-?\s*16(?!\s*d)/i, "apollox16"], [/madi\s*\.?\s*src/i, "madisrc"], [/\bpc\s*(rack\s*)?1\s*u\b/i, "pc1u"], [/\bpc\s*(rack\s*)?2\s*u\b/i, "pc2u"], [/redbox|sonifex|rb\s*-?\s*aes/i, "redbox"], [/fireface\s*-?\s*802/i, "fireface802"], [/madi\s*-?\s*router/i, "madirouter"], [/madi\s*-?\s*bri?dge/i, "madibridge"], [/rack\s*-?\s*mac\s*mini/i, "rackmacmini"], [/xmac/i, "xmacmini"], [/gs\s*-?\s*724/i, "gs724t"], [/sg\s*-?\s*350/i, "sg350x"], [/uad.*live|live\s*rack/i, "uadlive"], [/echo\s*(iii|3)\b/i, "echo3"], [/exbox\s*\.?\s*blds/i, "exboxblds"], [/exbox\s*\.?\s*md/i, "exboxmd"], [/\bmgb\b/i, "mgb"], [/ultra\s*-?\s*lite/i, "motuul3"], [/x\s*-?\s*440|summit|extreme\s*networks/i, "x440"], [/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
+  const FACE_BY_NAME = [[/portico\s*5045|\b5045\b/i, "p5045"], [/8\s*mx\s*2/i, "ati8mx2"], [/960\s*l\b/i, "lex960l"], [/api\s*7600/i, "api7600"], [/apollo\s*quad/i, "apolloquad"], [/eventide\s*eclipse|^\s*eclipse\s*$/i, "eclipse"], [/klang\s*:?\s*fabrik/i, "klang"], [/\bm\s*-?\s*3000\b/i, "m3000"], [/reverb\s*4000/i, "rev4000"], [/\bm\s*-?\s*6000\b|system\s*6000/i, "m6000"], [/bricasti|\bm7\b/i, "m7"], [/xl\s*88/i, "xl88"], [/\b5024\b/i, "neve5024"], [/1073\s*-?\s*opx/i, "neve1073opx"], [/pcm\s*70/i, "pcm70"], [/pcm\s*96/i, "pcm96"], [/pcm\s*92/i, "pcm92"], [/ta\s*-?\s*1\s*vp|auto\s*-?\s*tune/i, "ta1vp"], [/transient\s*designer\s*4/i, "td4"], [/transient\s*designer\s*2|^\s*(spl\s*)?transient(\s*designer)?\s*$/i, "td2"], [/xl\s*42/i, "xl42"], [/xl\s*48/i, "xl48"], [/api\s*2500/i, "api2500"], [/1073\s*-?\s*dpd/i, "neve1073dpd"], [/rb\s*-?\s*dda/i, "rbdda6a"], [/apollo\s*x\s*-?\s*16(?!\s*d)/i, "apollox16"], [/madi\s*\.?\s*src/i, "madisrc"], [/\bpc\s*(rack\s*)?1\s*u\b/i, "pc1u"], [/\bpc\s*(rack\s*)?2\s*u\b/i, "pc2u"], [/redbox|sonifex|rb\s*-?\s*aes/i, "redbox"], [/fireface\s*-?\s*802/i, "fireface802"], [/madi\s*-?\s*router/i, "madirouter"], [/madi\s*-?\s*bri?dge/i, "madibridge"], [/rack\s*-?\s*mac\s*mini/i, "rackmacmini"], [/xmac/i, "xmacmini"], [/gs\s*-?\s*724/i, "gs724t"], [/sg\s*-?\s*350/i, "sg350x"], [/uad.*live|live\s*rack/i, "uadlive"], [/echo\s*(iii|3)\b/i, "echo3"], [/exbox\s*\.?\s*blds/i, "exboxblds"], [/exbox\s*\.?\s*md/i, "exboxmd"], [/\bmgb\b/i, "mgb"], [/ultra\s*-?\s*lite/i, "motuul3"], [/x\s*-?\s*440|summit|extreme\s*networks/i, "x440"], [/\bhms\s*-?\s*4x/i, "hms4x"], [/\bhrm\s*-?\s*4x/i, "hrm4x"], [/v\s*-?\s*series|\bv\s*-?\s*12\b|panneau\s*v/i, "vpanel"], [/\blq\s*-?\s*r?\s*-?\s*4w8|\blq\s*-?\s*r\b/i, "lqr"], [/micro\s*-?\s*n\b|mediornet/i, "micron"], [/\bc\s*-?\s*44\b/i, "c44"], [/rsp\s*-?\s*2318/i, "rsp2318"], [/nsa\s*-?\s*002/i, "nsa002"], [/artist\s*-?\s*32/i, "artist32"], [/\btango\b|tng\s*-?\s*200/i, "tango"], [/hx\s*-?\s*delta|eclipse\s*-?\s*delta/i, "eclipsedelta"], [/hx\s*-?\s*median|eclipse\s*-?\s*median/i, "eclipsemedian"], [/stage\s*-?\s*32\b/i, "stage32"], [/rio\s*-?\s*3224/i, "rio3224"], [/rio\s*-?\s*1608/i, "rio1608"], [/rpio\s*-?\s*622/i, "rpio622"], [/\bro\s*-?\s*8\s*-?\s*d\b/i, "ro8d"], [/mini\s*-?\s*rack/i, "sdmini"], [/madi\s*-?\s*rack/i, "madirack"], [/\bml\s*-?\s*32/i, "ml32"], [/\bd\s*-?\s*32\s*\.?\s*32/i, "d3232"], [/blacklight/i, "blacklight"], [/\be6l\b/i, "e6l"], [/impact\s*server/i, "sgimpact"], [/extreme\s*server|server\s*extreme/i, "sgextreme"], [/server\s*one/i, "sgone"], [/fourier|transform\s*\.?\s*engine/i, "fourier"], [/big\s*-?\s*ben/i, "bigben"], [/nanosync/i, "nanosyncs"], [/\bi\s*-?\s*clock/i, "iclock"]];
   const faceByName = (t) => (FACE_BY_NAME.find(([re]) => re.test(t || "")) || [])[1] || "";
   function devType(n) {
     if (!n) return "box";
@@ -3559,12 +3559,37 @@ label.p48 input:checked + span { border-style: solid; }
     exboxmd: { nom: "EXBOX.MD", type: "Convertisseur MADI / Dante", t: "DirectOut EXBOX.MD · 64 canaux MADI vers Dante", re: /exbox\s*\.?\s*md/i, ports: [["Dante primaire", "Dante"], ["Dante secondaire", "Dante"], ["MADI (BNC)", "MADI"], ["MADI (SC / SFP)", "MADI"], ["Word clock in", "Word clock"]] },
     mgb: { nom: "MGB", type: "Passerelle MADI / SoundGrid", t: "DiGiGrid MGB · 2 ports MADI vers SoundGrid", re: /\bmgb\b/i, ports: [["MADI 1 in", "MADI"], ["MADI 1 out", "MADI"], ["MADI 2 in", "MADI"], ["MADI 2 out", "MADI"], ["SoundGrid", "SoundGrid"]] },
     motuul3: { nom: "UltraLite mk3", type: "Interface audio USB / FireWire", t: "MOTU UltraLite mk3 · 10 in / 14 out, demi-rack", re: /ultra\s*-?\s*lite/i, ports: [["USB / FireWire", "Autre"], ["Micro / instrument 1-2", "Analogique"], ["Entrées ligne 3-8", "Analogique"], ["Sorties ligne 1-8", "Analogique"], ["S/PDIF", "AES"]] },
+    p5045: { nom: "Portico 5045", type: "Réducteur de repisse / anti-larsen", t: "Rupert Neve Designs Portico 5045 · 2 canaux", re: /portico\s*5045|\b5045\b/i, clk: "none", ports: [["Entrée A", "Analogique"], ["Entrée B", "Analogique"], ["Sortie A", "Analogique"], ["Sortie B", "Analogique"]] },
+    ati8mx2: { nom: "8MX2", type: "Préampli / mélangeur 8 voies", t: "ATI 8MX2 · 8 préamplis micro avec limiteur et bus de mix", re: /8\s*mx\s*2/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`Micro ${i + 1}`, "Analogique"]), ...Array.from({ length: 8 }, (_, i) => [`Direct out ${i + 1}`, "Analogique"]), ["Mix out L / R", "Analogique"]] },
+    lex960l: { nom: "960L", type: "Réverbération multicanal", t: "Lexicon 960L · réverbération multicanal, télécommande LARC2", re: /960\s*l\b/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"], ["Télécommande LARC2", "Réseau"]] },
+    api7600: { nom: "API 7600", type: "Tranche de console", t: "API 7600 · préampli, EQ 550A, compresseur", re: /api\s*7600/i, clk: "none", ports: [["Micro / ligne in", "Analogique"], ["Sortie", "Analogique"], ["Insert", "Analogique"]] },
+    apolloquad: { nom: "Apollo Quad", type: "Interface audio", t: "Universal Audio Apollo Quad · 18 x 24, 4 DSP UAD", re: /apollo\s*quad/i, ports: [["Thunderbolt / FireWire", "Autre"], ...Array.from({ length: 4 }, (_, i) => [`Micro / ligne ${i + 1}`, "Analogique"]), ["Entrées ligne 5-8", "Analogique"], ["Sorties ligne 1-8", "Analogique"], ["ADAT", "Autre"], ["S/PDIF", "AES"], ["Word clock in", "Word clock"]] },
+    eclipse: { nom: "Eclipse", type: "Multi-effet / harmoniseur", t: "Eventide Eclipse · harmoniseur, 2 moteurs", re: /eventide\s*eclipse|^\s*eclipse\s*$/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"]] },
+    klang: { nom: "Klang:fabrik", type: "Processeur de mix ears 3D", t: "Klang:fabrik · 16 mix ears immersifs", re: /klang\s*:?\s*fabrik/i, ports: [["Dante primaire", "Dante"], ["Dante secondaire", "Dante"], ["MADI (option)", "MADI"], ["Contrôle (réseau)", "Réseau"]] },
+    m3000: { nom: "TC M3000", type: "Réverbération double moteur", t: "TC Electronic M3000 · réverbération 2 moteurs", re: /\bm\s*-?\s*3000\b/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"]] },
+    rev4000: { nom: "Reverb 4000", type: "Réverbération stéréo", t: "TC Electronic Reverb 4000 · réverbération stéréo", re: /reverb\s*4000/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"]] },
+    m6000: { nom: "TC M6000", type: "Multi-effet", t: "TC Electronic System 6000 · 4 moteurs, télécommande ICON", re: /\bm\s*-?\s*6000\b|system\s*6000/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"], ["Télécommande ICON", "Réseau"]] },
+    m7: { nom: "Bricasti M7", type: "Réverbération stéréo", t: "Bricasti M7 · réverbération stéréo", re: /bricasti|\bm7\b/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"]] },
+    xl88: { nom: "Midas XL88", type: "Matrice ligne 8 x 8", t: "Midas XL88 · matrice de mixage ligne 8 entrées, 8 sorties", re: /xl\s*88/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`Entrée ${i + 1}`, "Analogique"]), ...Array.from({ length: 8 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    neve5024: { nom: "Portico 5024", type: "4 préamplis micro", t: "Rupert Neve Designs Portico 5024 · 4 préamplis", re: /\b5024\b/i, clk: "none", ports: [...Array.from({ length: 4 }, (_, i) => [`Micro ${i + 1}`, "Analogique"]), ...Array.from({ length: 4 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    neve1073opx: { nom: "1073 OPX", type: "8 préamplis micro", t: "AMS Neve 1073 OPX · 8 préamplis 1073 pilotables", re: /1073\s*-?\s*opx/i, ports: [...Array.from({ length: 8 }, (_, i) => [`Micro / ligne ${i + 1}`, "Analogique"]), ...Array.from({ length: 8 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"]), ["USB (contrôle)", "Autre"], ["Option Dante / AES", "Dante"]] },
+    pcm70: { nom: "PCM 70", type: "Réverbération / effets", t: "Lexicon PCM 70 · réverbération numérique", re: /pcm\s*70/i, clk: "none", ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"]] },
+    pcm96: { nom: "PCM 96", type: "Réverbération / effets", t: "Lexicon PCM 96 · réverbération / effets stéréo", re: /pcm\s*96/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"], ["FireWire", "Autre"]] },
+    pcm92: { nom: "PCM 92", type: "Réverbération / effets", t: "Lexicon PCM 92 · réverbération / effets stéréo", re: /pcm\s*92/i, ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES in", "AES"], ["AES out", "AES"]] },
+    ta1vp: { nom: "TA-1VP", type: "Processeur vocal", t: "Tascam TA-1VP · Auto-Tune, modélisation micro, compresseur, de-esser", re: /ta\s*-?\s*1\s*vp|auto\s*-?\s*tune/i, ports: [["Entrée micro (XLR)", "Analogique"], ["Entrée ligne", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"], ["AES / S/PDIF", "AES"]] },
+    td2: { nom: "Transient Designer 2", type: "Modeleur de transitoires", t: "SPL Transient Designer 2 · 2 canaux", re: /transient\s*designer\s*2|^\s*(spl\s*)?transient(\s*designer)?\s*$/i, clk: "none", ports: [...Array.from({ length: 2 }, (_, i) => [`Entrée ${i + 1}`, "Analogique"]), ...Array.from({ length: 2 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    td4: { nom: "Transient Designer 4", type: "Modeleur de transitoires", t: "SPL Transient Designer 4 · 4 canaux", re: /transient\s*designer\s*4/i, clk: "none", ports: [...Array.from({ length: 4 }, (_, i) => [`Entrée ${i + 1}`, "Analogique"]), ...Array.from({ length: 4 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    xl42: { nom: "Midas XL42", type: "2 tranches de console", t: "Midas XL42 · 2 préamplis avec EQ 4 bandes", re: /xl\s*42/i, clk: "none", ports: [...Array.from({ length: 2 }, (_, i) => [`Micro / ligne ${i + 1}`, "Analogique"]), ...Array.from({ length: 2 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    xl48: { nom: "Midas XL48", type: "8 préamplis micro", t: "Midas XL48 · 8 préamplis micro", re: /xl\s*48/i, ports: [...Array.from({ length: 8 }, (_, i) => [`Micro ${i + 1}`, "Analogique"]), ...Array.from({ length: 8 }, (_, i) => [`Sortie ${i + 1}`, "Analogique"])] },
+    api2500: { nom: "API 2500", type: "Compresseur de bus stéréo", t: "API 2500 · compresseur stéréo", re: /api\s*2500/i, clk: "none", ports: [["Entrée L", "Analogique"], ["Entrée R", "Analogique"], ["Sortie L", "Analogique"], ["Sortie R", "Analogique"]] },
+    neve1073dpd: { nom: "1073 DPD", type: "2 préamplis micro numériques", t: "AMS Neve 1073 DPD · 2 préamplis 1073, sorties numériques", re: /1073\s*-?\s*dpd/i, ports: [["Micro 1", "Analogique"], ["Micro 2", "Analogique"], ["Sorties ligne 1-2", "Analogique"], ["AES out", "AES"], ["S/PDIF", "AES"], ["ADAT", "Autre"], ["Word clock in", "Word clock"]] },
+    rbdda6a: { nom: "RB-DDA6A", type: "Distributeur AES", t: "Sonifex Redbox RB-DDA6A · 1 entrée AES vers 6 sorties", re: /rb\s*-?\s*dda/i, clk: "none", ports: [["AES in", "AES"], ...Array.from({ length: 6 }, (_, i) => [`AES out ${i + 1}`, "AES"])] },
     ms702: { nom: "MS-702", type: "Intercom 2 canaux (A, B)", t: "Clear-Com MS-702 · station principale 2 canaux", re: /ms\s*-?\s*702/i, ports: [["Canal A", "Intercom"], ["Canal B", "Intercom"], ["Program in", "Analogique"], ["Annonce out", "Analogique"]] }
   };
   const extraModel = (x) => (x && !x.gen && x.model !== "none" ? (EXTRA_MODELS[x.model] ? x.model : Object.keys(EXTRA_MODELS).find((k) => EXTRA_MODELS[k].re.test(x.nom || "")) || "") : "");
   const HF_ART = { EM6000: "em6000", AD4Q: "ad4q", AD4D: "ad4d", "EW-DXEM2": "ewdxem2", P10T: "p10t", MTK952: "mtk952", SR2050IEM: "sr2050", ULXD4Q: "ulxd4q", ULXD4D: "ulxd4d", "UR4D+": "ur4d", UR4D: "ur4d", ADTQ: "adtq", AXT400: "axt400", EM3732: "em3732", "EW-DXEM4DANTE": "ewdxem4", "EW-DXEM4": "ewdxem4", MRK960: "mrk960", TG1000: "tg1000", TG1000DR: "tg1000" };
   const DEV_W = { ewdxem2: 241.5, mgb: 154, motuul3: 218, x440: 304 };
-  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45 };
+  const DEV_H = { ad600: 44.45, ua845: 44.45, em6000: 44.45, ad4q: 44.45, ad4d: 44.45, ewdxem2: 44.45, p10t: 44.45, mtk952: 44.45, sr2050: 44.45, ac3000: 44.45, pa821: 44.45, ad8c: 44.45, csi16t: 44.45, rfamp: 44.45, as80: 44.45, dn9680: 44.45, ms702: 44.45, sdback: 445, hfrx: 44.45, hftx: 44.45, sd: 445, num: 267, numg: 88.9, osend: 44.45, dd4mr: 44.45, orange: 88.9, m8: 44.45, spectera: 44.45, switch: 44.45, clock: 44.45, io: 44.45, box: 44.45, console: 210, bigben: 44.45, nanosyncs: 44.45, iclock: 44.45, ro8d: 44.45, rio3224: 222.25, rio1608: 133.35, rpio622: 444.5, stage32: 222.25, sdmini: 177.8, madirack: 355.6, e6l: 222.25, ml32: 222.25, d3232: 88.9, blacklight: 88.9, sgimpact: 88.9, sgextreme: 88.9, sgone: 88.9, fourier: 88.9, hms4x: 44.45, hrm4x: 44.45, vpanel: 44.45, lqr: 44.45, micron: 44.45, c44: 44.45, rsp2318: 44.45, nsa002: 88.9, artist32: 88.9, tango: 44.45, eclipsedelta: 133.35, eclipsemedian: 266.7, apollox16: 44.45, madisrc: 44.45, pc1u: 44.45, pc2u: 88.9, redbox: 44.45, fireface802: 44.45, madirouter: 44.45, madibridge: 44.45, rackmacmini: 44.45, xmacmini: 44.45, gs724t: 44.45, sg350x: 44.45, uadlive: 44.45, echo3: 88.9, exboxblds: 44.45, exboxmd: 44.45, mgb: 44.45, motuul3: 44.45, x440: 44.45, p5045: 44.45, ati8mx2: 44.45, lex960l: 177.8, api7600: 44.45, apolloquad: 44.45, eclipse: 44.45, klang: 88.9, m3000: 44.45, rev4000: 44.45, m6000: 88.9, m7: 44.45, xl88: 177.8, neve5024: 44.45, neve1073opx: 88.9, pcm70: 44.45, pcm96: 44.45, pcm92: 44.45, ta1vp: 44.45, td2: 44.45, td4: 44.45, xl42: 44.45, xl48: 44.45, api2500: 44.45, neve1073dpd: 44.45, rbdda6a: 44.45 };
   function devArt(type, label, ref) {
     const H = DEV_H[type] || 44.45, R = (x, y, w, h, c, rx, extra) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"${extra || ""}/>`;
     const C = (x, y, r, c, extra) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"${extra || ""}/>`;
@@ -4604,6 +4629,221 @@ label.p48 input:checked + span { border-style: solid; }
         s += [139, 155].map((x) => [12.7, 25.3].map((y) => R(x, y, 15, 11, "#c9ced3", 0.5) + R(x + 1.5, y + 2, 12, 7, "#2a2d31", 0.4)).join("") + led(x + 4, 7.5, "#a3e635", 0.6) + led(x + 11, 7.5, "#3f4549", 0.6)).join("");
         s += [189, 228].map((x) => C(x + 1.5, 32.4, 1.6, "#c9ced3") + C(x + 26.5, 32.4, 1.6, "#c9ced3") + R(x + 4, 28.4, 21, 8, "#c9ced3", 3) + R(x + 6, 30, 17, 4.8, "#2a2d31", 2)).join("") + T(222, 41.5, "STACK", 1.8, "#e0d7ff", 700, 0, "middle");
         s += T(296, 9.5, "EXTREME NETWORKS", 3, "#f3f4f6", 900, 0.3, "end") + T(296, 13.5, "Summit X440-8t", 2.4, "#e0d7ff", 700, 0, "end") + T(60, 41.5, "10/100/1000", 1.8, "#e0d7ff", 700, 0, "middle");
+        return s;
+      }
+      // ——— Lot périphériques : façades dessinées d'après les photos du parc (Plan de Rack/Machine/PERIF) ———
+      // Rupert Neve Designs Portico 5045 : 1 U argenté, deux canaux (Time Constant rouge, Threshold, Depth crème), LED, logo écrit
+      case "p5045": {
+        const ck = (x, y, r) => C(x, y, r, "#f1ead8", ' stroke="#9aa3ab" stroke-width="0.4"') + R(x - 0.4, y - r + 0.8, 0.8, r * 0.6, "#3a3d41");
+        let s = earsO("#d9dcdf", "#9aa3ab") + R(13, 0, 457, H, "#e6e8ea", 1) + [[30, 8], [30, 37], [453, 8], [453, 37]].map(([x, y]) => scr(x, y, 1.5)).join("");
+        s += T(19, 24, "5045", 7, "#1e3a8a", 400) + T(19, 28.5, "Primary Source Enhancer", 1.5, "#4b5563", 700);
+        [0, 193].forEach((o) => { s += T(149 + o, 10, o ? "CHANNEL B" : "CHANNEL A", 2.6, "#4b5563", 400, 0.3, "middle") + C(113 + o, 24, 7.5, "#a3171f") + C(113 + o, 24, 5.6, "#c81e2a") + R(112.6 + o, 17.5, 0.8, 4, "#f3f4f6") + T(113 + o, 41, "TIME CONSTANT", 1.7, "#4b5563", 700, 0, "middle") + ck(169 + o, 24, 5) + T(169 + o, 15, "THRESHOLD", 1.6, "#4b5563", 700, 0, "middle") + ck(205 + o, 24, 5) + T(205 + o, 15, "DEPTH", 1.6, "#4b5563", 700, 0, "middle") + [86.5, 139, 187].map((x, i) => led(x + o, 27, i === 1 ? "#4b5563" : "#22543d", 1.3) + T(x + o, 33, ["PROCESS", "RMS / PEAK", "ACTIVE"][i], 1.4, "#4b5563", 700, 0, "middle")).join(""); });
+        s += led(436, 27, "#22543d", 1.3) + T(436, 33, "POWER", 1.4, "#4b5563", 700, 0, "middle") + `<path d="M459 26 q3 -10 6 -2 q-2 6 3 4" fill="none" stroke="#4b5563" stroke-width="0.5"/>`;
+        return s;
+      }
+      // ATI 8MX2 : 1 U rouge, 8 tranches (Level noir, Gain turquoise, touches), section Monitor, bargraphe, casque
+      case "ati8mx2": {
+        let s = earsO("#b91c1c", "#f3f4f6") + R(13, 0, 457, H, "#c81e2a", 1) + T(17, 22, "ATI", 8, "#f3f4f6", 900, 0.2) + T(17, 30, "8MX2", 4.6, "#f3f4f6", 900);
+        for (let i = 0; i < 8; i++) { const x0 = 37 + i * 43.5; s += R(x0, 2, 42.5, 40.5, "none", 1, ' stroke="#7f1d1d" stroke-width="0.5"') + T(x0 + 15, 6, `Channel ${i + 1}`, 2, "#f3f4f6", 700, 0, "middle") + [10, 16, 22, 28].map((y, j) => R(x0 + 2, y, 3.4, 3, j === 1 ? "#f3f4f6" : "#7f1d1d", 0.4)).join("") + knurl(x0 + 32, 12, 4.4) + C(x0 + 15, 28, 5, "#0f766e") + C(x0 + 15, 28, 3.8, "#14b8a6") + R(x0 + 14.6, 23.5, 0.8, 3, "#f3f4f6") + R(x0 + 30, 25, 3, 3, "#1d2023", 0.4) + T(x0 + 4, 41, "Cue", 1.8, "#f3f4f6", 700) + T(x0 + 34, 41, "Mix", 1.8, "#f3f4f6", 700, 0, "middle"); }
+        s += T(392, 6, "Mix  Monitor", 2, "#f3f4f6", 700) + knurl(418, 13, 4.2) + knurl(402, 28, 4.6) + R(425, 6, 14, 30, "#7f1d1d", 0.6) + Array.from({ length: 10 }, (_, j) => R(428, 8 + j * 2.8, 8, 1.6, j < 2 ? "#ef4444" : j < 4 ? "#f59e0b" : "#86efac", 0.2)).join("") + T(432, 4.5, "Atten | Level", 1.6, "#f3f4f6", 700, 0, "middle") + jack(418, 32, 3.4) + T(418, 41, "Phones", 1.8, "#f3f4f6", 700, 0, "middle") + C(456, 22, 2.4, "#1d2023");
+        return s;
+      }
+      // Lexicon 960L : 4 U noir, bandeau « 960L DIGITAL EFFECTS SYSTEM », filet bleu, logo écrit, lecteur de disquette, LED et marche
+      case "lex960l": {
+        let s = earsU("#141517", "#d5dade") + R(13, 0, 457, H, "#16171a", 1) + R(13, 59, 457, 0.8, "#2a2d31") + R(13, 118, 457, 0.8, "#2a2d31") + C(41, 20, 3.6, "#2a2d31") + C(447, 20, 3.6, "#2a2d31");
+        s += Ti(38, 94, "960L", 16, "#e5e7eb", 800) + Ti(80, 94, "DIGITAL EFFECTS SYSTEM", 9, "#e5e7eb", 800) + R(38, 102, 408, 4, "#2b7de0") + T(446, 88, "lexicon", 15, "#e5e7eb", 800, 0, "end") + R(392, 74, 54, 1.2, "#e5e7eb");
+        s += R(55, 134, 93, 14, "#0b0c0e", 1) + R(62, 140, 70, 2, "#2a2d31") + R(130, 142, 8, 4, "#2a2d31", 0.5) + R(72, 144, 4, 1.4, "#facc15") + led(427, 134, "#22c55e", 1.4) + R(421, 141, 13, 14, "#0b0c0e", 1, ' stroke="#3a3d41" stroke-width="0.6"');
+        return s;
+      }
+      // API 7600 : 1 U noir, six sections encadrées (entrée, aux, EQ 550A, compresseur, préampli, sortie), logo écrit en bleu
+      case "api7600": {
+        const gk = (x, y, r) => C(x, y, r, "#9aa3ab") + C(x, y, r * 0.7, "#c9ced3") + R(x - 0.3, y - r, 0.6, r * 0.5, "#1d2023"), bt = (x, y, c) => R(x - 1.8, y - 1.6, 3.6, 3.2, c || "#e5e7eb", 0.4);
+        let s = earsO("#141517", "#d5dade") + R(13, 0, 457, H, "#111214", 1);
+        [[28, 78], [80, 155], [157, 258], [260, 322], [324, 362], [364, 414]].forEach(([a, b]) => { s += R(a, 3, b - a - 1, 38.5, "none", 1.5, ' stroke="#9aa3ab" stroke-width="0.6"'); });
+        s += bt(34, 12) + bt(40, 12) + bt(46, 12) + R(46, 24, 6, 6, "#f59e0b", 0.6) + bt(34, 30) + C(66, 24, 6, "#2a2d31", ' stroke="#9aa3ab" stroke-width="0.6"') + [90, 106, 120, 136].map((x) => gk(x, 15, 4) + bt(x, 33)).join("");
+        s += gk(186, 15, 4.4) + gk(214, 26, 4.6) + gk(240, 15, 4.4) + [166, 176, 200, 226, 250].map((x) => bt(x, 33)).join("") + T(208, 6, "LOW EQUALIZATION", 1.6, "#e5e7eb", 700, 0, "middle");
+        s += [270, 290, 310].map((x) => gk(x, 15, 3.8)).join("") + [268, 280, 292, 304, 316].map((x, i) => bt(x, 33, i === 2 ? "#a3e635" : i === 4 ? "#ef4444" : "#e5e7eb")).join("") + gk(343, 16, 4.4) + bt(337, 33) + bt(351, 33, "#ef4444") + gk(375, 15, 4) + [393, 405].map((x, i) => bt(x, 12, i ? "#e5e7eb" : "#ef4444") + bt(x, 33)).join("");
+        s += Ti(446, 21, "api", 9, "#3b82f6", 900, "middle") + Ti(436, 34, "7600", 5.5, "#e5e7eb", 800, "middle");
+        return s;
+      }
+      // Universal Audio Apollo Quad : 1 U argenté, préampli à anneau vert, 2 entrées Hi-Z, touches, vu-mètres, molette Monitor, casques
+      case "apolloquad": {
+        const gr = (x, y, r) => C(x, y, r + 2, "#16a34a") + C(x, y, r + 0.8, "#1d2023") + knurl(x, y, r);
+        let s = earsO("#c9ccd0", "#f3f4f6") + R(13, 0, 457, H, "#d4d6d8", 1) + T(44, 20, "apollo", 6.5, "#4b5563", 400) + gr(95, 22, 6.5) + jack(46, 34, 2.6) + jack(64, 34, 2.6);
+        s += [131, 143].map((x) => [12, 22, 32].map((y) => R(x - 3, y - 3, 6, 6, "#2a2d31", 1)).join("")).join("") + R(163, 4, 185, 36, "#0b0c0e", 1.5);
+        for (let i = 0; i < 8; i++) for (let j = 0; j < 10; j++) s += R(197 + i * 5.5, 9 + j * 2.8, 3.4, 1.6, j < 2 ? "#ef4444" : j < 4 ? "#f59e0b" : "#22c55e");
+        s += `<path d="M282 16 L290 22 L282 28 L274 22Z" fill="none" stroke="#e5e7eb" stroke-width="1"/>` + T(282, 33, "UNIVERSAL AUDIO", 1.8, "#e5e7eb", 700, 0, "middle") + [318, 324, 334, 340].map((x) => Array.from({ length: 10 }, (_, j) => R(x, 9 + j * 2.8, 3.4, 1.6, j < 3 ? "#f59e0b" : "#22c55e")).join("")).join("") + [170, 176, 182].map((x, i) => led(x, 12 + i * 6, i ? "#f59e0b" : "#ef4444", 0.9)).join("");
+        s += gr(366, 22, 7) + knurl(402, 14, 4) + knurl(421, 14, 4) + jack(402, 34, 2.6) + jack(421, 34, 2.6) + R(444, 16, 2.4, 9, "#9aa3ab", 1) + C(445.2, 25, 2.4, "#4b5563");
+        return s;
+      }
+      // Eventide Eclipse : 1 U gris clair, logo écrit, vu-mètres, écran vert, 4 touches, molette, pavé numérique, Tap, carte mémoire
+      case "eclipse": {
+        const ob = (x, y) => R(x - 3.5, y - 1.6, 7, 3.2, "#f3f4f6", 1.6, ' stroke="#6b7280" stroke-width="0.4"');
+        let s = earsO("#c3c7cd", "#5b6167") + R(13, 0, 457, H, "#cfd3d8", 1) + T(17, 21, "Eventide", 5, "#4c3a8a", 900) + T(17, 27, "E C L I P S E", 2.4, "#4c3a8a", 700);
+        s += [48, 54].map((x) => ledCol(x, 9, 7, 2.9, ["#ef4444", "#f59e0b", "#f59e0b", "#22c55e"])).join("") + ledCol(64, 9, 5, 3.6, ["#f59e0b"]) + ob(54, 33) + led(67, 33, "#ef4444", 0.7);
+        s += R(86, 6, 151, 19, "#111", 1.5) + R(88, 8, 147, 15, "#1a2a12", 0.6) + T(91, 14, "FX shift params      pitch:   600 cnts", 3.2, "#a3e635", 400) + T(91, 20.5, "(  LEVEL  ) (  PITCH  ) (  DELAY  ) (  FBACK  )", 2.8, "#a3e635", 400) + [107, 141, 175, 209].map((x) => R(x - 4, 32, 8, 4, "#1d2023", 1)).join("");
+        s += [10, 22, 34].map((y) => ob(257, y)).join("") + C(288, 22, 9, "#9aa3ab") + C(288, 22, 7.5, "#e5e7eb") + ob(314, 12) + ob(314, 34);
+        s += Array.from({ length: 3 }, (_, r) => Array.from({ length: 5 }, (_, c) => R(336 + c * 9, 8 + r * 9, 7, 7, "#2a2d31", 1) + T(339.5 + c * 9, 13 + r * 9, ["1", "2", "3", "·", "▲", "4", "5", "6", "+/-", "▼", "7", "8", "9", "0", "ENT"][r * 5 + c], 2.4, "#f3f4f6", 700, 0, "middle")).join("")).join("");
+        s += C(398, 12, 3.6, "#d9f99d", ' stroke="#6b7280" stroke-width="0.5"') + R(420, 9, 12, 7, "#111", 0.8) + R(422, 11, 8, 3, "#e5e7eb") + R(392, 32, 44, 2.6, "#111", 1) + T(465, 25, "Harmonizer® Effects Processor", 2.6, "#374151", 700, 0, "end");
+        return s;
+      }
+      // Klang:fabrik : 2 U argenté clair, USB, écran de niveaux (entrées / sorties), logo écrit en violet
+      case "klang": {
+        let s = earsU("#d4d6d8", "#5b6167") + R(13, 0, 457, H, "#e8e9eb", 1) + [[27, 12], [27, 77], [456, 12], [456, 77]].map(([x, y]) => scr(x, y, 1.7)).join("") + R(37, 37, 6, 13, "#9aa3ab", 0.8) + R(38.5, 39, 3, 9, "#111") + T(40, 35, "USB", 2.4, "#4b5563", 700, 0, "middle");
+        s += R(54, 10, 110, 70, "#c9ced3", 1) + R(56, 12, 106, 66, "#1e2126") + R(56, 12, 8, 66, "#6d28d9") + ["NET", "AUDIO", "METER", "INFO"].map((t, i) => T(60, 22 + i * 15, t, 1.6, "#ede9fe", 700, 0, "middle")).join("");
+        [[16, "INPUT CHANNEL LEVELS"], [47, "OUTPUT USER LEVELS"]].forEach(([y, t]) => { s += T(68, y, t, 1.8, "#cbd5e1", 700); for (let i = 0; i < 16; i++) { const h = 6 + ((i * 7) % 11) * 1.6; s += R(67 + i * 5.8, y + 2, 4.6, 24, "#2a2f36") + R(67 + i * 5.8, y + 26 - h, 4.6, h, i % 5 === 3 ? "#facc15" : "#22c55e"); } });
+        s += `<text x="447" y="49" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#6d28d9" text-anchor="end"><tspan font-weight="800">KLANG</tspan><tspan font-weight="400">:fabrik</tspan></text>`;
+        return s;
+      }
+      // TC Electronic M3000 : 1 U argenté, logo écrit, écran vert, 5 groupes de touches (Setup, Engine 1 / 2, Combined, Control), molette Adjust
+      case "m3000": case "rev4000": {
+        const r4 = type === "rev4000", bt = (x, y, on) => R(x, y - 1.6, 8, 3.2, "#2a2d31", 0.8) + (on ? R(x + 1, y - 0.8, 2, 1.6, "#facc15") : "");
+        let s = earsO("#c9ccd0", "#f3f4f6") + R(13, 0, 457, H, r4 ? "#d6d3cb" : "#d8dadc", 1) + T(38, 22, "t.c. electronic", 4, "#1d2023", 800) + R(36, 30, 59, 6, "#111", 0.5);
+        s += r4 ? R(38, 6, 7, 2.6, "#14532d", 0.4) + T(47, 8, "POWER", 1.6, "#1d2023", 700) + T(72, 21.5, "REVERB 4000", 2.4, "#6b7280", 700) : R(38, 7, 5, 2.6, "#ef4444", 0.4) + Ti(70, 22, "M3000", 3.6, "#1d2023", 800);
+        s += R(100, 5, 35, 34, "#111", 0.8) + [104, 108].map((x) => ledCol(x, 9, 7, 3.6, ["#facc15"])).join("") + ["OVERLOAD", "96 kHz", "48 kHz", "44.1 kHz", "DIGITAL IN", "MIDI", "EDITED"].map((t, i) => T(112, 9.6 + i * 3.6, t, 1.4, "#cbd5e1", 700)).join("");
+        s += R(136, 5, 70, 34, "#1a1d12", 1) + R(138, 7, 66, 30, "#bef264", 0.6);
+        if (r4) {
+          s += T(140, 13, "Recall  Hall", 3, "#1a2e05", 900) + T(200, 13, "268", 4, "#1a2e05", 900, 0, "end") + T(140, 20, "Concert Hall", 4, "#1a2e05", 800) + T(140, 25, "Two Src. Large Hall", 2.8, "#1a2e05", 700) + T(140, 31, "PREDEL   DECAY   HIDEC", 2.4, "#1a2e05", 800) + T(140, 35.5, "220ms    2.6s    8.0kHz", 2.4, "#1a2e05", 700);
+          s += [14, 24, 34].map((y) => bt(211, y)).join("") + [246, 278, 310].map((x) => C(x, 26, 7, "#1d2023")).join("") + ["PRE DELAY", "DECAY", "HI DECAY"].map((t, i) => T(246 + i * 32, 13, t, 1.6, "#1d2023", 700, 0, "middle")).join("") + [14, 24, 34].map((y) => bt(340, y) + bt(362, y)).join("") + C(398, 24, 9, "#1d2023") + [14, 24, 34].map((y) => bt(431, y)).join("") + T(219, 7, "PAGE", 1.8, "#1d2023", 800) + T(344, 7, "PROGRAM", 1.8, "#1d2023", 800) + T(366, 7, "CONTROL", 1.8, "#1d2023", 800);
+        } else {
+          s += T(140, 12, "1 HALL    3.4s", 3.2, "#1a2e05", 900) + T(140, 17, "Bright Hall", 3.2, "#1a2e05", 700) + T(140, 25, "2 ROOM    0.9s", 3.2, "#1a2e05", 900) + T(140, 30, "Small Clear Room", 3.2, "#1a2e05", 700) + T(202, 17, "56", 6, "#1a2e05", 900, 0, "end") + T(202, 31, "148", 6, "#1a2e05", 900, 0, "end");
+          [[212, 246, "SETUP"], [248, 286, "ENGINE 1"], [288, 324, "ENGINE 2"], [326, 370, "COMBINED 1+2"], [372, 408, "CONTROL"]].forEach(([a, b, t], g) => { s += R(a, 4, b - a, 3, "#3a3d41", 0.4) + T(a + 1, 6.3, t, 1.8, "#f3f4f6", 800) + [14, 22, 30, 38].map((y, j) => bt(a + 1, y, g === 1 && j === 0)).join(""); });
+          s += C(430, 22, 9.5, "#1d2023") + T(430, 7, "ADJUST", 1.8, "#1d2023", 800, 0, "middle");
+        }
+        return s;
+      }
+      // TC Electronic System 6000 (M6000) : 2 U argenté, interrupteur, logo écrit, fente, ouïes
+      case "m6000": {
+        let s = earsU("#c9ccd0", "#5b6167") + R(13, 0, 457, H, "#d8dadc", 1) + R(13, 0, 457, 3, "#c4c7ca") + R(13, 85.9, 457, 3, "#c4c7ca") + R(42, 18, 22, 19, "#111", 1) + R(46, 22, 14, 11, "#2a2d31", 0.6) + C(73, 25, 1.4, "#4b5563");
+        s += T(417, 34, "tc electronic", 11, "#1d2023", 800, 0, "end") + R(42, 68, 61, 2.6, "#111") + [[113, 201], [217, 306], [322, 402]].map(([a, b]) => Array.from({ length: Math.floor((b - a) / 4.5) }, (_, i) => R(a + i * 4.5, 64, 1.8, 11, "#1d2023", 0.5)).join("")).join("") + T(400, 58, "SYSTEM 6000", 1.8, "#6b7280", 700, 0, "end");
+        return s;
+      }
+      // Bricasti M7 : 1 U anthracite en trois panneaux : molette Input, afficheur rouge, flèches, molette, touches, presets 1-4, Tap, marche
+      case "m7": {
+        const ov = (x, y, w) => R(x - (w || 5), y - 2.6, (w || 5) * 2, 5.2, "#c9ccd0", 2.6);
+        let s = earsO("#2a2c30", "#d5dade") + R(13, 0, 457, H, "#2e3034", 1) + R(70, 1.5, 158, 41.5, "#26282c", 1) + R(229, 1.5, 88, 41.5, "#2a2c30", 1) + R(318, 1.5, 140, 41.5, "#2a2c30", 1);
+        s += T(22, 13, "M7", 5, "#c9ccd0", 700) + C(48, 24, 7, "#e5e7eb") + R(47.6, 17.5, 0.8, 2.4, "#ef4444") + T(48, 38, "Input", 2, "#c9ccd0", 400, 0, "middle") + T(74, 6, "Stereo Reverb Processor", 2.6, "#9aa3ab", 400);
+        s += R(85, 9, 110, 28, "#0c0d0f", 1) + T(105, 18, "Clear  Ambience", 4, "#ef4444", 400) + T(105, 30, "Ambience", 4, "#ef4444", 400) + ledCol(91, 14, 5, 3, ["#ef4444"]) + ov(211, 14, 4) + ov(211, 31, 4) + tri(211, 6.5, 1.4, true, "#9aa3ab") + tri(211, 38.5, 1.4, false, "#9aa3ab");
+        s += C(252, 22, 9, "#e5e7eb") + [[284, 9], [300, 9], [284, 19], [300, 19], [284, 29], [300, 29], [284, 39], [300, 39]].slice(0, 6).map(([x, y]) => ov(x, y + 2, 5)).join("") + ["Prog", "Reg", "System", "Store", "Edit", "Enter"].map((t, i) => T(i % 2 ? 300 : 284, 15.5 + Math.floor(i / 2) * 10, t, 1.6, "#9aa3ab", 400, 0, "middle")).join("");
+        s += [334, 354, 374, 396].map((x, i) => ov(x, 14, 5) + T(x, 21, String(i + 1), 1.8, "#9aa3ab", 400, 0, "middle")).join("") + ov(415, 36, 5) + T(415, 42, "Tap", 1.8, "#9aa3ab", 400, 0, "middle") + C(435, 14, 3.6, "#e5e7eb") + T(328, 39, "Bricasti", 4, "#9aa3ab", 400) + T(353, 40, "Design", 3, "#9aa3ab", 400);
+        return s;
+      }
+      // Midas XL88 : 4 U argenté, 8 voies (gain, 8 départs à LED jaunes, fader et bargraphe), 8 touches de sortie bleues, marche, logo écrit
+      case "xl88": {
+        let s = earsU("#c9ccd0", "#5b6167") + R(13, 0, 457, H, "#dcdedf", 1);
+        for (let i = 0; i < 8; i++) { const x0 = 22 + i * 48;
+          s += R(x0, 2, 47, 172, "#c9ccd0", 0.6, ' stroke="#9aa3ab" stroke-width="0.4"') + R(x0 + 25, 2, 21, 172, "#2a2d31", 0.6) + R(x0 + 8, 6, 14, 18, "#3a2224", 1) + knurl(x0 + 15, 12, 4) + led(x0 + 6, 28, "#facc15", 1) + R(x0 + 10, 32, 9, 4, "#b91c1c", 0.6);
+          for (let k = 0; k < 8; k++) s += knurl(x0 + 38, 19 + k * 18.7, 4.6) + led(x0 + 29.5, 24 + k * 18.7, "#facc15", 1) + T(x0 + 28, 16 + k * 18.7, String(k + 1), 2.6, "#e5e7eb", 700);
+          s += R(x0 + 15, 70, 1.6, 90, "#111") + R(x0 + 10.5, 112 - i * 3, 10.5, 9, "#9aa3ab", 0.8) + R(x0 + 10.5, 116 - i * 3, 10.5, 1, "#1d2023") + Array.from({ length: 16 }, (_, k) => R(x0 + 3, 74 + k * 3, 3, 2, k < 2 ? "#ef4444" : k < 5 ? "#facc15" : "#22c55e", 0.3)).join(""); }
+        s += Array.from({ length: 8 }, (_, k) => R(414, 15 + k * 15.7, 10, 8, "#3b82f6", 1) + T(419, 21 + k * 15.7, String(k + 1), 2.6, "#f3f4f6", 800, 0, "middle")).join("") + T(440, 40, "output", 2.6, "#4b5563", 400, 0, "middle") + led(441, 104, "#ef4444", 1.2) + R(437, 108, 9, 14, "#b91c1c", 1) + T(441, 141, "MIDAS", 7, "#9aa3ab", 900, 0.3, "middle") + T(441, 156, "XL 88", 6, "#4b5563", 400, 0, "middle");
+        return s;
+      }
+      // Rupert Neve Designs Portico 5024 : 1 U argenté, 4 préamplis (gain rouge, trim crème, HPF, 48V, phase, Silk, mute), entrées DI
+      case "neve5024": {
+        const ck = (x, y, r) => C(x, y, r, "#f1ead8", ' stroke="#9aa3ab" stroke-width="0.4"') + R(x - 0.4, y - r + 0.8, 0.8, r * 0.6, "#3a3d41"), sb = (x, y) => C(x, y, 1.8, "#c9ccd0", ' stroke="#6b7280" stroke-width="0.4"');
+        let s = earsO("#d9dcdf", "#9aa3ab") + R(13, 0, 457, H, "#e2e3e1", 1) + T(16, 27, "5024", 6, "#1e3a8a", 400) + T(16, 31, "Portico Series", 1.4, "#4b5563", 700) + T(16, 33.5, "Quad Mic Pre", 1.4, "#4b5563", 700);
+        [[79, 1], [193, 1], [280, 0], [380, 0]].forEach(([g, di], i) => {
+          if (di) s += jack(g - 37, 13, 3.4, "#9aa3ab") + jack(g - 37, 33, 3.4, "#9aa3ab") + T(g - 37, 7.5, "THRU", 1.6, "#4b5563", 700, 0, "middle") + T(g - 37, 40.5, "DI", 1.6, "#4b5563", 700, 0, "middle") + sb(g - 19, 36);
+          s += T(g, 4.5, String(i + 1), 2.4, "#4b5563", 700, 0, "middle") + R(g - 12, 6, 24, 1.2, "#1d2023") + C(g, 25, 7.5, "#a3171f") + C(g, 25, 5.8, "#c81e2a") + R(g - 0.4, 18.5, 0.8, 4, "#f3f4f6") + T(g, 41.5, "GAIN", 1.6, "#4b5563", 700, 0, "middle") + ck(g + 25, 15, 4.6) + T(g + 25, 22.5, "TRIM", 1.5, "#4b5563", 700, 0, "middle") + sb(g + 42, 13) + T(g + 42, 9, "HPF", 1.5, "#4b5563", 700, 0, "middle") + C(g + 54, 15, 2.2, "#f3f4f6", ' stroke="#6b7280" stroke-width="0.4"') + T(g + 54, 9, "30Hz", 1.5, "#4b5563", 700, 0, "middle") + [34, 46, 58, 70].map((d, j) => sb(g + d, 36) + T(g + d, 41.5, ["+48V", "ø", "SILK", "MUTE"][j], 1.4, "#4b5563", 700, 0, "middle")).join("");
+        });
+        s += sb(354, 36) + T(354, 41.5, "M/S", 1.4, "#4b5563", 700, 0, "middle") + `<path d="M461 26 q3 -10 6 -2 q-2 6 3 4" fill="none" stroke="#4b5563" stroke-width="0.5"/>`;
+        return s;
+      }
+      // AMS Neve 1073 OPX : 2 U bleu-gris, 8 préamplis (touches, gain rouge à couronne de LED, afficheur rouge, combo XLR), section de contrôle, logo écrit
+      case "neve1073opx": {
+        const sq = (x, y, c) => R(x, y, 5.5, 5.5, c, 0.6);
+        let s = earsU("#36414f", "#d5dade") + R(13, 0, 457, H, "#3d4a5c", 1);
+        ["15", "15", "15", "12", "16", "15", "19", "18"].forEach((v, i) => { const x0 = 16 + i * 49.5;
+          s += R(x0 + 47.5, 4, 0.6, 80, "#2a3442") + sq(x0 + 2, 6, "#f3f4f6") + sq(x0 + 2, 13.5, "#fde68a") + sq(x0 + 2, 21, "#f3f4f6") + Array.from({ length: 22 }, (_, k) => { const a = (k / 22) * 2 * Math.PI; return C((x0 + 26 + 12 * Math.cos(a)).toFixed(2), (20 + 12 * Math.sin(a)).toFixed(2), 0.6, "#f3f4f6"); }).join("") + C(x0 + 26, 20, 9, "#7f1d1d") + C(x0 + 26, 20, 7.5, "#b91c1c") + R(x0 + 25.6, 12, 0.8, 5, "#f3f4f6");
+          s += R(x0 + 6, 37, 16, 9, "#111", 0.6) + T(x0 + 14, 44.6, v, 7.5, "#ef4444", 400, 0, "middle") + led(x0 + 30, 39, "#22c55e", 1) + led(x0 + 36, 39, "#22c55e", 1) + C(x0 + 18, 64, 8, "#111") + xlrF(x0 + 18, 64, 0.62) + C(x0 + 18, 64, 2.6, "#1b1e21", ' stroke="#9aa3ab" stroke-width="0.5"') + sq(x0 + 36, 51, "#f3f4f6") + sq(x0 + 36, 59, "#fde68a") + sq(x0 + 36, 67, "#fde68a") + T(x0 + 18, 82, String(i + 1), 2.4, "#cbd5e1", 700, 0, "middle"); });
+        s += R(413, 4, 0.8, 80, "#2a3442") + R(418, 6, 8, 7, "#f3f4f6", 0.6) + `<path d="M420 12 L422 7 L423 10 L425 7" fill="none" stroke="#b91c1c" stroke-width="0.8"/>` + Array.from({ length: 3 }, (_, r) => Array.from({ length: 5 }, (_, c) => led(417 + c * 3.4, 18 + r * 3.4, ["#f59e0b", "#22c55e", "#3b82f6", "#ef4444", "#facc15"][(r + c) % 5], 0.8)).join("")).join("") + R(416, 30, 7, 7, "#60a5fa", 0.6) + R(426, 30, 7, 7, "#fecaca", 0.6) + R(416, 42, 7, 7, "#f3f4f6", 0.6);
+        s += `<path d="M444 10 L452 10 L446 22 L456 22 L440 40 L446 26 L438 26Z" fill="#e11d48"/>` + T(452, 52, "Neve", 6.5, "#f3f4f6", 800, 0, "middle") + T(452, 60, "1073", 6, "#f3f4f6", 400, 0, "middle") + T(452, 67, "OPX", 5, "#f3f4f6", 400, 0, "middle") + jack(421, 74, 2.8) + knurl(437, 74, 4.4) + T(437, 82, "HP LEVEL", 1.6, "#cbd5e1", 700, 0, "middle");
+        return s;
+      }
+      // Lexicon PCM 70 : 1 U noir, LED de niveau, molette Input, afficheur, grosse molette, flèches, pavé de touches, logo écrit
+      case "pcm70": {
+        let s = earsO("#141517", "#d5dade") + R(13, 0, 457, H, "#1a1b1e", 1) + T(28, 6, "HEADROOM   INPUT", 1.8, "#9aa3ab", 700) + ledCol(42, 12, 6, 3.6, ["#ef4444", "#f59e0b", "#22c55e"]) + knurl(72, 24, 5);
+        s += T(101, 7, "PCM 70   DIGITAL EFFECTS PROCESSOR", 2.6, "#9aa3ab", 700) + R(97, 12, 104, 24, "#2d3a40", 1) + R(99, 20, 100, 8, "#1f2a2e") + knurl(215, 24, 8) + R(244, 10, 9, 9, "#3a3d41", 1) + R(244, 28, 9, 9, "#3a3d41", 1) + tri(248.5, 14.5, 1.6, true, "#e5e7eb") + tri(248.5, 32.5, 1.6, false, "#e5e7eb");
+        s += R(258, 8, 72, 30, "#232528", 1) + Array.from({ length: 2 }, (_, r) => Array.from({ length: 5 }, (_, c) => R(261 + c * 13.5, 11 + r * 13.5, 11, 10, "#3a3d41", 1) + T(266.5 + c * 13.5, 17.5 + r * 13.5, String(r * 5 + c), 2.2, "#9aa3ab", 700, 0, "middle")).join("")).join("") + [336, 354].map((x) => R(x - 4.5, 11, 9, 10, "#3a3d41", 1) + R(x - 4.5, 25, 9, 10, "#3a3d41", 1)).join("");
+        s += T(437, 9, "POWER", 1.8, "#9aa3ab", 700, 0, "middle") + R(432, 14, 10, 12, "#0b0c0e", 1) + R(434, 16, 6, 8, "#2a2d31") + T(458, 38, "lexicon", 4, "#9aa3ab", 800, 0, "end");
+        return s;
+      }
+      // Lexicon PCM 96 / PCM 92 : 1 U champagne, logo écrit, LED de niveau, écran, Machine / Back, molette Select, A B C, Tap / Store / Load / Compare, marche
+      case "pcm96": case "pcm92": {
+        const p96 = type === "pcm96", sb = (x, y) => C(x, y, 2.2, "#1d2023") + C(x, y, 1.2, "#d97706");
+        let s = earsO(p96 ? "#cbbfa9" : "#d6d2c8", "#f3f4f6") + R(13, 0, 457, H, p96 ? "#d9cfbd" : "#e3dfd5", 1);
+        s += T(17, 25, "lexicon", 7, p96 ? "#f3efe6" : "#1d2023", 900).replace("<text ", p96 ? '<text stroke="#8a7f6c" stroke-width="0.4" ' : "<text ") + T(55, 6, "HEADROOM", 1.6, "#4b5563", 700, 0, "middle") + [50, 60].map((x) => ledCol(x, 10, 6, 4, ["#ef4444", "#f59e0b", "#22c55e"])).join("");
+        s += R(84, 7, 94, 30, "#111", 4) + T(89, 14, p96 ? "9:Large RHall 3 (Dark)" : "0 Med Hall", 3, p96 ? "#fde68a" : "#f3f4f6", 400) + T(89, 20, "1:PreDelay     :23ms", 2.4, "#fde68a", 400) + T(89, 25, "2:MidRT          :3.52s", 2.4, "#fde68a", 400) + T(89, 30, "3:RvbOutFreq  :1800.0Hz", 2.4, "#fde68a", 400);
+        s += sb(188, 14) + sb(188, 30) + T(188, 9, "MACHINE", 1.5, "#4b5563", 700, 0, "middle") + T(188, 25, "BACK", 1.5, "#4b5563", 700, 0, "middle") + C(216, 22, 14, "#1d2023") + C(216, 22, 11, "#e8e2d4") + T(216, 6.5, "SELECT", 1.5, "#4b5563", 700, 0, "middle");
+        s += [252, 278, 304].map((x, i) => C(x, 22, 8, "#e8e2d4", ' stroke="#9a8f7c" stroke-width="0.5"') + T(x, 10, "ABC"[i], 1.8, "#4b5563", 700, 0, "middle")).join("") + R(322, 6, p96 ? 108 : 50, 32, "#1d2023", 6);
+        s += [[334, 14, "TAP/TEMPO"], [352, 14, "STORE"], [334, 30, "LOAD"], [352, 30, "COMPARE"]].map(([x, y, t]) => sb(x, y) + T(x, y - 4, t, 1.3, "#e5e7eb", 700, 0, "middle")).join("") + (p96 ? R(362, 19, 59, 6, "#0b0c0e", 1) + R(364, 21, 40, 2, "#2a2d31") + led(422, 13, "#ef4444", 0.8) + T(410, 13.5, "FLASH BUSY", 1.5, "#e5e7eb", 700, 0, "end") : "");
+        s += T(443, 13, "POWER", 1.5, "#4b5563", 700, 0, "middle") + C(443, 23, 5, "#e8e2d4", ' stroke="#9a8f7c" stroke-width="0.6"') + T(467, 26, p96 ? "PCM96" : "PCM92", 5, "#1d2023", 900, 0, "end");
+        return s;
+      }
+      // Tascam / Antares TA-1VP (Auto-Tune) : 1 U argenté, marche, écran vert, molette, 6 sections de touches (oranges / grises), entrée XLR
+      case "ta1vp": {
+        const bt = (x, y, c) => R(x, y, 7.5, 5, c || "#e5e7eb", 0.6);
+        let s = earsO("#c9ccd0", "#5b6167") + R(13, 0, 457, H, "#d8dadc", 1) + [[27, 12], [27, 33], [241, 12], [241, 33], [458, 12], [458, 33]].map(([x, y]) => scr(x, y, 1.4)).join("");
+        s += R(36, 13, 27, 10, "#111", 1) + R(38, 15, 23, 6, "#2a2d31", 0.6) + T(49, 9, "STANDBY / ON", 1.8, "#1d2023", 700, 0, "middle") + T(66, 9, "TASCAM", 4.4, "#1d2023", 900) + T(94, 9, "TA-1VP", 3.6, "#1d2023", 700);
+        s += R(86, 12, 83, 19, "#1d2023", 1) + R(88, 14, 79, 15, "#a3e635", 0.6) + T(127.5, 20.5, "Auto-Tune", 4, "#1a2e05", 400, 0, "middle") + T(127.5, 27, "Sensitivity:  7", 4, "#1a2e05", 400, 0, "middle") + C(185, 22, 5, "#1d2023") + T(66, 39, "antares", 5, "#1d2023", 800) + T(110, 39, "powered by Auto-Tune evo", 2, "#4b5563", 700);
+        [[207, "MASTER"], [246, "MIC MODELER"], [277, "AUTO-TUNE"], [308, "COMPRESSOR/GATE"], [342, "DE-ESSER"], [375, "EQUALIZER/OUTPUT"]].forEach(([x, t], i) => { const w = i === 0 ? 35 : 29; s += R(x, 6, w, 34, "#1d2023", 0.8) + T(x + w / 2, 42.5, t, 1.4, "#1d2023", 700, 0, "middle") + Array.from({ length: 3 }, (_, r) => Array.from({ length: 2 }, (_, c) => bt(x + 3 + c * (w / 2 - 1), 9 + r * 10, r === 0 && (c === 1 || i > 1) ? "#f97316" : "#e5e7eb")).join("")).join(""); });
+        s += R(406, 33, 7, 6, "#9aa3ab", 0.6) + T(409.5, 31, "-20dB", 1.5, "#1d2023", 700, 0, "middle") + C(431, 22, 7, "#5b6167") + C(431, 22, 5.8, "#1b1e21") + [[-2.4, -1.4], [2.4, -1.4], [0, 2.4]].map(([dx, dy]) => C(431 + dx, 22 + dy, 0.8, "#c9ced3")).join("") + T(431, 38, "MIC IN", 1.8, "#1d2023", 700, 0, "middle");
+        return s;
+      }
+      // SPL Transient Designer 2 / 4 : 1 U bleu nuit, logo écrit, par canal Attack / Sustain, LED, touche On ; interrupteur rouge et logo SPL
+      case "td2": case "td4": {
+        const n = type === "td4" ? 4 : 2, w = n === 4 ? 98 : 170, gk = (x, y, r) => C(x, y, r, "#0b0c0e") + knurl(x, y, r * 0.8);
+        let s = earsO("#1b2550", "#d5dade") + R(13, 0, 457, H, "#1f2a5a", 1) + Ti(15, 18, "Transient", 4.6, "#cbd5e1", 400) + Ti(15, 25, "Designer", 4.6, "#cbd5e1", 400);
+        for (let i = 0; i < n; i++) { const x0 = 40 + i * w, a = n === 4 ? 22 : 34, b = n === 4 ? 75 : 121, m = n === 4 ? 47 : 99;
+          s += R(x0, 2.5, w - 3, 39.5, "none", 1, ' stroke="#64748b" stroke-width="0.5"') + T(x0 + 3, 40, String(i + 1), 4, "#e5e7eb", 900) + gk(x0 + a, 22, 7) + gk(x0 + b, 22, 7) + T(x0 + a, 6.5, "ATTACK", 1.6, "#cbd5e1", 700, 0, "middle") + T(x0 + b, 6.5, "SUSTAIN", 1.6, "#cbd5e1", 700, 0, "middle") + led(x0 + m, 14, "#f59e0b", 1) + T(x0 + m, 20, "ON", 1.4, "#cbd5e1", 700, 0, "middle") + R(x0 + m - 3, 24, 6, 5, "#fecaca", 0.5);
+          if (i % 2 === 0 && i + 1 < n) s += R(x0 + w - 5, 22, 5, 4, "#fecaca", 0.5); }
+        s += R(434, 13, 11, 14, "#b91c1c", 1) + R(436, 15, 7, 10, "#ef4444", 0.6) + T(439.5, 10, "POWER", 1.5, "#cbd5e1", 700, 0, "middle") + R(450, 13, 16, 10, "#c9ccd0", 1) + T(458, 20.5, "spl", 6, "#1f2a5a", 900, 0, "middle");
+        return s;
+      }
+      // Midas XL42 : 1 U gris foncé, 2 voies (gain, EQ sur panneau clair avec boutons bleus, niveau / pan, bargraphe), logo écrit
+      case "xl42": {
+        const bk = (x, y, c) => C(x, y, 3.6, "#1d2023") + C(x, y, 2.8, c || "#2f3439") + R(x - 0.3, y - 3.2, 0.6, 1.8, "#f3f4f6");
+        let s = earsO("#2f3236", "#d5dade") + R(13, 0, 457, H, "#3a3d42", 1) + C(17, 30, 2.4, "#9aa3ab") + T(17, 22, "width", 1.8, "#cbd5e1", 400);
+        [0, 173].forEach((o) => {
+          s += knurl(38 + o, 13, 5) + T(38 + o, 23, "mic/line gain", 1.8, "#cbd5e1", 400, 0, "middle") + ["PAD", "48V", "ø"].map((t, i) => R(30 + o + i * 6, 29, 5.4, 4, "#e5e7eb", 0.4) + T(32.7 + o + i * 6, 32, t, 1.6, "#1d2023", 700, 0, "middle")).join("") + T(38 + o, 39, "line/pad  phase", 1.6, "#cbd5e1", 400, 0, "middle");
+          s += R(56 + o, 2, 124, 40.5, "#c9cbc8", 0.6) + [[64, 12, ""], [87, 12, ""], [113, 12, "#3b6fb5"], [139, 12, "#3b6fb5"], [165, 12, ""], [76, 30, ""], [103, 30, "#3b6fb5"], [127, 30, "#3b6fb5"], [153, 30, ""]].map(([x, y, c]) => bk(x + o, y, c)).join("") + ["lo-cut", "bass", "lo-mid", "hi-mid", "treble"].map((t, i) => T([64, 87, 113, 139, 165][i] + o, 21, t, 1.8, "#3a3d42", 400, 0, "middle")).join("");
+          s += C(193 + o, 13, 5, "#c9ced3") + knurl(193 + o, 13, 3.6) + T(193 + o, 22, "level/pan", 1.8, "#cbd5e1", 400, 0, "middle") + ["INS", "PAN", "MUTE"].map((t, i) => R(183 + o + i * 6.5, 29, 6, 4, i === 2 ? "#ef4444" : "#e5e7eb", 0.4) + T(186 + o + i * 6.5, 32, t, 1.4, "#1d2023", 700, 0, "middle")).join("") + ledCol(211 + o, 5, 11, 3.2, ["#ef4444", "#f59e0b", "#f59e0b", "#22c55e"]); });
+        s += R(415, 2, 55, 40.5, "#2f3236", 0.6) + T(442, 14, "MIDAS", 6, "#9aa3ab", 900, 0.3, "middle") + Ti(442, 25, "XL42", 6, "#cbd5e1", 400, "middle") + led(424, 34, "#ef4444", 1.3) + R(432, 31, 10, 6, "#b91c1c", 0.6);
+        return s;
+      }
+      // Midas XL48 : 1 U bleu ardoise, 8 préamplis (bargraphe, gain, filtres, touches 48V / PAD / phase), fréquences, logo écrit
+      case "xl48": {
+        let s = earsO("#2b3446", "#d5dade") + R(13, 0, 457, H, "#334056", 1) + T(16, 25, "MIDAS", 4.4, "#cbd5e1", 900, 0.2);
+        for (let i = 0; i < 8; i++) { const x0 = 31 + i * 51.5;
+          s += R(x0, 2.5, 50, 39.5, "#2b3446", 1, ' stroke="#64748b" stroke-width="0.5"') + T(x0 + 25, 6.5, `channel ${i + 1}`, 2.2, "#e5e7eb", 700, 0, "middle") + ledCol(x0 + 4, 10, 7, 3, ["#ef4444", "#f59e0b", "#22c55e"]) + C(x0 + 20, 20, 6.5, "#c9ced3") + knurl(x0 + 20, 20, 5) + knurl(x0 + 40, 13, 3.4) + knurl(x0 + 40, 29, 3.4);
+          s += [["48V", "#ef4444"], ["PAD", "#e5e7eb"], ["ø", "#3b82f6"]].map(([t, c], j) => R(x0 + 3 + j * 9, 35, 8, 4.5, c, 0.4) + T(x0 + 7 + j * 9, 38.3, t, 1.6, "#1d2023", 700, 0, "middle")).join("") + T(x0 + 40, 39, "high pass", 1.6, "#cbd5e1", 400, 0, "middle"); }
+        s += ledCol(447, 8, 6, 3.6, ["#bfdbfe", "#bfdbfe", "#bfdbfe", "#a3e635", "#a3e635", "#1d2023"]) + ["96k", "88.2k", "48k", "44.1k", "ext", "sync"].map((t, i) => T(450, 8.6 + i * 3.6, t, 1.4, "#cbd5e1", 700)).join("") + C(465, 13, 6, "#c9ccd0") + T(465, 15, "XL48", 3.2, "#334056", 900, 0, "middle") + T(465, 23, "mic pre", 2, "#cbd5e1", 700, 0, "middle") + C(452, 36, 2, "#1d2023");
+        return s;
+      }
+      // API 2500 : 1 U noir, compresseur (molettes grises), Tone, Link, sortie (molettes rouge / bleue), deux vu-mètres, logo écrit en bleu
+      case "api2500": {
+        const gk = (x, y, r) => C(x, y, r, "#6b7280") + C(x, y, r * 0.72, "#c9ced3") + R(x - 0.3, y - r, 0.6, r * 0.5, "#1d2023"), bt = (x, y, c) => R(x - 2, y - 1.6, 4, 3.2, c || "#e5e7eb", 0.4);
+        let s = earsO("#141517", "#d5dade") + R(13, 0, 457, H, "#111214", 1) + T(90, 7, "COMPRESSOR", 2.8, "#e5e7eb", 800, 0.3, "middle") + [42, 66, 90, 113].map((x) => gk(x, 22, 6)).join("") + gk(137, 24, 4.5);
+        s += T(177, 7, "TONE", 2.6, "#e5e7eb", 800, 0, "middle") + [163, 177, 191].map((x) => bt(x, 14, "#7f1d1d") + bt(x, 22) + bt(x, 32)).join("") + T(219, 7, "LINK", 2.6, "#e5e7eb", 800, 0, "middle") + gk(209, 22, 5) + bt(228, 17, "#86efac") + bt(228, 32);
+        s += T(270, 7, "OUTPUT", 2.6, "#e5e7eb", 800, 0, "middle") + bt(250, 14, "#86efac") + bt(286, 14, "#fca5a5") + C(258, 30, 5, "#b91c1c") + C(288, 30, 5, "#2563eb") + bt(272, 32, "#fca5a5");
+        s += [306, 354].map((x) => R(x, 6, 44, 30, "#2a2d31", 1) + R(x + 2, 8, 40, 24, "#f3e3b5", 0.8) + `<path d="M${x + 6} 22 Q${x + 22} 12 ${x + 38} 22" fill="none" stroke="#1d2023" stroke-width="0.4"/>` + R(x + 21.7, 17, 0.6, 14, "#1d2023")).join("") + T(406, 9, "VU", 2.4, "#e5e7eb", 800, 0, "middle") + ledCol(404, 14, 3, 3.2, ["#a3e635"]);
+        s += Ti(436, 21, "api", 8, "#3b82f6", 900, "middle") + T(436, 33, "2500+", 4, "#cbd5e1", 800, 0, "middle");
+        return s;
+      }
+      // AMS Neve 1073 DPD : 1 U bleu, 2 préamplis (gain rouge, impédance, +48V / phase, trim), format et fréquence, synchro, logo écrit, marche rouge
+      case "neve1073dpd": {
+        const sw = (x) => R(x - 1.6, 17, 3.2, 9, "#1d2023", 1) + R(x - 1, 18, 2, 3.4, "#f3f4f6", 0.6), red = (x) => Array.from({ length: 11 }, (_, k) => { const a = Math.PI * (0.75 + k * 0.15); return R((x + 11 * Math.cos(a) - 0.3).toFixed(2), (22 + 11 * Math.sin(a) - 0.3).toFixed(2), 0.6, 0.6, "#f3f4f6"); }).join("") + C(x, 22, 8, "#7f1d1d") + C(x, 22, 6.5, "#b91c1c") + R(x - 0.4, 15, 0.8, 4, "#f3f4f6");
+        let s = earsO("#36507f", "#d5dade") + R(13, 0, 457, H, "#3f5a8f", 1) + [[27, 12], [27, 33], [458, 12], [458, 33]].map(([x, y]) => scr(x, y, 1.4)).join("");
+        s += red(66) + sw(83) + T(83, 13, "Z", 2.6, "#f3f4f6", 800, 0, "middle") + T(110, 9, "CHANNEL 1", 2.4, "#f3f4f6", 700, 0, "middle") + R(96, 19, 10, 6, "#f3f4f6", 0.6) + T(101, 23, "+48V", 1.8, "#1d2023", 700, 0, "middle") + R(110, 19, 10, 6, "#f3f4f6", 0.6) + T(115, 23, "ø", 2.4, "#1d2023", 700, 0, "middle") + knurl(139, 23, 4.6) + T(139, 9, "TRIM", 2.2, "#f3f4f6", 700, 0, "middle");
+        s += led(155, 22, "#ef4444", 0.9) + led(165, 22, "#ef4444", 0.9) + T(160, 9, "CLIP", 2.2, "#f3f4f6", 700, 0, "middle") + knurl(181, 23, 4.6) + T(181, 9, "TRIM", 2.2, "#f3f4f6", 700, 0, "middle") + R(198, 19, 10, 6, "#f3f4f6", 0.6) + T(203, 23, "ø", 2.4, "#1d2023", 700, 0, "middle") + R(212, 19, 10, 6, "#f3f4f6", 0.6) + T(217, 23, "+48V", 1.8, "#1d2023", 700, 0, "middle") + T(210, 9, "CHANNEL 2", 2.4, "#f3f4f6", 700, 0, "middle") + sw(242) + T(242, 13, "Z", 2.6, "#f3f4f6", 800, 0, "middle") + red(258);
+        s += T(308, 9, "FORMAT", 2.4, "#f3f4f6", 700, 0, "middle") + sw(308) + T(334, 9, "SAMPLE RATE", 2.4, "#f3f4f6", 700, 0, "middle") + [320, 327, 334, 341].map((x) => led(x, 19, "#1e293b", 0.8) + led(x, 28, "#1e293b", 0.8)).join("") + sw(352) + T(374, 9, "SYNC", 2.4, "#f3f4f6", 700, 0, "middle") + led(368, 22, "#1e293b", 0.8) + led(380, 22, "#1e293b", 0.8);
+        s += `<path d="M392 26 L400 14 L401 22 L409 14" fill="none" stroke="#e11d48" stroke-width="1.4"/>` + T(412, 20, "Neve", 5, "#f3f4f6", 800) + T(412, 26, "1073DPD", 3, "#f3f4f6", 700) + C(440, 22, 5, "#1d2023") + C(440, 22, 3.6, "#dc2626");
+        return s;
+      }
+      // Sonifex Redbox RB-DDA6A : 1 U rouge en profilé arrondi, logo écrit sur ovale jaune, LED
+      case "rbdda6a": {
+        let s = earsO("#b91c1c", "#f3f4f6") + R(13, 0, 457, H, "#c81e1e", 1) + R(13, 3, 457, 4, "#e64545") + R(13, 38, 457, 5, "#9b1515") + [[22, 5], [22, 40], [461, 5], [461, 40]].map(([x, y]) => scr(x, y, 1.3)).join("");
+        s += `<ellipse cx="110" cy="21" rx="62" ry="12" fill="#fbbf24"/><ellipse cx="110" cy="21" rx="58" ry="9.5" fill="#fde68a"/>` + T(110, 21, "SONIFEX", 9, "#1d4ed8", 900, 0.4, "middle") + Ti(118, 30, "Redbox", 7.5, "#b91c1c", 900, "middle") + led(70, 34, "#7f1d1d", 1.2) + T(458, 30, ref && ref.nom ? String(ref.nom).slice(0, 14) : "RB-DDA6A", 3, "#fde68a", 800, 0, "end");
         return s;
       }
       // Switch réseau : 1 U, 2 rangées de RJ45, cages SFP, LED
@@ -6308,7 +6548,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["SSL L350 Plus", "SSL", "Console Live · 16 in mic + 16 out analog · 24+2 faders · Dante"],
       ["Allen & Heath SQ-5", "Allen & Heath", "Console · 48 canaux · 17 faders (com)"],
       ["Behringer X32", "Behringer", "Console · 32 canaux (com, repet)"],
-      ["Midas XL42", "Midas", "Tranche de console stéréo / préampli (HF musiciens)"]
+      ["Midas XL42", "Midas", "2 tranches de console : préampli micro, EQ 4 bandes, niveau / pan · 1 U (HF musiciens)"]
     ],
     "Stage racks et cartes": [
       ["SD-Rack", "DiGiCo", "Stage rack · 2 × 7 slots · MADI BNC et Optocore · 10 U"],
@@ -6356,13 +6596,13 @@ label.p48 input:checked + span { border-style: solid; }
       ["SSL Fusion", "SSL", "Processeur stéréo analogique · 2 U"],
       ["Creamliner", "Sonic Farm", "Préampli ligne classe A · 2 canaux"],
       ["EL8 Distressor", "Empirical Labs", "Compresseur 1 canal"],
-      ["Transient Designer 4", "SPL", "Processeur de transitoires · 4 canaux"],
+      ["Transient Designer 4", "SPL", "Processeur de transitoires · 4 canaux (attack / sustain) · 1 U"],
       ["Vitalizer MK2-T", "SPL", "Enhancer stéréo · 1 U"],
       ["UAD-2 Live Rack", "Universal Audio", "Processeur de plugins UAD · 16 in/out MADI · 1 U"],
       ["SoundGrid Extreme Server", "Waves", "Serveur de plugins Waves · 2 U"],
       ["SuperRack SoundGrid", "Waves", "Logiciel hôte de plugins Waves"],
       ["Fourier transform.engine", "Fourier Audio", "Serveur de plugins VST3 · 64 in/out · Dante · 2 U"],
-      ["Klang Fabrik", "Klang", "Processeur de mix ears 3D · option MADI"],
+      ["Klang Fabrik", "Klang", "Processeur de mix ears 3D · 16 mix · Dante, option MADI · 2 U"],
       ["L-ISA Processor II", "L-Acoustics", "Processeur de spatialisation"],
       ["P1", "L-Acoustics", "Processeur de système · AVB · AES"]
     ],
@@ -6553,7 +6793,7 @@ label.p48 input:checked + span { border-style: solid; }
       ["Nanosyncs HD", "Rosendahl", "Générateur word clock et synchro vidéo · 1 U"]
     ],
     "Périphériques et effets": [
-      ["960L", "Lexicon", "Réverbération multicanal · télécommande LARC2"],
+      ["960L", "Lexicon", "Réverbération multicanal · télécommande LARC2 · châssis 4 U"],
       ["PCM 96", "Lexicon", "Réverbération / effets stéréo · 1 U"],
       ["PCM 92", "Lexicon", "Réverbération / effets stéréo · 1 U"],
       ["PCM 70", "Lexicon", "Réverbération numérique (vintage) · 1 U"],
@@ -6561,14 +6801,16 @@ label.p48 input:checked + span { border-style: solid; }
       ["Reverb 4000", "TC Electronic", "Réverbération stéréo · 1 U"],
       ["Eclipse", "Eventide", "Harmoniseur / multi-effet · 1 U"],
       ["API 7600", "API", "Tranche : préampli, EQ 550A, compresseur · 1 U"],
-      ["API 2500", "API", "Compresseur de bus stéréo"],
+      ["API 2500", "API", "Compresseur de bus stéréo · 2 vu-mètres · 1 U"],
       ["Portico 5024", "Rupert Neve Designs", "4 préamplis micro · 1 U"],
-      ["1073 OPX", "AMS Neve", "8 préamplis 1073 pilotables à distance · 1 U"],
-      ["1073 DPD", "AMS Neve", "2 préamplis 1073 · sorties numériques"],
-      ["Transient Designer 2", "SPL", "Modeleur de transitoires · 2 canaux"],
-      ["Midas XL88", "Midas", "Matrice de mixage ligne · 8 voies"],
-      ["Midas XL48", "Midas", "Mélangeur / matrice ligne"],
-      ["TA-1VP", "Tascam", "Processeur vocal Auto-Tune (Antares) · 1 U"],
+      ["1073 OPX", "AMS Neve", "8 préamplis 1073 pilotables à distance (USB) · option Dante / AES · 2 U"],
+      ["1073 DPD", "AMS Neve", "2 préamplis 1073 · sorties ligne + AES / S/PDIF / ADAT · jusqu'à 192 kHz · 1 U"],
+      ["Transient Designer 2", "SPL", "Modeleur de transitoires · 2 canaux · 1 U"],
+      ["Midas XL88", "Midas", "Matrice de mixage ligne · 8 entrées vers 8 sorties · 4 U"],
+      ["Midas XL48", "Midas", "8 préamplis micro (48V, pad, phase, passe-haut) · sorties analogiques et numériques · 1 U"],
+      ["TA-1VP", "Tascam", "Processeur vocal Auto-Tune (Antares) · modélisation micro, compresseur, de-esser, EQ · entrée XLR · 1 U"],
+      ["8MX2", "ATI", "Préampli / mélangeur 8 voies · limiteur par voie · sorties directes et bus de mix · 1 U"],
+      ["RB-DDA6A", "Sonifex", "Distributeur AES/EBU Redbox · 1 entrée vers 6 sorties · XLR · 1 U"],
       ["Eurorack Pro RX1602", "Behringer", "Mélangeur ligne · 16 entrées · 1 U"],
       ["SoundGrid Impact Server", "Waves", "Serveur DSP SoundGrid · 2 U"],
       ["SoundGrid Server One", "Waves", "Serveur DSP SoundGrid · 2 U"]
