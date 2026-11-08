@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "ee17465dc2";</script>
+<script>window.PL_VER = "202754cdd5";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -978,6 +978,66 @@ label.p48 input:checked + span { border-style: solid; }
   table.master label.p48 { min-height: 32px; }
   table.master .btn.xdel { min-height: 32px; min-width: 40px; }
 }
+/* ---------- Local console, intercom et réseau (v106) ---------- */
+.fxbar .inl { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.fxbar .hint { flex: 1 1 320px; margin: 0; }
+.fxlist { display: grid; gap: 14px; }
+.fxh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 4px; }
+.fxh .meta { color: var(--muted); font-size: 14px; }
+.fxh .btn { margin-left: auto; }
+/* Le nom de la console ou du système s'écrit sur le gaffer, comme les boîtiers */
+.fxtape { display: inline-block; max-width: 100%; padding: 3px 6px; background: var(--tape); box-shadow: inset 0 -1px 0 var(--tape-edge); transform: rotate(-0.6deg);
+  clip-path: polygon(0 6%, 2.5% 0, 5% 7%, 7.5% 1%, 92% 0, 95% 6%, 97.5% 0, 100% 5%, 99% 50%, 100% 94%, 97% 100%, 94.5% 93%, 92% 100%, 6% 100%, 3.5% 94%, 1% 100%, 0 95%, 1% 50%); }
+.panel .fxtape input[type="text"] { width: 22ch; max-width: 100%; font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--tape-ink); background: transparent; border: 1px dashed transparent; border-radius: 0; padding: 2px 4px; }
+.panel .fxtape input[type="text"]:hover { border-color: color-mix(in srgb, var(--tape-ink) 40%, transparent); }
+.panel .fxtape input[type="text"]:focus { outline: 2px solid var(--tape-ink); outline-offset: -3px; }
+.panel .fxtape input::placeholder { color: color-mix(in srgb, var(--tape-ink) 55%, transparent); }
+.fxs h3 { font-size: 16px; margin: 10px 0 4px; }
+.fxs + .fxs { border-top: 1px solid var(--line); margin-top: 12px; }
+.fxt td input[type="text"] { width: 100%; }
+.fxadd { margin-top: 6px; align-items: center; }
+.fxadd .inl { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); font-size: 14px; }
+.fxadd input[type="number"] { width: 58px; }
+.netsum { margin-left: auto; font-size: 14px; color: var(--muted); }
+.netsum.warn { color: var(--danger); font-weight: 600; }
+#netTbl tr.netbad td { background: color-mix(in srgb, var(--danger) 9%, transparent); }
+#netTbl tr.netbad td.ipc input { border-color: var(--danger); }
+.netwarn { display: block; margin-top: 2px; font-size: 12.5px; color: var(--danger); }
+#netTbl td.ipc input { font-variant-numeric: tabular-nums; }
+.netfill { margin-top: 14px; }
+.netfill .actions { align-items: flex-end; }
+.netfill .field input { width: 150px; }
+@media (prefers-reduced-motion: reduce) { .fxtape { transform: none; } }
+@media print { .fxtape { clip-path: none; transform: none; } }
+/* ---------- Reprendre un ancien Excel (v106) ---------- */
+.impdlg { width: min(900px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); display: none; flex-direction: column; }
+.impdlg[open] { display: flex; }
+.impdlg::backdrop { background: rgb(0 0 0 / 0.4); }
+.imptop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.imptop strong { font-family: var(--font-head); font-size: 20px; display: block; }
+.impfile { display: inline-block; margin-top: 4px; padding: 1px 8px; font-weight: 600; font-size: 14px; background: var(--tape); color: var(--tape-ink); transform: rotate(-0.6deg); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+.impbody { padding: 10px 16px; overflow: auto; flex: 1 1 auto; }
+.impbody h3 { font-size: 16px; margin: 14px 0 6px; }
+.impset { display: grid; grid-template-columns: 1.4fr 1.4fr 0.7fr 0.7fr; gap: 8px 10px; }
+.impset .field select, .impset .field input { width: 100%; }
+.impblocks { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.impmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.impmap .field select { width: 100%; }
+.impmap .field i { font-style: normal; color: var(--muted); font-weight: 400; }
+.impprev { overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+.impprev table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.impprev th { position: sticky; top: 0; background: var(--surface-2, var(--surface)); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.impprev td { padding: 3px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.impprev td.muted { color: var(--muted); font-variant-numeric: tabular-nums; }
+.impprev .hint { margin: 6px 8px; }
+.impprev .empty-state { margin: 0; border: 0; }
+.impfoot { display: flex; justify-content: flex-end; align-items: flex-end; gap: 10px; padding: 10px 16px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .impdlg { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; }
+  .impset { grid-template-columns: 1fr 1fr; }
+  .impfoot .field { flex: 1 1 100%; } .impfoot .btn { flex: 1 1 100%; }
+}
+@media (pointer: coarse) { .impdlg .field select, .impdlg .field input { min-height: 44px; } }
 </style>
 
 <div id="cover" class="cover empty">
@@ -1035,6 +1095,27 @@ label.p48 input:checked + span { border-style: solid; }
   <div class="dbxbody"><div id="dbxRecent"></div><div id="dbxList"></div></div>
   <form id="dbxSaveRow" class="dbxsave" hidden><label class="field" style="flex:1"><span>Nom du fichier</span><input id="dbxName" type="text" required></label><button class="btn primary" type="submit">Enregistrer ici</button></form>
 </dialog>
+<dialog id="impDlg" class="impdlg" aria-labelledby="impTitle">
+  <div class="imptop"><div><strong id="impTitle">Reprendre un ancien Excel</strong><span id="impFile" class="impfile"></span></div><button class="btn small" type="button" data-iclose>Fermer</button></div>
+  <div class="impbody">
+    <p class="hint">Ce fichier n'a pas été fait par l'appli. Choisis la feuille et les colonnes à reprendre : l'aperçu montre ce qui sera créé.</p>
+    <div class="impset">
+      <label class="field"><span>Feuille</span><select id="impSheet"></select></label>
+      <label class="field"><span>Reprendre comme</span><select id="impMode"><option value="master">Sources du master patch</option><option value="sorties">Sorties</option></select></label>
+      <label class="field"><span>Ligne de titres</span><input id="impHead" type="number" min="1" inputmode="numeric"></label>
+      <label class="field"><span>Dernière ligne</span><input id="impEnd" type="number" min="1" inputmode="numeric"></label>
+    </div>
+    <p id="impBlocks" class="impblocks"></p>
+    <h3>Colonnes</h3>
+    <div id="impMap" class="impmap"></div>
+    <h3>Aperçu</h3>
+    <div id="impPrev" class="impprev"></div>
+  </div>
+  <div class="impfoot">
+    <label class="field"><span>Où</span><select id="impDest"><option value="new">Dans un nouveau dossier</option><option value="add">Ajouter au dossier ouvert</option></select></label>
+    <button id="impGo" class="btn primary" type="button">Reprendre</button>
+  </div>
+</dialog>
 <div id="notice" hidden></div>
 <form id="printForm" class="newbox printform" hidden>
   <strong>Imprimer ou faire un PDF</strong>
@@ -1068,6 +1149,9 @@ label.p48 input:checked + span { border-style: solid; }
   <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
   <button role="tab" data-v="materiel" aria-selected="false">Réglages racks</button>
   <button role="tab" data-v="rackplan" aria-selected="false">Plans de rack</button>
+  <button role="tab" data-v="local" aria-selected="false">Local console</button>
+  <button role="tab" data-v="com" aria-selected="false">Intercom</button>
+  <button role="tab" data-v="net" aria-selected="false">Réseau</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
@@ -1281,6 +1365,32 @@ label.p48 input:checked + span { border-style: solid; }
   <div id="synLinks"></div>
   <h2 class="synh">Horloge</h2>
   <div id="synClock"></div>
+</section>
+
+<section id="v-local" hidden>
+  <div class="toolbar fxbar"><button class="btn small primary" type="button" data-fxaddg>+ Console</button><span class="hint">Entrées et sorties locales de chaque console : AES, inserts, effets, talkback, lecteurs. « + Insert » ajoute le départ et le retour d'un coup.</span></div>
+  <div id="fx-local" class="fxlist"></div>
+  <datalist id="dlFxCons"></datalist><datalist id="dlFxApp"></datalist>
+</section>
+
+<section id="v-com" hidden>
+  <div class="toolbar fxbar"><button class="btn small primary" type="button" data-fxaddg>+ Système</button><span class="hint">Patch intercom de la console com ou de la matrice : entrées (micros de talk, retours), sorties (HP, casques, ears) et liaisons 4 fils entre régies.</span></div>
+  <div id="fx-com" class="fxlist"></div>
+  <datalist id="dlComSys"></datalist><datalist id="dlComApp"></datalist>
+</section>
+
+<section id="v-net" hidden>
+  <div class="toolbar fxbar"><button id="netAdd" class="btn small primary" type="button">+ Appareil</button><label class="inl"><input id="netSort" type="checkbox"> Trier par adresse</label><span id="netSum" class="netsum" role="status"></span></div>
+  <div class="panel">
+    <div class="tbl"><table id="netTbl" class="cards"></table></div>
+    <p class="hint">Les consoles, les racks, les appareils HF et les éléments du synoptique apparaissent tout seuls. « + Appareil » ajoute un switch, un ordinateur ou une borne Wi-Fi. Une adresse en double sur le même réseau est signalée en rouge.</p>
+  </div>
+  <div class="panel netfill">
+    <h2>Numéroter d'un coup</h2>
+    <div class="actions"><label class="field"><span>Appareils</span><select id="netFillType"></select></label><label class="field"><span>À partir de</span><input id="netFillFrom" type="text" inputmode="decimal" placeholder="192.168.1.10" spellcheck="false"></label><button id="netFill" class="btn small" type="button">Attribuer les adresses</button></div>
+    <p class="hint">Les appareils sans adresse prennent les suivantes, dans l'ordre du tableau. Les adresses déjà prises sont sautées.</p>
+  </div>
+  <datalist id="dlNet"></datalist><datalist id="dlNetType"></datalist>
 </section>
 
 <section id="v-journal" hidden>
@@ -5184,7 +5294,7 @@ label.p48 input:checked + span { border-style: solid; }
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -5246,6 +5356,9 @@ label.p48 input:checked + span { border-style: solid; }
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
     rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${RP_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
+    local: () => freePrint("locaux"),
+    com: () => freePrint("com"),
+    net: () => { const r = netExportRows(); return r.length ? `<table><thead><tr>${NET_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${r.map((x) => `<tr>${x.map((v) => `<td>${esc(v || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""; },
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
   function printHtml(parts) {
@@ -5289,6 +5402,401 @@ label.p48 input:checked + span { border-style: solid; }
     catch (err) { if (!err || err.code !== "declined") notice("L'enregistrement n'a pas abouti dans cette vue.", true); }
   }
 
+  // ---------- Patchs libres : local console (inserts, effets, AES) et intercom ----------
+  // Un patch libre = des groupes (une console, un système d'intercom), chacun avec ses tableaux d'entrées et de sorties
+  const FREE = {
+    locaux: {
+      v: "local", grp: "console", grpPh: "Nom de la console, ex. MON Matt",
+      sens: [["in", "Entrées locales", "+ Entrée", "Local in"], ["out", "Sorties locales", "+ Sortie", "Local out"]],
+      cols: [["port", "Port", "Local in 5", 96], ["nom", "Désignation", "Transient SPL", 170, "dlSrc"], ["app", "Appareil", "SPL Transient Designer", 160, "dlFxApp"], ["lien", "Lien", "Kick, FX 1, insert ch 12", 150], ["notes", "Notes", "", 160]],
+      sheet: "Local console", empty: "Ajoute une console pour noter ses entrées et sorties locales, ses AES, ses inserts et ses effets."
+    },
+    com: {
+      v: "com", grp: "système", grpPh: "Nom du système, ex. X32 COM",
+      sens: [["in", "Entrées", "+ Entrée", "In"], ["out", "Sorties", "+ Sortie", "Out"], ["4w", "Liaisons 4 fils et patch", "+ Liaison", "4W"]],
+      cols: [["port", "Port", "In 1", 80], ["nom", "Nom", "FOH 1 to MON", 170], ["qui", "Qui", "Smart", 110, "dlMus"], ["app", "Micro ou HP", "e835 + DM1, SRM150", 150, "dlComApp"], ["lien", "Liaison", "12N COM 3, AMP 01", 130], ["notes", "Notes", "", 150]],
+      sheet: "Intercom", empty: "Ajoute un système d'intercom (console com, matrice, Bolero…) pour noter ses entrées, ses sorties et ses liaisons 4 fils."
+    }
+  };
+  const FREE_V = { local: "locaux", com: "com" };
+  function freeState(k) {
+    if (!state[k] || typeof state[k] !== "object" || Array.isArray(state[k])) state[k] = { groups: [], rows: [] };
+    const S = state[k];
+    if (!Array.isArray(S.groups)) S.groups = [];
+    if (!Array.isArray(S.rows)) S.rows = [];
+    return S;
+  }
+  const freeRows = (k, g, sens) => freeState(k).rows.filter((r) => r.g === g && r.sens === sens);
+  // Port suivant : « Local in 5 » après « Local in 4 », « AES IN 3-4 » après « AES IN 1-2 »
+  function nextPort(k, g, sens) {
+    const rows = freeRows(k, g, sens), last = [...rows].reverse().find((r) => String(r.port || "").trim());
+    const def = (FREE[k].sens.find((s) => s[0] === sens) || [])[3] || "";
+    if (!last) return `${def} 1`;
+    const p = String(last.port).trim();
+    let m = p.match(/^(.*?)(\d+)-(\d+)$/);
+    if (m) { const a = +m[2], b = +m[3], w = b - a + 1; return `${m[1]}${b + 1}-${b + w}`; }
+    m = p.match(/^(.*?)(\d+)$/);
+    return m ? `${m[1]}${+m[2] + 1}` : "";
+  }
+  function freeGroupHtml(k, g) {
+    const K = FREE[k], all = freeState(k).rows.filter((r) => r.g === g.id);
+    const meta = K.sens.map(([s, t]) => { const n = all.filter((r) => r.sens === s).length, w = t.split(" ")[0].toLowerCase(); return n ? `${n} ${n > 1 ? w : w.replace(/s$/, "")}` : ""; }).filter(Boolean).join(", ");
+    return `<div class="panel fxg" data-g="${g.id}">
+      <div class="fxh"><span class="fxtape"><input type="text" data-fxgn value="${esc(g.nom)}" aria-label="Nom de la ${K.grp}" placeholder="${esc(K.grpPh)}" autocomplete="off" data-suggest="${k === "locaux" ? "dlFxCons" : "dlComSys"}"></span><span class="meta">${esc(meta || "vide")}</span><button class="btn small" type="button" data-fxdelg title="Supprimer la ${K.grp} et ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Supprimer</button></div>
+      ${K.sens.map(([s, t, add]) => {
+        const rows = freeRows(k, g.id, s);
+        return `<div class="fxs" data-sens="${s}"><h3>${esc(t)}</h3>${rows.length ? `<div class="tbl"><table class="cards fxt"><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-fr="${r.id}">${K.cols.map(([f, , ph, w, dl]) => `<td style="min-width:${w}px"><input type="text" data-ff="${f}" value="${esc(r[f])}" aria-label="${esc(K.cols.find((c) => c[0] === f)[1])}"${ph && (i === 0 || f === "port") ? ` placeholder="${esc(i === 0 ? "ex. " + ph : ph)}"` : ""}${dl ? ` autocomplete="off" data-suggest="${dl}"` : ""}></td>`).join("")}<td><button class="btn small danger xdel" type="button" data-fxdel="${r.id}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+          <div class="actions fxadd"><button class="btn small" type="button" data-fxadd="${s}">${esc(add)}</button><label class="inl" title="Nombre de lignes ajoutées d'un coup">× <input type="number" min="1" max="64" value="1" data-fxn aria-label="Nombre de lignes à ajouter"></label>${k === "locaux" && s === "out" ? `<button class="btn small" type="button" data-fxins title="Ajoute une sortie et une entrée du même nom : le départ et le retour d'un insert">+ Insert</button>` : ""}</div></div>`;
+      }).join("")}
+    </div>`;
+  }
+  function renderFree(k) {
+    const S = freeState(k), K = FREE[k], root = $("#fx-" + K.v);
+    if (!root) return;
+    const dl = k === "locaux" ? ["FOH", "Monitor", "Broadcast", ...consoleKeys().filter((c) => !STD_CONS.some((x) => x[0] === c))] : ["Console com (X32)", "Matrice Bolero", "Si Expression", "Clear-Com MS-702", "Riedel Artist"];
+    $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = [...new Set([...dl, ...S.groups.map((g) => g.nom).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
+    const apps = k === "locaux" ? ["SPL Transient Designer", "Bricasti M7", "TC Electronic M6000", "Lexicon PCM 96", "Eventide H3000", "Empirical Labs Distressor", "Tube-Tech CL 1B", "Rupert Neve 5045", "Ordinateur playback", "Talkback"] : ["Pupitre talk DM1", "Sennheiser e835 à interrupteur", "Casque Beyerdynamic DT 109", "Yamaha MSP3", "Genelec 8020", "Talk HF (EW)", "Beltpack Bolero", "Pédale de talk"];
+    $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = [...new Set([...apps, ...S.rows.map((r) => r.app).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
+    root.innerHTML = S.groups.length ? S.groups.map((g) => freeGroupHtml(k, g)).join("") : `<div class="panel empty-state"><p>${esc(K.empty)}</p></div>`;
+    root.querySelectorAll("table.fxt").forEach(labelCells);
+  }
+  function freeBind(k) {
+    const K = FREE[k], sec = $("#v-" + K.v);
+    sec.querySelector("[data-fxaddg]").addEventListener("click", () => {
+      const S = freeState(k), n = S.groups.length + 1;
+      S.groups.push({ id: nid(), nom: k === "locaux" ? (n === 1 ? "Monitor" : "Console " + n) : (n === 1 ? "Console com" : "Système " + n) });
+      commit(true);
+      const ins = sec.querySelectorAll("input[data-fxgn]"); if (ins.length) { ins[ins.length - 1].focus(); ins[ins.length - 1].select(); }
+    });
+    sec.addEventListener("change", (e) => {
+      const t = e.target, gEl = t.closest("[data-g]"); if (!gEl) return;
+      const S = freeState(k), g = S.groups.find((x) => x.id === gEl.dataset.g); if (!g) return;
+      if (t.matches("[data-fxgn]")) { g.nom = t.value.trim(); commit(false); return; }
+      if (t.matches("[data-ff]")) { const r = S.rows.find((x) => x.id === t.closest("[data-fr]").dataset.fr); if (r) { r[t.dataset.ff] = t.value.trim(); commit(false); } }
+    });
+    sec.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const gEl = b.closest("[data-g]"); if (!gEl) return;
+      const S = freeState(k), gid = gEl.dataset.g;
+      if (b.matches("[data-fxdelg]")) {
+        const g = S.groups.find((x) => x.id === gid);
+        S.groups = S.groups.filter((x) => x.id !== gid); S.rows = S.rows.filter((r) => r.g !== gid);
+        commit(true); notice(`« ${esc((g && g.nom) || K.grp)} » supprimé. Cmd+Z (ou Ctrl+Z) pour annuler.`); return;
+      }
+      if (b.matches("[data-fxdel]")) { S.rows = S.rows.filter((r) => r.id !== b.dataset.fxdel); commit(true); return; }
+      const sEl = b.closest("[data-sens]"), sens = sEl && sEl.dataset.sens;
+      if (b.matches("[data-fxadd]")) {
+        const n = Math.max(1, Math.min(64, Number(sEl.querySelector("[data-fxn]").value) || 1));
+        for (let i = 0; i < n; i++) S.rows.push({ id: nid(), g: gid, sens, port: nextPort(k, gid, sens), nom: "", app: "", lien: "", qui: "", notes: "" });
+        commit(true);
+      } else if (b.matches("[data-fxins]")) {
+        S.rows.push({ id: nid(), g: gid, sens: "out", port: nextPort(k, gid, "out"), nom: "", app: "", lien: "Insert départ", notes: "" });
+        S.rows.push({ id: nid(), g: gid, sens: "in", port: nextPort(k, gid, "in"), nom: "", app: "", lien: "Insert retour", notes: "" });
+        commit(true);
+      } else return;
+      const last = $("#v-" + K.v).querySelector(`[data-g="${gid}"] [data-sens="${b.matches("[data-fxins]") ? "out" : sens}"] tbody tr:last-child input[data-ff="nom"]`);
+      if (last) last.focus();
+    });
+  }
+  function freePrint(k) {
+    const S = freeState(k), K = FREE[k];
+    return S.groups.map((g) => `<div class="blk"><h2>${esc(g.nom || K.grp)}</h2>${K.sens.map(([s, t]) => { const rows = freeRows(k, g.id, s); return rows.length ? `<h3>${esc(t)}</h3><table><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${K.cols.map(([f]) => `<td>${esc(r[f] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""; }).join("")}</div>`).join("");
+  }
+  function freeSheet(wb, k, titre) {
+    const S = freeState(k), K = FREE[k];
+    if (!S.rows.length) return;
+    const ws = wb.addWorksheet(K.sheet);
+    ws.addRow([`${K.sheet} · ${titre}`]).font = { bold: true, size: 14 };
+    K.cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.max(12, Math.round(c[3] / 7)); });
+    S.groups.forEach((g) => {
+      if (!S.rows.some((r) => r.g === g.id)) return;
+      ws.addRow([]); ws.addRow([g.nom || K.grp]).font = { bold: true, size: 12 };
+      K.sens.forEach(([s, t]) => {
+        const rows = freeRows(k, g.id, s); if (!rows.length) return;
+        ws.addRow([t]).font = { bold: true };
+        styleHead(ws.addRow(K.cols.map((c) => c[1])));
+        rows.forEach((r) => ws.addRow(K.cols.map(([f]) => r[f] || "")));
+      });
+    });
+    page(ws, false);
+  }
+
+  // ---------- Réseau : adresses IP des appareils ----------
+  const NET_KINDS = ["Dante primaire", "Dante secondaire", "Contrôle", "Contrôle HF", "Optocore", "AVB", "Wi-Fi", "Internet"];
+  function netState() {
+    if (!state.reseau || typeof state.reseau !== "object") state.reseau = {};
+    const N = state.reseau;
+    if (!N.dev || typeof N.dev !== "object") N.dev = {};
+    if (!Array.isArray(N.extra)) N.extra = [];
+    return N;
+  }
+  // Où l'appareil est rangé : le flight rack des plans de rack, sinon sa console
+  function rpWhere(kind, ref) {
+    for (const c of rpState().cases) if ((c.items || []).some((it) => it.kind === kind && it.ref === ref)) return [c.nom, c.lieu].filter(Boolean).join(" · ");
+    return "";
+  }
+  function netDevices() {
+    const out = [];
+    consoleKeys().forEach((c) => out.push({ key: "c:" + c, nom: "Console " + consLabel(c), type: "Console", pos: c === "FOH" || c === "MON" ? consLabel(c) : "" }));
+    state.racks.forEach((r) => out.push({ key: "r:" + r.id, nom: rackTitle(r), type: r.ports ? "I/O" : "Stage rack", pos: rpWhere("rack", r.id) || (r.console && r.console !== "Partagé" ? consLabel(r.console) : "") }));
+    hfDevs().forEach((d) => out.push({ key: "h:" + d.id, nom: d.nom || d.model, type: `${d.model || "HF"} · ${HFDEV_KIND[d.kind] || "HF"}`, pos: rpWhere("hf", d.id) }));
+    synState().nodes.forEach((x) => out.push({ key: "x:" + x.id, nom: x.nom || "Élément", type: (EXTRA_MODELS[extraModel(x)] || {}).nom || x.type || "Élément", pos: rpWhere("extra", x.id) }));
+    return out;
+  }
+  const ipNum = (ip) => { const m = String(ip || "").trim().match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/); if (!m) return null; const p = m.slice(1).map(Number); if (p.some((x) => x > 255)) return null; return ((p[0] * 256 + p[1]) * 256 + p[2]) * 256 + p[3]; };
+  const ipTxt = (n) => [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join(".");
+  let netSortIp = false;
+  try { netSortIp = localStorage.getItem("patch-live-netsort") === "1"; } catch (e) { /* ignore */ }
+  // Toutes les lignes du tableau : appareils de l'appli (réglages gardés par appareil) puis appareils ajoutés à la main
+  function netRows() {
+    const N = netState();
+    const rows = netDevices().map((d) => { const v = N.dev[d.key] || {}; return { ...d, auto: true, ip: v.ip || "", masque: v.masque || "", net: v.net || "", notes: v.notes || "", pos: v.pos != null && v.pos !== "" ? v.pos : d.pos, posAuto: !(v.pos != null && v.pos !== "") }; });
+    N.extra.forEach((x) => rows.push({ key: "e:" + x.id, id: x.id, nom: x.nom || "", type: x.type || "", ip: x.ip || "", masque: x.masque || "", net: x.net || "", pos: x.pos || "", notes: x.notes || "" }));
+    if (netSortIp) rows.sort((a, b) => { const x = ipNum(a.ip), y = ipNum(b.ip); return (x == null) - (y == null) || (x || 0) - (y || 0); });
+    return rows;
+  }
+  function netProblems(rows) {
+    const seen = new Map(), bad = new Map();
+    rows.forEach((r) => {
+      const t = String(r.ip || "").trim(); if (!t) return;
+      if (ipNum(t) == null) { bad.set(r.key, "Adresse incomplète ou fausse (format 192.168.1.10)"); return; }
+      const k = `${r.net || ""}|${ipNum(t)}`;
+      if (seen.has(k)) { const o = seen.get(k); bad.set(r.key, `Même adresse que ${o.nom}`); if (!bad.has(o.key)) bad.set(o.key, `Même adresse que ${r.nom}`); } else seen.set(k, r);
+    });
+    return bad;
+  }
+  function renderNet() {
+    const rows = netRows(), bad = netProblems(rows), N = netState();
+    $("#dlNet").innerHTML = NET_KINDS.map((v) => `<option value="${esc(v)}">`).join("");
+    $("#netSort").checked = netSortIp;
+    const types = [...new Set(rows.map((r) => r.type).filter(Boolean))];
+    const sel = $("#netFillType"), cur = sel.value;
+    sel.innerHTML = `<option value="">tous les appareils</option>${types.map((t) => `<option value="${esc(t)}"${t === cur ? " selected" : ""}>${esc(t)}</option>`).join("")}`;
+    const inp = (r, f, ph, extra) => `<input type="text" data-nf="${f}" value="${esc(r[f])}" aria-label="${esc(ph)}"${extra || ""}>`;
+    $("#netTbl").innerHTML = `<thead><tr><th>Appareil</th><th>Type</th><th>Réseau</th><th>Adresse IP</th><th>Masque</th><th>Emplacement</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map((r, i) => `
+      <tr data-nk="${esc(r.key)}"${bad.has(r.key) ? ' class="netbad"' : ""}>
+        <td style="min-width:170px">${r.auto ? `<b>${esc(r.nom)}</b>` : inp(r, "nom", "Appareil", ' placeholder="ex. Switch Netgear GS724T"')}</td>
+        <td style="min-width:130px">${r.auto ? `<span class="prov">${esc(r.type)}</span>` : inp(r, "type", "Type", ' placeholder="ex. Switch" autocomplete="off" data-suggest="dlNetType"')}</td>
+        <td style="min-width:130px">${inp(r, "net", "Réseau", ` placeholder="${i ? "" : "ex. Dante primaire"}" autocomplete="off" data-suggest="dlNet"`)}</td>
+        <td style="min-width:130px" class="ipc">${inp(r, "ip", "Adresse IP", ` inputmode="decimal" placeholder="${i ? "" : "ex. 192.168.1.10"}" spellcheck="false"`)}${bad.has(r.key) ? `<span class="netwarn">${esc(bad.get(r.key))}</span>` : ""}</td>
+        <td style="min-width:120px">${inp(r, "masque", "Masque", ` inputmode="decimal" placeholder="${i ? "" : "ex. 255.255.255.0"}" spellcheck="false"`)}</td>
+        <td style="min-width:120px">${inp(r, "pos", "Emplacement", r.posAuto && r.pos ? ' title="Repris du plan de rack ou de la console"' : "")}</td>
+        <td style="min-width:150px">${inp(r, "notes", "Notes")}</td>
+        <td>${r.auto ? "" : `<button class="btn small danger xdel" type="button" data-netdel="${r.id}" title="Supprimer" aria-label="Supprimer">×</button>`}</td>
+      </tr>`).join("") || `<tr><td colspan="8" class="hint">Aucun appareil : ajoute des racks, des appareils HF ou une ligne à la main.</td></tr>`}</tbody>`;
+    labelCells($("#netTbl"));
+    const withIp = rows.filter((r) => String(r.ip || "").trim()).length;
+    $("#netSum").textContent = `${withIp} adresse${withIp > 1 ? "s" : ""} sur ${rows.length} appareil${rows.length > 1 ? "s" : ""}${bad.size ? ` · ${bad.size} à vérifier` : ""}`;
+    $("#netSum").classList.toggle("warn", bad.size > 0);
+    $("#dlNetType").innerHTML = [...new Set(["Switch", "Ordinateur", "Point d'accès Wi-Fi", "Imprimante", "Routeur", ...N.extra.map((x) => x.type).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
+  }
+  function netBind() {
+    $("#netAdd").addEventListener("click", () => { netState().extra.push({ id: nid(), nom: "", type: "", ip: "", masque: "", net: "", pos: "", notes: "" }); commit(true); const ins = document.querySelectorAll('#netTbl input[data-nf="nom"]'); if (ins.length) ins[ins.length - 1].focus(); });
+    $("#netSort").addEventListener("change", (e) => { netSortIp = e.target.checked; try { localStorage.setItem("patch-live-netsort", netSortIp ? "1" : "0"); } catch (err) { /* ignore */ } renderNet(); });
+    $("#netTbl").addEventListener("change", (e) => {
+      const t = e.target; if (!t.matches("[data-nf]")) return;
+      const key = t.closest("[data-nk]").dataset.nk, f = t.dataset.nf, v = t.value.trim(), N = netState();
+      if (key.startsWith("e:")) { const x = N.extra.find((y) => y.id === key.slice(2)); if (x) x[f] = v; }
+      else { const o = N.dev[key] || (N.dev[key] = {}); if (v) o[f] = v; else delete o[f]; if (!Object.keys(o).length) delete N.dev[key]; }
+      commit(true);
+    });
+    $("#netTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-netdel]"); if (!b) return; const N = netState(); N.extra = N.extra.filter((x) => x.id !== b.dataset.netdel); commit(true); });
+    // Numérotation : les appareils sans adresse prennent les adresses suivantes, dans l'ordre du tableau, en sautant celles déjà prises
+    $("#netFill").addEventListener("click", () => {
+      const start = ipNum($("#netFillFrom").value), type = $("#netFillType").value;
+      if (start == null) { notice("Donne la première adresse, au format 192.168.1.10.", true); $("#netFillFrom").focus(); return; }
+      const rows = netRows(), taken = new Set(rows.map((r) => ipNum(r.ip)).filter((x) => x != null)), N = netState();
+      let n = start, k = 0;
+      rows.filter((r) => !String(r.ip || "").trim() && (!type || r.type === type)).forEach((r) => {
+        while (taken.has(n)) n++;
+        const ip = ipTxt(n); taken.add(n); n++; k++;
+        if (r.auto) (N.dev[r.key] = N.dev[r.key] || {}).ip = ip; else { const x = N.extra.find((y) => y.id === r.id); if (x) x.ip = ip; }
+      });
+      if (!k) { notice("Tous ces appareils ont déjà une adresse."); return; }
+      commit(true); notice(`${k} adresse${k > 1 ? "s" : ""} attribuée${k > 1 ? "s" : ""}.`);
+    });
+  }
+  const NET_HEAD = ["Appareil", "Type", "Réseau", "Adresse IP", "Masque", "Emplacement", "Notes"];
+  const netExportRows = () => { const keep = netSortIp; netSortIp = true; const rows = netRows(); netSortIp = keep; return rows.filter((r) => String(r.ip || "").trim() || !r.auto).map((r) => [r.nom, r.type, r.net, r.ip, r.masque, r.pos, r.notes]); };
+
+  // ---------- Reprendre un ancien Excel (fichier qui n'a pas été fait par l'appli) ----------
+  // On repère la ligne de titres, les tableaux posés côte à côte (même titre répété), on devine les colonnes,
+  // on montre un aperçu, puis on crée les lignes du master ou des sorties. Les entrées et boîtiers d'origine restent dans les notes.
+  const impNorm = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  const IMP_FIELDS = {
+    master: [
+      ["source", "Source", ["LABEL", "LABELS", "NOM", "NOMS", "SOURCE", "SOURCES", "DESIGNATION", "INSTRUMENT", "INSTRUMENTS", "INST", "INSTRU", "NAME", "CHANNEL NAME", "INPUT NAME", "LIBELLE"]],
+      ["micro", "Micro ou DI", ["MICRO", "MICROS", "MIC", "MICS", "MICRO / DI", "MICRO/DI", "MIC/DI", "MODELE", "MODEL", "CAPTEUR"]],
+      ["pied", "Pied", ["PIED", "PIEDS", "STAND", "STANDS", "PIED / PINCE", "SUPPORT"]],
+      ["musicien", "Musicien", ["MUSICIEN", "MUSICIENS", "ZICOS", "ZICO", "ARTISTE", "ARTISTES", "PLAYER", "QUI"]],
+      ["p48", "48V", ["48V", "+48", "+48V", "48", "PH", "PHANTOM", "FANTOME", "P48", "48 V"]],
+      ["entree", "Entrée d'origine", ["IN", "INPUT", "INPUTS", "N°", "N", "NO", "#", "PATCH", "MAIN PATCH", "ENTREE", "ENTREES", "CH", "CHANNEL", "CANAL", "LINE", "TRANCHE"]],
+      ["sp", "Sous-patch ou boîtier", ["SOUS PATCH", "SOUS-PATCH", "SUB PATCH", "SUBPATCH", "BOITIER", "BOITIERS", "MULTI", "BOX", "12N", "20H", "B20", "SP"]],
+      ["notes", "Notes", ["NOTES", "NOTE", "COMMENTAIRES", "COMMENTAIRE", "REMARQUES", "REMARQUE", "OBS", "INFOS", "COM"]]
+    ],
+    sorties: [
+      ["mix", "Mix", ["MIX", "MIXES", "MIX OUT", "AUX", "OUT NAME", "LABEL", "NOM", "SORTIE", "SORTIES", "OUTPUT", "DESIGNATION"]],
+      ["dest", "Destination", ["DESTINATION", "DEST", "POUR", "QUI", "MUSICIEN", "ARTISTE"]],
+      ["type", "Type", ["TYPE"]],
+      ["rx", "Enceinte ou récepteur", ["ENCEINTE", "ENCEINTES", "HP", "DEVICE", "MODELE", "MODEL", "RECEPTEUR", "BODYPACK"]],
+      ["entree", "Sortie d'origine", ["OUT", "OUT PATCH", "CHANNEL", "CH", "N°", "N", "OUTPUT", "PORT", "SLOT"]],
+      ["notes", "Notes", ["NOTES", "NOTE", "COMMENTAIRES", "COMMENTAIRE", "REMARQUES"]]
+    ]
+  };
+  const IMP_KEEP = { entree: "Ancien patch", sp: "Sous-patch" };
+  const colLetter = (n) => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  let imp = null;
+  // Grille de texte d'une feuille (lignes et colonnes à partir de 1)
+  function impGrid(ws) {
+    const g = [], max = Math.min(ws.rowCount, 1500);
+    let w = 0;
+    for (let r = 1; r <= max; r++) { const row = ws.getRow(r), a = []; for (let c = 1; c <= Math.min(row.cellCount, 120); c++) a[c] = cellText(row.getCell(c)).replace(/\s*\n\s*/g, " ").trim(); g[r] = a; w = Math.max(w, a.length - 1); }
+    return { g, rows: max, cols: w };
+  }
+  const impMatch = (mode, f, txt) => { const t = impNorm(txt); return !!t && IMP_FIELDS[mode].find((x) => x[0] === f)[2].includes(t); };
+  function impScoreRow(mode, cells) {
+    const got = new Set();
+    (cells || []).forEach((v) => { if (!v) return; IMP_FIELDS[mode].forEach(([f]) => { if (impMatch(mode, f, v)) got.add(f); }); });
+    return got.has(IMP_FIELDS[mode][0][0]) ? got.size : 0;
+  }
+  function impFindHead(mode, G) {
+    let best = 0, row = 0;
+    for (let r = 1; r <= Math.min(G.rows, 40); r++) { const s = impScoreRow(mode, G.g[r]); if (s > best) { best = s; row = r; } }
+    return { row, score: best };
+  }
+  // Colonnes du nom (même titre répété) = un tableau par colonne ; les autres colonnes se lisent au même décalage
+  // Tableaux côte à côte : la colonne du nom et toutes celles qui portent le même titre sur la ligne de titres
+  function impBlocks(c) {
+    const head = imp.grid.g[imp.head] || [], t = impNorm(head[c]), cols = [];
+    if (t) head.forEach((v, k) => { if (impNorm(v) === t) cols.push(k); });
+    imp.blocks = cols.length > 1 ? cols : c ? [c] : [];
+    const firstCol = Math.max(1, head.findIndex((v) => v));
+    if (imp.blocks.length > 1) {
+      // Chaque tableau fait la largeur qui sépare deux titres « nom » : on commence au premier titre rempli
+      const period = imp.blocks[1] - imp.blocks[0];
+      let a = Math.max(1, imp.blocks[0] - (period - 1)); while (a < imp.blocks[0] && !head[a]) a++;
+      imp.range = [a, a + period - 1];
+    } else imp.range = [firstCol, imp.grid.cols];
+  }
+  function impSetup(keepMap) {
+    const G = imp.grid, head = G.g[imp.head] || [], main = IMP_FIELDS[imp.mode][0][0];
+    impBlocks(Math.max(0, head.findIndex((v) => impMatch(imp.mode, main, v))));
+    if (keepMap) return;
+    imp.map = {}; const taken = new Set();
+    IMP_FIELDS[imp.mode].forEach(([f]) => {
+      for (let c = imp.range[0]; c <= imp.range[1]; c++) if (!taken.has(c) && impMatch(imp.mode, f, head[c])) { imp.map[f] = c; taken.add(c); break; }
+    });
+    if (imp.blocks[0]) imp.map[main] = imp.blocks[0];
+    // Pied : une colonne sans titre clair (« COM », vide…) remplie de PPM, GPM, pinces… est prise pour les pieds
+    if (imp.mode === "master" && !imp.map.pied) {
+      for (let c = imp.range[0]; c <= imp.range[1]; c++) {
+        if (Object.keys(imp.map).some((k) => k !== "notes" && imp.map[k] === c)) continue;
+        const vals = []; for (let r = imp.head + 1; r <= Math.min(G.rows, imp.head + 80); r++) { const v = (G.g[r] || [])[c]; if (v) vals.push(v); }
+        if (vals.length >= 3 && vals.filter((v) => /^(PPM|GPM|PP|GP|CLAMP|PINCE|GOOSE|PIED|DROIT|GIRAFE|SOL\b|BASE\b)/i.test(v)).length >= vals.length * 0.6) { if (imp.map.notes === c) delete imp.map.notes; imp.map.pied = c; break; }
+      }
+      if (!imp.map.notes) for (let c = imp.range[0]; c <= imp.range[1]; c++) if (!Object.values(imp.map).includes(c) && impMatch("master", "notes", head[c])) { imp.map.notes = c; break; }
+    }
+    // Fin du tableau : avant le prochain bloc de titres, ou après 15 lignes vides
+    let end = imp.head, empty = 0;
+    for (let r = imp.head + 1; r <= G.rows; r++) {
+      const cells = G.g[r] || [];
+      if (r > imp.head + 1 && impScoreRow(imp.mode, cells) >= 2) break;
+      const any = impCols(main).some((c) => cells[c]);
+      if (any) { end = r; empty = 0; } else if (++empty >= 15) break;
+    }
+    imp.end = Math.max(end, imp.head + 1);
+  }
+  // Colonnes réelles d'un champ, une par tableau côte à côte
+  function impCols(f) {
+    const c = imp.map[f]; if (!c) return [];
+    if (imp.blocks.length < 2) return [c];
+    const off = c - imp.blocks[0]; return imp.blocks.map((b) => b + off);
+  }
+  const IMP_SKIP = new Set(["", "X", "-", "—", "BLANK", "VIDE", "/", "?"]);
+  function impItems() {
+    const G = imp.grid, F = IMP_FIELDS[imp.mode], main = F[0][0], out = [];
+    const nb = Math.max(1, imp.blocks.length);
+    for (let b = 0; b < nb; b++) {
+      for (let r = imp.head + 1; r <= imp.end; r++) {
+        const cells = G.g[r] || [], get = (f) => { const cs = impCols(f); return cs.length ? cells[cs[Math.min(b, cs.length - 1)]] || "" : ""; };
+        const name = get(main);
+        if (IMP_SKIP.has(impNorm(name)) || impMatch(imp.mode, main, name)) continue;
+        const it = { r }; F.forEach(([f]) => { it[f] = get(f); }); out.push(it);
+      }
+    }
+    return out;
+  }
+  const impOn = (v) => /^(X|OUI|YES|ON|1|✓|V|48|\+48|48V|\+48V|PH)$/i.test(String(v || "").trim());
+  function impPaint() {
+    const d = $("#impDlg"), G = imp.grid, F = IMP_FIELDS[imp.mode], head = G.g[imp.head] || [];
+    $("#impFile").textContent = imp.name;
+    $("#impSheet").innerHTML = imp.wb.worksheets.map((w, i) => `<option value="${i}"${i === imp.sheet ? " selected" : ""}>${esc(w.name)}</option>`).join("");
+    $("#impMode").value = imp.mode; $("#impHead").value = imp.head || ""; $("#impEnd").value = imp.end || "";
+    const opts = (f) => `<option value="">ignorer</option>` + (() => { let h = ""; for (let c = imp.range[0]; c <= imp.range[1]; c++) h += `<option value="${c}"${imp.map[f] === c ? " selected" : ""}>${colLetter(c)}${head[c] ? " · " + esc(head[c].slice(0, 28)) : ""}</option>`; return h; })();
+    $("#impMap").innerHTML = F.map(([f, t]) => `<label class="field"><span>${esc(t)}${IMP_KEEP[f] ? ' <i>va dans les notes</i>' : ""}</span><select data-impf="${f}">${opts(f)}</select></label>`).join("");
+    const items = imp.head ? impItems() : [];
+    const nb = imp.blocks.length;
+    $("#impBlocks").textContent = !imp.head ? "Aucune ligne de titres reconnue dans cette feuille : indique son numéro, puis choisis les colonnes." : nb > 1 ? `${nb} tableaux côte à côte (colonnes ${imp.blocks.map(colLetter).join(", ")}) : ils sont lus l'un après l'autre.` : "Un seul tableau dans la feuille.";
+    const shown = F.filter(([f]) => imp.map[f]);
+    $("#impPrev").innerHTML = items.length ? `<table><thead><tr><th>Ligne</th>${shown.map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${items.slice(0, 12).map((it) => `<tr><td class="muted">${it.r}</td>${shown.map(([f]) => `<td>${esc(f === "p48" ? (impOn(it[f]) ? "48V" : "") : it[f])}</td>`).join("")}</tr>`).join("")}</tbody></table>${items.length > 12 ? `<p class="hint">… et ${items.length - 12} autres lignes.</p>` : ""}` : `<p class="empty-state">Rien à reprendre avec ces réglages. Choisis la colonne « ${esc(F[0][1])} ».</p>`;
+    const go = $("#impGo"); go.disabled = !items.length;
+    go.textContent = items.length ? `Reprendre ${items.length} ${imp.mode === "master" ? "source" : "sortie"}${items.length > 1 ? "s" : ""}` : "Reprendre";
+    if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+  }
+  function impLoadSheet(i, mode) {
+    imp.sheet = i; imp.grid = impGrid(imp.wb.worksheets[i]);
+    imp.mode = mode || (/out|sortie|ear|iem|retour/i.test(imp.wb.worksheets[i].name) ? "sorties" : "master");
+    imp.head = impFindHead(imp.mode, imp.grid).row; imp.map = {}; imp.blocks = []; imp.range = [1, imp.grid.cols]; imp.end = imp.grid.rows;
+    if (imp.head) impSetup(false);
+  }
+  async function impOpen(buf, name) {
+    const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
+    if (!wb.worksheets.length) { notice("Ce fichier Excel ne contient aucune feuille.", true); return; }
+    imp = { wb, name: name || "fichier Excel" };
+    // Feuille de départ : celle où la ligne de titres du patch est la plus nette
+    let best = 0, bi = 0;
+    wb.worksheets.forEach((w, i) => { const s = impFindHead("master", impGrid(w)).score + (/patch|input|entr/i.test(w.name) ? 0.5 : 0); if (s > best) { best = s; bi = i; } });
+    impLoadSheet(bi);
+    $("#impDest").value = "new";
+    impPaint();
+  }
+  function impApply() {
+    const items = impItems(); if (!items.length) return;
+    const isNew = $("#impDest").value === "new", base = imp.name.replace(/\.xlsx$/i, "").trim();
+    if (isNew) { dbxDetach(); state = vide(); state.dossier.nom = base || "Dossier repris"; }
+    const keep = (it) => Object.keys(IMP_KEEP).filter((f) => it[f]).map((f) => `${IMP_KEEP[f]} : ${it[f]}`);
+    if (imp.mode === "master") {
+      items.forEach((it) => {
+        const l = newLine(it.source); l.micro = it.micro || ""; l.pied = it.pied || ""; l.musicien = it.musicien || ""; l.p48 = impOn(it.p48);
+        l.notes = [it.notes, ...keep(it)].filter(Boolean).join(" · "); state.lignes.push(l);
+      });
+    } else {
+      state.sorties = state.sorties || [];
+      items.forEach((it) => state.sorties.push({ id: nid(), mix: it.mix, dest: it.dest || "", type: it.type || "", tx: "", rx: it.rx || "", notes: [it.notes, ...keep(it)].filter(Boolean).join(" · "), out: null, box: null, pair: null }));
+    }
+    learnDossier(state); state.exemple = false;
+    $("#impDlg").close();
+    commit(true); setView(imp.mode === "master" ? homeView() : "sorties");
+    const n = items.length, what = imp.mode === "master" ? `source${n > 1 ? "s" : ""}` : `sortie${n > 1 ? "s" : ""}`;
+    notice(`${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}. ${imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre aussi les sorties, rouvre le fichier, choisis leur feuille et « Ajouter au dossier ouvert »." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`);
+  }
+  function impBind() {
+    const d = $("#impDlg");
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-iclose]")) d.close(); });
+    $("#impSheet").addEventListener("change", (e) => { impLoadSheet(Number(e.target.value)); impPaint(); });
+    $("#impMode").addEventListener("change", (e) => { impLoadSheet(imp.sheet, e.target.value); impPaint(); });
+    $("#impHead").addEventListener("change", (e) => { const n = Math.max(1, Math.min(imp.grid.rows, Number(e.target.value) || 1)); imp.head = n; impSetup(false); impPaint(); });
+    $("#impEnd").addEventListener("change", (e) => { imp.end = Math.max(imp.head + 1, Math.min(imp.grid.rows, Number(e.target.value) || imp.grid.rows)); impPaint(); });
+    $("#impMap").addEventListener("change", (e) => {
+      const s = e.target.closest("select[data-impf]"); if (!s) return;
+      const f = s.dataset.impf, c = Number(s.value) || 0, main = IMP_FIELDS[imp.mode][0][0];
+      if (c) imp.map[f] = c; else delete imp.map[f];
+      if (f === main && c) { impBlocks(c); Object.keys(imp.map).forEach((k) => { if (imp.map[k] < imp.range[0] || imp.map[k] > imp.range[1]) delete imp.map[k]; }); imp.map[main] = c; }
+      impPaint();
+    });
+    $("#impGo").addEventListener("click", impApply);
+  }
+
   // ---------- Rendu général ----------
   function renderHeader() {
     renderCover();
@@ -5323,6 +5831,9 @@ label.p48 input:checked + span { border-style: solid; }
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
     if (view === "rackplan") renderRackplan();
+    if (view === "local") renderFree("locaux");
+    if (view === "com") renderFree("com");
+    if (view === "net") renderNet();
     if (sc.some(Boolean)) document.querySelectorAll("section:not([hidden]) .table-wrap, section:not([hidden]) .hftw, section:not([hidden]) .kb").forEach((w, i) => { if (sc[i]) w.scrollLeft = sc[i]; });
   }
   // Historique : chaque modification enregistrée peut être annulée puis rétablie
@@ -5372,7 +5883,7 @@ label.p48 input:checked + span { border-style: solid; }
   document.addEventListener("click", (e) => { const h = e.target.closest(".hint.clamp"); if (h && !e.target.closest("a, button, input, select")) h.classList.toggle("open"); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   function setView(v, fromHistory) {
@@ -5388,7 +5899,7 @@ label.p48 input:checked + span { border-style: solid; }
     $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "reglbox", "racks", "materiel", "rackplan", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
@@ -5596,6 +6107,16 @@ label.p48 input:checked + span { border-style: solid; }
       sy.addImage(id, { tl: { col: 0, row: sy.rowCount + 1 }, ext: { width: sp.w * scale, height: sp.h * scale } });
       page(sy, true);
     }
+    freeSheet(wb, "locaux", titre);
+    freeSheet(wb, "com", titre);
+    const netX = netExportRows();
+    if (netX.length) {
+      const ns = wb.addWorksheet("Réseau");
+      ns.addRow([`Réseau · ${titre}`]).font = { bold: true, size: 14 };
+      styleHead(ns.addRow(NET_HEAD)); netX.forEach((r) => ns.addRow(r));
+      [30, 22, 18, 16, 16, 20, 34].forEach((w, i) => { ns.getColumn(i + 1).width = w; });
+      page(ns, false);
+    }
     const jr = wb.addWorksheet("Journal");
     styleHead(jr.addRow(["Date", "Salle", "Changement"]));
     [18, 26, 80].forEach((w, i) => { jr.getColumn(i + 1).width = w; });
@@ -5648,7 +6169,7 @@ label.p48 input:checked + span { border-style: solid; }
       const ws = wb.getWorksheet("Master patch"), ids = [];
       if (ws) { const head = ws.getRow(2).values.map((v) => (v == null ? "" : String(v))), ic = head.indexOf("ID appli"); if (ic > 0) for (let r = 3; r <= ws.rowCount; r++) { const t = cellText(ws.getRow(r).getCell(ic)); if (t) ids.push(t); } }
       const known = new Set(state.lignes.map((l) => l.id)), hit = ids.filter((id) => known.has(id)).length;
-      if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; throw e; }
+      if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; e.buf = buf; throw e; }
       next = JSON.parse(JSON.stringify(state));
       const report = reconcile(next, ws);
       report.problems.unshift("Ce fichier a perdu les données de l'appli (réenregistré par Numbers ou un autre tableur) : le dossier a été repris depuis cet appareil, avec les corrections du master patch. Les modifs faites dans les autres feuilles ne sont pas reprises.");
@@ -5684,7 +6205,7 @@ label.p48 input:checked + span { border-style: solid; }
       notice(`Dossier « ${esc(state.dossier.nom)} » ouvert.` + openReport(report), report.problems.length > 0);
     } catch (e) {
       if (e && e.code === "autre-dossier") { notice("Ce fichier a perdu les données de l'appli (il a sans doute été réenregistré par Numbers ou un autre tableur). On ne peut le récupérer que sur l'appareil où ce dossier est encore ouvert dans l'appli : ouvre-le depuis cet appareil.", true); return; }
-      if (e && e.code === "pas-appli") { notice("Ce fichier n'a pas été créé par l'appli. Pour l'instant, l'appli ne relit que ses propres fichiers ; l'import de tes anciens dossiers Excel viendra ensuite.", true); return; }
+      if (e && e.code === "pas-appli") { try { await impOpen(await file.arrayBuffer(), file.name); } catch (err) { notice("Impossible de lire ce fichier Excel.", true); } return; }
       notice("Impossible de lire ce fichier. Vérifie qu'il s'agit bien d'un .xlsx enregistré par l'appli.", true);
     }
   }
@@ -5836,6 +6357,7 @@ label.p48 input:checked + span { border-style: solid; }
   // ---------- Événements ----------
   function bind() {
     bindSuggest();
+    freeBind("locaux"); freeBind("com"); netBind(); impBind();
     $("#undoBtn").addEventListener("click", undo);
     $("#redoBtn").addEventListener("click", redo);
     document.addEventListener("keydown", (e) => {
@@ -6351,6 +6873,7 @@ label.p48 input:checked + span { border-style: solid; }
     } catch (e) {
       dbxPaint("err");
       if (e && e.code === "trop-recent") { notice("Ce dossier a été enregistré par une version plus récente de Patch Live. Ferme complètement l'appli et rouvre-la pour la mettre à jour, puis rouvre le dossier.", true); return false; }
+      if (e && e.code === "pas-appli" && e.buf) { dbxPaint(); if ($("#dbxDlg").open) $("#dbxDlg").close(); try { await impOpen(e.buf, String(idOrPath).split("/").pop()); } catch (err) { notice("Impossible de lire ce fichier Excel.", true); } return false; }
       notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
       return false;
     }
