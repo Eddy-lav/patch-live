@@ -995,6 +995,35 @@ label.p48 input:checked + span { border-style: solid; }
 .netfill .field input { width: 150px; }
 @media (prefers-reduced-motion: reduce) { .fxtape { transform: none; } }
 @media print { .fxtape { clip-path: none; transform: none; } }
+/* ---------- Reprendre un ancien Excel (v106) ---------- */
+.impdlg { width: min(900px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); display: none; flex-direction: column; }
+.impdlg[open] { display: flex; }
+.impdlg::backdrop { background: rgb(0 0 0 / 0.4); }
+.imptop { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.imptop strong { font-family: var(--font-head); font-size: 20px; display: block; }
+.impfile { display: inline-block; margin-top: 4px; padding: 1px 8px; font-weight: 600; font-size: 14px; background: var(--tape); color: var(--tape-ink); transform: rotate(-0.6deg); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: top; }
+.impbody { padding: 10px 16px; overflow: auto; flex: 1 1 auto; }
+.impbody h3 { font-size: 16px; margin: 14px 0 6px; }
+.impset { display: grid; grid-template-columns: 1.4fr 1.4fr 0.7fr 0.7fr; gap: 8px 10px; }
+.impset .field select, .impset .field input { width: 100%; }
+.impblocks { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.impmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 10px; }
+.impmap .field select { width: 100%; }
+.impmap .field i { font-style: normal; color: var(--muted); font-weight: 400; }
+.impprev { overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+.impprev table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.impprev th { position: sticky; top: 0; background: var(--surface-2, var(--surface)); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.impprev td { padding: 3px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.impprev td.muted { color: var(--muted); font-variant-numeric: tabular-nums; }
+.impprev .hint { margin: 6px 8px; }
+.impprev .empty-state { margin: 0; border: 0; }
+.impfoot { display: flex; justify-content: flex-end; align-items: flex-end; gap: 10px; padding: 10px 16px 14px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .impdlg { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; margin: 0; }
+  .impset { grid-template-columns: 1fr 1fr; }
+  .impfoot .field { flex: 1 1 100%; } .impfoot .btn { flex: 1 1 100%; }
+}
+@media (pointer: coarse) { .impdlg .field select, .impdlg .field input { min-height: 44px; } }
 </style>
 
 <div id="cover" class="cover empty">
@@ -1051,6 +1080,27 @@ label.p48 input:checked + span { border-style: solid; }
   <div id="dbxCrumbs" class="dbxcrumbs"></div>
   <div class="dbxbody"><div id="dbxRecent"></div><div id="dbxList"></div></div>
   <form id="dbxSaveRow" class="dbxsave" hidden><label class="field" style="flex:1"><span>Nom du fichier</span><input id="dbxName" type="text" required></label><button class="btn primary" type="submit">Enregistrer ici</button></form>
+</dialog>
+<dialog id="impDlg" class="impdlg" aria-labelledby="impTitle">
+  <div class="imptop"><div><strong id="impTitle">Reprendre un ancien Excel</strong><span id="impFile" class="impfile"></span></div><button class="btn small" type="button" data-iclose>Fermer</button></div>
+  <div class="impbody">
+    <p class="hint">Ce fichier n'a pas été fait par l'appli. Choisis la feuille et les colonnes à reprendre : l'aperçu montre ce qui sera créé.</p>
+    <div class="impset">
+      <label class="field"><span>Feuille</span><select id="impSheet"></select></label>
+      <label class="field"><span>Reprendre comme</span><select id="impMode"><option value="master">Sources du master patch</option><option value="sorties">Sorties</option></select></label>
+      <label class="field"><span>Ligne de titres</span><input id="impHead" type="number" min="1" inputmode="numeric"></label>
+      <label class="field"><span>Dernière ligne</span><input id="impEnd" type="number" min="1" inputmode="numeric"></label>
+    </div>
+    <p id="impBlocks" class="impblocks"></p>
+    <h3>Colonnes</h3>
+    <div id="impMap" class="impmap"></div>
+    <h3>Aperçu</h3>
+    <div id="impPrev" class="impprev"></div>
+  </div>
+  <div class="impfoot">
+    <label class="field"><span>Où</span><select id="impDest"><option value="new">Dans un nouveau dossier</option><option value="add">Ajouter au dossier ouvert</option></select></label>
+    <button id="impGo" class="btn primary" type="button">Reprendre</button>
+  </div>
 </dialog>
 <div id="notice" hidden></div>
 <form id="printForm" class="newbox printform" hidden>
@@ -5555,6 +5605,184 @@ label.p48 input:checked + span { border-style: solid; }
   const NET_HEAD = ["Appareil", "Type", "Réseau", "Adresse IP", "Masque", "Emplacement", "Notes"];
   const netExportRows = () => { const keep = netSortIp; netSortIp = true; const rows = netRows(); netSortIp = keep; return rows.filter((r) => String(r.ip || "").trim() || !r.auto).map((r) => [r.nom, r.type, r.net, r.ip, r.masque, r.pos, r.notes]); };
 
+  // ---------- Reprendre un ancien Excel (fichier qui n'a pas été fait par l'appli) ----------
+  // On repère la ligne de titres, les tableaux posés côte à côte (même titre répété), on devine les colonnes,
+  // on montre un aperçu, puis on crée les lignes du master ou des sorties. Les entrées et boîtiers d'origine restent dans les notes.
+  const impNorm = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  const IMP_FIELDS = {
+    master: [
+      ["source", "Source", ["LABEL", "LABELS", "NOM", "NOMS", "SOURCE", "SOURCES", "DESIGNATION", "INSTRUMENT", "INSTRUMENTS", "INST", "INSTRU", "NAME", "CHANNEL NAME", "INPUT NAME", "LIBELLE"]],
+      ["micro", "Micro ou DI", ["MICRO", "MICROS", "MIC", "MICS", "MICRO / DI", "MICRO/DI", "MIC/DI", "MODELE", "MODEL", "CAPTEUR"]],
+      ["pied", "Pied", ["PIED", "PIEDS", "STAND", "STANDS", "PIED / PINCE", "SUPPORT"]],
+      ["musicien", "Musicien", ["MUSICIEN", "MUSICIENS", "ZICOS", "ZICO", "ARTISTE", "ARTISTES", "PLAYER", "QUI"]],
+      ["p48", "48V", ["48V", "+48", "+48V", "48", "PH", "PHANTOM", "FANTOME", "P48", "48 V"]],
+      ["entree", "Entrée d'origine", ["IN", "INPUT", "INPUTS", "N°", "N", "NO", "#", "PATCH", "MAIN PATCH", "ENTREE", "ENTREES", "CH", "CHANNEL", "CANAL", "LINE", "TRANCHE"]],
+      ["sp", "Sous-patch ou boîtier", ["SOUS PATCH", "SOUS-PATCH", "SUB PATCH", "SUBPATCH", "BOITIER", "BOITIERS", "MULTI", "BOX", "12N", "20H", "B20", "SP"]],
+      ["notes", "Notes", ["NOTES", "NOTE", "COMMENTAIRES", "COMMENTAIRE", "REMARQUES", "REMARQUE", "OBS", "INFOS", "COM"]]
+    ],
+    sorties: [
+      ["mix", "Mix", ["MIX", "MIXES", "MIX OUT", "AUX", "OUT NAME", "LABEL", "NOM", "SORTIE", "SORTIES", "OUTPUT", "DESIGNATION"]],
+      ["dest", "Destination", ["DESTINATION", "DEST", "POUR", "QUI", "MUSICIEN", "ARTISTE"]],
+      ["type", "Type", ["TYPE"]],
+      ["rx", "Enceinte ou récepteur", ["ENCEINTE", "ENCEINTES", "HP", "DEVICE", "MODELE", "MODEL", "RECEPTEUR", "BODYPACK"]],
+      ["entree", "Sortie d'origine", ["OUT", "OUT PATCH", "CHANNEL", "CH", "N°", "N", "OUTPUT", "PORT", "SLOT"]],
+      ["notes", "Notes", ["NOTES", "NOTE", "COMMENTAIRES", "COMMENTAIRE", "REMARQUES"]]
+    ]
+  };
+  const IMP_KEEP = { entree: "Ancien patch", sp: "Sous-patch" };
+  const colLetter = (n) => { let s = ""; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+  let imp = null;
+  // Grille de texte d'une feuille (lignes et colonnes à partir de 1)
+  function impGrid(ws) {
+    const g = [], max = Math.min(ws.rowCount, 1500);
+    let w = 0;
+    for (let r = 1; r <= max; r++) { const row = ws.getRow(r), a = []; for (let c = 1; c <= Math.min(row.cellCount, 120); c++) a[c] = cellText(row.getCell(c)).replace(/\s*\n\s*/g, " ").trim(); g[r] = a; w = Math.max(w, a.length - 1); }
+    return { g, rows: max, cols: w };
+  }
+  const impMatch = (mode, f, txt) => { const t = impNorm(txt); return !!t && IMP_FIELDS[mode].find((x) => x[0] === f)[2].includes(t); };
+  function impScoreRow(mode, cells) {
+    const got = new Set();
+    (cells || []).forEach((v) => { if (!v) return; IMP_FIELDS[mode].forEach(([f]) => { if (impMatch(mode, f, v)) got.add(f); }); });
+    return got.has(IMP_FIELDS[mode][0][0]) ? got.size : 0;
+  }
+  function impFindHead(mode, G) {
+    let best = 0, row = 0;
+    for (let r = 1; r <= Math.min(G.rows, 40); r++) { const s = impScoreRow(mode, G.g[r]); if (s > best) { best = s; row = r; } }
+    return { row, score: best };
+  }
+  // Colonnes du nom (même titre répété) = un tableau par colonne ; les autres colonnes se lisent au même décalage
+  // Tableaux côte à côte : la colonne du nom et toutes celles qui portent le même titre sur la ligne de titres
+  function impBlocks(c) {
+    const head = imp.grid.g[imp.head] || [], t = impNorm(head[c]), cols = [];
+    if (t) head.forEach((v, k) => { if (impNorm(v) === t) cols.push(k); });
+    imp.blocks = cols.length > 1 ? cols : c ? [c] : [];
+    const firstCol = Math.max(1, head.findIndex((v) => v));
+    if (imp.blocks.length > 1) {
+      // Chaque tableau fait la largeur qui sépare deux titres « nom » : on commence au premier titre rempli
+      const period = imp.blocks[1] - imp.blocks[0];
+      let a = Math.max(1, imp.blocks[0] - (period - 1)); while (a < imp.blocks[0] && !head[a]) a++;
+      imp.range = [a, a + period - 1];
+    } else imp.range = [firstCol, imp.grid.cols];
+  }
+  function impSetup(keepMap) {
+    const G = imp.grid, head = G.g[imp.head] || [], main = IMP_FIELDS[imp.mode][0][0];
+    impBlocks(Math.max(0, head.findIndex((v) => impMatch(imp.mode, main, v))));
+    if (keepMap) return;
+    imp.map = {}; const taken = new Set();
+    IMP_FIELDS[imp.mode].forEach(([f]) => {
+      for (let c = imp.range[0]; c <= imp.range[1]; c++) if (!taken.has(c) && impMatch(imp.mode, f, head[c])) { imp.map[f] = c; taken.add(c); break; }
+    });
+    if (imp.blocks[0]) imp.map[main] = imp.blocks[0];
+    // Pied : une colonne sans titre clair (« COM », vide…) remplie de PPM, GPM, pinces… est prise pour les pieds
+    if (imp.mode === "master" && !imp.map.pied) {
+      for (let c = imp.range[0]; c <= imp.range[1]; c++) {
+        if (Object.keys(imp.map).some((k) => k !== "notes" && imp.map[k] === c)) continue;
+        const vals = []; for (let r = imp.head + 1; r <= Math.min(G.rows, imp.head + 80); r++) { const v = (G.g[r] || [])[c]; if (v) vals.push(v); }
+        if (vals.length >= 3 && vals.filter((v) => /^(PPM|GPM|PP|GP|CLAMP|PINCE|GOOSE|PIED|DROIT|GIRAFE|SOL\b|BASE\b)/i.test(v)).length >= vals.length * 0.6) { if (imp.map.notes === c) delete imp.map.notes; imp.map.pied = c; break; }
+      }
+      if (!imp.map.notes) for (let c = imp.range[0]; c <= imp.range[1]; c++) if (!Object.values(imp.map).includes(c) && impMatch("master", "notes", head[c])) { imp.map.notes = c; break; }
+    }
+    // Fin du tableau : avant le prochain bloc de titres, ou après 15 lignes vides
+    let end = imp.head, empty = 0;
+    for (let r = imp.head + 1; r <= G.rows; r++) {
+      const cells = G.g[r] || [];
+      if (r > imp.head + 1 && impScoreRow(imp.mode, cells) >= 2) break;
+      const any = impCols(main).some((c) => cells[c]);
+      if (any) { end = r; empty = 0; } else if (++empty >= 15) break;
+    }
+    imp.end = Math.max(end, imp.head + 1);
+  }
+  // Colonnes réelles d'un champ, une par tableau côte à côte
+  function impCols(f) {
+    const c = imp.map[f]; if (!c) return [];
+    if (imp.blocks.length < 2) return [c];
+    const off = c - imp.blocks[0]; return imp.blocks.map((b) => b + off);
+  }
+  const IMP_SKIP = new Set(["", "X", "-", "—", "BLANK", "VIDE", "/", "?"]);
+  function impItems() {
+    const G = imp.grid, F = IMP_FIELDS[imp.mode], main = F[0][0], out = [];
+    const nb = Math.max(1, imp.blocks.length);
+    for (let b = 0; b < nb; b++) {
+      for (let r = imp.head + 1; r <= imp.end; r++) {
+        const cells = G.g[r] || [], get = (f) => { const cs = impCols(f); return cs.length ? cells[cs[Math.min(b, cs.length - 1)]] || "" : ""; };
+        const name = get(main);
+        if (IMP_SKIP.has(impNorm(name)) || impMatch(imp.mode, main, name)) continue;
+        const it = { r }; F.forEach(([f]) => { it[f] = get(f); }); out.push(it);
+      }
+    }
+    return out;
+  }
+  const impOn = (v) => /^(X|OUI|YES|ON|1|✓|V|48|\+48|48V|\+48V|PH)$/i.test(String(v || "").trim());
+  function impPaint() {
+    const d = $("#impDlg"), G = imp.grid, F = IMP_FIELDS[imp.mode], head = G.g[imp.head] || [];
+    $("#impFile").textContent = imp.name;
+    $("#impSheet").innerHTML = imp.wb.worksheets.map((w, i) => `<option value="${i}"${i === imp.sheet ? " selected" : ""}>${esc(w.name)}</option>`).join("");
+    $("#impMode").value = imp.mode; $("#impHead").value = imp.head || ""; $("#impEnd").value = imp.end || "";
+    const opts = (f) => `<option value="">ignorer</option>` + (() => { let h = ""; for (let c = imp.range[0]; c <= imp.range[1]; c++) h += `<option value="${c}"${imp.map[f] === c ? " selected" : ""}>${colLetter(c)}${head[c] ? " · " + esc(head[c].slice(0, 28)) : ""}</option>`; return h; })();
+    $("#impMap").innerHTML = F.map(([f, t]) => `<label class="field"><span>${esc(t)}${IMP_KEEP[f] ? ' <i>va dans les notes</i>' : ""}</span><select data-impf="${f}">${opts(f)}</select></label>`).join("");
+    const items = imp.head ? impItems() : [];
+    const nb = imp.blocks.length;
+    $("#impBlocks").textContent = !imp.head ? "Aucune ligne de titres reconnue dans cette feuille : indique son numéro, puis choisis les colonnes." : nb > 1 ? `${nb} tableaux côte à côte (colonnes ${imp.blocks.map(colLetter).join(", ")}) : ils sont lus l'un après l'autre.` : "Un seul tableau dans la feuille.";
+    const shown = F.filter(([f]) => imp.map[f]);
+    $("#impPrev").innerHTML = items.length ? `<table><thead><tr><th>Ligne</th>${shown.map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${items.slice(0, 12).map((it) => `<tr><td class="muted">${it.r}</td>${shown.map(([f]) => `<td>${esc(f === "p48" ? (impOn(it[f]) ? "48V" : "") : it[f])}</td>`).join("")}</tr>`).join("")}</tbody></table>${items.length > 12 ? `<p class="hint">… et ${items.length - 12} autres lignes.</p>` : ""}` : `<p class="empty-state">Rien à reprendre avec ces réglages. Choisis la colonne « ${esc(F[0][1])} ».</p>`;
+    const go = $("#impGo"); go.disabled = !items.length;
+    go.textContent = items.length ? `Reprendre ${items.length} ${imp.mode === "master" ? "source" : "sortie"}${items.length > 1 ? "s" : ""}` : "Reprendre";
+    if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+  }
+  function impLoadSheet(i, mode) {
+    imp.sheet = i; imp.grid = impGrid(imp.wb.worksheets[i]);
+    imp.mode = mode || (/out|sortie|ear|iem|retour/i.test(imp.wb.worksheets[i].name) ? "sorties" : "master");
+    imp.head = impFindHead(imp.mode, imp.grid).row; imp.map = {}; imp.blocks = []; imp.range = [1, imp.grid.cols]; imp.end = imp.grid.rows;
+    if (imp.head) impSetup(false);
+  }
+  async function impOpen(buf, name) {
+    const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
+    if (!wb.worksheets.length) { notice("Ce fichier Excel ne contient aucune feuille.", true); return; }
+    imp = { wb, name: name || "fichier Excel" };
+    // Feuille de départ : celle où la ligne de titres du patch est la plus nette
+    let best = 0, bi = 0;
+    wb.worksheets.forEach((w, i) => { const s = impFindHead("master", impGrid(w)).score + (/patch|input|entr/i.test(w.name) ? 0.5 : 0); if (s > best) { best = s; bi = i; } });
+    impLoadSheet(bi);
+    $("#impDest").value = "new";
+    impPaint();
+  }
+  function impApply() {
+    const items = impItems(); if (!items.length) return;
+    const isNew = $("#impDest").value === "new", base = imp.name.replace(/\.xlsx$/i, "").trim();
+    if (isNew) { dbxDetach(); state = vide(); state.dossier.nom = base || "Dossier repris"; }
+    const keep = (it) => Object.keys(IMP_KEEP).filter((f) => it[f]).map((f) => `${IMP_KEEP[f]} : ${it[f]}`);
+    if (imp.mode === "master") {
+      items.forEach((it) => {
+        const l = newLine(it.source); l.micro = it.micro || ""; l.pied = it.pied || ""; l.musicien = it.musicien || ""; l.p48 = impOn(it.p48);
+        l.notes = [it.notes, ...keep(it)].filter(Boolean).join(" · "); state.lignes.push(l);
+      });
+    } else {
+      state.sorties = state.sorties || [];
+      items.forEach((it) => state.sorties.push({ id: nid(), mix: it.mix, dest: it.dest || "", type: it.type || "", tx: "", rx: it.rx || "", notes: [it.notes, ...keep(it)].filter(Boolean).join(" · "), out: null, box: null, pair: null }));
+    }
+    learnDossier(state); state.exemple = false;
+    $("#impDlg").close();
+    commit(true); setView(imp.mode === "master" ? homeView() : "sorties");
+    const n = items.length, what = imp.mode === "master" ? `source${n > 1 ? "s" : ""}` : `sortie${n > 1 ? "s" : ""}`;
+    notice(`${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}. ${imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre aussi les sorties, rouvre le fichier, choisis leur feuille et « Ajouter au dossier ouvert »." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`);
+  }
+  function impBind() {
+    const d = $("#impDlg");
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest("[data-iclose]")) d.close(); });
+    $("#impSheet").addEventListener("change", (e) => { impLoadSheet(Number(e.target.value)); impPaint(); });
+    $("#impMode").addEventListener("change", (e) => { impLoadSheet(imp.sheet, e.target.value); impPaint(); });
+    $("#impHead").addEventListener("change", (e) => { const n = Math.max(1, Math.min(imp.grid.rows, Number(e.target.value) || 1)); imp.head = n; impSetup(false); impPaint(); });
+    $("#impEnd").addEventListener("change", (e) => { imp.end = Math.max(imp.head + 1, Math.min(imp.grid.rows, Number(e.target.value) || imp.grid.rows)); impPaint(); });
+    $("#impMap").addEventListener("change", (e) => {
+      const s = e.target.closest("select[data-impf]"); if (!s) return;
+      const f = s.dataset.impf, c = Number(s.value) || 0, main = IMP_FIELDS[imp.mode][0][0];
+      if (c) imp.map[f] = c; else delete imp.map[f];
+      if (f === main && c) { impBlocks(c); Object.keys(imp.map).forEach((k) => { if (imp.map[k] < imp.range[0] || imp.map[k] > imp.range[1]) delete imp.map[k]; }); imp.map[main] = c; }
+      impPaint();
+    });
+    $("#impGo").addEventListener("click", impApply);
+  }
+
   // ---------- Rendu général ----------
   function renderHeader() {
     renderCover();
@@ -5927,7 +6155,7 @@ label.p48 input:checked + span { border-style: solid; }
       const ws = wb.getWorksheet("Master patch"), ids = [];
       if (ws) { const head = ws.getRow(2).values.map((v) => (v == null ? "" : String(v))), ic = head.indexOf("ID appli"); if (ic > 0) for (let r = 3; r <= ws.rowCount; r++) { const t = cellText(ws.getRow(r).getCell(ic)); if (t) ids.push(t); } }
       const known = new Set(state.lignes.map((l) => l.id)), hit = ids.filter((id) => known.has(id)).length;
-      if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; throw e; }
+      if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; e.buf = buf; throw e; }
       next = JSON.parse(JSON.stringify(state));
       const report = reconcile(next, ws);
       report.problems.unshift("Ce fichier a perdu les données de l'appli (réenregistré par Numbers ou un autre tableur) : le dossier a été repris depuis cet appareil, avec les corrections du master patch. Les modifs faites dans les autres feuilles ne sont pas reprises.");
@@ -5963,7 +6191,7 @@ label.p48 input:checked + span { border-style: solid; }
       notice(`Dossier « ${esc(state.dossier.nom)} » ouvert.` + openReport(report), report.problems.length > 0);
     } catch (e) {
       if (e && e.code === "autre-dossier") { notice("Ce fichier a perdu les données de l'appli (il a sans doute été réenregistré par Numbers ou un autre tableur). On ne peut le récupérer que sur l'appareil où ce dossier est encore ouvert dans l'appli : ouvre-le depuis cet appareil.", true); return; }
-      if (e && e.code === "pas-appli") { notice("Ce fichier n'a pas été créé par l'appli. Pour l'instant, l'appli ne relit que ses propres fichiers ; l'import de tes anciens dossiers Excel viendra ensuite.", true); return; }
+      if (e && e.code === "pas-appli") { try { await impOpen(await file.arrayBuffer(), file.name); } catch (err) { notice("Impossible de lire ce fichier Excel.", true); } return; }
       notice("Impossible de lire ce fichier. Vérifie qu'il s'agit bien d'un .xlsx enregistré par l'appli.", true);
     }
   }
@@ -6115,7 +6343,7 @@ label.p48 input:checked + span { border-style: solid; }
   // ---------- Événements ----------
   function bind() {
     bindSuggest();
-    freeBind("locaux"); freeBind("com"); netBind();
+    freeBind("locaux"); freeBind("com"); netBind(); impBind();
     $("#undoBtn").addEventListener("click", undo);
     $("#redoBtn").addEventListener("click", redo);
     document.addEventListener("keydown", (e) => {
@@ -6631,6 +6859,7 @@ label.p48 input:checked + span { border-style: solid; }
     } catch (e) {
       dbxPaint("err");
       if (e && e.code === "trop-recent") { notice("Ce dossier a été enregistré par une version plus récente de Patch Live. Ferme complètement l'appli et rouvre-la pour la mettre à jour, puis rouvre le dossier.", true); return false; }
+      if (e && e.code === "pas-appli" && e.buf) { dbxPaint(); if ($("#dbxDlg").open) $("#dbxDlg").close(); try { await impOpen(e.buf, String(idOrPath).split("/").pop()); } catch (err) { notice("Impossible de lire ce fichier Excel.", true); } return false; }
       notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
       return false;
     }
