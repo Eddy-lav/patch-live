@@ -1525,7 +1525,7 @@ label.p48 input:checked + span { border-style: solid; }
         <td data-l="${rx ? "Sources du master" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
         <td data-l="Notes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
         <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle au-dessus et clique « + Ajouter ».</div>`}
-      <datalist id="dlHfDevModel_${kind}">${uniqCi([...HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]), ...(rx ? banqueNoms("Récepteurs HF") : (BANQUE["Ears HF"] || []).filter((x) => /^Émetteur/.test(x[2])).map((x) => x[0]))]).map(optFiche).join("")}</datalist></div>`;
+      <datalist id="dlHfDevModel_${kind}">${bqUniq([...HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]), ...(rx ? banqueNoms("Récepteurs HF") : (BANQUE["Ears HF"] || []).filter((x) => /^Émetteur/.test(x[2])).map((x) => x[0]))]).map(optFiche).join("")}</datalist></div>`;
   }
   function renderHfDev(kind) { const host = $(kind === "rx" ? "#hfRxOut" : "#hfTxOut"); host.innerHTML = hfDevHtml(kind); }
   let hfDevPick = "";
@@ -2721,7 +2721,9 @@ label.p48 input:checked + span { border-style: solid; }
   }
   // Sans doublon, sans tenir compte des majuscules (le premier écrit l'emporte)
   function uniqCi(arr) { const seen = new Set(); return arr.filter((v) => { const k = String(v || "").trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; }); }
-  const consSugg = () => uniqCi([...CONS_MODELS, ...banqueNoms("Consoles")]);
+  // Listes de suggestions avec la banque : une seule entrée par référence, écrite comme dans la banque (avec sa marque en étiquette)
+  const bqUniq = (arr) => uniqCi(arr.map((v) => { const f = banqueFiche(v); return f ? f.nom : v; }));
+  const consSugg = () => bqUniq([...CONS_MODELS, ...banqueNoms("Consoles")]);
   const optFiche = (v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc(banqueLabel(f))}"` : ""}>`; };
   function renderDatalists() {
     let dl = document.getElementById("dls");
@@ -2729,16 +2731,16 @@ label.p48 input:checked + span { border-style: solid; }
     const pieds = [...new Set([...lib.pieds, ...Object.keys(PIEDS_LEGENDE), "Bras magique", "Clamp"])].sort((a, b) => a.localeCompare(b, "fr"));
     const mus = [...(state.musiciens || [])].sort((a, b) => a.localeCompare(b, "fr"));
     dl.innerHTML = `<datalist id="dlMus">${mus.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlMic">${uniqCi([...lib.micros, ...banqueNoms("Micros", "DI et talkback", "Micros HF")]).map(optFiche).join("")}</datalist>
-      <datalist id="dlPied">${uniqCi([...pieds, ...banqueNoms("Pieds et fixations")]).map(optFiche).join("")}</datalist>
-      <datalist id="dlBanque">${uniqCi([...(state.materiel || []).map((x) => x.nom).filter(Boolean), ...[...BANQUE_FICHE.values()].map((f) => f.nom)]).map((v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc([f.cat, f.marque].filter(Boolean).join(" · "))}"` : ""}>`; }).join("")}</datalist>
+      <datalist id="dlMic">${bqUniq([...lib.micros, ...banqueNoms("Micros", "DI et talkback", "Micros HF")]).map(optFiche).join("")}</datalist>
+      <datalist id="dlPied">${bqUniq([...pieds, ...banqueNoms("Pieds et fixations")]).map(optFiche).join("")}</datalist>
+      <datalist id="dlBanque">${bqUniq([...(state.materiel || []).map((x) => x.nom).filter(Boolean), ...[...BANQUE_FICHE.values()].map((f) => f.nom)]).map((v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc([f.cat, f.marque].filter(Boolean).join(" · "))}"` : ""}>`; }).join("")}</datalist>
       <datalist id="dlAcc">${lib.acc.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlCat">${[...new Set([...MAN_CATS, ...Object.keys(BANQUE), ...(state.materiel || []).map((x) => x.cat).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlFree">${state.lignes.filter((l) => !Object.values(l.sr || {}).some(Boolean)).map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlSrc">${state.lignes.map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlMix">${[...new Set((state.sorties || []).map((o) => o.mix).filter(Boolean))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlBqRack">${uniqCi([...state.racks.map((r) => r.nom).filter(Boolean), ...banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs")]).map(optFiche).join("")}</datalist>
+      <datalist id="dlBqRack">${bqUniq([...state.racks.map((r) => r.nom).filter(Boolean), ...banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs")]).map(optFiche).join("")}</datalist>
       <datalist id="dlBqSyn">${uniqCi(banqueNoms("Intercom", "Réseau", "Transport audio et convertisseurs", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Stage racks et cartes", "Énergie", "Amplification", "Diffusion et retours", "Antennes et distribution HF")).map(optFiche).join("")}</datalist>
       <datalist id="dlProv">${provSuggestions().map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`;
   }
@@ -7490,7 +7492,6 @@ label.p48 input:checked + span { border-style: solid; }
       ["PC rack 2U", "", "Ordinateur rackable · 2 U"],
       ["Echo III", "Sonnet", "Châssis Thunderbolt · 3 cartes PCIe (ex. MADI, Dante) · 2 U"],
       ["xMac mini Server", "Sonnet", "Rack 1 U pour Mac mini · 3 cartes PCIe"],
-      ["RackMac mini", "Sonnet", "Rack 1 U pour 2 Mac mini"],
       ["MIDI Express XT", "MOTU", "Interface MIDI USB · 8 entrées / 8 sorties · 1 U"],
       ["mioXM", "iConnectivity", "Interface MIDI USB / réseau (RTP-MIDI) · 4 DIN in / out · demi-rack 1 U"],
       ["Écran", "", "Moniteur informatique"],
@@ -7584,7 +7585,16 @@ label.p48 input:checked + span { border-style: solid; }
   // Une fiche par nom (le premier rencontré l'emporte), avec sa catégorie
   const BANQUE_FICHE = new Map();
   Object.entries(BANQUE).forEach(([cat, items]) => items.forEach(([nom, marque, carac]) => { const k = nom.toLowerCase(); if (!BANQUE_FICHE.has(k)) BANQUE_FICHE.set(k, { nom, marque, carac, cat }); }));
-  const banqueFiche = (v) => BANQUE_FICHE.get(String(v || "").trim().toLowerCase()) || null;
+  // Même fiche quelle que soit l'écriture : espaces, tirets et accents ignorés (« SM58 » = « SM 58 »), marque devant acceptée (« Shure SM58 »)
+  const bqKey = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[\s\-_]/g, "");
+  const BQ_BY_KEY = new Map(), BQ_MARQUES = new Set();
+  BANQUE_FICHE.forEach((f) => { const k = bqKey(f.nom); if (!BQ_BY_KEY.has(k)) BQ_BY_KEY.set(k, f); if (f.marque) BQ_MARQUES.add(bqKey(f.marque)); });
+  const banqueFiche = (v) => {
+    const t = String(v || "").trim(), k = bqKey(t); if (!k) return null;
+    const f = BANQUE_FICHE.get(t.toLowerCase()) || BQ_BY_KEY.get(k); if (f) return f;
+    const m = t.match(/^(\S+(?:\s*&\s*\S+)?)\s+(.+)$/); if (!m || !BQ_MARQUES.has(bqKey(m[1]))) return null;
+    const g = BQ_BY_KEY.get(bqKey(m[2])); return g && bqKey(g.marque) === bqKey(m[1]) ? g : null;
+  };
   const banqueNoms = (...cats) => cats.flatMap((c) => (BANQUE[c] || []).map((x) => x[0]));
   // Icône par catégorie (traits 24 × 24, couleur du texte), pour ce qui n'a pas de façade
   const BQ_ICO = {
@@ -7896,10 +7906,10 @@ label.p48 input:checked + span { border-style: solid; }
     if (!root) return;
     const gs = freeGroups(k);
     const dl = k === "locaux" ? ["Rack FX FOH", "Rack FX MON", "Playback", "Splitter"] : ["Bolero", "Riedel Artist", "Clear-Com HelixNet", "Green-GO", "Matrice"];
-    $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = uniqCi([...dl, ...S.groups.map((g) => g.nom).filter(Boolean), ...(k === "locaux" ? [] : banqueNoms("Intercom"))]).map(optFiche).join("");
+    $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = bqUniq([...dl, ...S.groups.map((g) => g.nom).filter(Boolean), ...(k === "locaux" ? [] : banqueNoms("Intercom"))]).map(optFiche).join("");
     const apps = k === "locaux" ? ["SPL Transient Designer", "Bricasti M7", "TC Electronic M6000", "Lexicon PCM 96", "Eventide H3000", "Empirical Labs Distressor", "Tube-Tech CL 1B", "Rupert Neve 5045", "Ordinateur playback", "Talkback"] : ["Pupitre talk DM1", "Sennheiser e835 à interrupteur", "Casque Beyerdynamic DT 109", "Yamaha MSP3", "Genelec 8020", "Talk HF (EW)", "Beltpack Bolero", "Pédale de talk"];
-    $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = uniqCi([...apps, ...S.rows.map((r) => r.app).filter(Boolean), ...(k === "locaux" ? banqueNoms("Périphériques et effets", "Ordinateurs et logiciels") : banqueNoms("Intercom", "DI et talkback", "Diffusion et retours"))]).map(optFiche).join("");
-    $("#dlFxModel").innerHTML = uniqCi([...consSugg(), ...LOCAL_EXTRA_MODELS]).map(optFiche).join("");
+    $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = bqUniq([...apps, ...S.rows.map((r) => r.app).filter(Boolean), ...(k === "locaux" ? banqueNoms("Périphériques et effets", "Ordinateurs et logiciels") : banqueNoms("Intercom", "DI et talkback", "Diffusion et retours"))]).map(optFiche).join("");
+    $("#dlFxModel").innerHTML = bqUniq([...consSugg(), ...LOCAL_EXTRA_MODELS]).map(optFiche).join("");
     if (k === "com") $("#comAddCons").hidden = consoleKeys().includes("COM");
     root.innerHTML = gs.length ? gs.map((g) => freeGroupHtml(k, g)).join("") : `<div class="panel empty-state"><p>${esc(K.empty)}</p></div>`;
     root.querySelectorAll("table.fxt").forEach(labelCells);
