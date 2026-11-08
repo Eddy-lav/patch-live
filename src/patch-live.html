@@ -990,9 +990,19 @@ label.p48 input:checked + span { border-style: solid; }
 #netTbl tr.netbad td.ipc input { border-color: var(--danger); }
 .netwarn { display: block; margin-top: 2px; font-size: 12.5px; color: var(--danger); }
 #netTbl td.ipc input { font-variant-numeric: tabular-nums; }
+#netTbl tr.netgrp td { background: var(--surface); padding: 14px 4px 4px; border-bottom: 2px solid var(--ink); font-family: var(--font-head); font-size: 16px; }
+#netTbl tr.netgrp td .meta { color: var(--muted); font-family: var(--font-ui); font-size: 13.5px; font-weight: 400; margin-left: 6px; }
+#netTbl tr.netgrp td::before { content: none !important; }
+#netTbl tbody tr.netgrp:first-child td { padding-top: 4px; }
 .netfill { margin-top: 14px; }
 .netfill .actions { align-items: flex-end; }
 .netfill .field input { width: 150px; }
+.fxtape b { display: block; padding: 2px 4px; font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--tape-ink); }
+.fxmodel input[type="text"] { width: 22ch; max-width: 100%; }
+.fxnote { margin: 2px 0 6px; }
+.fxt td.fxport b { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fxt tr.virt td.fxport b { color: var(--muted); font-weight: 500; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .fxtape { transform: none; } }
 @media print { .fxtape { clip-path: none; transform: none; } }
 /* ---------- Reprendre un ancien Excel (v106) ---------- */
@@ -1354,13 +1364,13 @@ label.p48 input:checked + span { border-style: solid; }
 </section>
 
 <section id="v-local" hidden>
-  <div class="toolbar fxbar"><button class="btn small primary" type="button" data-fxaddg>+ Console</button><span class="hint">Entrées et sorties locales de chaque console : AES, inserts, effets, talkback, lecteurs. « + Insert » ajoute le départ et le retour d'un coup.</span></div>
+  <div class="toolbar fxbar"><button class="btn small" type="button" data-fxaddg title="Rack d'effets, lecteur, splitter… ce qui n'est pas une console du dossier">+ Autre appareil</button><span class="hint">Chaque console du dossier apparaît ici : choisis son modèle et ses entrées et sorties locales se déclarent toutes seules. Note dessus les AES, inserts, effets et talkback. « + Insert » ajoute le départ et le retour d'un coup.</span></div>
   <div id="fx-local" class="fxlist"></div>
-  <datalist id="dlFxCons"></datalist><datalist id="dlFxApp"></datalist>
+  <datalist id="dlFxCons"></datalist><datalist id="dlFxApp"></datalist><datalist id="dlFxModel"></datalist>
 </section>
 
 <section id="v-com" hidden>
-  <div class="toolbar fxbar"><button class="btn small primary" type="button" data-fxaddg>+ Système</button><span class="hint">Patch intercom de la console com ou de la matrice : entrées (micros de talk, retours), sorties (HP, casques, ears) et liaisons 4 fils entre régies.</span></div>
+  <div class="toolbar fxbar"><button class="btn small primary" type="button" id="comAddCons">+ Console de com</button><button class="btn small" type="button" data-fxaddg title="Bolero, Riedel, matrice…">+ Autre système</button><span class="hint">La console de com est une console du dossier : choisis son modèle et ses locaux se déclarent tout seuls ; ses stage racks se règlent dans Réglages racks. Note aussi les liaisons 4 fils entre régies.</span></div>
   <div id="fx-com" class="fxlist"></div>
   <datalist id="dlComSys"></datalist><datalist id="dlComApp"></datalist>
 </section>
@@ -1369,12 +1379,12 @@ label.p48 input:checked + span { border-style: solid; }
   <div class="toolbar fxbar"><button id="netAdd" class="btn small primary" type="button">+ Appareil</button><label class="inl"><input id="netSort" type="checkbox"> Trier par adresse</label><span id="netSum" class="netsum" role="status"></span></div>
   <div class="panel">
     <div class="tbl"><table id="netTbl" class="cards"></table></div>
-    <p class="hint">Les consoles, les racks, les appareils HF et les éléments du synoptique apparaissent tout seuls. « + Appareil » ajoute un switch, un ordinateur ou une borne Wi-Fi. Une adresse en double sur le même réseau est signalée en rouge.</p>
+    <p class="hint">Les consoles, les racks, les appareils HF et les éléments du synoptique apparaissent tout seuls, rangés par réseau. Les HF sont mis ensemble sur « Contrôle HF » ; pour les autres, écris le réseau de chaque appareil (Dante primaire, contrôle…). « + Appareil » ajoute un switch, un ordinateur ou une borne Wi-Fi. Une adresse en double sur le même réseau est signalée en rouge.</p>
   </div>
   <div class="panel netfill">
     <h2>Numéroter d'un coup</h2>
-    <div class="actions"><label class="field"><span>Appareils</span><select id="netFillType"></select></label><label class="field"><span>À partir de</span><input id="netFillFrom" type="text" inputmode="decimal" placeholder="192.168.1.10" spellcheck="false"></label><button id="netFill" class="btn small" type="button">Attribuer les adresses</button></div>
-    <p class="hint">Les appareils sans adresse prennent les suivantes, dans l'ordre du tableau. Les adresses déjà prises sont sautées.</p>
+    <div class="actions"><label class="field"><span>Appareils</span><select id="netFillType"></select></label><label class="field"><span>À partir de</span><input id="netFillFrom" type="text" inputmode="decimal" placeholder="192.168.1.10" spellcheck="false"></label><label class="field"><span>Masque (facultatif)</span><input id="netFillMask" type="text" inputmode="decimal" placeholder="255.255.255.0" spellcheck="false"></label><button id="netFill" class="btn small" type="button">Attribuer les adresses</button></div>
+    <p class="hint">Choisis un réseau (ou un type d'appareil) : ses appareils sans adresse prennent les suivantes, dans l'ordre du tableau, en sautant celles déjà prises. Fais-le une fois par réseau.</p>
   </div>
   <datalist id="dlNet"></datalist><datalist id="dlNetType"></datalist>
 </section>
@@ -2231,7 +2241,7 @@ label.p48 input:checked + span { border-style: solid; }
 
   // Colonnes de stage rack selon les consoles
   // FOH, monitor, broadcast ou console nommée à la main ; « Partagé » sert à toutes les consoles
-  const STD_CONS = [["FOH", "FOH"], ["MON", "monitor"], ["BC", "broadcast"]];
+  const STD_CONS = [["FOH", "FOH"], ["MON", "monitor"], ["BC", "broadcast"], ["COM", "com"]];
   const consLabel = (k) => (STD_CONS.find((x) => x[0] === k) || [, k])[1];
   function consoleKeys() {
     const rank = (c) => { const i = STD_CONS.findIndex((x) => x[0] === c); return i < 0 ? 9 : i; };
@@ -3421,7 +3431,7 @@ label.p48 input:checked + span { border-style: solid; }
 
   // ---------- Visuels d'appareils ----------
   // Pictogrammes dessinés pour l'appli (pas de photos de fabricant) ; une photo perso peut les remplacer appareil par appareil
-  const CONS_MODELS = ["DiGiCo SD5", "DiGiCo SD7", "DiGiCo SD7 Quantum", "DiGiCo SD10", "DiGiCo SD12", "DiGiCo Quantum 225", "DiGiCo Quantum 338", "DiGiCo Quantum 5", "DiGiCo Quantum 7", "DiGiCo Quantum 852", "Yamaha Rivage PM10", "Yamaha Rivage PM7", "Yamaha Rivage PM5", "Yamaha Rivage PM3", "Yamaha CL5", "Avid S6L-24D", "Avid S6L-32D", "Avid S6L-48D", "Midas Heritage-D HD96-24", "Midas Pro X", "Allen & Heath dLive S7000", "Allen & Heath dLive S5000", "SSL L550 Plus", "SSL L650", "Lawo mc²56"];
+  const CONS_MODELS = ["DiGiCo SD5", "DiGiCo SD7", "DiGiCo SD7 Quantum", "DiGiCo SD10", "DiGiCo SD12", "DiGiCo Quantum 225", "DiGiCo Quantum 338", "DiGiCo Quantum 5", "DiGiCo Quantum 7", "DiGiCo Quantum 852", "Yamaha Rivage PM10", "Yamaha Rivage PM7", "Yamaha Rivage PM5", "Yamaha Rivage PM3", "Yamaha CL5", "Avid S6L-24D", "Avid S6L-32D", "Avid S6L-48D", "Midas Heritage-D HD96-24", "Midas Pro X", "Allen & Heath dLive S7000", "Allen & Heath dLive S5000", "Yamaha QL5", "Yamaha QL1", "Behringer X32", "Midas M32", "SSL L550 Plus", "SSL L650", "Lawo mc²56"];
   // Envoi Optocore d'une console DiGiCo (« Opto Send ») : des canaux que la console pose sur la loop sous un ID à elle, sans boîtier
   const isOsend = (r) => !!r && (r.model === "osend" || /opto\s*-?\s*send|envoi\s+opto/i.test(r.nom || ""));
   function devType(n) {
@@ -3955,7 +3965,7 @@ label.p48 input:checked + span { border-style: solid; }
     }).join("")}</tbody>`;
     { const ks = consoleKeys(), S = synState(), list = ks.length ? ks : ["ALL"];
       const nR = (k) => state.racks.filter((r) => r.console === k).length, nSh = state.racks.filter((r) => r.console === "Partagé").length;
-      const CHOICES = [["FOH", "FOH"], ["MON", "Monitor"], ["BC", "Broadcast"], ["__autre", "Autre (nom libre)…"]];
+      const CHOICES = [["FOH", "FOH"], ["MON", "Monitor"], ["BC", "Broadcast"], ["COM", "Com (intercom)"], ["__autre", "Autre (nom libre)…"]];
       const free = CHOICES.filter(([v]) => v === "__autre" || !ks.includes(v));
       const row = (k) => {
         const own = k === "ALL" ? state.racks.length : nR(k), what = k === "ALL" ? `${own} appareil${own > 1 ? "s" : ""}` : `${own ? `${own} appareil${own > 1 ? "s" : ""} à elle` : "aucun appareil à elle"}${nSh ? ` + ${nSh} partagé${nSh > 1 ? "s" : ""}` : ""}`;
@@ -5389,22 +5399,50 @@ label.p48 input:checked + span { border-style: solid; }
   }
 
   // ---------- Patchs libres : local console (inserts, effets, AES) et intercom ----------
-  // Un patch libre = des groupes (une console, un système d'intercom), chacun avec ses tableaux d'entrées et de sorties
+  // Un patch libre = des groupes, chacun avec ses tableaux d'entrées et de sorties.
+  // Les consoles du dossier (Réglages racks › Consoles) sont des groupes automatiques : leurs locaux se déclarent
+  // d'après le modèle choisi ; la console « com » va dans Intercom, les autres dans Local console.
+  // On ajoute à la main d'autres groupes (rack d'effets, Bolero, Riedel…).
   const FREE = {
     locaux: {
-      v: "local", grp: "console", grpPh: "Nom de la console, ex. MON Matt",
-      sens: [["in", "Entrées locales", "+ Entrée", "Local in"], ["out", "Sorties locales", "+ Sortie", "Local out"]],
-      cols: [["port", "Port", "Local in 5", 96], ["nom", "Désignation", "Transient SPL", 170, "dlSrc"], ["app", "Appareil", "SPL Transient Designer", 160, "dlFxApp"], ["lien", "Lien", "Kick, FX 1, insert ch 12", 150], ["notes", "Notes", "", 160]],
-      sheet: "Local console", empty: "Ajoute une console pour noter ses entrées et sorties locales, ses AES, ses inserts et ses effets."
+      v: "local", grp: "console", grpPh: "Nom, ex. Rack FX FOH",
+      sens: [["in", "Entrées locales", "+ Entrée", "Local In"], ["out", "Sorties locales", "+ Sortie", "Local Out"]],
+      cols: [["port", "Port", "Local In 5", 96], ["nom", "Désignation", "Transient SPL", 170, "dlSrc"], ["app", "Appareil", "SPL Transient Designer", 160, "dlFxApp"], ["lien", "Lien", "Kick, FX 1, insert ch 12", 150], ["notes", "Notes", "", 160]],
+      sheet: "Local console", empty: "Ajoute tes consoles dans Régie › Réglages racks : chacune apparaît ici avec ses entrées et sorties locales, d'après son modèle.",
+      addG: "+ Autre appareil", addGt: "Un appareil qui n'est pas une console du dossier : rack d'effets, lecteur, splitter…"
     },
     com: {
-      v: "com", grp: "système", grpPh: "Nom du système, ex. X32 COM",
+      v: "com", grp: "système", grpPh: "Nom, ex. Bolero",
       sens: [["in", "Entrées", "+ Entrée", "In"], ["out", "Sorties", "+ Sortie", "Out"], ["4w", "Liaisons 4 fils et patch", "+ Liaison", "4W"]],
       cols: [["port", "Port", "In 1", 80], ["nom", "Nom", "FOH 1 to MON", 170], ["qui", "Qui", "Smart", 110, "dlMus"], ["app", "Micro ou HP", "e835 + DM1, SRM150", 150, "dlComApp"], ["lien", "Liaison", "12N COM 3, AMP 01", 130], ["notes", "Notes", "", 150]],
-      sheet: "Intercom", empty: "Ajoute un système d'intercom (console com, matrice, Bolero…) pour noter ses entrées, ses sorties et ses liaisons 4 fils."
+      sheet: "Intercom", empty: "Ajoute la console de com : ses locaux se déclarent d'après son modèle, et tu peux lui donner ses stage racks dans Réglages racks.",
+      addG: "+ Autre système", addGt: "Bolero, Riedel, matrice… tout ce qui n'est pas une console du dossier"
     }
   };
-  const FREE_V = { local: "locaux", com: "com" };
+  // Locaux de chaque modèle, d'après les fiches des fabricants (entrées micro/ligne, sorties ligne, AES en canaux, talkback)
+  // Un modèle absent d'ici n'a pas de locaux automatiques : on les ajoute à la main.
+  const LOCAL_SPEC = [
+    [/SD7|Quantum ?7\b/i, { i: 12, o: 12, ai: 12, ao: 12, tb: 1 }],
+    [/SD12/i, { i: 8, o: 8, ai: 8, ao: 8 }],
+    [/SD10/i, { i: 8, o: 8, ai: 8, ao: 8 }],
+    [/Quantum ?338/i, { i: 8, o: 8, ai: 8, ao: 8 }],
+    [/Quantum ?225/i, { i: 8, o: 8, ai: 4, ao: 4 }],
+    [/CL5/i, { i: 8, o: 8, ai: 0, ao: 2, tb: 1, inN: "Omni In", outN: "Omni Out" }],
+    [/QL5/i, { i: 32, o: 16, ai: 0, ao: 2, inN: "Input", outN: "Omni Out" }],
+    [/QL1/i, { i: 16, o: 8, ai: 0, ao: 2, inN: "Input", outN: "Omni Out" }],
+    [/dLive|S7000/i, { i: 8, o: 8, ai: 4, ao: 6 }],
+    [/X32|M32/i, { i: 32, o: 16, ai: 0, ao: 0, inN: "In", outN: "Out" }]
+  ];
+  function consLocals(model) {
+    const hit = LOCAL_SPEC.find(([re]) => re.test(model || "")); if (!hit) return null;
+    const s = hit[1], out = [], inN = s.inN || "Local In", outN = s.outN || "Local Out";
+    for (let n = 1; n <= s.i; n++) out.push({ sens: "in", port: `${inN} ${n}` });
+    for (let n = 1; n < s.ai; n += 2) out.push({ sens: "in", port: `AES In ${n}-${n + 1}` });
+    if (s.tb) out.push({ sens: "in", port: "Talkback" });
+    for (let n = 1; n <= s.o; n++) out.push({ sens: "out", port: `${outN} ${n}` });
+    for (let n = 1; n < s.ao; n += 2) out.push({ sens: "out", port: `AES Out ${n}-${n + 1}` });
+    return out;
+  }
   function freeState(k) {
     if (!state[k] || typeof state[k] !== "object" || Array.isArray(state[k])) state[k] = { groups: [], rows: [] };
     const S = state[k];
@@ -5412,10 +5450,27 @@ label.p48 input:checked + span { border-style: solid; }
     if (!Array.isArray(S.rows)) S.rows = [];
     return S;
   }
+  const consModelOf = (c) => ((synState().cons || {})[c] || {}).model || "";
+  // Groupes affichés : les consoles du dossier (automatiques), puis ceux ajoutés à la main
+  function freeGroups(k) {
+    const ks = consoleKeys().filter((c) => (k === "com" ? c === "COM" : c !== "COM"));
+    const auto = ks.map((c) => ({ id: "c:" + c, cons: c, auto: true, nom: "Console " + consLabel(c), model: consModelOf(c) }));
+    return [...auto, ...freeState(k).groups];
+  }
   const freeRows = (k, g, sens) => freeState(k).rows.filter((r) => r.g === g && r.sens === sens);
-  // Port suivant : « Local in 5 » après « Local in 4 », « AES IN 3-4 » après « AES IN 1-2 »
+  const fxFilled = (r) => ["nom", "app", "lien", "qui", "notes"].some((f) => String(r[f] || "").trim());
+  // Lignes d'un tableau : les ports du modèle (remplis ou non), puis les lignes ajoutées à la main
+  function freeView(k, g, sens) {
+    const saved = freeRows(k, g.id, sens), ports = g.auto ? (consLocals(g.model) || []).filter((p) => p.sens === sens) : [];
+    const used = new Set();
+    const out = ports.map((p) => { const r = saved.find((x) => !used.has(x.id) && impNorm(x.port) === impNorm(p.port)); if (r) { used.add(r.id); return { ...r, fixed: true }; } return { id: "", port: p.port, fixed: true, virt: true }; });
+    saved.forEach((r) => { if (!used.has(r.id)) out.push(r); });
+    return out;
+  }
+  // Port suivant : « Local In 13 » après « Local In 12 », « AES In 3-4 » après « AES In 1-2 »
   function nextPort(k, g, sens) {
-    const rows = freeRows(k, g, sens), last = [...rows].reverse().find((r) => String(r.port || "").trim());
+    const all = freeView(k, g, sens), plain = all.filter((r) => !/^(AES|Talkback)/i.test(r.port || "")), rows = plain.length ? plain : all;
+    const last = [...rows].reverse().find((r) => String(r.port || "").trim());
     const def = (FREE[k].sens.find((s) => s[0] === sens) || [])[3] || "";
     if (!last) return `${def} 1`;
     const p = String(last.port).trim();
@@ -5425,13 +5480,22 @@ label.p48 input:checked + span { border-style: solid; }
     return m ? `${m[1]}${+m[2] + 1}` : "";
   }
   function freeGroupHtml(k, g) {
-    const K = FREE[k], all = freeState(k).rows.filter((r) => r.g === g.id);
-    const meta = K.sens.map(([s, t]) => { const n = all.filter((r) => r.sens === s).length, w = t.split(" ")[0].toLowerCase(); return n ? `${n} ${n > 1 ? w : w.replace(/s$/, "")}` : ""; }).filter(Boolean).join(", ");
-    return `<div class="panel fxg" data-g="${g.id}">
-      <div class="fxh"><span class="fxtape"><input type="text" data-fxgn value="${esc(g.nom)}" aria-label="Nom de la ${K.grp}" placeholder="${esc(K.grpPh)}" autocomplete="off" data-suggest="${k === "locaux" ? "dlFxCons" : "dlComSys"}"></span><span class="meta">${esc(meta || "vide")}</span><button class="btn small" type="button" data-fxdelg title="Supprimer la ${K.grp} et ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Supprimer</button></div>
+    const K = FREE[k], spec = g.auto ? consLocals(g.model) : null;
+    const meta = K.sens.map(([s, t]) => { const v = freeView(k, g, s); if (!v.length) return ""; const n = v.filter((r) => !r.virt && fxFilled(r)).length, w = t.split(" ")[0].toLowerCase(), one = w.replace(/s$/, ""); return g.auto && spec ? `${n} sur ${v.length} ${v.length > 1 ? w : one}` : `${v.length} ${v.length > 1 ? w : one}`; }).filter(Boolean).join(", ");
+    const racks = g.auto && g.cons === "COM" ? state.racks.filter((r) => r.console === "COM") : [];
+    const name = g.auto
+      ? `<span class="fxtape"><b>${esc(g.nom)}</b></span><label class="fxmodel"><span class="sr">Modèle de la console ${esc(consLabel(g.cons))}</span><input type="text" data-fxmodel="${esc(g.cons)}" value="${esc(g.model)}" placeholder="Modèle, ex. DiGiCo SD12" autocomplete="off" data-suggest="dlFxModel"></label>`
+      : `<span class="fxtape"><input type="text" data-fxgn value="${esc(g.nom)}" aria-label="Nom de la ${K.grp}" placeholder="${esc(K.grpPh)}" autocomplete="off" data-suggest="${k === "locaux" ? "dlFxCons" : "dlComSys"}"></span>`;
+    const note = !g.auto ? "" : !g.model ? `<p class="hint fxnote">Choisis le modèle : ses entrées et sorties locales se déclarent toutes seules.</p>` : !spec ? `<p class="hint fxnote">Ce modèle n'a pas de locaux connus dans l'appli : ajoute-les à la main.</p>` : "";
+    const rk = g.auto && g.cons === "COM" ? `<p class="hint fxnote">${racks.length ? `Stage rack${racks.length > 1 ? "s" : ""} de la console de com : ${racks.map((r) => esc(rackTitle(r))).join(", ")}. Leur patch est dans Racks et I/O.` : "Pas encore de stage rack sur la console de com : dans Réglages racks, mets « com » dans la colonne Console d'un appareil."}</p>` : "";
+    return `<div class="panel fxg" data-g="${esc(g.id)}">
+      <div class="fxh">${name}<span class="meta">${esc(meta || "vide")}</span>${g.auto ? "" : `<button class="btn small" type="button" data-fxdelg title="Supprimer et effacer ses lignes (Cmd+Z ou Ctrl+Z pour annuler)">Supprimer</button>`}</div>${note}${rk}
       ${K.sens.map(([s, t, add]) => {
-        const rows = freeRows(k, g.id, s);
-        return `<div class="fxs" data-sens="${s}"><h3>${esc(t)}</h3>${rows.length ? `<div class="tbl"><table class="cards fxt"><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-fr="${r.id}">${K.cols.map(([f, , ph, w, dl]) => `<td style="min-width:${w}px"><input type="text" data-ff="${f}" value="${esc(r[f])}" aria-label="${esc(K.cols.find((c) => c[0] === f)[1])}"${ph && (i === 0 || f === "port") ? ` placeholder="${esc(i === 0 ? "ex. " + ph : ph)}"` : ""}${dl ? ` autocomplete="off" data-suggest="${dl}"` : ""}></td>`).join("")}<td><button class="btn small danger xdel" type="button" data-fxdel="${r.id}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td></tr>`).join("")}</tbody></table></div>` : ""}
+        const rows = freeView(k, g, s);
+        return `<div class="fxs" data-sens="${s}"><h3>${esc(t)}</h3>${rows.length ? `<div class="tbl"><table class="cards fxt"><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr data-fr="${esc(r.id)}"${r.virt ? ` data-vp="${esc(r.port)}"` : ""}${r.virt ? ' class="virt"' : ""}>${K.cols.map(([f, , ph, w, dl]) => {
+          if (f === "port" && r.fixed) return `<td style="min-width:${w}px" class="fxport"><b>${esc(r.port)}</b></td>`;
+          return `<td style="min-width:${w}px"><input type="text" data-ff="${f}" value="${esc(r[f] || "")}" aria-label="${esc(K.cols.find((c) => c[0] === f)[1])}${r.fixed ? " " + esc(r.port) : ""}"${ph && i === 0 ? ` placeholder="${esc("ex. " + ph)}"` : ""}${dl ? ` autocomplete="off" data-suggest="${dl}"` : ""}></td>`;
+        }).join("")}<td>${r.virt ? "" : `<button class="btn small danger xdel" type="button" data-fxdel="${esc(r.id)}" title="${r.fixed ? "Vider la ligne" : "Supprimer la ligne"}" aria-label="${r.fixed ? "Vider la ligne" : "Supprimer la ligne"}">×</button>`}</td></tr>`).join("")}</tbody></table></div>` : ""}
           <div class="actions fxadd"><button class="btn small" type="button" data-fxadd="${s}">${esc(add)}</button><label class="inl" title="Nombre de lignes ajoutées d'un coup">× <input type="number" min="1" max="64" value="1" data-fxn aria-label="Nombre de lignes à ajouter"></label>${k === "locaux" && s === "out" ? `<button class="btn small" type="button" data-fxins title="Ajoute une sortie et une entrée du même nom : le départ et le retour d'un insert">+ Insert</button>` : ""}</div></div>`;
       }).join("")}
     </div>`;
@@ -5439,66 +5503,84 @@ label.p48 input:checked + span { border-style: solid; }
   function renderFree(k) {
     const S = freeState(k), K = FREE[k], root = $("#fx-" + K.v);
     if (!root) return;
-    const dl = k === "locaux" ? ["FOH", "Monitor", "Broadcast", ...consoleKeys().filter((c) => !STD_CONS.some((x) => x[0] === c))] : ["Console com (X32)", "Matrice Bolero", "Si Expression", "Clear-Com MS-702", "Riedel Artist"];
+    const gs = freeGroups(k);
+    const dl = k === "locaux" ? ["Rack FX FOH", "Rack FX MON", "Playback", "Splitter"] : ["Bolero", "Riedel Artist", "Clear-Com HelixNet", "Green-GO", "Matrice"];
     $(k === "locaux" ? "#dlFxCons" : "#dlComSys").innerHTML = [...new Set([...dl, ...S.groups.map((g) => g.nom).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
     const apps = k === "locaux" ? ["SPL Transient Designer", "Bricasti M7", "TC Electronic M6000", "Lexicon PCM 96", "Eventide H3000", "Empirical Labs Distressor", "Tube-Tech CL 1B", "Rupert Neve 5045", "Ordinateur playback", "Talkback"] : ["Pupitre talk DM1", "Sennheiser e835 à interrupteur", "Casque Beyerdynamic DT 109", "Yamaha MSP3", "Genelec 8020", "Talk HF (EW)", "Beltpack Bolero", "Pédale de talk"];
     $(k === "locaux" ? "#dlFxApp" : "#dlComApp").innerHTML = [...new Set([...apps, ...S.rows.map((r) => r.app).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("");
-    root.innerHTML = S.groups.length ? S.groups.map((g) => freeGroupHtml(k, g)).join("") : `<div class="panel empty-state"><p>${esc(K.empty)}</p></div>`;
+    $("#dlFxModel").innerHTML = [...new Set([...CONS_MODELS, ...LOCAL_EXTRA_MODELS])].map((m) => `<option value="${esc(m)}">`).join("");
+    if (k === "com") $("#comAddCons").hidden = consoleKeys().includes("COM");
+    root.innerHTML = gs.length ? gs.map((g) => freeGroupHtml(k, g)).join("") : `<div class="panel empty-state"><p>${esc(K.empty)}</p></div>`;
     root.querySelectorAll("table.fxt").forEach(labelCells);
   }
+  const LOCAL_EXTRA_MODELS = ["Yamaha QL5", "Yamaha QL1", "Behringer X32", "Midas M32"];
   function freeBind(k) {
     const K = FREE[k], sec = $("#v-" + K.v);
+    const grp = (id) => freeGroups(k).find((x) => x.id === id);
     sec.querySelector("[data-fxaddg]").addEventListener("click", () => {
       const S = freeState(k), n = S.groups.length + 1;
-      S.groups.push({ id: nid(), nom: k === "locaux" ? (n === 1 ? "Monitor" : "Console " + n) : (n === 1 ? "Console com" : "Système " + n) });
+      S.groups.push({ id: nid(), nom: k === "locaux" ? (n === 1 ? "Rack FX" : "Appareil " + n) : (n === 1 ? "Bolero" : "Système " + n) });
       commit(true);
       const ins = sec.querySelectorAll("input[data-fxgn]"); if (ins.length) { ins[ins.length - 1].focus(); ins[ins.length - 1].select(); }
     });
     sec.addEventListener("change", (e) => {
       const t = e.target, gEl = t.closest("[data-g]"); if (!gEl) return;
-      const S = freeState(k), g = S.groups.find((x) => x.id === gEl.dataset.g); if (!g) return;
-      if (t.matches("[data-fxgn]")) { g.nom = t.value.trim(); commit(false); return; }
-      if (t.matches("[data-ff]")) { const r = S.rows.find((x) => x.id === t.closest("[data-fr]").dataset.fr); if (r) { r[t.dataset.ff] = t.value.trim(); commit(false); } }
+      const S = freeState(k);
+      if (t.matches("[data-fxmodel]")) { const C = synState(), c = t.dataset.fxmodel; C.cons[c] = { ...(C.cons[c] || {}), model: t.value.trim() }; commit(true); return; }
+      if (t.matches("[data-fxgn]")) { const g = S.groups.find((x) => x.id === gEl.dataset.g); if (g) { g.nom = t.value.trim(); commit(false); } return; }
+      if (!t.matches("[data-ff]")) return;
+      const tr = t.closest("[data-fr]"), v = t.value.trim();
+      if (!tr.dataset.fr) { // port du modèle encore vide : la ligne est créée à la première saisie
+        if (!v) return;
+        S.rows.push({ id: nid(), g: gEl.dataset.g, sens: t.closest("[data-sens]").dataset.sens, port: tr.dataset.vp, nom: "", app: "", lien: "", qui: "", notes: "", [t.dataset.ff]: v });
+        commit(true); return;
+      }
+      const r = S.rows.find((x) => x.id === tr.dataset.fr); if (r) { r[t.dataset.ff] = v; commit(false); }
     });
     sec.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "comAddCons") {
+        const C = synState(); C.cons.COM = { ...(C.cons.COM || {}), added: true }; rebuildSr(); commit(true);
+        notice("Console de com ajoutée. Choisis son modèle ici ; ses stage racks se règlent dans Réglages racks (colonne Console : « com »).");
+        const m = sec.querySelector('[data-fxmodel="COM"]'); if (m) m.focus(); return;
+      }
       const gEl = b.closest("[data-g]"); if (!gEl) return;
-      const S = freeState(k), gid = gEl.dataset.g;
+      const S = freeState(k), gid = gEl.dataset.g, g = grp(gid); if (!g) return;
       if (b.matches("[data-fxdelg]")) {
-        const g = S.groups.find((x) => x.id === gid);
         S.groups = S.groups.filter((x) => x.id !== gid); S.rows = S.rows.filter((r) => r.g !== gid);
-        commit(true); notice(`« ${esc((g && g.nom) || K.grp)} » supprimé. Cmd+Z (ou Ctrl+Z) pour annuler.`); return;
+        commit(true); notice(`« ${esc(g.nom || K.grp)} » supprimé. Cmd+Z (ou Ctrl+Z) pour annuler.`); return;
       }
       if (b.matches("[data-fxdel]")) { S.rows = S.rows.filter((r) => r.id !== b.dataset.fxdel); commit(true); return; }
       const sEl = b.closest("[data-sens]"), sens = sEl && sEl.dataset.sens;
       if (b.matches("[data-fxadd]")) {
         const n = Math.max(1, Math.min(64, Number(sEl.querySelector("[data-fxn]").value) || 1));
-        for (let i = 0; i < n; i++) S.rows.push({ id: nid(), g: gid, sens, port: nextPort(k, gid, sens), nom: "", app: "", lien: "", qui: "", notes: "" });
+        for (let i = 0; i < n; i++) S.rows.push({ id: nid(), g: gid, sens, port: nextPort(k, g, sens), nom: "", app: "", lien: "", qui: "", notes: "" });
         commit(true);
       } else if (b.matches("[data-fxins]")) {
-        S.rows.push({ id: nid(), g: gid, sens: "out", port: nextPort(k, gid, "out"), nom: "", app: "", lien: "Insert départ", notes: "" });
-        S.rows.push({ id: nid(), g: gid, sens: "in", port: nextPort(k, gid, "in"), nom: "", app: "", lien: "Insert retour", notes: "" });
+        S.rows.push({ id: nid(), g: gid, sens: "out", port: nextPort(k, g, "out"), nom: "", app: "", lien: "Insert départ", notes: "" });
+        S.rows.push({ id: nid(), g: gid, sens: "in", port: nextPort(k, g, "in"), nom: "", app: "", lien: "Insert retour", notes: "" });
         commit(true);
       } else return;
-      const last = $("#v-" + K.v).querySelector(`[data-g="${gid}"] [data-sens="${b.matches("[data-fxins]") ? "out" : sens}"] tbody tr:last-child input[data-ff="nom"]`);
+      const last = sec.querySelector(`[data-g="${gid}"] [data-sens="${b.matches("[data-fxins]") ? "out" : sens}"] tbody tr:last-child input[data-ff="nom"]`);
       if (last) last.focus();
     });
   }
+  // Impression et Excel : seulement les lignes écrites (les ports du modèle restés vides ne s'impriment pas)
+  const freeOut = (k) => freeGroups(k).map((g) => ({ g, parts: FREE[k].sens.map(([s, t]) => [t, freeView(k, g, s).filter((r) => !r.virt)]).filter((p) => p[1].length) })).filter((x) => x.parts.length);
+  const fxTitle = (g) => (g.auto && g.model ? `${g.nom} · ${g.model}` : g.nom);
   function freePrint(k) {
-    const S = freeState(k), K = FREE[k];
-    return S.groups.map((g) => `<div class="blk"><h2>${esc(g.nom || K.grp)}</h2>${K.sens.map(([s, t]) => { const rows = freeRows(k, g.id, s); return rows.length ? `<h3>${esc(t)}</h3><table><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${K.cols.map(([f]) => `<td>${esc(r[f] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""; }).join("")}</div>`).join("");
+    const K = FREE[k];
+    return freeOut(k).map(({ g, parts }) => `<div class="blk"><h2>${esc(fxTitle(g) || K.grp)}</h2>${parts.map(([t, rows]) => `<h3>${esc(t)}</h3><table><thead><tr>${K.cols.map((c) => `<th>${esc(c[1])}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${K.cols.map(([f]) => `<td>${esc(r[f] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`).join("")}</div>`).join("");
   }
   function freeSheet(wb, k, titre) {
-    const S = freeState(k), K = FREE[k];
-    if (!S.rows.length) return;
+    const K = FREE[k], blocks = freeOut(k);
+    if (!blocks.length) return;
     const ws = wb.addWorksheet(K.sheet);
     ws.addRow([`${K.sheet} · ${titre}`]).font = { bold: true, size: 14 };
     K.cols.forEach((c, i) => { ws.getColumn(i + 1).width = Math.max(12, Math.round(c[3] / 7)); });
-    S.groups.forEach((g) => {
-      if (!S.rows.some((r) => r.g === g.id)) return;
-      ws.addRow([]); ws.addRow([g.nom || K.grp]).font = { bold: true, size: 12 };
-      K.sens.forEach(([s, t]) => {
-        const rows = freeRows(k, g.id, s); if (!rows.length) return;
+    blocks.forEach(({ g, parts }) => {
+      ws.addRow([]); ws.addRow([fxTitle(g) || K.grp]).font = { bold: true, size: 12 };
+      parts.forEach(([t, rows]) => {
         ws.addRow([t]).font = { bold: true };
         styleHead(ws.addRow(K.cols.map((c) => c[1])));
         rows.forEach((r) => ws.addRow(K.cols.map(([f]) => r[f] || "")));
@@ -5536,9 +5618,13 @@ label.p48 input:checked + span { border-style: solid; }
   // Toutes les lignes du tableau : appareils de l'appli (réglages gardés par appareil) puis appareils ajoutés à la main
   function netRows() {
     const N = netState();
-    const rows = netDevices().map((d) => { const v = N.dev[d.key] || {}; return { ...d, auto: true, ip: v.ip || "", masque: v.masque || "", net: v.net || "", notes: v.notes || "", pos: v.pos != null && v.pos !== "" ? v.pos : d.pos, posAuto: !(v.pos != null && v.pos !== "") }; });
+    const rows = netDevices().map((d) => { const v = N.dev[d.key] || {}, defNet = d.key.startsWith("h:") ? "Contrôle HF" : ""; return { ...d, auto: true, ip: v.ip || "", masque: v.masque || "", net: v.net != null ? v.net : defNet, netAuto: v.net == null && !!defNet, notes: v.notes || "", pos: v.pos != null && v.pos !== "" ? v.pos : d.pos, posAuto: !(v.pos != null && v.pos !== "") }; });
     N.extra.forEach((x) => rows.push({ key: "e:" + x.id, id: x.id, nom: x.nom || "", type: x.type || "", ip: x.ip || "", masque: x.masque || "", net: x.net || "", pos: x.pos || "", notes: x.notes || "" }));
-    if (netSortIp) rows.sort((a, b) => { const x = ipNum(a.ip), y = ipNum(b.ip); return (x == null) - (y == null) || (x || 0) - (y || 0); });
+    // Un bloc par réseau (sans réseau à la fin), dans l'ordre d'apparition ; dans chaque bloc, l'ordre du dossier ou les adresses
+    const order = [...new Set(rows.map((r) => r.net).filter(Boolean))];
+    const rank = (r) => (r.net ? order.indexOf(r.net) : order.length);
+    const ix = new Map(rows.map((r, i) => [r.key, i]));
+    rows.sort((a, b) => rank(a) - rank(b) || (netSortIp ? (() => { const x = ipNum(a.ip), y = ipNum(b.ip); return (x == null) - (y == null) || (x || 0) - (y || 0); })() : 0) || ix.get(a.key) - ix.get(b.key));
     return rows;
   }
   function netProblems(rows) {
@@ -5555,15 +5641,17 @@ label.p48 input:checked + span { border-style: solid; }
     const rows = netRows(), bad = netProblems(rows), N = netState();
     $("#dlNet").innerHTML = NET_KINDS.map((v) => `<option value="${esc(v)}">`).join("");
     $("#netSort").checked = netSortIp;
-    const types = [...new Set(rows.map((r) => r.type).filter(Boolean))];
+    const types = [...new Set(rows.map((r) => r.type).filter(Boolean))], nets = [...new Set(rows.map((r) => r.net).filter(Boolean))];
     const sel = $("#netFillType"), cur = sel.value;
-    sel.innerHTML = `<option value="">tous les appareils</option>${types.map((t) => `<option value="${esc(t)}"${t === cur ? " selected" : ""}>${esc(t)}</option>`).join("")}`;
+    sel.innerHTML = `<option value="">tous les appareils</option>${nets.length ? `<optgroup label="Réseau">${nets.map((t) => `<option value="n:${esc(t)}"${"n:" + t === cur ? " selected" : ""}>${esc(t)}</option>`).join("")}</optgroup>` : ""}<optgroup label="Type">${types.map((t) => `<option value="t:${esc(t)}"${"t:" + t === cur ? " selected" : ""}>${esc(t)}</option>`).join("")}</optgroup>`;
     const inp = (r, f, ph, extra) => `<input type="text" data-nf="${f}" value="${esc(r[f])}" aria-label="${esc(ph)}"${extra || ""}>`;
-    $("#netTbl").innerHTML = `<thead><tr><th>Appareil</th><th>Type</th><th>Réseau</th><th>Adresse IP</th><th>Masque</th><th>Emplacement</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map((r, i) => `
+    const cnt = new Map(); rows.forEach((r) => cnt.set(r.net || "", (cnt.get(r.net || "") || 0) + 1));
+    const grpRow = (r, i) => (i && (rows[i - 1].net || "") === (r.net || "") ? "" : `<tr class="netgrp"><td colspan="8"><b>${esc(r.net || "Sans réseau")}</b> <span class="meta">${cnt.get(r.net || "")} appareil${cnt.get(r.net || "") > 1 ? "s" : ""}</span></td></tr>`);
+    $("#netTbl").innerHTML = `<thead><tr><th>Appareil</th><th>Type</th><th>Réseau</th><th>Adresse IP</th><th>Masque</th><th>Emplacement</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map((r, i) => `${grpRow(r, i)}
       <tr data-nk="${esc(r.key)}"${bad.has(r.key) ? ' class="netbad"' : ""}>
         <td style="min-width:170px">${r.auto ? `<b>${esc(r.nom)}</b>` : inp(r, "nom", "Appareil", ' placeholder="ex. Switch Netgear GS724T"')}</td>
         <td style="min-width:130px">${r.auto ? `<span class="prov">${esc(r.type)}</span>` : inp(r, "type", "Type", ' placeholder="ex. Switch" autocomplete="off" data-suggest="dlNetType"')}</td>
-        <td style="min-width:130px">${inp(r, "net", "Réseau", ` placeholder="${i ? "" : "ex. Dante primaire"}" autocomplete="off" data-suggest="dlNet"`)}</td>
+        <td style="min-width:130px">${inp(r, "net", "Réseau", ` placeholder="${i ? "" : "ex. Dante primaire"}" autocomplete="off" data-suggest="dlNet"${r.netAuto ? ' title="Les HF sont mis ensemble sur « Contrôle HF » : change-le si besoin"' : ""}`)}</td>
         <td style="min-width:130px" class="ipc">${inp(r, "ip", "Adresse IP", ` inputmode="decimal" placeholder="${i ? "" : "ex. 192.168.1.10"}" spellcheck="false"`)}${bad.has(r.key) ? `<span class="netwarn">${esc(bad.get(r.key))}</span>` : ""}</td>
         <td style="min-width:120px">${inp(r, "masque", "Masque", ` inputmode="decimal" placeholder="${i ? "" : "ex. 255.255.255.0"}" spellcheck="false"`)}</td>
         <td style="min-width:120px">${inp(r, "pos", "Emplacement", r.posAuto && r.pos ? ' title="Repris du plan de rack ou de la console"' : "")}</td>
@@ -5583,20 +5671,25 @@ label.p48 input:checked + span { border-style: solid; }
       const t = e.target; if (!t.matches("[data-nf]")) return;
       const key = t.closest("[data-nk]").dataset.nk, f = t.dataset.nf, v = t.value.trim(), N = netState();
       if (key.startsWith("e:")) { const x = N.extra.find((y) => y.id === key.slice(2)); if (x) x[f] = v; }
-      else { const o = N.dev[key] || (N.dev[key] = {}); if (v) o[f] = v; else delete o[f]; if (!Object.keys(o).length) delete N.dev[key]; }
+      else { const o = N.dev[key] || (N.dev[key] = {}); if (v || (f === "net" && key.startsWith("h:"))) o[f] = v; else delete o[f]; if (!Object.keys(o).length) delete N.dev[key]; }
       commit(true);
     });
     $("#netTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-netdel]"); if (!b) return; const N = netState(); N.extra = N.extra.filter((x) => x.id !== b.dataset.netdel); commit(true); });
     // Numérotation : les appareils sans adresse prennent les adresses suivantes, dans l'ordre du tableau, en sautant celles déjà prises
     $("#netFill").addEventListener("click", () => {
-      const start = ipNum($("#netFillFrom").value), type = $("#netFillType").value;
+      const start = ipNum($("#netFillFrom").value), pick = $("#netFillType").value, mask = $("#netFillMask").value.trim();
       if (start == null) { notice("Donne la première adresse, au format 192.168.1.10.", true); $("#netFillFrom").focus(); return; }
       const rows = netRows(), taken = new Set(rows.map((r) => ipNum(r.ip)).filter((x) => x != null)), N = netState();
       let n = start, k = 0;
-      rows.filter((r) => !String(r.ip || "").trim() && (!type || r.type === type)).forEach((r) => {
+      if (mask && ipNum(mask) == null) { notice("Le masque doit avoir la forme 255.255.255.0.", true); $("#netFillMask").focus(); return; }
+      const ok = (r) => !pick || (pick.startsWith("n:") ? r.net === pick.slice(2) : r.type === pick.slice(2));
+      rows.filter((r) => !String(r.ip || "").trim() && ok(r)).forEach((r) => {
         while (taken.has(n)) n++;
         const ip = ipTxt(n); taken.add(n); n++; k++;
-        if (r.auto) (N.dev[r.key] = N.dev[r.key] || {}).ip = ip; else { const x = N.extra.find((y) => y.id === r.id); if (x) x.ip = ip; }
+        const o = r.auto ? (N.dev[r.key] = N.dev[r.key] || {}) : N.extra.find((y) => y.id === r.id);
+        if (!o) return;
+        o.ip = ip; if (mask && !o.masque) o.masque = mask;
+        if (r.auto && r.netAuto && o.net == null) o.net = r.net; // le réseau proposé devient celui de l'appareil
       });
       if (!k) { notice("Tous ces appareils ont déjà une adresse."); return; }
       commit(true); notice(`${k} adresse${k > 1 ? "s" : ""} attribuée${k > 1 ? "s" : ""}.`);
