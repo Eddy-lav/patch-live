@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "6f96ba3148";</script>
+<script>window.PL_VER = "ee17465dc2";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -965,14 +965,18 @@ label.p48 input:checked + span { border-style: solid; }
   input[type="number"], input[type="search"] { min-height: 44px; }
   nav.tabs button { min-height: 40px; }
   table.master td input[type="text"], table.master td input[type="number"], table.master td select, table.master select.addr,
-  .hfdev input, .hfdev select, .hfg input, .hfg select, table.rack td input, table.rack td select { min-height: 44px; }
+  .hfdev input, .hfdev select, .hfg input, .hfg select, table.rack td input, table.rack td select { min-height: 32px; }
   .btn.xdel, .hfdev td.x button, .hfg td.x button, .acc .tag button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
-  .box li { min-height: 40px; align-items: center; }
-  .box li button, .box li input.bquick { min-height: 36px; align-items: center; }
+  .box li { min-height: 40px; align-items: center; padding-block: 2px; }
+  .box li button, .box li input.bquick { min-height: 34px; align-items: center; }
   .box h3 .unb { min-height: 34px; padding: 4px 10px; }
   label.p48 span { display: inline-flex; align-items: center; min-height: 32px; padding: 2px 10px; }
   label.p48 { min-height: 44px; align-items: center; }
   .cover.empty .cbtn.add { min-height: 36px; }
+  /* Lignes du master et des sorties à 40 px (choix d'Eddy) */
+  table.master td input[type="text"], table.master td input[type="number"], table.master td select { min-height: 35px; }
+  table.master label.p48 { min-height: 32px; }
+  table.master .btn.xdel { min-height: 32px; min-width: 40px; }
 }
 </style>
 
