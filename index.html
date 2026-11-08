@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "48e669ae8e";</script>
+<script>window.PL_VER = "d86481a5a7";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -2722,7 +2722,7 @@ label.p48 input:checked + span { border-style: solid; }
     if (!list.some((x) => x.toLowerCase() === v.toLowerCase())) { list.push(v); list.sort((a, b) => a.localeCompare(b, "fr")); try { localStorage.setItem(LIB_KEY, JSON.stringify(lib)); } catch (e) { /* ignore */ } }
   }
   function learnDossier(s) {
-    (s.lignes || []).forEach((l) => { learn("micros", l.micro); learn("pieds", l.pied); });
+    (s.lignes || []).forEach((l) => { splitMicAcc(l); learn("micros", l.micro); learn("pieds", l.pied); });
     ((s.bibliotheque && s.bibliotheque.micros) || []).forEach((v) => learn("micros", v));
     ((s.bibliotheque && s.bibliotheque.pieds) || []).forEach((v) => learn("pieds", v));
     ((s.bibliotheque && s.bibliotheque.acc) || []).forEach((v) => learn("acc", v));
@@ -2760,7 +2760,7 @@ label.p48 input:checked + span { border-style: solid; }
       <datalist id="dlFree">${state.lignes.filter((l) => !Object.values(l.sr || {}).some(Boolean)).map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlSrc">${state.lignes.map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlMix">${[...new Set((state.sorties || []).map((o) => o.mix).filter(Boolean))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
-      <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+      <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...(BANQUE["DI et talkback"] || []).filter((x) => /^p[ée]dale/i.test(x[2])).map((x) => x[0]), ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlBqRack">${bqUniq([...state.racks.map((r) => r.nom).filter(Boolean), ...banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs")]).map(optFiche).join("")}</datalist>
       <datalist id="dlBqSyn">${uniqCi(banqueNoms("Intercom", "Réseau", "Transport audio et convertisseurs", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Stage racks et cartes", "Énergie", "Amplification", "Diffusion et retours", "Antennes et distribution HF")).map(optFiche).join("")}</datalist>
       <datalist id="dlProv">${provSuggestions().map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`;
@@ -2848,7 +2848,7 @@ label.p48 input:checked + span { border-style: solid; }
     if (f === "p48") l.p48 = t.checked;
     else if (f === "pad") { l.pad = Math.abs(parseFloat(String(t.value).replace(",", "."))) || 0; t.value = l.pad ? "-" + l.pad : ""; }
     else l[f] = t.value.trim();
-    if (f === "micro") learn("micros", l.micro);
+    if (f === "micro") { splitMicAcc(l); learn("micros", l.micro); }
     if (f === "pied") learn("pieds", l.pied);
     if (f === "musicien" && l.musicien) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(l.musicien)) state.musiciens.push(l.musicien); }
     if (f === "micro" || f === "pied" || f === "musicien" || f === "prov" || f === "accp") renderDatalists();
@@ -2870,7 +2870,7 @@ label.p48 input:checked + span { border-style: solid; }
       if (f === "p48") l.p48 = $("#selBool").value === "1";
       else if (f === "pad") l.pad = Math.abs(parseFloat(v.replace(",", "."))) || 0;
       else if (f === "accp") l.accp = v ? [...new Set([...accList(l), v])] : [];
-      else l[f] = v;
+      else { l[f] = v; if (f === "micro") splitMicAcc(l); }
     });
     if (f === "p48") shown = $("#selBool").value === "1" ? "oui" : "non";
     if (f === "pad") shown = ls[0].pad ? "-" + ls[0].pad + " dB" : "";
@@ -7616,6 +7616,25 @@ label.p48 input:checked + span { border-style: solid; }
     const m = t.match(/^(\S+(?:\s*&\s*\S+)?)\s+(.+)$/); if (!m || !BQ_MARQUES.has(bqKey(m[1]))) return null;
     const g = BQ_BY_KEY.get(bqKey(m[2])); return g && bqKey(g.marque) === bqKey(m[1]) ? g : null;
   };
+  const bqNom = (v) => { const f = banqueFiche(v); return f ? f.nom : String(v || "").trim(); };
+  // « E 935 + DM1 » dans la colonne Micro / DI : le micro reste, la pédale de talk (ou un autre accessoire de micro connu) passe en accessoire,
+  // pour que la liste de matériel compte le micro et la pédale chacun de leur côté
+  const ACC_MIC_RE = /talk|p[ée]dale|\bmute\b|inverseur|att[ée]nuateur|c[âa]ble\s*y\b|rallonge|\bpince\b|\bclip\b|bonnette|suspension|anti\s*-?\s*pop/i;
+  const isAccFiche = (f) => !!f && (f.cat === "Accessoires micros" || /^p[ée]dale/i.test(f.carac || ""));
+  const accFiche = (t) => {
+    const f = banqueFiche(t); if (isAccFiche(f)) return f;
+    const w = String(t || "").trim().split(/\s+/), keys = [bqKey(t)]; if (w.length > 1 && BQ_MARQUES.has(bqKey(w[0]))) keys.push(bqKey(w.slice(1).join(" ")));
+    for (const k of keys) { if (k.length < 3) continue; for (const g of BANQUE_FICHE.values()) if (isAccFiche(g) && bqKey(g.nom).endsWith(k)) return g; }
+    return null;
+  };
+  const bqAcc = (v) => { const f = accFiche(v) || banqueFiche(v), t = String(v || "").trim(); return f ? f.nom : t.charAt(0).toUpperCase() + t.slice(1); };
+  function splitMicAcc(l) {
+    const parts = String(l.micro || "").split(/\s*\+\s*(?=\S)/).map((x) => x.trim()).filter(Boolean); if (parts.length < 2) return false;
+    const keep = [parts[0]], acc = [];
+    parts.slice(1).forEach((x) => { const f = accFiche(x), m = banqueFiche(x); if (f || (!m && ACC_MIC_RE.test(x))) acc.push(f ? f.nom : x); else keep.push(x); });
+    if (!acc.length) return false;
+    l.micro = keep.join(" + "); l.accp = [...new Set([...accList(l), ...acc])]; return true;
+  }
   const banqueNoms = (...cats) => cats.flatMap((c) => (BANQUE[c] || []).map((x) => x[0]));
   // Icône par catégorie (traits 24 × 24, couleur du texte), pour ce qui n'a pas de façade
   const BQ_ICO = {
@@ -7674,11 +7693,11 @@ label.p48 input:checked + span { border-style: solid; }
         <td><button class="btn small danger xdel" type="button" data-delman="${x.id}" title="Supprimer" aria-label="Supprimer">×</button></td>
       </tr>`).join("") || `<tr><td colspan="5" class="hint">Rien pour l'instant.</td></tr>`}</tbody>`;
     labelCells($("#manTbl"));
-    const count = (f) => { const m = new Map(); state.lignes.forEach((l) => { const v = (l[f] || "").trim(); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); };
+    const count = (f) => { const m = new Map(); state.lignes.forEach((l) => { const v = f === "micro" ? bqNom(l[f]) : (l[f] || "").trim(); if (v) m.set(v, (m.get(v) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); };
     const mics = count("micro").filter(([k]) => !/^(SEK|SKM) Spectera$/i.test(k)), pieds = count("pied");
     $("#micTbl").innerHTML = `<thead><tr><th>Modèle</th><th style="text-align:right">Qté</th></tr></thead><tbody>${mics.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="q">${n}</td></tr>`).join("") || `<tr><td colspan="2" class="hint">Aucun micro renseigné.</td></tr>`}</tbody>`;
     $("#piedTbl").innerHTML = `<thead><tr><th>Pied</th><th style="text-align:right">Qté</th></tr></thead><tbody>${pieds.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="q">${n}</td></tr>`).join("") || `<tr><td colspan="2" class="hint">Aucun pied renseigné.</td></tr>`}</tbody>`;
-    const accP = (() => { const m = new Map(); state.lignes.forEach((l) => accList(l).forEach((v) => m.set(v, (m.get(v) || 0) + 1))); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); })();
+    const accP = (() => { const m = new Map(); state.lignes.forEach((l) => accList(l).map(bqAcc).forEach((v) => m.set(v, (m.get(v) || 0) + 1))); return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); })();
     $("#accPTbl").innerHTML = `<thead><tr><th>Accessoire</th><th style="text-align:right">Qté</th></tr></thead><tbody>${accP.map(([k, n]) => `<tr><td>${esc(k)}</td><td class="q">${n}</td></tr>`).join("") || `<tr><td colspan="2" class="hint">Aucun accessoire dans le master (colonne Accessoire : pédale de talk, câble Y…).</td></tr>`}</tbody>`;
     const used = pieds.map(([k]) => k).filter((k) => PIEDS_LEGENDE[k]);
     renderBanque();
@@ -8635,12 +8654,12 @@ label.p48 input:checked + span { border-style: solid; }
     mat.addRow([`Liste matériel · ${titre}`]).font = { bold: true, size: 14 };
     styleHead(mat.addRow(["Micro / DI", "Qté", "", "Pied", "Qté"]));
     [24, 6, 3, 22, 6].forEach((w, i) => { mat.getColumn(i + 1).width = w; });
-    const count = (f) => { const mm = new Map(); state.lignes.forEach((l) => { const v = (l[f] || "").trim(); if (v) mm.set(v, (mm.get(v) || 0) + 1); }); return [...mm.entries()].sort((a, b) => b[1] - a[1]); };
+    const count = (f) => { const mm = new Map(); state.lignes.forEach((l) => { const v = f === "micro" ? bqNom(l[f]) : (l[f] || "").trim(); if (v) mm.set(v, (mm.get(v) || 0) + 1); }); return [...mm.entries()].sort((a, b) => b[1] - a[1]); };
     const a1 = count("micro"), a2 = count("pied");
     for (let i = 0; i < Math.max(a1.length, a2.length); i++) mat.addRow([a1[i]?.[0] || "", a1[i]?.[1] || "", "", a2[i]?.[0] || "", a2[i]?.[1] || ""]);
     const leg = a2.map(([k]) => k).filter((k) => PIEDS_LEGENDE[k]);
     if (leg.length) { mat.addRow([]); leg.forEach((k) => mat.addRow(["", "", "", `${k} = ${PIEDS_LEGENDE[k]}`])); }
-    const a3 = (() => { const mm = new Map(); state.lignes.forEach((l) => accList(l).forEach((v) => mm.set(v, (mm.get(v) || 0) + 1))); return [...mm.entries()].sort((a, b) => b[1] - a[1]); })();
+    const a3 = (() => { const mm = new Map(); state.lignes.forEach((l) => accList(l).map(bqAcc).forEach((v) => mm.set(v, (mm.get(v) || 0) + 1))); return [...mm.entries()].sort((a, b) => b[1] - a[1]); })();
     if (a3.length) { mat.addRow([]); styleHead(mat.addRow(["Accessoire du patch", "Qté"])); a3.forEach(([k, n]) => mat.addRow([k, n])); }
     mat.addRow([]);
     styleHead(mat.addRow(["Stage rack / I/O", "Qté", "", "Configuration", ""]));
@@ -8856,7 +8875,7 @@ label.p48 input:checked + span { border-style: solid; }
         order.push(l);
         let touched = false;
         const setTxt = (f, v) => { if (v !== null && (l[f] || "") !== v) { l[f] = v; touched = true; } };
-        setTxt("source", src); setTxt("musicien", get("Musicien")); setTxt("micro", get("Micro / DI")); setTxt("pied", get("Pied")); setTxt("notes", get("Notes")); if (col("Provenance") > 0) setTxt("prov", get("Provenance")); if (col("Accessoire") > 0) { const nv = accList({ accp: get("Accessoire") }); if (accList(l).join("|") !== nv.join("|")) { l.accp = nv; touched = true; } }
+        setTxt("source", src); setTxt("musicien", get("Musicien")); setTxt("micro", get("Micro / DI")); setTxt("pied", get("Pied")); setTxt("notes", get("Notes")); if (col("Provenance") > 0) setTxt("prov", get("Provenance")); if (col("Accessoire") > 0) { const nv = accList({ accp: get("Accessoire") }); if (accList(l).join("|") !== nv.join("|")) { l.accp = nv; touched = true; } } if (splitMicAcc(l)) touched = true;
         if (get("Pad dB") !== null) { const pad = Math.abs(parseFloat(get("Pad dB").replace(",", "."))) || 0; if ((l.pad || 0) !== pad) { l.pad = pad; touched = true; } }
         if (get("48V") !== null) { const p48 = /^(oui|x|1|48|yes)$/i.test(get("48V")); if (!!l.p48 !== p48) { l.p48 = p48; touched = true; } }
         // Boîtier
