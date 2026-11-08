@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "3b6898ae06";</script>
+<script>window.PL_VER = "b26c738ec7";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -2753,7 +2753,7 @@ label.p48 input:checked + span { border-style: solid; }
       <datalist id="dlMix">${[...new Set((state.sorties || []).map((o) => o.mix).filter(Boolean))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlBqRack">${uniqCi([...state.racks.map((r) => r.nom).filter(Boolean), ...banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs")]).map(optFiche).join("")}</datalist>
-      <datalist id="dlBqSyn">${uniqCi(banqueNoms("Intercom", "Réseau", "Transport audio et convertisseurs", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Stage racks et cartes", "Énergie")).map(optFiche).join("")}</datalist>
+      <datalist id="dlBqSyn">${uniqCi(banqueNoms("Intercom", "Réseau", "Transport audio et convertisseurs", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Stage racks et cartes", "Énergie", "Amplification", "Diffusion et retours", "Antennes et distribution HF")).map(optFiche).join("")}</datalist>
       <datalist id="dlProv">${provSuggestions().map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`;
   }
 
