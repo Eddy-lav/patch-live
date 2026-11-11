@@ -480,6 +480,8 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .rpsvg { width: 100%; height: auto; display: block; touch-action: pan-x pan-y; }
 .rpsvg g.rpit { cursor: grab; }
 .rpsvg g.rpit.bad { opacity: 0.45; }
+.rpsvg g.rpit.dup { opacity: 0.75; }
+.rpadd input[data-rpadd] { flex: 1 1 240px; min-width: 0; max-width: 420px; }
 :root[data-theme="regie"] .rpstage { filter: brightness(0.6); }
 .plan-side label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 .plan-side input, .plan-side select { width: 100%; }
@@ -1629,7 +1631,7 @@ table.master td.nopad input { opacity: 0.8; }
 </section>
 
 <section id="v-rackplan" hidden>
-  <div class="toolbar planbar"><button id="rpAddCase" class="btn small primary" type="button">+ Flight rack</button><span class="zoom"><button id="rpZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="rpZoomVal" class="mono">100 %</span><button id="rpZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span><span class="hint">Vue de face, U numérotés depuis le haut. Les appareils viennent de Racks et I/O et du synoptique.</span></div>
+  <div class="toolbar planbar"><button id="rpAddCase" class="btn small primary" type="button">+ Flight rack</button><span class="zoom"><button id="rpZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="rpZoomVal" class="mono">100 %</span><button id="rpZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span><span class="hint">Vue de face, U numérotés depuis le haut. Les appareils viennent de Racks et I/O et du synoptique. Alt + glisser un appareil le duplique.</span></div>
   <div class="plan-wrap rp-wrap">
     <div id="rpCases" class="rpcases"></div>
     <aside class="panel plan-side" id="rpSide"></aside>
@@ -6610,6 +6612,82 @@ table.master td.nopad input { opacity: 0.8; }
     h += Object.entries(grp).map(([g, L]) => `<optgroup label="${esc(g)}">${L.map(([k, t, u]) => `<option value="free|${k}">${esc(t)} · ${u} U</option>`).join("")}</optgroup>`).join("");
     return h;
   }
+  // Recherche d'un appareil à ajouter : la liste « Ajouter… » plus la banque de matériel, filtrée à la frappe.
+  // Un nom qui n'est dans aucune liste devient un élément libre (il prend la façade d'un appareil connu s'il est reconnu à son nom).
+  let rpAddMap = new Map();
+  function rpAddDatalist() {
+    const s = document.createElement("select"), opts = []; s.innerHTML = rpAddOptions(); rpAddMap = new Map();
+    const put = (txt, lab, val) => { let v = txt, k = 2; while (rpAddMap.has(v.toLowerCase())) v = `${txt} (${k++})`; rpAddMap.set(v.toLowerCase(), val); opts.push(`<option value="${esc(v)}" label="${esc(lab)}">`); };
+    [...s.querySelectorAll("optgroup")].forEach((g) => [...g.children].forEach((o) => { const m = /^(.*) · (\d+) U$/.exec(o.textContent); put(m ? m[1] : o.textContent, m ? `${g.label} · ${m[2]} U` : g.label, o.value); }));
+    HFDEV_MODELS.forEach(([m, kk, nn, t], i) => put(t, `Nouvel appareil HF (ajouté à l'onglet HF) · ${HFDEV_KIND[kk] || "HF"}`, "newh|" + i));
+    uniqCi(banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs", "Antennes et distribution HF", "Intercom", "Réseau", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Énergie", "Amplification"))
+      .forEach((nm) => { if (!rpAddMap.has(nm.toLowerCase())) put(nm, "Banque de matériel", "lab|" + nm); });
+    let w = document.getElementById("dlRpAddWrap"); if (!w) { w = document.createElement("div"); w.id = "dlRpAddWrap"; w.hidden = true; document.body.appendChild(w); }
+    w.innerHTML = `<datalist id="dlRpAdd">${opts.join("")}</datalist>`;
+  }
+  // Ajoute dans le rack ce qui a été choisi ou tapé ; renvoie le message d'erreur, ou "" si c'est fait
+  function rpAddTyped(c, txt) {
+    const t = String(txt || "").trim(); if (!t) return "";
+    let val = rpAddMap.get(t.toLowerCase()) || "lab|" + t, [kind, ref] = [val.slice(0, val.indexOf("|")), val.slice(val.indexOf("|") + 1)];
+    let it;
+    if (kind === "lab") {
+      const ft = faceByName(ref);
+      it = { id: nid(), kind: "free", free: "autre", label: ref, h: ft && DEV_H[ft] ? Math.max(1, Math.round(DEV_H[ft] / RP_UH)) : 1, at: 1 };
+      if (ft && DEV_W[ft] && DEV_W[ft] <= 242 && it.h === 1) it.half = "l";
+    } else {
+      if (kind === "newx") { ref = rpNewExtra(ref); if (!ref) return "Appareil inconnu."; kind = "extra"; }
+      if (kind === "newh") { // même création que « C'est un appareil connu ? »
+        const md = HFDEV_MODELS[+ref]; if (!md) return "Appareil inconnu."; const [m, kk, nn] = md, D = hfDevs(); let k2 = D.filter((d) => d.model === m).length + 1; while (D.some((d) => d.nom === `${m} #${k2}`)) k2++;
+        const d = { id: nid(), kind: kk, model: m, nom: `${m} #${k2}`, n: nn, notes: "", ...(kk === "tx" ? { st: 1 } : {}) }; D.push(d); kind = "hf"; ref = d.id;
+      }
+      it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
+      if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
+    }
+    const pl = rpPlace(c, it, 1); if (!pl) return `Plus de place pour ${it.h} U : agrandis le rack ou libère des U.`;
+    it.at = pl[1]; if (pl[0]) it.col = pl[0]; if (pl[2]) it.half = pl[2];
+    c.items.push(it); rpSel = it.id; commit(true); return "";
+  }
+  // Copie d'un appareil (Alt + glisser, ou bouton « Dupliquer ») : un appareil lié devient un nouvel appareil, avec un nom suivant
+  function rpNextName(nm, taken) {
+    const set = new Set(taken.map((x) => String(x || "").toLowerCase())), m = /^(.*?)(\s*#?)(\d+)$/.exec(nm || "");
+    const base = m ? m[1] : (nm || "Élément"), sep = m ? m[2] || " " : " #"; let k = m ? Number(m[3]) + 1 : 2;
+    while (set.has(`${base}${sep}${k}`.toLowerCase())) k++;
+    return `${base}${sep}${k}`;
+  }
+  function rpCloneItem(it) {
+    const x = JSON.parse(JSON.stringify(it)); x.id = nid();
+    if (it.kind === "rack") {
+      const r = rackById(it.ref); if (!r) { x.kind = "free"; x.free = "autre"; x.label = it.label || "Appareil"; delete x.ref; return x; }
+      const n = JSON.parse(JSON.stringify(r)); n.id = nid();
+      if (String(r.num || "").trim()) n.num = String(Math.max(10, ...state.racks.map((z) => Number(z.num) || 0)) + 1);
+      else n.nom = rpNextName(r.nom || "I/O", state.racks.map((z) => z.nom));
+      state.racks.push(n); x.ref = n.id;
+    } else if (it.kind === "hf") {
+      const d = hfDevById(it.ref); if (!d) return null;
+      const n = JSON.parse(JSON.stringify(d)); n.id = nid(); n.nom = rpNextName(d.nom || d.model, hfDevs().map((z) => z.nom));
+      hfDevs().push(n); x.ref = n.id;
+    } else if (it.kind === "extra") {
+      const o = rpExtra(it.ref); if (!o) return null;
+      const n = JSON.parse(JSON.stringify(o)); n.id = nid(); n.nom = rpNextName(o.nom || "Élément", synState().nodes.map((z) => z.nom));
+      synState().nodes.push(n); x.ref = n.id;
+    } // élément libre : même nom, même façade
+    return x;
+  }
+  // Pose la copie à l'U et la colonne voulues, sinon à la place libre la plus proche ; renvoie la copie ou un message
+  function rpDuplicate(c, it, at = it.at + it.h, col = rpCol(it), half = it.half) {
+    const probe = { ...it, id: "_dup", col, half };
+    let pl = rpFits(c, probe, at, col, half) ? [col, at, half] : rpPlace(c, probe, at);
+    let dest = c;
+    if (!pl) { // rack plein : la copie va dans un autre rack qui a la place
+      for (const o of rpState().cases) { if (o === c) continue; const p2 = rpPlace(o, { ...probe, col: 0 }, 1); if (p2) { dest = o; pl = p2; break; } }
+    }
+    if (!pl) return `Pas ${it.h} U libres pour la copie.`;
+    const x = rpCloneItem(it); if (!x) return "Cet appareil n'existe plus.";
+    x.at = pl[1]; if (pl[0]) x.col = pl[0]; else delete x.col; if (pl[2]) x.half = pl[2]; else delete x.half;
+    dest.items.push(x); rpSel = x.id; commit(true);
+    notice(`${esc(rpLabel(x))} ajouté${dest !== c ? ` dans ${esc(dest.nom || "un autre rack")}` : ""}, U${x.at}.`);
+    return x;
+  }
   // Façades des éléments libres
   function rpFreeArt(it, H) {
     const R = (x, y, w, h, c, rx) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx || 0}" fill="${c}"/>`, C = (x, y, r, c) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
@@ -6661,13 +6739,20 @@ table.master td.nopad input { opacity: 0.8; }
       const pos = it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`;
       // Rack multiple : le nom est écrit sur l'appareil (pastille), sinon dans la marge à droite
       const chipT = `${it.half ? "" : pos + " "}${rpLabel(it)}`.slice(0, it.half ? 14 : 24), cw = chipT.length * 11 + 16;
-      const chip = n > 1 ? `<rect x="${w - 13 - cw}" y="${hh / 2 - 15}" width="${cw}" height="30" rx="6" fill="#111827" fill-opacity="0.85"/><text x="${w - 21}" y="${hh / 2 + 7}" text-anchor="end" font-size="20" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text>` : "";
+      // À l'export, l'adresse IP (onglet Réseau) s'ajoute sous le nom
+      const ip = forExport ? rpIp(it) : "", ipw = ip.length * 9 + 14;
+      const chip = n > 1 ? (ip ? `<rect x="${w - 13 - Math.min(w - 26, chipT.length * 9 + 14)}" y="${hh / 2 - 21}" width="${Math.min(w - 26, chipT.length * 9 + 14)}" height="22" rx="5" fill="#111827" fill-opacity="0.85"/><text x="${w - 20}" y="${hh / 2 - 4}" text-anchor="end" font-size="16" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text><rect x="${w - 13 - ipw}" y="${hh / 2 + 2}" width="${ipw}" height="20" rx="5" fill="#0e7490" fill-opacity="0.92"/><text x="${w - 20}" y="${hh / 2 + 17}" text-anchor="end" font-size="15" font-weight="700" fill="#ffffff" ${F}>${esc(ip)}</text>`
+        : `<rect x="${w - 13 - cw}" y="${hh / 2 - 15}" width="${cw}" height="30" rx="6" fill="#111827" fill-opacity="0.85"/><text x="${w - 21}" y="${hh / 2 + 7}" text-anchor="end" font-size="20" font-weight="700" fill="#ffffff" ${F}>${esc(chipT)}</text>`) : "";
       const g = `<g class="rpit${on ? " on" : ""}" data-rpi="${it.id}" transform="translate(${X + RP_SIDE} ${y})">${rpItemArt(it, w)}${chip}<rect class="rpsel" x="1" y="1" width="${w - 2}" height="${hh - 2}" fill="transparent" stroke="${on ? "#f59e0b" : "transparent"}" stroke-width="4" rx="2"/></g>`;
       if (n > 1 || (twin && it.half === "r")) return g;
-      const lab = twin ? `${rpLabel(it)} / ${rpLabel(twin)}` : rpLabel(it);
+      const lab = twin ? `${rpLabel(it)} / ${rpLabel(twin)}` : rpLabel(it), ips = forExport ? [...new Set([ip, twin ? rpIp(twin) : ""].filter(Boolean))].join(" / ") : "";
+      // 1 U avec adresse IP : nom en petit, l'IP dessous
+      if (ips && it.h === 1) return `${g}
+        <line x1="${RP_SIDE + (it.half === "l" && !twin ? 245 : 486)}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <text x="${lx}" y="${cy - 3}" font-size="19" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(lab.slice(0, twin ? 40 : 32))}</text><text x="${lx}" y="${cy + 17}" font-size="16" fill="#0e7490" font-weight="700" ${F}>${esc(ips)}${it.notes ? `<tspan fill="#6b7280" font-weight="400"> · ${esc(it.notes.slice(0, 24))}</tspan>` : ""}</text>`;
       return `${g}
         <line x1="${RP_SIDE + (it.half === "l" && !twin ? 245 : 486)}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/>
-        ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${it.notes ? " · " + esc(it.notes.slice(0, 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(lab.slice(0, twin ? 34 : 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
+        ${it.h > 1 ? `<text x="${lx}" y="${cy - 3}" font-size="26" font-weight="700" fill="#111827" ${F}>${esc(rpLabel(it).slice(0, 28))}</text><text x="${lx}" y="${cy + 22}" font-size="20" fill="#6b7280" ${F}>${pos} · ${it.h} U${ips ? ` · <tspan fill="#0e7490" font-weight="700">${esc(ips)}</tspan>` : ""}${it.notes ? " · " + esc(it.notes.slice(0, ips ? 12 : 24)) : ""}</text>` : `<text x="${lx}" y="${cy + 9}" font-size="24" font-weight="700" fill="#111827" ${F}><tspan fill="#6b7280" font-weight="400">${pos}</tspan> ${esc(lab.slice(0, twin ? 34 : 26))}${it.notes ? `<tspan fill="#6b7280" font-weight="400" font-size="18"> · ${esc(it.notes.slice(0, 16))}</tspan>` : ""}</text>`}`;
     }).join("");
     const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${n > 1 ? (n === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
     const top = forExport ? 40 : 0;
@@ -6677,7 +6762,7 @@ table.master td.nopad input { opacity: 0.8; }
   let rpZoom = (() => { try { const z = Number(localStorage.getItem("patch-live-rpzoom")); return RP_ZOOMS.includes(z) ? z : 1; } catch (e) { return 1; } })();
   function rpSetZoom(d) { rpZoom = RP_ZOOMS[Math.max(0, Math.min(RP_ZOOMS.length - 1, RP_ZOOMS.indexOf(rpZoom) + d))]; try { localStorage.setItem("patch-live-rpzoom", String(rpZoom)); } catch (e) { /* ignore */ } renderRackplan(); }
   function renderRackplan() {
-    const P = rpState(), free = rpAddOptions();
+    const P = rpState(); rpAddDatalist();
     // Zoom : en dessous de 100 %, les racks sont plus petits et se rangent à plusieurs par ligne ; au-dessus, ils grandissent et défilent
     const cs = $("#rpCases"); cs.style.setProperty("--rpz", Math.min(1, rpZoom)); cs.style.setProperty("--rpzi", Math.max(1, rpZoom)); cs.classList.toggle("zin", rpZoom > 1); $("#rpZoomVal").textContent = Math.round(rpZoom * 100) + " %";
     $("#rpCases").innerHTML = P.cases.length ? P.cases.map((c) => {
@@ -6689,7 +6774,7 @@ table.master td.nopad input { opacity: 0.8; }
         <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" list="dlRpLieu" class="rplieu">
         ${rpCols(c) > 1 ? `<button class="btn small" type="button" data-rpcsplit title="Faire un rack simple par colonne, avec ses appareils">Séparer en ${rpCols(c)} simples</button>` : ""}
         <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
-        <div class="rpadd"><select data-rpadd aria-label="Ajouter dans ce rack">${free}</select><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
+        <div class="rpadd"><input type="text" data-rpadd data-suggest="dlRpAdd" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un appareil dans ce rack" placeholder="+ Ajouter : tape un nom (SD Rack, AD4Q, plaque…)" title="Tape un nom : la liste propose les appareils du dossier, les modèles et la banque de matériel. Un nom inconnu est ajouté comme élément libre (Entrée)."><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
         <div class="rpstage">${rpCaseSvg(c)}</div></div>`;
     }).join("") : `<div class="panel"><p class="hint" style="margin:0">Aucun rack pour l'instant. « + Flight rack » en crée un ; ajoute ensuite tes appareils dedans.</p></div>`;
     renderRackplanSide();
@@ -6710,7 +6795,8 @@ table.master td.nopad input { opacity: 0.8; }
       ${it.h === 1 ? `<label>Largeur<select data-rpf="half"><option value="">Pleine largeur (19")</option><option value="l"${it.half === "l" ? " selected" : ""}>Demi-rack, à gauche</option><option value="r"${it.half === "r" ? " selected" : ""}>Demi-rack, à droite</option></select></label>` : ""}
       <label>Notes<input type="text" data-rpf="notes" value="${esc(it.notes || "")}" placeholder="ex. face arrière, alim 16 A"></label>
       <p class="hint" id="rpMsg" style="min-height:1em;margin:0"></p>
-      <div class="actions" style="margin-top:8px"><button class="btn small danger" type="button" data-rpdel>Retirer du rack</button></div>`;
+      <div class="actions" style="margin-top:8px"><button class="btn small" type="button" data-rpdup title="Ou maintiens Alt et fais glisser l'appareil">Dupliquer</button><button class="btn small danger" type="button" data-rpdel>Retirer du rack</button></div>
+      ${linked ? `<p class="hint" style="margin:6px 0 0">La copie est un nouvel appareil${it.kind === "rack" ? " dans Racks et I/O, sans patch" : it.kind === "hf" ? " dans l'onglet HF" : " du synoptique"}.</p>` : ""}`;
   }
   function rpPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
   function rackplanBind() {
@@ -6732,13 +6818,11 @@ table.master td.nopad input { opacity: 0.8; }
         commit(true); return;
       }
       if (card && t.matches("[data-rpadd]")) {
-        const c = P.cases.find((x) => x.id === card.dataset.rpc); let [kind, ref] = t.value.split("|"); if (!c || !kind) return;
-        if (kind === "newx") { ref = rpNewExtra(ref); if (!ref) return; kind = "extra"; }
-        const it = { id: nid(), kind, h: kind === "free" ? (RP_FREE.find((f) => f[0] === ref) || RP_FREE[5])[2] : rpDefaultU(kind, ref), at: 1 };
-        if (kind === "free") it.free = ref; else { it.ref = ref; const hf = rpDefaultHalf(kind, ref); if (hf) it.half = hf; }
-        const pl = rpPlace(c, it, 1); if (pl) { it.at = pl[1]; if (pl[0]) it.col = pl[0]; if (pl[2]) it.half = pl[2]; } else it.at = 0;
-        if (!it.at) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = `Plus de place pour ${it.h} U : agrandis le rack ou libère des U.`; h.classList.add("warn"); return; }
-        c.items.push(it); rpSel = it.id; commit(true); return;
+        // Choix dans la liste : ajouté tout de suite ; un nom libre attend Entrée (voir keydown), pour ne rien ajouter en quittant la case
+        const c = P.cases.find((x) => x.id === card.dataset.rpc), v = t.value; if (!c || !rpAddMap.has(v.trim().toLowerCase())) return;
+        t.value = ""; // la case disparaît au rendu : pas de deuxième « change » au moment où elle perd le focus
+        const err = rpAddTyped(c, v); if (err) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = err; h.classList.add("warn"); }
+        return;
       }
       const f = rpSel && rpFind(rpSel), k = t.dataset.rpf; if (!f || !k) return;
       const { c, it } = f, msg = (m) => { const x = $("#rpMsg"); if (x) x.textContent = m; };
@@ -6765,8 +6849,16 @@ table.master td.nopad input { opacity: 0.8; }
       }
       commit(true);
     });
+    host.addEventListener("keydown", (e) => {
+      const t = e.target; if (e.key !== "Enter" || !t.matches || !t.matches("[data-rpadd]") || !t.value.trim()) return;
+      e.preventDefault(); const card = t.closest(".rpcase"), c = card && rpState().cases.find((x) => x.id === card.dataset.rpc), v = t.value; if (!c) return;
+      t.value = "";
+      const err = rpAddTyped(c, v); if (err) { t.value = ""; const h = card.querySelector(".rpadd .hint"); h.textContent = err; h.classList.add("warn"); }
+    });
     host.addEventListener("click", (e) => {
       const P = rpState();
+      const dup = e.target.closest("[data-rpdup]");
+      if (dup) { const f = rpSel && rpFind(rpSel); if (f) { const r = rpDuplicate(f.c, f.it); if (typeof r === "string") { const m = $("#rpMsg"); if (m) m.textContent = r; } } return; }
       const del = e.target.closest("[data-rpcdel]");
       if (del) { const id = del.closest(".rpcase").dataset.rpc; P.cases = P.cases.filter((x) => x.id !== id); commit(true); return; }
       const sp = e.target.closest("[data-rpcsplit]");
@@ -6787,7 +6879,10 @@ table.master td.nopad input { opacity: 0.8; }
       const wasSel = rpSel === f.it.id;
       if (e.pointerType === "touch" && !wasSel) { rpSel = f.it.id; rpFresh = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); return; }
       const p = rpPoint(svg, e);
-      rpDrag = { ...f, svg, g, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), half: f.it.half, moved: false };
+      // Alt (Option sur Mac) : on fait glisser une copie, l'original reste en place
+      const dup = e.altKey, gg = dup ? g.cloneNode(true) : g;
+      if (dup) { gg.classList.add("dup"); g.parentNode.appendChild(gg); }
+      rpDrag = { ...f, svg, g: gg, dup, dy: p.y - (RP_TOP + (f.it.at - 1) * RP_UH), at: f.it.at, col: rpCol(f.it), half: f.it.half, moved: false };
       if (rpSel !== f.it.id) { rpSel = f.it.id; host.querySelectorAll("g.rpit.on").forEach((x) => { x.classList.remove("on"); x.querySelector(".rpsel").setAttribute("stroke", "transparent"); }); g.classList.add("on"); g.querySelector(".rpsel").setAttribute("stroke", "#f59e0b"); renderRackplanSide(); }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -6798,10 +6893,12 @@ table.master td.nopad input { opacity: 0.8; }
       const at = Math.max(1, Math.min(c.u - it.h + 1, Math.round((p.y - rpDrag.dy - RP_TOP) / RP_UH) + 1));
       const col = Math.max(0, Math.min(rpCols(c) - 1, Math.floor(p.x / (RP_CW + RP_GAP))));
       const half = it.half ? (p.x - rpX(col) - RP_SIDE > 241.5 ? "r" : "l") : undefined;
-      if (at !== rpDrag.at || col !== rpDrag.col || half !== rpDrag.half) { rpDrag.at = at; rpDrag.col = col; rpDrag.half = half; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE + (half === "r" ? 241.5 : 0)} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, it, at, col, half)); }
+      if (at !== rpDrag.at || col !== rpDrag.col || half !== rpDrag.half) { rpDrag.at = at; rpDrag.col = col; rpDrag.half = half; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE + (half === "r" ? 241.5 : 0)} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, rpDrag.dup ? { ...it, id: "_dup" } : it, at, col, half)); }
     });
     const end = () => {
-      if (!rpDrag) return; const { c, it, at, col, half, moved } = rpDrag; rpDrag = null;
+      if (!rpDrag) return; const { c, it, at, col, half, moved, dup, g } = rpDrag; rpDrag = null;
+      // Copie : posée là où on l'a lâchée si c'est libre, sinon à la place libre la plus proche (Alt + clic = copie juste en dessous)
+      if (dup) { g.remove(); const r = moved ? rpDuplicate(c, it, at, col, half) : rpDuplicate(c, it); if (typeof r === "string") notice(r, true); return; }
       if (!moved) return;
       if (rpFits(c, it, at, col, half)) { it.at = at; if (col) it.col = col; else delete it.col; if (half) it.half = half; }
       commit(true);
@@ -6818,17 +6915,26 @@ table.master td.nopad input { opacity: 0.8; }
     });
   }
   // Liste des U d'un rack, pour l'Excel et l'impression (les U libres regroupés)
-  function rpRows(c) {
+  // Adresse IP d'un élément du plan, prise dans l'onglet Réseau (un élément libre retrouve un appareil ajouté à la main par son nom)
+  function rpIp(it) {
+    const N = netState(), key = it.kind === "rack" ? "r:" + it.ref : it.kind === "hf" ? "h:" + it.ref : it.kind === "extra" ? "x:" + it.ref : "";
+    if (key) return String((N.dev[key] || {}).ip || "").trim();
+    const nm = rpLabel(it).trim().toLowerCase(), x = nm && N.extra.find((e) => String(e.nom || "").trim().toLowerCase() === nm);
+    return x ? String(x.ip || "").trim() : "";
+  }
+  // La colonne IP n'apparaît que si au moins un appareil des plans de rack a une adresse
+  const rpHasIp = () => rpState().cases.some((c) => c.items.some((it) => rpIp(it)));
+  function rpRows(c, withIp = rpHasIp()) {
     const rows = [], n = rpCols(c);
     for (let col = 0; col < n; col++) {
       const pre = n > 1 ? RP_COLN[n][col] + " · " : "", items = c.items.filter((i) => Math.min(rpCol(i), n - 1) === col).sort((a, b) => a.at - b.at); let u = 1;
-      const gap = (to) => { if (to > u) rows.push([pre + (to - 1 > u ? `U${u}–${to - 1}` : `U${u}`), "libre", to - u, ""]); };
-      items.forEach((it) => { gap(it.at); rows.push([pre + (it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`), rpLabel(it), it.h, it.notes || ""]); u = it.at + it.h; });
+      const gap = (to) => { if (to > u) rows.push([pre + (to - 1 > u ? `U${u}–${to - 1}` : `U${u}`), "libre", to - u, ...(withIp ? [""] : []), ""]); };
+      items.forEach((it) => { gap(it.at); rows.push([pre + (it.h > 1 ? `U${it.at}–${it.at + it.h - 1}` : `U${it.at}`), rpLabel(it), it.h, ...(withIp ? [rpIp(it)] : []), it.notes || ""]); u = it.at + it.h; });
       gap(c.u + 1);
     }
     return rows;
   }
-  const RP_HEAD = ["U", "Élément", "Hauteur (U)", "Notes"];
+  const rpHead = (withIp = rpHasIp()) => ["U", "Élément", "Hauteur (U)", ...(withIp ? ["Adresse IP"] : []), "Notes"];
   function rpPng(c) {
     return new Promise((resolve) => {
       const img = new Image();
@@ -8327,7 +8433,7 @@ table.master td.nopad input { opacity: 0.8; }
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
-    rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${RP_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
+    rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -9328,13 +9434,14 @@ table.master td.nopad input { opacity: 0.8; }
     if (rpState().cases.length) {
       const rs = wb.addWorksheet("Plans de rack");
       rs.addRow([`Plans de rack · ${titre}`]).font = { bold: true, size: 14 };
-      [14, 34, 12, 30].forEach((w, i) => { rs.getColumn(i + 1).width = w; });
+      const withIp = rpHasIp();
+      (withIp ? [14, 34, 12, 16, 30] : [14, 34, 12, 30]).forEach((w, i) => { rs.getColumn(i + 1).width = w; });
       for (const c of rpState().cases) {
         rs.addRow([]); const r0 = rs.rowCount;
         rs.addRow([`${c.nom || "Rack"} · ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U${c.lieu ? " · " + c.lieu : ""}`]).font = { bold: true, size: 12 };
-        styleHead(rs.addRow(RP_HEAD)); rpRows(c).forEach((r) => { const row = rs.addRow(r); if (r[1] === "libre") row.font = { color: { argb: "FF9AA3AD" } }; });
+        styleHead(rs.addRow(rpHead(withIp))); rpRows(c, withIp).forEach((r) => { const row = rs.addRow(r); if (r[1] === "libre") row.font = { color: { argb: "FF9AA3AD" } }; });
         const png = await rpPng(c);
-        if (png) { const id = wb.addImage({ base64: png.data, extension: "png" }), k = Math.min(1, (rpCols(c) > 1 ? 720 : 420) / png.w); rs.addImage(id, { tl: { col: 5, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20); while (rs.rowCount < r0 + need) rs.addRow([]); }
+        if (png) { const id = wb.addImage({ base64: png.data, extension: "png" }), k = Math.min(1, (rpCols(c) > 1 ? 720 : 420) / png.w); rs.addImage(id, { tl: { col: withIp ? 6 : 5, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20); while (rs.rowCount < r0 + need) rs.addRow([]); }
       }
       page(rs, false);
     }
