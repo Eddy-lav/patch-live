@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "80254eb77f";</script>
+<script>window.PL_VER = "da18aa2a54";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -399,26 +399,29 @@ table.master tr.flash td { animation: flash 1.6s ease-out; }
 .box li .m { color: var(--muted); font-size: 12px; }
 .box li.hit { background: var(--accent-soft); }
 .box li .b { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-#gridOut.wsr .boxes { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-.box li.occ { align-items: start; padding-block: 3px; }
-.box li.occ .n { padding-top: 3px; }
-.box li .bx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.box li .bl1 { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.box li .bl2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 2px 8px; }
-.box li .bx input { min-width: 0; border: 1px solid transparent; background: transparent; padding: 1px 4px; border-radius: 3px; font: inherit; color: inherit; }
-.box li .bx input:hover, .box li .bx select:hover { border-color: var(--line); }
-.box li .bx input:focus { border-color: var(--accent); background: var(--surface); }
-.box li .bx input.bname { flex: 1 1 auto; font-weight: 600; width: 100%; }
-.box li .bmic { flex: 0 1 96px; width: 96px; font-size: 13px !important; color: var(--muted) !important; }
-.box li .bl1 .m { flex: none; }
-.box li .bx button { all: unset; cursor: pointer; flex: none; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: var(--muted); font-size: 14px; }
-.box li .bx button:hover { background: var(--rowhover); color: var(--ink); }
-.box li .bx button:focus-visible { outline: 2px solid var(--accent); }
-.box li .bx button.bun:hover { color: var(--danger); }
-.box li .bsr { display: inline-flex; flex: 0 1 auto; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
-.box li .bx .bsr select { width: 100%; flex: 1 1 auto; font-size: 13px; padding: 1px 2px; max-width: none; min-height: 0; border: 1px solid transparent; background: transparent; color: var(--ink); }
-.box li .bsr select.empty { color: var(--muted); }
-@media (pointer: coarse) { .box li .bx button { width: 36px; height: 36px; } }
+/* Boîtiers condensés : une ligne par entrée, colonnes Source · Micro · stage racks · actions */
+#gridOut.wsr .boxes { grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(240px + var(--nsrw, 0px))), 1fr)); }
+.box li.occ, .box li.bhead { display: grid; grid-template-columns: 22px minmax(70px, 1fr) minmax(52px, 72px) repeat(var(--nsr, 0), minmax(64px, 78px)) auto; gap: 0 4px; align-items: center; padding-block: 1px; min-height: 26px; }
+.box li.bhead { min-height: 0; padding-block: 2px; font-size: 11px; color: var(--muted); background: var(--surface-2); }
+.box li.bhead span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 4px; }
+.box li.occ > input, .box li.occ > select { min-width: 0; width: 100%; min-height: 0; height: 24px; line-height: 20px; border: 1px solid transparent; background: transparent; padding: 1px 3px; border-radius: 3px; font: inherit; color: inherit; }
+.box li.occ > input:hover, .box li.occ > select:hover { border-color: var(--line); }
+.box li.occ > input:focus, .box li.occ > select:focus { border-color: var(--accent); background: var(--surface); }
+.box li.occ > input.bname { font-weight: 600; }
+.box li.occ > .bmic { font-size: 12px; color: var(--muted); }
+.box li.occ > span.bmic { padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.box li.occ > select.bsr { font-size: 12px; font-weight: 600; min-height: 0; -webkit-appearance: none; appearance: none; background-image: none; cursor: pointer; }
+.box li.occ > select.bsr.empty { color: var(--muted); font-weight: 400; }
+.box li .bact { display: inline-flex; }
+.box li .bact button { all: unset; cursor: pointer; width: 18px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: var(--muted); font-size: 13px; opacity: 0.35; }
+.box li.occ:hover .bact button, .box li .bact button:focus-visible { opacity: 1; }
+.box li .bact button:hover { background: var(--rowhover); color: var(--ink); }
+.box li .bact button:focus-visible { outline: 2px solid var(--accent); }
+.box li .bact button.bun:hover { color: var(--danger); }
+.box li { padding-block: 1px; min-height: 26px; font-size: 14px; }
+.box li input.bquick { min-height: 0; height: 24px; }
+.box li.free, .box li.hs { align-items: center; }
+@media (pointer: coarse) { .box li .bact button { width: 32px; height: 32px; opacity: 0.7; } }
 .rackgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 900px) { .rackgrid { grid-template-columns: minmax(0, 1fr); } }
 .rt h3 { margin: 0 0 6px; font-size: 15px; display: inline-flex; gap: 8px; align-items: baseline; }
@@ -3696,14 +3699,12 @@ table.master td.nopad input { opacity: 0.8; }
   function boxLi(l, i, b, hit, occ, cols) {
     const out = isOut(l), mus = out ? l.dest : l.musicien, mc = musColorOf(mus);
     const sr = !boxShowSr ? "" : out
-      ? `<label class="bsr"><span>Départ</span><select class="addr${l.out ? "" : " empty"}" data-f="out" aria-label="Départ de ${esc(l.mix)}">${outOptions(l, occ)}</select></label>`
-      : cols.map((c) => `<label class="bsr"><span>${esc(cols.length > 1 ? (c.k.length <= 5 ? c.k : consLabel(c.k)) : "Rack")}</span><select class="addr${lineSr(l, c.k) ? "" : " empty"}" data-f="sr" data-col="${esc(c.k)}" aria-label="${esc(c.label)} de ${esc(l.source)}">${rackOptions(l, c.k, occ)}</select></label>`).join("");
-    return `<li class="occ${hit ? " hit" : ""}${mc ? " mc" : ""}" data-id="${l.id}"${mc ? ` style="--mc:${mc}"` : ""}><span class="n">${i}</span><div class="bx">
-      <div class="bl1"><input type="text" class="bname" data-f="${out ? "mix" : "source"}" value="${esc(label(l))}" aria-label="${out ? "Mix" : "Source"} sur ${esc(boxName(b))} → ${i}">
-        ${out ? `<span class="m">OUT · ${esc(l.type)}</span>` : `<input type="text" class="bmic" data-f="micro" value="${esc(l.micro)}" placeholder="micro" aria-label="Micro de ${esc(l.source)}" autocomplete="off" data-suggest="dlMic">`}
-        <button type="button" class="bgo" data-goto="${l.id}" title="${out ? "Voir dans Sorties" : "Voir dans le master"}" aria-label="Voir ${esc(label(l))} ${out ? "dans Sorties" : "dans le master"}">↗</button><button type="button" class="bun" data-bunpatch="${l.id}" title="Dépatcher cette entrée (la ${out ? "sortie" : "source"} reste)" aria-label="Dépatcher ${esc(label(l))}">×</button></div>
-      ${sr ? `<div class="bl2">${sr}</div>` : ""}</div></li>`;
+      ? `<select class="addr bsr${l.out ? "" : " empty"}" data-f="out" style="grid-column: span ${cols.length}" aria-label="Départ de ${esc(l.mix)}" title="Départ (sortie de rack)">${outOptions(l, occ)}</select>`
+      : cols.map((c) => `<select class="addr bsr${lineSr(l, c.k) ? "" : " empty"}" data-f="sr" data-col="${esc(c.k)}" aria-label="${esc(c.label)} de ${esc(l.source)}" title="${esc(c.label)}">${rackOptions(l, c.k, occ)}</select>`).join("");
+    return `<li class="occ${hit ? " hit" : ""}${mc ? " mc" : ""}" data-id="${l.id}"${mc ? ` style="--mc:${mc}"` : ""}><span class="n">${i}</span><input type="text" class="bname" data-f="${out ? "mix" : "source"}" value="${esc(label(l))}" aria-label="${out ? "Mix" : "Source"} sur ${esc(boxName(b))} → ${i}">${out ? `<span class="m bmic">OUT · ${esc(l.type)}</span>` : `<input type="text" class="bmic" data-f="micro" value="${esc(l.micro)}" placeholder="micro" aria-label="Micro de ${esc(l.source)}" autocomplete="off" data-suggest="dlMic">`}${sr}<span class="bact"><button type="button" class="bgo" data-goto="${l.id}" title="${out ? "Voir dans Sorties" : "Voir dans le master"}" aria-label="Voir ${esc(label(l))} ${out ? "dans Sorties" : "dans le master"}">↗</button><button type="button" class="bun" data-bunpatch="${l.id}" title="Dépatcher cette entrée (la ${out ? "sortie" : "source"} reste)" aria-label="Dépatcher ${esc(label(l))}">×</button></span></li>`;
   }
+  // En-tête des colonnes d'un boîtier quand les stage racks sont affichés
+  const boxColsHead = (cols) => (boxShowSr ? `<li class="bhead" aria-hidden="true"><span></span><span>Source</span><span>Micro</span>${cols.map((c) => `<span>${esc(cols.length > 1 ? (c.k.length <= 5 ? c.k : consLabel(c.k)) : "Rack")}</span>`).join("")}<span></span></li>` : "");
   function renderGrid() {
     const out = $("#gridOut");
     if (!state.boites.length) { out.innerHTML = `<div class="empty-state">Aucun boîtier pour l'instant.<div class="es-go"><button class="btn small primary" type="button" data-go="reglbox">Créer les boîtiers</button></div></div>`; return; }
@@ -3721,6 +3722,7 @@ table.master td.nopad input { opacity: 0.8; }
     dlb.innerHTML = `<datalist id="dlBoxPick">${pick.map((q) => `<option value="${esc(q.v)}" label="${esc(q.lab)}">`).join("")}</datalist>`;
     const cols = srCols();
     out.classList.toggle("wsr", boxShowSr);
+    out.style.setProperty("--nsrw", (boxShowSr ? cols.length * 76 : 0) + "px");
     out.innerHTML = sides.map(([s, sideName]) => {
       const bx = state.boites.filter((b) => (b.cote || "") === s).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num);
       if (!bx.length) return "";
@@ -3735,7 +3737,7 @@ table.master td.nopad input { opacity: 0.8; }
             : isHs(`${b.id}:${i}`) ? `<li class="hs"><span class="n">${i}</span><span class="s">HS</span><button type="button" class="unhs" data-unhs="${b.id}:${i}" title="Entrée réparée : la remettre en service">réparée</button></li>`
             : `<li class="free"><span class="n">${i}</span><input type="text" class="bquick" data-bk="${b.id}:${i}" placeholder="libre" data-suggest="dlBoxPick" autocomplete="off" aria-label="Patcher une source ou une sortie sur ${esc(boxName(b))} → ${i}" title="Tape un nom ou un N° : source ou sortie à mettre sur cette liaison"></li>`;
         }
-        return `<div class="box" data-bid="${b.id}"><h3><span>${esc(boxTitle(b))}</span><span class="used">${used}/${n}${used ? ` <button type="button" class="unb" data-unbox="${b.id}" aria-expanded="${unboxOpen === b.id}" title="Dépatcher des entrées de ce boîtier">Dépatcher…</button>` : ""}</span></h3>${unboxOpen === b.id ? `<form class="unbform" data-unbf="${b.id}">Entrées <input type="number" min="1" max="${n}" value="1" data-unf="from" aria-label="De l'entrée" inputmode="numeric"> à <input type="number" min="1" max="${n}" value="${n}" data-unf="to" aria-label="À l'entrée" inputmode="numeric"> <button class="btn small danger" type="submit">Dépatcher</button> <button class="btn small" type="button" data-unbcancel>Annuler</button></form>` : ""}<ol>${li}</ol></div>`;
+        return `<div class="box" data-bid="${b.id}" style="--nsr:${boxShowSr ? cols.length : 0}"><h3><span>${esc(boxTitle(b))}</span><span class="used">${used}/${n}${used ? ` <button type="button" class="unb" data-unbox="${b.id}" aria-expanded="${unboxOpen === b.id}" title="Dépatcher des entrées de ce boîtier">Dépatcher…</button>` : ""}</span></h3>${unboxOpen === b.id ? `<form class="unbform" data-unbf="${b.id}">Entrées <input type="number" min="1" max="${n}" value="1" data-unf="from" aria-label="De l'entrée" inputmode="numeric"> à <input type="number" min="1" max="${n}" value="${n}" data-unf="to" aria-label="À l'entrée" inputmode="numeric"> <button class="btn small danger" type="submit">Dépatcher</button> <button class="btn small" type="button" data-unbcancel>Annuler</button></form>` : ""}<ol>${boxColsHead(cols)}${li}</ol></div>`;
       }).join("")}</div></div>`;
     }).join("");
   }
