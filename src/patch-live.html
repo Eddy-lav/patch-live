@@ -178,8 +178,16 @@ table.master td.c-mus.mc input, table.master td.mc > input { padding-left: 10px;
 .portbar form { display: inline-flex; gap: 6px; } .portbar #portAdd { min-width: 200px; }
 table.portt td { vertical-align: top; }
 table.portt .pcw { display: inline-flex; align-items: center; gap: 6px; padding-left: 6px; }
-table.portt .pcw select { min-width: 112px; }
+table.portt .pcw select { min-width: 134px; }
 table.portt td.src input { font-weight: 600; min-width: 160px; }
+table.portt td.pord { white-space: nowrap; width: 1%; padding: 0 2px; }
+table.portt .pgrip { cursor: grab; color: var(--muted); padding: 0 4px; user-select: none; -webkit-user-select: none; }
+table.portt .pord button { all: unset; cursor: pointer; width: 22px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: var(--muted); }
+table.portt .pord button:hover { background: var(--rowhover); color: var(--ink); } table.portt .pord button:focus-visible { outline: 2px solid var(--accent); }
+table.portt .pord button[disabled] { opacity: 0.25; cursor: default; }
+@media (pointer: coarse) { table.portt .pord button { width: 36px; height: 36px; } table.portt .pgrip { display: none; } }
+table.portt tr.pdrag td { opacity: 0.45; }
+table.portt tr.pdrop-a td { box-shadow: inset 0 3px 0 var(--accent); } table.portt tr.pdrop-b td { box-shadow: inset 0 -3px 0 var(--accent); }
 .pchip { font: inherit; font-size: 13px; margin: 2px 4px 2px 0; padding: 2px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
 .pchip:hover { border-color: var(--muted); background: var(--rowhover); }
 th[data-ck] { cursor: grab; }
@@ -3074,7 +3082,7 @@ table.master td.nopad input { opacity: 0.8; }
     if (!dl) { dl = document.createElement("div"); dl.id = "dls"; dl.hidden = true; document.body.appendChild(dl); }
     const pieds = [...new Set([...lib.pieds, ...Object.keys(PIEDS_LEGENDE), "Bras magique", "Clamp"])].sort((a, b) => a.localeCompare(b, "fr"));
     const mus = personNames().sort((a, b) => a.localeCompare(b, "fr"));
-    dl.innerHTML = `<datalist id="dlMus">${mus.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+    dl.innerHTML = `<datalist id="dlPoste">${uniqCi([...Object.values(state.musPoste || {}), ...POSTES]).map((v) => `<option value="${esc(v)}">`).join("")}</datalist><datalist id="dlMus">${mus.map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlMic">${bqUniq([...lib.micros, ...banqueNoms("Micros", "DI et talkback", "Micros HF")]).map(optFiche).join("")}</datalist>
       <datalist id="dlPied">${bqUniq([...pieds, ...banqueNoms("Pieds et fixations")]).map(optFiche).join("")}</datalist>
       <datalist id="dlBanque">${bqUniq([...(state.materiel || []).map((x) => x.nom).filter(Boolean), ...[...BANQUE_FICHE.values()].map((f) => f.nom)]).map((v) => { const f = banqueFiche(v); return `<option value="${esc(v)}"${f ? ` label="${esc([f.cat, f.marque].filter(Boolean).join(" · "))}"` : ""}>`; }).join("")}</datalist>
@@ -3275,6 +3283,9 @@ table.master td.nopad input { opacity: 0.8; }
   const RES_BY = new Map(RES_COLORS.map((c) => [c[0], c]));
   const musColors = () => { if (!isObj0(state.musCol)) state.musCol = {}; return state.musCol; };
   function isObj0(x) { return x !== null && typeof x === "object" && !Array.isArray(x); }
+  // Instrument ou poste de chaque personne (Basse, Chœurs, Régie…), même clé que la couleur
+  const musPostes = () => { if (!isObj0(state.musPoste)) state.musPoste = {}; return state.musPoste; };
+  const POSTES = ["Chant lead", "Chant", "Chœurs", "Batterie", "Percussions", "Basse", "Contrebasse", "Guitare", "Guitare acoustique", "Claviers", "Piano", "Synthés", "Cuivres", "Trompette", "Saxophone", "Trombone", "Cordes", "Violon", "Violoncelle", "DJ", "Machines / séquences", "Direction musicale", "Régie", "Ingé retours", "Ingé façade", "Backline", "Tech son", "Tech HF", "Invité"];
   const musColorOf = (name) => { const k = musKey(name); const c = k && RES_BY.get((state.musCol || {})[k]); return c ? c[2] : ""; };
   const mcAttr = (name) => { const c = musColorOf(name); return c ? ` style="--mc:${c}"` : ""; };
   // Écriture déjà utilisée dans le dossier pour ce nom (la première rencontrée), sinon le nom nettoyé
@@ -3308,8 +3319,10 @@ table.master td.nopad input { opacity: 0.8; }
     const ok = musKey(oldName), nv = musClean(newName); if (!ok || !nv) return 0;
     const u = personUses(oldName);
     u.src.forEach((l) => { l.musicien = nv; }); u.outs.forEach((o) => { o.dest = nv; }); u.hf.forEach(({ r }) => { r.nom = nv; }); u.plan.forEach((i) => { i.label = nv; });
-    state.musiciens = (state.musiciens || []).filter((m) => musKey(m) !== ok && musKey(m) !== musKey(nv)); state.musiciens.push(nv);
-    const mc = musColors(); if (mc[ok] && !mc[musKey(nv)]) mc[musKey(nv)] = mc[ok]; if (ok !== musKey(nv)) delete mc[ok];
+    // Le nom garde sa place dans la liste des porteurs
+    const order = personNames(), nk = musKey(nv), at = order.findIndex((m) => musKey(m) === ok);
+    state.musiciens = order.filter((m) => musKey(m) !== nk).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
+    [musColors(), musPostes()].forEach((d) => { if (d[ok] && !d[nk]) d[nk] = d[ok]; if (ok !== nk) delete d[ok]; });
     log(`Musicien renommé : ${oldName} → ${nv} (${u.n} case${u.n > 1 ? "s" : ""}).`);
     return u.n;
   }
@@ -3317,7 +3330,7 @@ table.master td.nopad input { opacity: 0.8; }
   function removePerson(name) {
     const k = musKey(name), u = personUses(name);
     u.src.forEach((l) => { l.musicien = ""; }); u.outs.forEach((o) => { o.dest = ""; }); u.hf.forEach(({ r }) => { r.nom = ""; });
-    state.musiciens = (state.musiciens || []).filter((m) => musKey(m) !== k); delete musColors()[k];
+    state.musiciens = (state.musiciens || []).filter((m) => musKey(m) !== k); delete musColors()[k]; delete musPostes()[k];
     return u.n;
   }
   // Remet d'aplomb les noms d'un dossier : espaces en trop, même personne écrite de deux façons
@@ -8307,30 +8320,38 @@ table.master td.nopad input { opacity: 0.8; }
   function renderPorteurs() {
     const host = $("#portOut"); if (!host) return;
     renderDatalists();
-    const names = personNames().sort((a, b) => a.localeCompare(b, "fr")), mc = state.musCol || {};
+    const names = personNames(), mc = state.musCol || {}, mp = state.musPoste || {};
     const unused = names.filter((n) => !personUses(n).n).length;
     const bar = `<div class="toolbar portbar"><form id="portAddF" class="inl"><input id="portAdd" type="text" placeholder="Nouveau musicien ou porteur" aria-label="Nom du musicien ou porteur à ajouter" autocomplete="off"><button class="btn" type="submit">+ Porteur</button></form>
+      <button class="btn" type="button" id="portSort" title="Range la liste par ordre alphabétique">Trier de A à Z</button>
       <button class="btn" type="button" id="portAuto" title="Donne une couleur, dans l'ordre du code des résistances (marron, rouge, orange…), à ceux qui n'en ont pas">Couleurs dans l'ordre</button>
       ${unused ? `<button class="btn" type="button" id="portClean">Retirer les noms inutilisés (${unused})</button>` : ""}
-      <span class="hint">Musiciens du master, destinataires des sorties et porteurs HF au même endroit. Renommer ici change le nom partout où il est écrit. Chaque couleur suit le code des résistances.</span></div>`;
+      <span class="hint">Musiciens du master, destinataires des sorties et porteurs HF au même endroit. Renommer ici change le nom partout où il est écrit. Chaque couleur suit le code des résistances. Range la liste avec ↑ ↓ ou en glissant ⠿.</span></div>`;
     if (!names.length) { host.innerHTML = bar + `<div class="empty-state">Aucun musicien ni porteur pour l'instant. Ajoute un nom ici, ou remplis la colonne Musicien du master.</div>`; return; }
     const chip = (attr, txt, title) => `<button type="button" class="pchip" ${attr} title="${esc(title)}">${esc(txt)}</button>`;
     const rows = names.map((n) => {
       const u = personUses(n), k = musKey(n), col = RES_BY.get(mc[k]);
       const hfMic = (state.hf || []).filter((g) => g.kind === "tx" || g.kind === "spxm").flatMap((g) => g.rows.filter((r) => u.src.some((l) => musKey(l.source) === musKey(r.nom))).map((r) => ({ g, r })));
+      const ix = names.indexOf(n);
       return `<tr data-pk="${esc(k)}"${col ? ` style="--mc:${col[2]}"` : ""}>
+        <td class="pord" data-l=""><span class="pgrip" draggable="true" title="Glisser pour déplacer" aria-hidden="true">⠿</span><button type="button" data-pmv="-1"${ix ? "" : " disabled"} aria-label="Monter ${esc(n)}" title="Monter">↑</button><button type="button" data-pmv="1"${ix < names.length - 1 ? "" : " disabled"} aria-label="Descendre ${esc(n)}" title="Descendre">↓</button></td>
         <td class="pcol${col ? " mc" : ""}" data-l="Couleur"><span class="pcw"><span class="swatch${col ? "" : " none"}"></span><select data-pc aria-label="Couleur de ${esc(n)}"><option value="">Sans couleur</option>${RES_COLORS.map(([v, t]) => `<option value="${v}"${col && col[0] === v ? " selected" : ""}>${t}</option>`).join("")}</select></span></td>
         <td class="src" data-l="Nom"><input type="text" data-pn value="${esc(n)}" aria-label="Nom" data-old="${esc(n)}"></td>
+        <td data-l="Instrument / poste"><input type="text" data-pp value="${esc(mp[k] || "")}" placeholder="—" aria-label="Instrument ou poste de ${esc(n)}" autocomplete="off" data-suggest="dlPoste"></td>
         <td data-l="Sources">${u.src.map((l) => chip(`data-pgo="${l.id}"`, `${canal(l)} ${l.source}`, `Voir ${l.source} dans le master`)).join("") || '<span class="hint">—</span>'}</td>
         <td data-l="Mix (sorties)">${u.outs.map((o) => chip(`data-pgo="${o.id}"`, o.mix || "sans nom", `Voir ${o.mix} dans Sorties`)).join("") || '<span class="hint">—</span>'}</td>
         <td data-l="HF">${[...u.hf.map(({ g, r }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t}${r.mix ? " · " + r.mix : ""}`, "Voir dans Distribution HF")), ...hfMic.map(({ g, r }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t} · ${r.nom}`, "Voir dans Distribution HF"))].join("") || '<span class="hint">—</span>'}</td>
         <td class="x" data-l=""><button class="btn small danger xdel${portArmed === k ? " armed" : ""}" type="button" data-pdel title="${u.n ? `Retirer ${n} : le nom est effacé de ${u.n} case${u.n > 1 ? "s" : ""}` : `Retirer ${n} de la liste`}" aria-label="Retirer ${esc(n)}">${portArmed === k ? "Confirmer" : "×"}</button></td></tr>`;
     }).join("");
-    host.innerHTML = bar + `<div class="table-wrap"><table class="master portt"><thead><tr><th>Couleur</th><th class="col-src"><span>Nom</span></th><th>Sources</th><th>Mix (sorties)</th><th>HF</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    host.innerHTML = bar + `<div class="table-wrap"><table class="master portt"><thead><tr><th aria-label="Ordre"></th><th>Couleur</th><th class="col-src"><span>Nom</span></th><th>Instrument / poste</th><th>Sources</th><th>Mix (sorties)</th><th>HF</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
+  // Ordre des porteurs : il est gardé dans la liste des musiciens du dossier
+  function portSetOrder(names) { state.musiciens = names; commit(true); }
+  function portMove(k, d) { const L = personNames(), i = L.findIndex((n) => musKey(n) === k), j = i + d; if (i < 0 || j < 0 || j >= L.length) return; const [x] = L.splice(i, 1); L.splice(j, 0, x); portSetOrder(L); const b = document.querySelector(`#portOut tr[data-pk="${CSS.escape(k)}"] button[data-pmv="${d}"]:not([disabled])`) || document.querySelector(`#portOut tr[data-pk="${CSS.escape(k)}"] input[data-pn]`); if (b) b.focus(); }
+  let portDrag = null;
   function portColorsInOrder() {
     const mc = musColors(), used = new Set(Object.values(mc)); let n = 0;
-    personNames().sort((a, b) => a.localeCompare(b, "fr")).forEach((p) => { const k = musKey(p); if (mc[k]) return; const c = RES_ORDER.find((x) => !used.has(x)) || RES_ORDER[n % RES_ORDER.length]; mc[k] = c; used.add(c); n++; });
+    personNames().forEach((p) => { const k = musKey(p); if (mc[k]) return; const c = RES_ORDER.find((x) => !used.has(x)) || RES_ORDER[n % RES_ORDER.length]; mc[k] = c; used.add(c); n++; });
     return n;
   }
   function portBind() {
@@ -8339,6 +8360,7 @@ table.master td.nopad input { opacity: 0.8; }
     host.addEventListener("change", (e) => {
       const t = e.target, tr = t.closest("tr[data-pk]"); if (!tr) return;
       const k = tr.dataset.pk;
+      if (t.dataset.pp !== undefined) { const v = t.value.trim(), mp = musPostes(); if (v) mp[k] = v; else delete mp[k]; commit(false); return; }
       if (t.dataset.pc !== undefined) { const mc = musColors(); if (t.value) mc[k] = t.value; else delete mc[k]; commit(true); return; }
       if (t.dataset.pn !== undefined) {
         const old = t.dataset.old, nv = musClean(t.value);
@@ -8349,9 +8371,19 @@ table.master td.nopad input { opacity: 0.8; }
         notice(merge ? `${esc(old)} fusionné avec ${esc(merge)} (${n} case${n > 1 ? "s" : ""}).` : `${esc(old)} renommé en ${esc(nv)} partout (${n} case${n > 1 ? "s" : ""}). Annulable avec ↶.`);
       }
     });
+    host.addEventListener("dragstart", (e) => { const g = e.target.closest && e.target.closest(".pgrip"); if (!g) return; const tr = g.closest("tr[data-pk]"); portDrag = tr.dataset.pk; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", portDrag); e.dataTransfer.setDragImage(tr, 20, 20); } catch (err) { /* ignore */ } tr.classList.add("pdrag"); });
+    host.addEventListener("dragover", (e) => { if (!portDrag) return; const tr = e.target.closest("tr[data-pk]"); host.querySelectorAll("tr.pdrop-a, tr.pdrop-b").forEach((x) => x.classList.remove("pdrop-a", "pdrop-b")); if (!tr || tr.dataset.pk === portDrag) return; e.preventDefault(); const r = tr.getBoundingClientRect(); tr.classList.add(e.clientY < r.top + r.height / 2 ? "pdrop-a" : "pdrop-b"); });
+    host.addEventListener("drop", (e) => {
+      if (!portDrag) return; const tr = e.target.closest("tr[data-pk]"), k = portDrag; portDrag = null; if (!tr || tr.dataset.pk === k) return; e.preventDefault();
+      const r = tr.getBoundingClientRect(), after = e.clientY >= r.top + r.height / 2, L = personNames(), x = L.find((n) => musKey(n) === k), rest = L.filter((n) => n !== x);
+      rest.splice(rest.findIndex((n) => musKey(n) === tr.dataset.pk) + (after ? 1 : 0), 0, x); portSetOrder(rest);
+    });
+    host.addEventListener("dragend", () => { portDrag = null; host.querySelectorAll("tr.pdrag, tr.pdrop-a, tr.pdrop-b").forEach((x) => x.classList.remove("pdrag", "pdrop-a", "pdrop-b")); });
     host.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.dataset.pn !== undefined) { e.preventDefault(); e.target.blur(); } });
     host.addEventListener("click", (e) => {
       const t = e.target;
+      const mv = t.closest("[data-pmv]"); if (mv) { portMove(mv.closest("tr[data-pk]").dataset.pk, +mv.dataset.pmv); return; }
+      if (t.closest("#portSort")) { portSetOrder(personNames().sort((a, b) => a.localeCompare(b, "fr"))); notice("Liste rangée de A à Z. Annulable avec ↶."); return; }
       if (t.closest("#portAuto")) { const n = portColorsInOrder(); commit(true); notice(n ? `${n} couleur${n > 1 ? "s" : ""} donnée${n > 1 ? "s" : ""}.` : "Tout le monde a déjà une couleur."); return; }
       if (t.closest("#portClean")) { const del = personNames().filter((n) => !personUses(n).n); del.forEach(removePerson); commit(true); notice(`${del.length} nom${del.length > 1 ? "s" : ""} retiré${del.length > 1 ? "s" : ""} : ${esc(del.join(", "))}.`); return; }
       const go = t.closest("[data-pgo]");
