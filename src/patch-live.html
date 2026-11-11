@@ -2255,6 +2255,8 @@ table.master td.nopad input { opacity: 0.8; }
     });
   }
   function renderHf() {
+    // Ears HF et Spectera : un mix stéréo s'écrit sans L ni R, les deux côtés servent
+    hfState().forEach((g) => g.rows.forEach((r) => { if (r.mix) { const v = mixStereoFix(r.mix); if (v !== r.mix) r.mix = v; } }));
     renderDatalists();
     const out = $("#hfOut");
     const keep = $("#hfAddModel").value;
@@ -2354,7 +2356,7 @@ table.master td.nopad input { opacity: 0.8; }
         const i = document.querySelector(`[data-hg="${g.id}"] tr[data-hr="${r.id}"] input[data-accin]`); if (i) i.focus();
         return;
       }
-      if (r && t.dataset.hf) { const pers = t.dataset.hf === "nom" && (g.kind === "iem" || g.kind === "spx"); r[t.dataset.hf] = pers ? canonMus(t.value) : t.value.trim(); if (pers) { t.value = r.nom; if (r.nom) addMusician(r.nom); } commit(false); if (t.dataset.hf === "copy") renderHf(); else if (g.kind === "spx" || g.kind === "spxm") refreshSpx(); }
+      if (r && t.dataset.hf) { const pers = t.dataset.hf === "nom" && (g.kind === "iem" || g.kind === "spx"); r[t.dataset.hf] = pers ? canonMus(t.value) : t.value.trim(); if (pers) { t.value = r.nom; if (r.nom) addMusician(r.nom); } if (t.dataset.hf === "mix" && r.mix) { r.mix = mixStereoFix(r.mix); t.value = r.mix; } commit(false); if (t.dataset.hf === "copy") renderHf(); else if (g.kind === "spx" || g.kind === "spxm") refreshSpx(); }
     });
     out.addEventListener("click", (e) => {
       const el = e.target.closest("[data-hg]"); if (!el) return;
@@ -3082,7 +3084,7 @@ table.master td.nopad input { opacity: 0.8; }
       <datalist id="dlCat">${[...new Set([...MAN_CATS, ...Object.keys(BANQUE), ...(state.materiel || []).map((x) => x.cat).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlFree">${state.lignes.filter((l) => !Object.values(l.sr || {}).some(Boolean)).map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
       <datalist id="dlSrc">${state.lignes.map((l) => `<option value="${esc(l.source)}">`).join("")}</datalist>
-      <datalist id="dlMix">${[...new Set((state.sorties || []).map((o) => o.mix).filter(Boolean))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
+      <datalist id="dlMix">${mixNames().map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlAccP">${[...new Set([...state.lignes.flatMap(accList), "Pédale de talk", "Câble Y", "Inverseur de polarité", "Atténuateur -20 dB", "Rallonge XLR", "Pince / clip", ...(BANQUE["DI et talkback"] || []).filter((x) => /^p[ée]dale/i.test(x[2])).map((x) => x[0]), ...banqueNoms("Accessoires micros")])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>
       <datalist id="dlBqRack">${bqUniq([...state.racks.map((r) => r.nom).filter(Boolean), ...banqueNoms("Stage racks et cartes", "Transport audio et convertisseurs")]).map(optFiche).join("")}</datalist>
       <datalist id="dlBqSyn">${uniqCi(banqueNoms("Intercom", "Réseau", "Transport audio et convertisseurs", "Horloge et timecode", "Périphériques et effets", "Ordinateurs et logiciels", "Stage racks et cartes", "Énergie", "Amplification", "Diffusion et retours", "Antennes et distribution HF")).map(optFiche).join("")}</datalist>
@@ -3471,7 +3473,19 @@ table.master td.nopad input { opacity: 0.8; }
     if (!ma || !mb) return a.mix === b.mix ? a.mix || "" : null;
     const ba = a.mix.slice(0, ma.index), bb = b.mix.slice(0, mb.index);
     return ba === bb ? ba : null;
+  }  // Nom d'un mix stéréo sans L ni R (« IEM DRUMS » pour « IEM DRUMS L » + « IEM DRUMS R ») ; un mix mono garde son nom
+  function mixName(o) {
+    const p = o && o.pair && (state.sorties || []).find((x) => x.id === o.pair), b = p && outPairBase(o, p);
+    return b ? b.trim() : (o && o.mix) || "";
   }
+  // Les mix proposés ailleurs (ears HF, Spectera) : un seul nom par paire stéréo
+  const mixNames = () => uniqCi((state.sorties || []).map(mixName).filter(Boolean));
+  // « IEM DRUMS L » saisi avant : devient « IEM DRUMS » quand c'est un côté d'une paire stéréo
+  function mixStereoFix(v) {
+    const o = v && (state.sorties || []).find((x) => x.pair && eqv(x.mix, v));
+    return o ? mixName(o) : v;
+  }
+
   const PAIR_LINK = ["dest", "type", "tx", "rx"];
   // Sélection de sorties, comme au master : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter
   const outSel = new Set(); let outAnchor = null;
@@ -9671,8 +9685,9 @@ table.master td.nopad input { opacity: 0.8; }
     dlAccP: { what: "l'accessoire", uses: (v) => state.lignes.filter((l) => accList(l).some((a) => eqv(a, v))).length, rename: (a, b) => { let n = 0; state.lignes.forEach((l) => { const L = accList(l); if (L.some((x) => eqv(x, a))) { l.accp = uniqCi(L.map((x) => (eqv(x, a) ? b : x))); n++; } }); return n; } },
     dlProv: { what: "la provenance", uses: (v) => state.lignes.filter((l) => eqv(l.prov, v)).length, rename: (a, b) => { let n = 0; state.lignes.forEach((l) => { if (eqv(l.prov, a)) { l.prov = b; n++; } }); return n; } },
     dlMix: {
-      what: "le mix", uses: (v) => (state.sorties || []).filter((o) => eqv(o.mix, v)).length + (state.hf || []).reduce((n, g) => n + g.rows.filter((r) => eqv(r.mix, v)).length, 0),
-      rename: (a, b) => { let n = 0; (state.sorties || []).forEach((o) => { if (eqv(o.mix, a)) { o.mix = b; n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
+      what: "le mix", uses: (v) => (state.sorties || []).filter((o) => eqv(o.mix, v) || eqv(mixName(o), v)).length + (state.hf || []).reduce((n, g) => n + g.rows.filter((r) => eqv(r.mix, v)).length, 0),
+      // Une paire stéréo se renomme des deux côtés, en gardant L et R
+      rename: (a, b) => { let n = 0; (state.sorties || []).forEach((o) => { if (eqv(o.mix, a)) { o.mix = b; n++; } else if (o.pair && eqv(mixName(o), a)) { const m = (o.mix || "").match(LR); o.mix = `${b} ${m ? m[1].toUpperCase() : ""}`.trim(); n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
     }
   };
   function sugActions(input, v) {
