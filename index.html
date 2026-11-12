@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "1a8fe31fc1";</script>
+<script>window.PL_VER = "b580f18662";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1353,6 +1353,57 @@ body.dbxfile #saveState { display: none; }
 table.master td.nopad input { opacity: 0.8; }
 .rt > summary h3 .used { opacity: 1; }
 @media (pointer: coarse) { nav.tabs button { min-height: 44px; } }
+/* ---------- Étiquettes P-touch ---------- */
+.etq { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
+.etq-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; padding-block: 12px; }
+.etq-bar .field select { max-width: 260px; }
+.etq-bar .grow { flex: 1; }
+.etq-models { display: flex; gap: 6px; align-items: end; flex-wrap: wrap; }
+.etq-models input[type="text"] { width: 150px; }
+.etq-bench { background: #373737; border-radius: 6px; padding: 28px 20px 14px; color: #e9eef0; position: relative; overflow-x: auto; }
+.etq-tape { position: relative; margin: 0 auto; width: max-content; }
+.etq-tape canvas { display: block; border-radius: 2px; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 18px rgba(0,0,0,.45); }
+.etq-cell { position: absolute; border: 0; background: transparent; padding: 0; cursor: pointer; outline: 1px dashed rgba(120,140,150,.55); outline-offset: -1px; }
+.etq-cell:hover { background: rgba(193,219,227,.18); }
+.etq-cell[aria-pressed="true"] { outline: 2px solid #fce694; outline-offset: -2px; background: rgba(252,230,148,.12); }
+.etq-cell.drop { background: rgba(246,254,170,.35); outline: 2px solid #f6feaa; }
+.etq-ruler { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; color: #c1dbe3; }
+.etq-ruler .mono { color: #f6feaa; }
+.etq-nav { display: inline-flex; align-items: center; gap: 6px; }
+.etq-nav button { background: transparent; color: inherit; border: 1px solid #5b6164; border-radius: 4px; padding: 2px 9px; }
+.etq-nav button:disabled { opacity: .4; }
+.etq-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+.etq-chip { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: grab; }
+.etq-chip:hover { border-color: var(--muted); }
+.etq-insp { margin-top: 12px; }
+.etq-insp .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.etq-insp .field input[type="text"] { min-width: 240px; }
+.etq-insp .field input[type="number"] { width: 72px; }
+.etq-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.etq-seg button { border: 0; background: var(--surface); padding: 5px 9px; font-size: 13px; }
+.etq-seg button + button { border-left: 1px solid var(--line); }
+.etq-seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.etq-side .panel + .panel { margin-top: 12px; }
+.etq-side h3 { margin: 0 0 8px; font-size: 15px; }
+.etq-side .field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.etq-side .field input[type="number"] { width: 90px; }
+.etq-side label.inl { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 14px; }
+.etq-list { margin-top: 14px; }
+.etq-list table { width: 100%; border-collapse: collapse; }
+.etq-list td, .etq-list th { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; font-size: 14px; }
+.etq-list th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.etq-list tr.cur td { background: var(--hl); }
+.etq-list tr.off td:not(:first-child) { opacity: .45; }
+.etq-list td.pv { width: 1%; }
+.etq-list td.pv canvas { display: block; height: auto; border: 1px solid var(--line); border-radius: 2px; }
+.etq-list td.q input { width: 56px; }
+.etq-list .vals { color: var(--muted); font-size: 13px; }
+.etq-print { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-top: 14px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 -4px 14px rgba(0,0,0,.06); }
+.etq-print .st { flex: 1; min-width: 200px; font-size: 14px; }
+.etq-print .st.err { color: var(--danger); }
+.etq-print progress { width: 120px; }
+@media (max-width: 900px) { .etq { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) { .etq-bench { padding: 20px 10px 10px; } .etq-insp .field input[type="text"] { min-width: 0; width: 100%; } .etq-print { position: static; } }
 </style>
 
 <div id="cover" class="cover empty">
@@ -1471,6 +1522,7 @@ table.master td.nopad input { opacity: 0.8; }
   <button role="tab" data-v="net" aria-selected="false">Réseau</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
+  <button role="tab" data-v="etiq" aria-selected="false">Étiquettes</button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
 </nav>
@@ -1665,6 +1717,40 @@ table.master td.nopad input { opacity: 0.8; }
     </div>
     <div class="tbl"><table id="bqTbl" class="bq"></table></div>
     <p class="hint" id="bqInfo"></p>
+  </div>
+</section>
+
+<section id="v-etiq" hidden>
+  <div class="etq-bar">
+    <label class="field"><span>Étiqueter</span><select id="etqSrc" aria-label="Ce qu'on étiquette"></select></label>
+    <div class="etq-models">
+      <label class="field"><span>Modèle</span><select id="etqModel" aria-label="Modèle d'étiquette"></select></label>
+      <input id="etqModelName" type="text" placeholder="Nom du modèle" aria-label="Nom du modèle à enregistrer" autocomplete="off">
+      <button id="etqModelSave" class="btn small" type="button">Enregistrer le modèle</button>
+      <button id="etqModelDel" class="btn small danger" type="button">Supprimer</button>
+      <button id="etqModelImp" class="btn small" type="button" title="Reprend les modèles de l'appli Étiquettes P-touch (fichier reglages.json)">Importer mes modèles P-touch…</button>
+      <input id="etqModelFile" type="file" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <div class="etq">
+    <div class="etq-main">
+      <div class="etq-bench" id="etqBench">
+        <div class="etq-tape" id="etqTape"></div>
+        <div class="etq-ruler"><span id="etqLen" class="mono"></span><span class="etq-nav"><button type="button" id="etqPrev" aria-label="Étiquette précédente">◀</button><span id="etqWhich"></span><button type="button" id="etqNext" aria-label="Étiquette suivante">▶</button></span></div>
+      </div>
+      <div class="panel etq-insp" id="etqInsp"></div>
+      <div class="panel etq-list"><div class="toolbar" style="padding-block:0 8px"><strong id="etqCount"></strong><button id="etqAll" class="btn small" type="button">Tout cocher</button><button id="etqNone" class="btn small" type="button">Tout décocher</button></div><div class="tbl"><table id="etqTbl"></table></div></div>
+    </div>
+    <aside class="etq-side" id="etqSide"></aside>
+  </div>
+  <div class="etq-print" id="etqPrint">
+    <span class="st" id="etqSt" role="status"></span>
+    <progress id="etqProg" hidden></progress>
+    <button id="etqUsb" class="btn small" type="button">Connecter la P-touch en USB</button>
+    <button id="etqBt" class="btn small" type="button" hidden>En Bluetooth</button>
+    <button id="etqXlsx" class="btn small" type="button" title="Un onglet par type d'étiquette, à ouvrir dans l'appli Étiquettes P-touch du Mac">Excel pour l'appli P-touch</button>
+    <button id="etqStop" class="btn small danger" type="button" hidden>Arrêter</button>
+    <button id="etqGo" class="btn primary" type="button">Imprimer</button>
   </div>
 </section>
 
@@ -8511,6 +8597,568 @@ table.master td.nopad input { opacity: 0.8; }
     $("#bqInfo").textContent = total > shown ? `${shown} sur ${total} : affine la recherche ou choisis une catégorie.` : `${total} appareil${total > 1 ? "s" : ""} sur ${BANQUE_FICHE.size} dans la banque.`;
   }
 
+  // ---------- Étiquettes P-touch ----------
+  // Même moteur que l'appli « Étiquettes P-touch » du Mac (render.py, ptouch.py) : étiquette en cases, ruban à 180 dpi,
+  // tête de 128 points, impression raster Brother. Ici les données viennent du dossier ; l'impression passe par le
+  // navigateur (WebUSB ou port série Bluetooth, Chrome et Edge), et l'Excel reste lisible par l'appli du Mac.
+  const ETQ_HEAD = 128, ETQ_PT = 180 / 72;
+  const ETQ_TAPES = { 4: [52, 24], 6: [48, 32], 9: [39, 50], 12: [29, 70], 18: [8, 112], 24: [0, 128] };
+  const ETQ_TAPE_LBL = { 4: "3,5 mm", 6: "6 mm", 9: "9 mm", 12: "12 mm", 18: "18 mm", 24: "24 mm" };
+  const etqDots = (mm) => Math.round((Number(mm) || 0) * 180 / 25.4);
+  const etqTape = (w) => { const k = Object.keys(ETQ_TAPES).map(Number).reduce((a, b) => (Math.abs(b - w) < Math.abs(a - w) ? b : a)); return { mm: k, off: ETQ_TAPES[k][0], h: ETQ_TAPES[k][1] }; };
+  const ETQ_COLORS = [["blanc", "Blanc, encre noire", "#ffffff", "#141414"], ["jaune", "Jaune, encre noire", "#facc15", "#141414"], ["transp", "Transparent, encre noire", "#e9ecef", "#141414"], ["noir", "Noir, encre blanche", "#111111", "#f5f5f5"], ["rouge", "Rouge, encre noire", "#d62828", "#141414"], ["bleu", "Bleu, encre blanche", "#1d4ed8", "#f5f5f5"], ["vert", "Vert, encre noire", "#2f9e44", "#141414"], ["orange", "Orange fluo, encre noire", "#ff7a00", "#141414"]];
+  const ETQ_FONTS = [["DIN Condensed", "DIN Condensed"], ["DIN Alternate", "DIN Alternate"], ["Arial Narrow", "Arial Narrow"], ["Arial", "Arial"], ["Helvetica", "Helvetica"], ["Verdana", "Verdana"], ["Impact", "Impact"]];
+  const ETQ_DEF = { tape_mm: 12, font: "DIN Condensed", bold: true, length_mode: "fixed", length_mm: 40, min_length_mm: 0, padding_mm: 2, align: "center", frame: true, border_mm: 0.4, cell_pad: 12, overflow: "shrink", invert: false, same: false, margin_mm: 2, copies: 1, copies_column: "", chain: false, colors: "blanc", grid: { rows: [{ height: 100, cells: [{ template: "", width: 100 }] }] } };
+  const etqCell = (template, width, extra) => ({ template, width, ...(extra || {}) });
+  // Modèles fournis, un par type de données (repris de l'appli du Mac pour les ears)
+  const ETQ_BUILTIN = {
+    "Câble (patch)": { src: "lignes", length_mm: 40, grid: { rows: [{ height: 62, cells: [etqCell("{N°}", 24), etqCell("{Source}", 76)] }, { height: 38, cells: [etqCell("{Boîtier}", 100)] }] } },
+    "Sortie": { src: "sorties", length_mm: 40, grid: { rows: [{ height: 62, cells: [etqCell("{Mix}", 100)] }, { height: 38, cells: [etqCell("{N°}", 24), etqCell("{Arrivée}", 76)] }] } },
+    "IEM": { src: "hf:iem", length_mm: 45, grid: { rows: [{ height: 65, cells: [etqCell("{Nom}", 100)] }, { height: 35, cells: [etqCell("{N°}", 17), etqCell("{Mix}", 50), etqCell("{Plan}", 33)] }] } },
+    "Micro HF": { src: "hf:tx", length_mm: 45, grid: { rows: [{ height: 65, cells: [etqCell("{Nom}", 100)] }, { height: 35, cells: [etqCell("{N°}", 17), etqCell("{Modèle}", 50), etqCell("{Plan}", 33)] }] } },
+    "Boîtier": { src: "boites", length_mm: 50, grid: { rows: [{ height: 100, cells: [etqCell("{Boîtier}", 100)] }] } },
+    "Voie de boîtier": { src: "voies", length_mm: 40, grid: { rows: [{ height: 100, cells: [etqCell("{Voie}", 34), etqCell("{Source}", 66)] }] } },
+    "Rack": { src: "racks", length_mm: 60, tape_mm: 18, grid: { rows: [{ height: 100, cells: [etqCell("{Nom}", 100)] }] } },
+    "Nom seul": { src: "", length_mode: "auto", frame: false, grid: { rows: [{ height: 100, cells: [etqCell("{Nom}", 100)] }] } }
+  };
+  const ETQ_STORE = "patch-live-etiq-models";
+  const etqClone = (o) => JSON.parse(JSON.stringify(o));
+  function etqUserModels() { try { const m = JSON.parse(localStorage.getItem(ETQ_STORE) || "{}"); return m && typeof m === "object" ? m : {}; } catch (e) { return {}; } }
+  function etqSaveUserModels(m) { try { localStorage.setItem(ETQ_STORE, JSON.stringify(m)); } catch (e) { /* stockage indisponible */ } }
+  const etqModels = () => ({ ...ETQ_BUILTIN, ...etqUserModels() });
+
+  // Réglages de l'appli du Mac : la présentation « Lignes » devient une case par ligne, « DIN Condensed Bold » une police en gras
+  function etqNorm(cfg) {
+    const c = { ...etqClone(ETQ_DEF), ...etqClone(cfg || {}) };
+    if (cfg && cfg.font && cfg.bold === undefined) c.bold = false; // police nommée sans « Bold » : texte normal, comme dans l'appli du Mac
+    const fontBold = / bold$/i.test(c.font || "");
+    if (fontBold) { c.font = c.font.replace(/ bold$/i, ""); c.bold = true; }
+    if (c.layout === "lines" && Array.isArray(c.lines) && c.lines.length) c.grid = { rows: c.lines.map((l) => ({ height: Number(l.size) || 100, cells: [{ template: l.template || "", width: 100, bold: !!l.bold || fontBold }] })) };
+    if (c.layout === "lines" && c.length_mode !== "fixed") c.length_mode = "auto";
+    if (c.layout === "grid") c.length_mode = "fixed"; // dans l'appli du Mac, une étiquette en cases a toujours sa longueur fixe
+    delete c.layout; delete c.lines; delete c.src;
+    if (!c.grid || !Array.isArray(c.grid.rows) || !c.grid.rows.length) c.grid = etqClone(ETQ_DEF.grid);
+    c.grid.rows = c.grid.rows.filter((r) => r && Array.isArray(r.cells) && r.cells.length);
+    // « DIN Condensed Bold » est une police grasse en elle-même : ses cases restent en gras même si elles ne le demandent pas
+    if (fontBold) c.grid.rows.forEach((r) => r.cells.forEach((x) => { x.bold = true; }));
+    if (!c.grid.rows.length) c.grid = etqClone(ETQ_DEF.grid);
+    if (!ETQ_COLORS.some(([k]) => k === c.colors)) c.colors = "blanc";
+    return c;
+  }
+  // Colonne d'une case : {Nom} retrouve « Nom », « nom » ou « Nom » sans accent ; une colonne vide ne laisse pas de séparateur seul
+  const etqKey = (s) => bqNorm(s).replace(/[^a-z0-9°]+/g, "");
+  const ETQ_SEP = "·•\\-–—/|,;:";
+  function etqFill(template, row) {
+    const keys = new Map(Object.keys(row).map((k) => [etqKey(k), k]));
+    let t = String(template || "").replace(/\{([^{}]+)\}/g, (m, k) => { const x = k.trim(); const key = row[x] !== undefined ? x : keys.get(etqKey(x)); return key !== undefined ? String(row[key] ?? "") : ""; });
+    t = t.replace(new RegExp(`\\s+[${ETQ_SEP}](?=\\s+[${ETQ_SEP}]\\s)`, "g"), "").trim();
+    t = t.replace(new RegExp(`^(?:[${ETQ_SEP}](?:\\s+|$))+|(?:(?:^|\\s+)[${ETQ_SEP}])+$`, "g"), "").trim();
+    return t.replace(/\s{2,}/g, " ");
+  }
+
+  // ----- Données du dossier, par type d'étiquette -----
+  function etqSources() {
+    const S = [];
+    const cols = srCols();
+    S.push({ k: "lignes", t: "Sources du patch", cols: ["N°", "Source", "Musicien", "Micro", "Pied", "Accessoire", "Boîtier", ...cols.map((c) => c.label), "Provenance", "Notes"],
+      rows: state.lignes.map((l, i) => ({ id: l.id, v: { "N°": String(i + 1), Source: l.source || "", Musicien: l.musicien || "", Micro: l.micro || "", Pied: l.pied || "", Accessoire: accList(l).join(", "), Boîtier: boxAddr(l.box), ...Object.fromEntries(cols.map((c) => [c.label, rackAddr(lineSr(l, c.k))])), Provenance: l.prov || "", Notes: l.notes || "", Nom: l.source || "" } })) });
+    const SO = state.sorties || [];
+    S.push({ k: "sorties", t: "Sorties", cols: ["N°", "Mix", "Destinataire", "Type", "Départ", "Arrivée", "Émetteur", "Récepteur", "Notes"],
+      rows: SO.map((o, i) => ({ id: o.id, v: { "N°": String(i + 1), Mix: o.mix || "", Destinataire: o.dest || "", Type: o.type || "", Départ: outAddr(o.out), Arrivée: outDest(o).replace(/^→\s*/, ""), Émetteur: o.tx || "", Récepteur: o.rx || "", Notes: o.notes || "", Nom: o.mix || "" } })) });
+    hfState().forEach((g) => {
+      const K = HF_KINDS[g.kind] || HF_KINDS.tx, C = hfCols(g);
+      const names = ["N°", "Nom", "Modèle", ...C.map(([, t]) => t).filter((t) => t !== "Nom")];
+      S.push({ k: "hf:" + g.id, kind: g.kind === "iem" || g.kind === "spx" ? "iem" : "tx", t: `${K.t} · ${g.model || ""}`.trim(), cols: names,
+        rows: g.rows.map((r, i) => ({ id: r.id || String(i), v: { "N°": String(i + 1), Nom: hfName(r), Modèle: g.model || "", ...Object.fromEntries(C.map(([f, t]) => [t, hfCell(g, r, f)])), ...(C.some(([, t]) => t === "Nom") ? { Nom: r.nom || "" } : {}) } })) });
+    });
+    const occ = occupancy();
+    S.push({ k: "boites", t: "Boîtiers et multis", cols: ["Boîtier", "Type", "N°", "Nom", "Côté", "Voies"],
+      rows: state.boites.map((b) => ({ id: b.id, v: { Boîtier: boxTitle(b), Type: b.type || "", "N°": String(b.num || ""), Nom: b.nom || boxName(b), Côté: b.cote || "", Voies: String(boxSize(b)) } })) });
+    S.push({ k: "voies", t: "Voies des boîtiers", cols: ["Voie", "Boîtier", "Entrée", "Source", "N°", "Micro"],
+      rows: state.boites.flatMap((b) => Array.from({ length: boxSize(b) }, (_, j) => { const l = occ.box.get(`${b.id}:${j + 1}`); return { id: `${b.id}:${j + 1}`, v: { Voie: `${boxName(b)} → ${j + 1}`, Boîtier: boxName(b), Entrée: String(j + 1), Source: l ? label(l) : "", "N°": l && !isOut(l) ? String(canal(l)) : "", Micro: l ? (isOut(l) ? "OUT " + (l.type || "") : l.micro || "") : "", Nom: l ? label(l) : "" } }; })) });
+    S.push({ k: "racks", t: "Stage racks et I/O", cols: ["Nom", "N°", "Console", "Repère"],
+      rows: state.racks.map((r) => ({ id: r.id, v: { Nom: rackTitle(r), "N°": String(r.num || ""), Console: r.console || "", Repère: rackTag(r) } })) });
+    if (hfDevs().length) S.push({ k: "hfdev", t: "Récepteurs et émetteurs HF", cols: ["Nom", "Type", "Modèle", "Plage"], rows: hfDevs().map((d) => ({ id: d.id, v: { Nom: d.nom || "", Type: HFDEV_KIND[d.kind] || "", Modèle: d.model || "", Plage: d.band || "" } })) });
+    if ((state.materiel || []).length) S.push({ k: "materiel", t: "Matériel ajouté à la main", cols: ["Nom", "Qté", "Catégorie", "Notes"], rows: state.materiel.map((x) => ({ id: x.id, v: { Nom: x.nom || "", "Qté": String(Number(x.qte) || 0), Catégorie: x.cat || "", Notes: x.notes || "" } })) });
+    return S;
+  }
+  const etqDefModel = (src) => { const k = src.k.startsWith("hf:") ? "hf:" + src.kind : src.k; return Object.keys(ETQ_BUILTIN).find((n) => ETQ_BUILTIN[n].src === k) || "Nom seul"; };
+  function etqState() {
+    if (!state.etiq || typeof state.etiq !== "object") state.etiq = {};
+    const E = state.etiq; E.cfgs = E.cfgs || {}; E.model = E.model || {}; E.off = E.off || {}; E.qty = E.qty || {};
+    return E;
+  }
+  function etqCur() {
+    const E = etqState(), S = etqSources();
+    const src = S.find((s) => s.k === E.src) || S.find((s) => s.rows.length) || S[0];
+    E.src = src.k;
+    if (!E.cfgs[src.k]) { const n = etqDefModel(src); E.cfgs[src.k] = etqNorm(etqModels()[n]); E.model[src.k] = n; }
+    E.cfgs[src.k] = etqNorm(E.cfgs[src.k]);
+    return { E, S, src, cfg: E.cfgs[src.k] };
+  }
+
+  // ----- Rendu (port de render.py) -----
+  const etqMeasure = document.createElement("canvas").getContext("2d");
+  const etqFam = (cfg) => `"${String(cfg.font || "Arial").replace(/"/g, "")}", "Arial Narrow", Arial, sans-serif`;
+  const etqFont = (cfg, bold, px) => `${bold ? "700" : "400"} ${Math.max(1, Math.round(px))}px ${etqFam(cfg)}`;
+  function etqInk(font, text) {
+    etqMeasure.font = font;
+    const m = etqMeasure.measureText(text || "H"), H = etqMeasure.measureText("H");
+    return { top: -Math.max(m.actualBoundingBoxAscent || 0, H.actualBoundingBoxAscent || 0), bottom: text ? Math.max(0, m.actualBoundingBoxDescent || 0) : 0, w: text ? m.width : 0 };
+  }
+  // Plus grande taille (px) qui tient dans la case ; maxPx = taille voulue, réduite seulement si le texte ne tient pas
+  function etqFit(cfg, bold, text, w, h, maxPx) {
+    const f = (px) => etqFont(cfg, bold, px), r = etqInk(f(100), text), inkH = Math.max(1, r.bottom - r.top);
+    let size = Math.floor(100 * h / inkH);
+    if (maxPx) size = Math.min(size, Math.floor(maxPx));
+    if (r.w && size * r.w / 100 > w) size = Math.floor(100 * w / r.w);
+    while (size > 4 && etqInk(f(size), text).w > w) size--;
+    while (size > 4 && etqInk(f(size), text).bottom - etqInk(f(size), text).top > h) size--;
+    return Math.max(4, size);
+  }
+  function etqWrapLines(font, text, w) {
+    etqMeasure.font = font; const out = []; let cur = "";
+    text.split(/\s+/).forEach((word) => { const t = (cur + " " + word).trim(); if (!cur || etqMeasure.measureText(t).width <= w) cur = t; else { out.push(cur); cur = word; } });
+    return cur ? [...out, cur] : out;
+  }
+  function etqFitWrap(cfg, bold, text, w, h, maxPx) {
+    let size = etqFit(cfg, bold, text, 1e9, h, maxPx);
+    for (;;) {
+      const font = etqFont(cfg, bold, size), H = etqInk(font, "H"), g = etqInk(font, "gjpqy");
+      const capTop = Math.min(H.top, etqInk(font, text).top), pitch = Math.floor((-capTop + g.bottom) * 1.08);
+      const lines = etqWrapLines(font, text, w), last = etqInk(font, lines[lines.length - 1]);
+      const block = (lines.length - 1) * pitch - capTop + last.bottom;
+      if (size <= 4 || (block <= h && lines.every((l) => etqInk(font, l).w <= w))) return { size, lines, pitch, capTop, block };
+      size--;
+    }
+  }
+  // Géométrie de l'étiquette (en points d'impression) : longueur, et cases avec leur texte
+  function etqLayout(cfg, row, cap) {
+    const tp = etqTape(cfg.tape_mm), pad = etqDots(cfg.padding_mm), t = cfg.frame ? Math.max(1, etqDots(cfg.border_mm)) : 0;
+    const rows = cfg.grid.rows, totalH = rows.reduce((n, r) => n + Math.max(1, Number(r.height) || 50), 0) || 1;
+    const innerH = tp.h - t * (rows.length + 1);
+    const hs = []; let acc = 0;
+    rows.forEach((r, i) => { const h = i === rows.length - 1 ? innerH - acc : Math.round(innerH * Math.max(1, Number(r.height) || 50) / totalH); hs.push(h); acc += h; });
+    let length = Math.max(etqDots(cfg.length_mm), 16);
+    if (cfg.length_mode === "auto") {
+      // Longueur auto : chaque case reçoit la place de son texte à la plus grande taille qui tient en hauteur
+      let need = 0;
+      rows.forEach((r, ri) => {
+        const totalW = r.cells.reduce((n, c) => n + Math.max(1, Number(c.width) || 50), 0) || 1;
+        let inner = 0;
+        r.cells.forEach((c, ci) => {
+          const text = etqFill(c.template, row); if (!text) return;
+          const m = Math.floor(hs[ri] * cfg.cell_pad / 100), bold = c.bold ?? cfg.bold;
+          const maxPx = (cap && cap[`${ri}:${ci}`]) || (c.font_pt ? c.font_pt * ETQ_PT : 0);
+          const size = etqFit(cfg, bold, text, 1e9, hs[ri] - 2 * m, maxPx) * (maxPx ? 1 : (Number(c.size) || 100) / 100);
+          const w = etqInk(etqFont(cfg, bold, size), text).w + 2 * m + 2;
+          inner = Math.max(inner, w * totalW / Math.max(1, Number(c.width) || 50));
+        });
+        need = Math.max(need, inner + t * (r.cells.length + 1));
+      });
+      length = Math.max(Math.ceil(need) + 2 * pad, etqDots(cfg.min_length_mm), 16);
+    }
+    const x0 = pad, x1 = length - pad - 1, y0 = tp.off, y1 = tp.off + tp.h - 1;
+    const cells = []; let y = y0 + t;
+    rows.forEach((r, ri) => {
+      const rh = ri === rows.length - 1 ? y1 - t + 1 - y : hs[ri];
+      const totalW = r.cells.reduce((n, c) => n + Math.max(1, Number(c.width) || 50), 0) || 1;
+      const innerW = (x1 - x0 + 1) - t * (r.cells.length + 1);
+      let x = x0 + t;
+      r.cells.forEach((c, ci) => {
+        const cw = ci === r.cells.length - 1 ? x1 - t + 1 - x : Math.round(innerW * Math.max(1, Number(c.width) || 50) / totalW);
+        cells.push({ r: ri, c: ci, x, y, w: cw, h: rh, cell: c, text: etqFill(c.template, row), sepR: t && ci < r.cells.length - 1 });
+        x += cw + t;
+      });
+      cells.push({ sepB: t && ri < rows.length - 1, y: y + rh, x0, x1 });
+      y += rh + t;
+    });
+    return { tp, length, t, box: [x0, y0, x1, y1], cells };
+  }
+  // Taille de chaque case quand toute la série doit avoir la même taille de texte : la plus petite de la série
+  function etqCaps(cfg, rows) {
+    if (!cfg.same) return null;
+    const cap = {};
+    rows.forEach((row) => etqLayout(cfg, row, null).cells.forEach((k) => {
+      if (!k.cell || !k.text) return; const m = Math.floor(Math.min(k.w, k.h) * cfg.cell_pad / 100), bold = k.cell.bold ?? cfg.bold;
+      const maxPx = k.cell.font_pt ? k.cell.font_pt * ETQ_PT : 0;
+      const s = (k.cell.overflow || cfg.overflow) === "wrap" ? etqFitWrap(cfg, bold, k.text, k.w - 2 * m, k.h - 2 * m, maxPx).size : etqFit(cfg, bold, k.text, k.w - 2 * m, k.h - 2 * m, maxPx);
+      const key = `${k.r}:${k.c}`; cap[key] = Math.min(cap[key] || 1e9, maxPx ? s : s * (Number(k.cell.size) || 100) / 100);
+    }));
+    return cap;
+  }
+  // Dessine l'étiquette. print : image de la tête (128 points, noir sur blanc) ; sinon ruban entier en couleurs, k fois plus fin
+  function etqDraw(cfg, row, o) {
+    o = o || {}; const k = o.k || 1, L = etqLayout(cfg, row, o.cap), tp = L.tp;
+    const col = ETQ_COLORS.find(([x]) => x === cfg.colors) || ETQ_COLORS[0];
+    const paper = o.print ? "#fff" : col[2], ink = o.print ? "#000" : col[3];
+    const tapeH = o.print ? ETQ_HEAD : Math.max(etqDots(tp.mm), tp.h), dy = o.print ? 0 : Math.floor((tapeH - tp.h) / 2) - tp.off;
+    const cv = document.createElement("canvas"); cv.width = L.length * k; cv.height = tapeH * k;
+    const g = cv.getContext("2d"); g.scale(k, k); g.translate(0, dy);
+    g.fillStyle = paper; g.fillRect(0, -dy, L.length, tapeH);
+    const fg = cfg.invert ? paper : ink;
+    if (cfg.invert) { g.fillStyle = ink; g.fillRect(0, tp.off, L.length, tp.h); }
+    g.fillStyle = fg;
+    const [x0, y0, x1, y1] = L.box, t = L.t;
+    if (t) { g.fillRect(x0, y0, x1 - x0 + 1, t); g.fillRect(x0, y1 - t + 1, x1 - x0 + 1, t); g.fillRect(x0, y0, t, y1 - y0 + 1); g.fillRect(x1 - t + 1, y0, t, y1 - y0 + 1); }
+    const rects = [], sizes = [];
+    L.cells.forEach((c) => {
+      if (c.sepB) { g.fillRect(c.x0, c.y, c.x1 - c.x0 + 1, t); return; }
+      if (!c.cell) return;
+      rects.push({ r: c.r, c: c.c, x: c.x, y: c.y + dy, w: c.w, h: c.h });
+      if (c.sepR) g.fillRect(c.x + c.w, c.y, t, c.h);
+      if (!c.text) return;
+      const m = Math.floor(Math.min(c.w, c.h) * cfg.cell_pad / 100), bold = c.cell.bold ?? cfg.bold, align = c.cell.align || cfg.align;
+      const capPx = o.cap && o.cap[`${c.r}:${c.c}`], maxPx = capPx || (c.cell.font_pt ? c.cell.font_pt * ETQ_PT : 0), pct = capPx ? 100 : Number(c.cell.size) || 100;
+      let size, lines, pitch, capTop, block;
+      if ((c.cell.overflow || cfg.overflow) === "wrap") { ({ size, lines, pitch, capTop, block } = etqFitWrap(cfg, bold, c.text, c.w - 2 * m, c.h - 2 * m, maxPx)); if (!maxPx && pct !== 100) size = Math.max(4, Math.floor(size * pct / 100)); }
+      else { size = etqFit(cfg, bold, c.text, c.w - 2 * m, c.h - 2 * m, maxPx); if (!maxPx && pct !== 100) size = Math.max(4, Math.floor(size * pct / 100)); const b = etqInk(etqFont(cfg, bold, size), c.text); lines = [c.text]; pitch = 0; capTop = b.top; block = b.bottom - b.top; }
+      const font = etqFont(cfg, bold, size); g.font = font; g.textBaseline = "alphabetic";
+      const base = c.y + (c.h - block) / 2 - capTop;
+      lines.forEach((ln, i) => { const tw = g.measureText(ln).width; const tx = align === "left" ? c.x + m : align === "right" ? c.x + c.w - m - tw : c.x + (c.w - tw) / 2; g.fillText(ln, tx, base + i * pitch); });
+      sizes.push({ r: c.r, c: c.c, pt: Math.round(size / ETQ_PT * 10) / 10 });
+    });
+    return { cv, rects, sizes, length: L.length, tapeH, mm: Math.round(L.length * 254 / 180) / 10 };
+  }
+  // Image d'impression -> lignes raster Brother (16 octets par colonne, bit de poids fort = haut de l'étiquette)
+  function etqRaster(cv) {
+    const W = cv.width, d = cv.getContext("2d").getImageData(0, 0, W, ETQ_HEAD).data, out = [];
+    for (let x = 0; x < W; x++) {
+      const line = new Uint8Array(16);
+      for (let y = 0; y < ETQ_HEAD; y++) { const p = (y * W + x) * 4, lum = (d[p] * 299 + d[p + 1] * 587 + d[p + 2] * 114) / 1000; if (lum < 140) line[y >> 3] |= 0x80 >> (y & 7); }
+      out.push(line);
+    }
+    return out;
+  }
+
+  // ----- Pilote P-touch (port de ptouch.py) -----
+  const ETQ_ERR1 = { 0x01: "pas de ruban", 0x04: "massicot bloqué", 0x08: "piles faibles", 0x40: "adaptateur haute tension" };
+  const ETQ_ERR2 = { 0x01: "mauvais ruban", 0x04: "mémoire pleine", 0x10: "capot ouvert", 0x20: "surchauffe" };
+  const etqSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const etqBytes = (...parts) => { const n = parts.reduce((a, p) => a + p.length, 0), u = new Uint8Array(n); let i = 0; parts.forEach((p) => { u.set(p, i); i += p.length; }); return u; };
+  const etqLE = (v, n) => Array.from({ length: n }, (_, i) => (v >> (8 * i)) & 0xff);
+  // Liaison avec l'imprimante : USB (WebUSB) ou Bluetooth (port série). Une boucle de lecture remplit un tampon.
+  class EtqLink {
+    constructor(kind, dev) { this.kind = kind; this.dev = dev; this.buf = []; this.open = false; this.name = kind === "usb" ? (dev.productName || "P-touch") + " (USB)" : "P-touch (Bluetooth)"; }
+    async start() {
+      if (this.kind === "usb") {
+        const d = this.dev; if (!d.opened) await d.open();
+        if (!d.configuration) await d.selectConfiguration(1);
+        const intf = d.configuration.interfaces.find((i) => i.alternates[0].endpoints.some((e) => e.direction === "out")) || d.configuration.interfaces[0];
+        await d.claimInterface(intf.interfaceNumber);
+        const eps = intf.alternates[0].endpoints;
+        this.epOut = eps.find((e) => e.direction === "out").endpointNumber; this.epIn = (eps.find((e) => e.direction === "in") || {}).endpointNumber;
+        this.open = true;
+        (async () => { while (this.open && this.epIn != null) { try { const r = await d.transferIn(this.epIn, 64); if (r.data && r.data.byteLength) this.buf.push(...new Uint8Array(r.data.buffer, r.data.byteOffset, r.data.byteLength)); } catch (e) { if (!this.open) break; await etqSleep(200); } } })();
+      } else {
+        const p = this.dev; if (!p.readable) await p.open({ baudRate: 115200 });
+        this.open = true; this.writer = p.writable.getWriter(); this.reader = p.readable.getReader();
+        (async () => { while (this.open) { try { const { value, done } = await this.reader.read(); if (done) break; if (value) this.buf.push(...value); } catch (e) { break; } } })();
+      }
+    }
+    async write(u8) {
+      if (this.kind === "usb") { for (let i = 0; i < u8.length; i += 4096) await this.dev.transferOut(this.epOut, u8.subarray(i, i + 4096)); }
+      else { for (let i = 0; i < u8.length; i += 1024) await this.writer.write(u8.subarray(i, i + 1024)); }
+    }
+    async read(n, ms) { const end = Date.now() + ms; while (this.buf.length < n && Date.now() < end) await etqSleep(40); return this.buf.length >= n ? this.buf.splice(0, n) : []; }
+    async close() {
+      this.open = false;
+      try { if (this.kind === "usb") await this.dev.close(); else { try { await this.reader.cancel(); } catch (e) { /* ignore */ } this.reader.releaseLock(); this.writer.releaseLock(); await this.dev.close(); } } catch (e) { /* déjà fermé */ }
+    }
+  }
+  function etqParseStatus(b) {
+    if (b.length < 32 || b[0] !== 0x80) throw new Error("La P-touch ne répond pas (allumée ? en veille ?).");
+    const errors = [...Object.entries(ETQ_ERR1).filter(([m]) => b[8] & m).map(([, t]) => t), ...Object.entries(ETQ_ERR2).filter(([m]) => b[9] & m).map(([, t]) => t)];
+    return { tape_mm: b[10], media: b[11], errors, type: b[18], phase: b[19] };
+  }
+  const ETQ_INIT = etqBytes(new Uint8Array(100), [0x1b, 0x40]);
+  async function etqStatus(link) { link.buf.length = 0; await link.write(etqBytes(ETQ_INIT, [0x1b, 0x69, 0x53])); return etqParseStatus(await link.read(32, 3000)); }
+  function etqPage(lines, tape, media, margin, page, last, chain) {
+    const parts = [[0x1b, 0x69, 0x7a, 0x86, media, tape, 0, ...etqLE(lines.length, 4), page, 0], [0x1b, 0x69, 0x4d, 0x40], [0x1b, 0x69, 0x4b, chain ? 0x00 : 0x08], [0x1b, 0x69, 0x64, ...etqLE(margin, 2)], [0x4d, 0x02]];
+    lines.forEach((l) => { if (!l.some(Boolean)) parts.push([0x5a]); else parts.push([0x47, 17, 0, 15], l); });
+    parts.push([last ? 0x1a : 0x0c]);
+    return etqBytes(...parts);
+  }
+  async function etqWaitPrinted(link, job) {
+    const end = Date.now() + 40000; let printing = false;
+    while (Date.now() < end) {
+      const b = await link.read(32, 1000); if (b.length < 32 || b[0] !== 0x80) continue;
+      const st = etqParseStatus(b);
+      if (st.type === 0x02 || st.errors.length) throw new Error("Erreur pendant l'impression : " + (st.errors.join(", ") || "inconnue"));
+      if (st.type === 0x01) return;
+      if (st.type === 0x06) { if (st.phase === 0x01) printing = true; else if (printing) return; }
+    }
+    throw new Error("La P-touch ne répond plus.");
+  }
+  // Impression étiquette par étiquette : on suit la progression, et « Arrêter » finit l'étiquette en cours puis coupe
+  async function etqRunJob(link, images, cfg, job, onStep) {
+    const st = await etqStatus(link);
+    if (st.errors.length) throw new Error("P-touch : " + st.errors.join(", "));
+    const tape = etqTape(cfg.tape_mm).mm;
+    if (st.tape_mm && st.tape_mm !== tape) throw new Error(`Le ruban installé fait ${st.tape_mm} mm, mais les étiquettes sont prévues pour ${tape} mm. Change le ruban ou la largeur.`);
+    const media = st.media !== 0x00 && st.media !== 0xff ? st.media : 0x01, margin = etqDots(cfg.margin_mm);
+    await link.write(etqBytes(ETQ_INIT, [0x1b, 0x69, 0x61, 0x01]));
+    for (let p = 0; p < images.length; p++) {
+      if (job.cancel) break;
+      const last = p === images.length - 1;
+      link.buf.length = 0;
+      await link.write(etqPage(etqRaster(images[p]), tape, media, margin, p === 0 ? 0 : last ? 2 : 1, last, cfg.chain));
+      await etqWaitPrinted(link, job); job.done++; onStep();
+    }
+    if (job.cancel && job.done > 0 && job.done < images.length) {
+      const blank = Array.from({ length: etqDots(4) }, () => new Uint8Array(16));
+      link.buf.length = 0; await link.write(etqPage(blank, tape, media, margin, 2, true, false)); await etqWaitPrinted(link, job);
+    }
+  }
+
+  // ----- Écran -----
+  const etqUi = { sel: { r: 0, c: 0 }, ix: 0, link: null, job: null, msg: "", err: false };
+  const etqOn = (E, src, r) => !(E.off[src.k] || {})[r.id];
+  function etqQty(E, src, cfg, r) {
+    const q = E.qty[src.k + "|" + r.id];
+    if (q !== undefined && q !== "") return Math.max(0, Number(q) || 0);
+    if (cfg.copies_column) { const v = parseFloat(String(r.v[cfg.copies_column] ?? "").replace(",", ".")); return isFinite(v) ? Math.max(0, Math.floor(v)) : Math.max(1, Number(cfg.copies) || 1); }
+    return Math.max(1, Number(cfg.copies) || 1);
+  }
+  const etqSample = (src) => (src.rows[etqUi.ix] || src.rows[0] || { v: Object.fromEntries(src.cols.map((c) => [c, c])) }).v;
+  function renderEtiq() {
+    const { E, S, src, cfg } = etqCur();
+    if (etqUi.ix >= src.rows.length) etqUi.ix = 0;
+    const models = etqModels(), user = etqUserModels();
+    $("#etqSrc").innerHTML = S.map((s) => `<option value="${esc(s.k)}"${s.k === src.k ? " selected" : ""}>${esc(s.t)} (${s.rows.length})</option>`).join("");
+    const cur = E.model[src.k] || "";
+    $("#etqModel").innerHTML = `<option value="">— choisir —</option>` + Object.keys(models).map((n) => `<option value="${esc(n)}"${n === cur ? " selected" : ""}>${esc(n)}${user[n] ? "" : " (fourni)"}</option>`).join("");
+    $("#etqModelName").value = cur && user[cur] ? cur : "";
+    $("#etqModelDel").hidden = !(cur && user[cur]);
+    etqPaintSide(cfg, src);
+    etqPaint();
+  }
+  function etqPaint() { const { E, src, cfg } = etqCur(); etqPaintStage(cfg, src); etqPaintInsp(cfg, src); etqPaintList(E, src, cfg); etqPaintBar(); }
+  // Changement d'étiquette affichée : seul l'aperçu et la ligne surlignée changent, pas les vignettes de la liste
+  function etqPaintSel() { const { cfg, src } = etqCur(); etqPaintStage(cfg, src); $("#etqTbl").querySelectorAll("tr[data-eid]").forEach((tr, i) => tr.classList.toggle("cur", i === etqUi.ix)); }
+  function etqPaintStage(cfg, src) {
+    const host = $("#etqTape"), bench = $("#etqBench");
+    const row = etqSample(src), cap = etqCaps(cfg, src.rows.filter((r) => etqOn(etqState(), src, r)).map((r) => r.v));
+    const base = etqDraw(cfg, row, { k: 1, cap });
+    const avail = Math.max(240, (bench.clientWidth || 700) - 40);
+    const s = Math.max(0.5, Math.min(8, avail / base.length, 220 / base.tapeH));
+    const k = Math.min(10, Math.ceil(s * (window.devicePixelRatio || 1)));
+    const R = etqDraw(cfg, row, { k, cap });
+    R.cv.style.width = Math.round(base.length * s) + "px"; R.cv.style.height = Math.round(base.tapeH * s) + "px";
+    R.cv.setAttribute("role", "img"); R.cv.setAttribute("aria-label", "Aperçu de l'étiquette");
+    const sel = etqUi.sel;
+    host.innerHTML = ""; host.append(R.cv);
+    R.rects.forEach((q) => {
+      const b = document.createElement("button"); b.type = "button"; b.className = "etq-cell"; b.dataset.er = q.r; b.dataset.ec = q.c;
+      b.style.left = q.x * s + "px"; b.style.top = q.y * s + "px"; b.style.width = q.w * s + "px"; b.style.height = q.h * s + "px";
+      b.setAttribute("aria-pressed", q.r === sel.r && q.c === sel.c ? "true" : "false");
+      const tpl = cfg.grid.rows[q.r].cells[q.c].template || "";
+      b.setAttribute("aria-label", `Case ${q.r + 1}.${q.c + 1}${tpl ? " : " + tpl : " vide"}`); b.title = tpl || "Case vide : glisse une colonne ici";
+      host.append(b);
+    });
+    $("#etqLen").textContent = `${ETQ_TAPE_LBL[etqTape(cfg.tape_mm).mm]} × ${base.mm.toLocaleString("fr-FR")} mm`;
+    const n = src.rows.length;
+    $("#etqWhich").textContent = n ? `${etqUi.ix + 1} / ${n}` : "exemple";
+    $("#etqPrev").disabled = etqUi.ix <= 0; $("#etqNext").disabled = etqUi.ix >= n - 1;
+  }
+  function etqPaintInsp(cfg, src) {
+    const host = $("#etqInsp"), rows = cfg.grid.rows;
+    if (!rows[etqUi.sel.r]) etqUi.sel = { r: 0, c: 0 };
+    if (!rows[etqUi.sel.r].cells[etqUi.sel.c]) etqUi.sel.c = 0;
+    const { r, c } = etqUi.sel, row = rows[r], cell = row.cells[c];
+    const act = document.activeElement && host.contains(document.activeElement) ? document.activeElement.id : "";
+    const seg = (attr, cur, opts) => `<span class="etq-seg" role="group">${opts.map(([v, t, title]) => `<button type="button" ${attr}="${v}" aria-pressed="${String(cur) === v ? "true" : "false"}"${title ? ` title="${title}" aria-label="${title}"` : ""}>${t}</button>`).join("")}</span>`;
+    host.innerHTML = `<h2 style="font-size:16px;margin:0 0 6px">Case ${r + 1}.${c + 1}</h2>
+      <div class="row">
+        <label class="field"><span>Contenu</span><input id="etqTpl" type="text" value="${esc(cell.template || "")}" placeholder="{Source} ou texte libre" autocomplete="off" spellcheck="false"></label>
+        <label class="field"><span>Taille (pt)</span><input id="etqPt" type="number" min="3" max="200" step="0.5" value="${cell.font_pt || ""}" placeholder="auto"></label>
+        <label class="inl" style="align-self:center"><input id="etqBold" type="checkbox"${(cell.bold ?? cfg.bold) ? " checked" : ""}> Gras</label>
+        <div class="field"><span>Alignement</span>${seg("data-eal", cell.align || "", [["", "auto", "Comme le reste"], ["left", "⇤", "À gauche"], ["center", "↔", "Centré"], ["right", "⇥", "À droite"]])}</div>
+        <div class="field"><span>Texte trop long</span>${seg("data-eov", cell.overflow || "", [["", "auto"], ["shrink", "Réduire"], ["wrap", "À la ligne"]])}</div>
+        <label class="field"><span>Largeur (%)</span><input id="etqW" type="number" min="1" max="100" step="1" value="${Math.round(cell.width * 10) / 10}"></label>
+        <label class="field"><span>Hauteur rangée (%)</span><input id="etqH" type="number" min="1" max="100" step="1" value="${Math.round(row.height * 10) / 10}"></label>
+      </div>
+      <div class="etq-chips" aria-label="Colonnes : clique pour remplir la case, Maj + clic pour ajouter">${src.cols.map((k) => `<button type="button" class="etq-chip" draggable="true" data-echip="${esc(k)}" title="Clic : remplit la case · Maj + clic : ajoute au texte · ou glisse sur une case">${esc(k)}</button>`).join("")}</div>
+      <div class="actions" style="margin-top:8px"><button type="button" class="btn small" data-eact="right">+ Case à droite</button><button type="button" class="btn small" data-eact="below">+ Rangée dessous</button><button type="button" class="btn small danger" data-eact="del"${rows.length === 1 && row.cells.length === 1 ? " disabled" : ""}>Supprimer la case</button></div>`;
+    if (act && $("#" + act)) $("#" + act).focus();
+  }
+  function etqPaintSide(cfg, src) {
+    const opt = (v, cur, t) => `<option value="${esc(v)}"${String(v) === String(cur) ? " selected" : ""}>${esc(t)}</option>`;
+    const fonts = ETQ_FONTS.some(([f]) => f === cfg.font) ? ETQ_FONTS : [[cfg.font, cfg.font], ...ETQ_FONTS];
+    $("#etqSide").innerHTML = `<div class="panel"><h3>Ruban</h3>
+      <label class="field"><span>Largeur</span><select data-ecf="tape_mm">${Object.keys(ETQ_TAPES).map((w) => opt(w, etqTape(cfg.tape_mm).mm, ETQ_TAPE_LBL[w])).join("")}</select></label>
+      <label class="field"><span>Couleurs (aperçu)</span><select data-ecf="colors">${ETQ_COLORS.map(([k, t]) => opt(k, cfg.colors, t)).join("")}</select></label>
+      <label class="field"><span>Longueur</span><select data-ecf="length_mode">${opt("fixed", cfg.length_mode, "Fixe")}${opt("auto", cfg.length_mode, "Selon le texte")}</select></label>
+      ${cfg.length_mode === "auto" ? `<label class="field"><span>Longueur mini (mm)</span><input type="number" min="0" step="1" data-ecf="min_length_mm" value="${cfg.min_length_mm}"></label>` : `<label class="field"><span>Longueur (mm)</span><input type="number" min="5" max="500" step="1" data-ecf="length_mm" value="${cfg.length_mm}"></label>`}
+      <label class="field"><span>Marge gauche et droite (mm)</span><input type="number" min="0" step="0.5" data-ecf="padding_mm" value="${cfg.padding_mm}"></label>
+      <label class="field"><span>Avance de l'imprimante (mm)</span><input type="number" min="0" step="0.5" data-ecf="margin_mm" value="${cfg.margin_mm}"></label></div>
+      <div class="panel"><h3>Texte</h3>
+      <label class="field"><span>Police</span><select data-ecf="font">${fonts.map(([f, t]) => opt(f, cfg.font, t)).join("")}</select></label>
+      <label class="field"><span>Alignement</span><select data-ecf="align">${opt("left", cfg.align, "À gauche")}${opt("center", cfg.align, "Centré")}${opt("right", cfg.align, "À droite")}</select></label>
+      <label class="field"><span>Texte trop long</span><select data-ecf="overflow">${opt("shrink", cfg.overflow, "Réduire")}${opt("wrap", cfg.overflow, "Aller à la ligne")}</select></label>
+      <label class="field"><span>Marge dans les cases (%)</span><input type="number" min="0" max="45" step="1" data-ecf="cell_pad" value="${cfg.cell_pad}"></label>
+      <label class="inl"><input type="checkbox" data-ecf="bold"${cfg.bold ? " checked" : ""}> Gras par défaut</label>
+      <label class="inl" title="Toutes les étiquettes de la série prennent la taille de la plus chargée"><input type="checkbox" data-ecf="same"${cfg.same ? " checked" : ""}> Même taille sur toute la série</label>
+      <label class="inl"><input type="checkbox" data-ecf="frame"${cfg.frame ? " checked" : ""}> Cadre et traits</label>
+      ${cfg.frame ? `<label class="field"><span>Épaisseur des traits (mm)</span><input type="number" min="0.1" max="2" step="0.1" data-ecf="border_mm" value="${cfg.border_mm}"></label>` : ""}
+      <label class="inl"><input type="checkbox" data-ecf="invert"${cfg.invert ? " checked" : ""}> Blanc sur noir</label></div>
+      <div class="panel"><h3>Quantités</h3>
+      <label class="field"><span>Exemplaires par ligne</span><input type="number" min="1" max="50" step="1" data-ecf="copies" value="${cfg.copies}"></label>
+      <label class="field"><span>Colonne quantité</span><select data-ecf="copies_column">${opt("", cfg.copies_column, "— aucune —")}${src.cols.map((k) => opt(k, cfg.copies_column, k)).join("")}</select></label>
+      <label class="inl" title="Les étiquettes restent attachées : une seule coupe à la fin"><input type="checkbox" data-ecf="chain"${cfg.chain ? " checked" : ""}> Ne pas couper entre les étiquettes</label></div>`;
+  }
+  function etqPaintList(E, src, cfg) {
+    const rows = src.rows, on = rows.filter((r) => etqOn(E, src, r));
+    const total = on.reduce((n, r) => n + etqQty(E, src, cfg, r), 0);
+    const cap = etqCaps(cfg, on.map((r) => r.v));
+    let mm = 0;
+    $("#etqTbl").innerHTML = rows.length ? `<thead><tr><th title="Imprimer">✓</th><th>Étiquette</th><th>Données</th><th>Qté</th></tr></thead><tbody>${rows.map((r, i) => `<tr data-eid="${esc(r.id)}" class="${i === etqUi.ix ? "cur" : ""}${etqOn(E, src, r) ? "" : " off"}"><td><input type="checkbox" data-eon${etqOn(E, src, r) ? " checked" : ""} aria-label="Imprimer l'étiquette ${i + 1}"></td><td class="pv"></td><td class="vals">${esc(src.cols.slice(0, 4).map((k) => r.v[k]).filter(Boolean).join(" · "))}</td><td class="q"><input type="number" min="0" step="1" data-eq value="${E.qty[src.k + "|" + r.id] ?? ""}" placeholder="${etqQty({ qty: {} }, src, cfg, r)}" aria-label="Exemplaires de l'étiquette ${i + 1}"></td></tr>`).join("")}</tbody>` : `<tbody><tr><td class="hint">Rien à étiqueter ici pour l'instant : remplis d'abord ${esc(src.t.toLowerCase())} dans le dossier.</td></tr></tbody>`;
+    const cells = $("#etqTbl").querySelectorAll("td.pv");
+    rows.forEach((r, i) => {
+      let len;
+      if (i < 400) { const R = etqDraw(cfg, r.v, { k: 2, cap }); R.cv.style.width = Math.round(R.length * 0.55) + "px"; cells[i].append(R.cv); len = R.mm; }
+      else if (etqOn(E, src, r)) len = Math.round(etqLayout(cfg, r.v, cap).length * 254 / 180) / 10;
+      if (etqOn(E, src, r)) mm += (len + (Number(cfg.margin_mm) || 0) * 2) * etqQty(E, src, cfg, r);
+    });
+    $("#etqCount").textContent = rows.length ? `${total} étiquette${total > 1 ? "s" : ""} à imprimer · environ ${(Math.round(mm / 100) / 10).toLocaleString("fr-FR")} m de ruban` : "";
+  }
+  const etqCanPrint = () => !!(navigator.usb || navigator.serial);
+  function etqPaintBar() {
+    const st = $("#etqSt"), busy = !!etqUi.job;
+    $("#etqUsb").hidden = !navigator.usb || !!etqUi.link; $("#etqBt").hidden = !navigator.serial || !!etqUi.link;
+    $("#etqStop").hidden = !busy; $("#etqGo").disabled = busy || !etqCanPrint();
+    $("#etqProg").hidden = !busy; if (busy) { $("#etqProg").max = etqUi.job.total; $("#etqProg").value = etqUi.job.done; }
+    st.classList.toggle("err", !!etqUi.err);
+    st.textContent = etqUi.msg || (!etqCanPrint() ? "Ce navigateur ne parle pas directement à la P-touch : imprime depuis Chrome ou Edge (ordinateur ou Android), ou prends l'Excel pour l'appli P-touch du Mac." : etqUi.link ? `Connectée : ${etqUi.link.name}` : "P-touch non connectée : branche-la en USB, puis « Connecter ».");
+  }
+  const etqSay = (msg, err) => { etqUi.msg = msg; etqUi.err = !!err; etqPaintBar(); };
+  // Modifie le réglage courant ; « live » : sans enregistrer d'étape d'historique (frappe en cours)
+  function etqSet(fn, live) {
+    const { cfg, src } = etqCur(); fn(cfg);
+    if (live) { persist(); etqPaintStage(cfg, src); return; }
+    commit(false); renderEtiq();
+  }
+  async function etqConnect(kind) {
+    try {
+      let link;
+      if (kind === "usb") {
+        const known = (await navigator.usb.getDevices()).find((d) => d.vendorId === 0x04f9);
+        link = new EtqLink("usb", known || await navigator.usb.requestDevice({ filters: [{ vendorId: 0x04f9 }] }));
+      } else link = new EtqLink("bt", await navigator.serial.requestPort());
+      await link.start();
+      try { const s = await etqStatus(link); etqUi.link = link; etqSay(`Connectée : ${link.name} · ruban ${s.tape_mm || "?"} mm${s.errors.length ? " · " + s.errors.join(", ") : ""}`, s.errors.length > 0); }
+      catch (e) { etqUi.link = link; etqSay(`Connectée : ${link.name}. ${e.message}`, true); }
+      return true;
+    } catch (e) {
+      if (e && e.name === "NotFoundError") { etqSay("Aucune P-touch choisie."); return false; }
+      etqSay(e && e.name === "SecurityError" ? "Le navigateur refuse l'accès USB à la P-touch. Ferme l'appli Étiquettes P-touch du Mac si elle est ouverte, puis réessaie." : `Connexion impossible : ${e.message || e}`, true); return false;
+    }
+  }
+  async function etqPrint() {
+    const { E, src, cfg } = etqCur();
+    const on = src.rows.filter((r) => etqOn(E, src, r)), cap = etqCaps(cfg, on.map((r) => r.v));
+    const images = on.flatMap((r) => { const n = etqQty(E, src, cfg, r); if (!n) return []; const cv = etqDraw(cfg, r.v, { print: true, cap }).cv; return Array(n).fill(cv); });
+    if (!images.length) { etqSay("Aucune étiquette à imprimer : coche au moins une ligne.", true); return; }
+    if (!etqUi.link && !(await etqConnect(navigator.usb ? "usb" : "bt"))) return;
+    const job = { total: images.length, done: 0, cancel: false }; etqUi.job = job;
+    const step = () => etqSay(`Impression : ${job.done} / ${job.total}`);
+    step();
+    try { await etqRunJob(etqUi.link, images, cfg, job, step); etqUi.job = null; etqSay(job.cancel ? `Arrêté après ${job.done} étiquette${job.done > 1 ? "s" : ""}.` : `${job.done} étiquette${job.done > 1 ? "s" : ""} imprimée${job.done > 1 ? "s" : ""}.`); }
+    catch (e) { etqUi.job = null; etqSay(e.message || String(e), true); if (/ne répond|disconnected|NetworkError|device/i.test(String(e.message))) { try { await etqUi.link.close(); } catch (x) { /* ignore */ } etqUi.link = null; etqPaintBar(); } }
+  }
+  // Excel lisible par l'appli Étiquettes P-touch du Mac : un onglet par type, titres en première ligne
+  async function etqXlsx() {
+    const wb = new ExcelJS.Workbook(); wb.creator = "Patch Live"; const used = new Set();
+    etqSources().filter((s) => s.rows.length).forEach((s) => {
+      const base = s.t.replace(/[\\/*?:[\]]/g, " ").trim() || "Étiquettes";
+      let name = base.slice(0, 31).trim(), n = 2;
+      while (used.has(name.toLowerCase())) name = `${base.slice(0, 27).trim()} (${n++})`; used.add(name.toLowerCase());
+      const ws = wb.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
+      styleHead(ws.addRow(s.cols)); s.rows.forEach((r) => ws.addRow(s.cols.map((k) => r.v[k] ?? "")));
+      s.cols.forEach((k, i) => { ws.getColumn(i + 1).width = Math.min(40, Math.max(8, k.length + 2, ...s.rows.map((r) => String(r.v[k] ?? "").length + 2))); });
+    });
+    const d = state.dossier, file = `${(d.nom || "Dossier").replace(/[\\/:*?"<>|]+/g, " ").trim()} étiquettes.xlsx`;
+    await saveBlob(file, new Blob([await wb.xlsx.writeBuffer()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    etqSay(`« ${file} » enregistré : ouvre-le dans l'appli Étiquettes P-touch.`);
+  }
+  // Modèles de l'appli du Mac (reglages.json : « templates » plus le réglage en cours)
+  function etqImport(text) {
+    let j; try { j = JSON.parse(text); } catch (e) { etqSay("Ce fichier n'est pas un fichier de réglages lisible.", true); return; }
+    const m = etqUserModels(), got = [];
+    Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = ETQ_BUILTIN[n] ? `${n} (P-touch)` : n; m[name] = etqNorm(c); got.push(name); } });
+    if (!got.length && (j.grid || j.lines)) { m["Importé"] = etqNorm(j); got.push("Importé"); }
+    if (!got.length) { etqSay("Aucun modèle trouvé dans ce fichier.", true); return; }
+    etqSaveUserModels(m); renderEtiq(); etqSay(`Modèle${got.length > 1 ? "s" : ""} importé${got.length > 1 ? "s" : ""} : ${got.join(", ")}.`);
+  }
+  // ----- Événements -----
+  (() => {
+    const V = $("#v-etiq"); if (!V) return;
+    $("#etqSrc").addEventListener("change", (e) => { etqState().src = e.target.value; etqUi.ix = 0; etqUi.sel = { r: 0, c: 0 }; commit(false); renderEtiq(); });
+    $("#etqModel").addEventListener("change", (e) => { const n = e.target.value, M = etqModels()[n]; if (!M) return; const E = etqState(); const keep = etqCur().cfg; const c = etqNorm(M); if (!M.tape_mm) c.tape_mm = keep.tape_mm; delete c.src; E.cfgs[E.src] = c; E.model[E.src] = n; etqUi.sel = { r: 0, c: 0 }; commit(false); renderEtiq(); });
+    $("#etqModelSave").addEventListener("click", () => { const E = etqState(), n = $("#etqModelName").value.trim(); if (!n) { $("#etqModelName").focus(); etqSay("Donne un nom au modèle.", true); return; } if (ETQ_BUILTIN[n]) { etqSay("Ce nom est pris par un modèle fourni : choisis-en un autre.", true); return; } const m = etqUserModels(); m[n] = etqClone(etqCur().cfg); etqSaveUserModels(m); E.model[E.src] = n; commit(false); renderEtiq(); etqSay(`Modèle « ${n} » enregistré sur ce navigateur.`); });
+    $("#etqModelDel").addEventListener("click", () => { const E = etqState(), n = E.model[E.src], m = etqUserModels(); if (!m[n]) return; delete m[n]; etqSaveUserModels(m); E.model[E.src] = ""; commit(false); renderEtiq(); etqSay(`Modèle « ${n} » supprimé.`); });
+    $("#etqModelImp").addEventListener("click", () => $("#etqModelFile").click());
+    $("#etqModelFile").addEventListener("change", async (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) etqImport(await f.text()); });
+    $("#etqPrev").addEventListener("click", () => { etqUi.ix = Math.max(0, etqUi.ix - 1); etqPaintSel(); });
+    $("#etqNext").addEventListener("click", () => { etqUi.ix++; etqPaintSel(); });
+    // Cases : clic pour choisir, dépôt d'une colonne glissée (Alt ou Maj : ajoute au texte)
+    $("#etqTape").addEventListener("click", (e) => { const b = e.target.closest(".etq-cell"); if (!b) return; etqUi.sel = { r: +b.dataset.er, c: +b.dataset.ec }; const { cfg, src } = etqCur(); etqPaintStage(cfg, src); etqPaintInsp(cfg, src); $("#etqTpl").focus(); });
+    $("#etqTape").addEventListener("dragover", (e) => { const b = e.target.closest(".etq-cell"); if (!b) return; e.preventDefault(); V.querySelectorAll(".etq-cell.drop").forEach((x) => x.classList.remove("drop")); b.classList.add("drop"); });
+    $("#etqTape").addEventListener("dragleave", (e) => { const b = e.target.closest(".etq-cell"); if (b) b.classList.remove("drop"); });
+    $("#etqTape").addEventListener("drop", (e) => { const b = e.target.closest(".etq-cell"), k = e.dataTransfer.getData("text/x-etq"); if (!b || !k) return; e.preventDefault(); etqUi.sel = { r: +b.dataset.er, c: +b.dataset.ec }; etqSet((cfg) => { const cell = cfg.grid.rows[etqUi.sel.r].cells[etqUi.sel.c]; cell.template = e.altKey || e.shiftKey ? `${cell.template || ""} {${k}}`.trim() : `{${k}}`; }); });
+    const insp = $("#etqInsp"), cellOf = (cfg) => cfg.grid.rows[etqUi.sel.r].cells[etqUi.sel.c];
+    insp.addEventListener("dragstart", (e) => { const c = e.target.closest("[data-echip]"); if (c) { e.dataTransfer.setData("text/x-etq", c.dataset.echip); e.dataTransfer.effectAllowed = "copy"; } });
+    insp.addEventListener("input", (e) => {
+      const id = e.target.id;
+      if (id === "etqTpl") etqSet((cfg) => { cellOf(cfg).template = e.target.value; }, true);
+      if (id === "etqPt") etqSet((cfg) => { const v = parseFloat(e.target.value); if (v > 0) cellOf(cfg).font_pt = v; else delete cellOf(cfg).font_pt; }, true);
+      if (id === "etqW") etqSet((cfg) => { const v = parseFloat(e.target.value); if (v > 0) cellOf(cfg).width = v; }, true);
+      if (id === "etqH") etqSet((cfg) => { const v = parseFloat(e.target.value); if (v > 0) cfg.grid.rows[etqUi.sel.r].height = v; }, true);
+    });
+    insp.addEventListener("change", (e) => {
+      if (e.target.id === "etqBold") { etqSet((cfg) => { cellOf(cfg).bold = e.target.checked; }); return; }
+      if (["etqTpl", "etqPt", "etqW", "etqH"].includes(e.target.id)) { commit(false); const { E, src, cfg } = etqCur(); etqPaintList(E, src, cfg); }
+    });
+    insp.addEventListener("click", (e) => {
+      const chip = e.target.closest("[data-echip]");
+      if (chip) { const k = chip.dataset.echip; etqSet((cfg) => { const c = cellOf(cfg); c.template = e.shiftKey || e.altKey ? `${c.template || ""} {${k}}`.trim() : `{${k}}`; }); return; }
+      const al = e.target.closest("[data-eal]"); if (al) { etqSet((cfg) => { if (al.dataset.eal) cellOf(cfg).align = al.dataset.eal; else delete cellOf(cfg).align; }); return; }
+      const ov = e.target.closest("[data-eov]"); if (ov) { etqSet((cfg) => { if (ov.dataset.eov) cellOf(cfg).overflow = ov.dataset.eov; else delete cellOf(cfg).overflow; }); return; }
+      const a = e.target.closest("[data-eact]"); if (!a) return;
+      etqSet((cfg) => {
+        const R = cfg.grid.rows, { r, c } = etqUi.sel;
+        if (a.dataset.eact === "right") { const cur = R[r].cells[c], half = Math.max(1, cur.width / 2); cur.width = half; R[r].cells.splice(c + 1, 0, { template: "", width: half }); etqUi.sel = { r, c: c + 1 }; }
+        if (a.dataset.eact === "below") { const h = Math.max(1, R[r].height / 2); R[r].height = h; R.splice(r + 1, 0, { height: h, cells: [{ template: "", width: 100 }] }); etqUi.sel = { r: r + 1, c: 0 }; }
+        if (a.dataset.eact === "del") {
+          if (R[r].cells.length > 1) { const w = R[r].cells[c].width; R[r].cells.splice(c, 1); R[r].cells[Math.max(0, c - 1)].width += w; etqUi.sel = { r, c: Math.max(0, c - 1) }; }
+          else if (R.length > 1) { const h = R[r].height; R.splice(r, 1); R[Math.max(0, r - 1)].height += h; etqUi.sel = { r: Math.max(0, r - 1), c: 0 }; }
+        }
+      });
+    });
+    $("#etqSide").addEventListener("change", (e) => {
+      const f = e.target.dataset.ecf; if (!f) return;
+      etqSet((cfg) => { cfg[f] = e.target.type === "checkbox" ? e.target.checked : e.target.type === "number" ? Math.max(0, parseFloat(e.target.value) || 0) : f === "tape_mm" ? Number(e.target.value) : e.target.value; });
+    });
+    $("#etqTbl").addEventListener("change", (e) => {
+      const tr = e.target.closest("tr[data-eid]"); if (!tr) return; const E = etqState(), k = E.src, id = tr.dataset.eid;
+      if (e.target.matches("[data-eon]")) { E.off[k] = E.off[k] || {}; if (e.target.checked) delete E.off[k][id]; else E.off[k][id] = 1; }
+      if (e.target.matches("[data-eq]")) { const v = e.target.value.trim(); if (v === "") delete E.qty[k + "|" + id]; else E.qty[k + "|" + id] = Math.max(0, Math.floor(Number(v) || 0)); }
+      commit(false); etqPaint();
+    });
+    $("#etqTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-eid]"); if (!tr || e.target.closest("input")) return; etqUi.ix = [...tr.parentNode.children].indexOf(tr); etqPaintSel(); });
+    const all = (on) => { const E = etqState(), { src } = etqCur(); E.off[src.k] = on ? {} : Object.fromEntries(src.rows.map((r) => [r.id, 1])); commit(false); etqPaint(); };
+    $("#etqAll").addEventListener("click", () => all(true)); $("#etqNone").addEventListener("click", () => all(false));
+    $("#etqUsb").addEventListener("click", () => etqConnect("usb").then(etqPaintBar));
+    $("#etqBt").addEventListener("click", () => etqConnect("bt").then(etqPaintBar));
+    $("#etqGo").addEventListener("click", () => etqPrint());
+    $("#etqStop").addEventListener("click", () => { if (etqUi.job) { etqUi.job.cancel = true; etqSay("Arrêt après l'étiquette en cours…"); } });
+    $("#etqXlsx").addEventListener("click", () => etqXlsx().catch((e) => etqSay(`Excel impossible : ${e.message || e}`, true)));
+    if (navigator.usb) navigator.usb.addEventListener("disconnect", (e) => { if (etqUi.link && etqUi.link.dev === e.device) { const l = etqUi.link; etqUi.link = null; if (etqUi.job) etqUi.job.cancel = true; etqUi.job = null; l.close(); etqSay("La P-touch a été débranchée.", true); } });
+    addEventListener("resize", () => { if (view === "etiq") { const { cfg, src } = etqCur(); etqPaintStage(cfg, src); } });
+    // Les polices du système arrivent parfois après le premier dessin
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (view === "etiq") renderEtiq(); });
+  })();
+
   function renderInfos() {
     const hfN = hfState().reduce((n, g) => n + g.rows.length, 0);
     const it = [["Sources", state.lignes.length], ["Sorties", (state.sorties || []).length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ["Appareils HF", hfN], ["Changements au journal", state.journal.length]];
@@ -9533,6 +10181,7 @@ table.master td.nopad input { opacity: 0.8; }
     if (view === "hftx") renderHfDev("tx");
     if (view === "materiel" || view === "reglbox") renderSetup();
     if (view === "liste") renderListe();
+    if (view === "etiq") renderEtiq();
     if (view === "journal") renderJournal();
     if (view === "infos") renderInfos();
     if (view === "plan") renderPlan();
@@ -9609,7 +10258,7 @@ table.master td.nopad input { opacity: 0.8; }
   document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste"], dossier: ["infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq"], dossier: ["infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   function setView(v, fromHistory) {
@@ -9625,7 +10274,7 @@ table.master td.nopad input { opacity: 0.8; }
     $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
