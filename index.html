@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "b580f18662";</script>
+<script>window.PL_VER = "737c35be5a";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1364,6 +1364,7 @@ table.master td.nopad input { opacity: 0.8; }
 .etq-tape { position: relative; margin: 0 auto; width: max-content; }
 .etq-tape canvas { display: block; border-radius: 2px; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 18px rgba(0,0,0,.45); }
 .etq-cell { position: absolute; border: 0; background: transparent; padding: 0; cursor: pointer; outline: 1px dashed rgba(120,140,150,.55); outline-offset: -1px; }
+.etq-cell.unk { color: #a3201a; font: 600 12px/1.1 var(--font-mono); background: rgba(252,226,223,.75); overflow: hidden; }
 .etq-cell:hover { background: rgba(193,219,227,.18); }
 .etq-cell[aria-pressed="true"] { outline: 2px solid #fce694; outline-offset: -2px; background: rgba(252,230,148,.12); }
 .etq-cell.drop { background: rgba(246,254,170,.35); outline: 2px solid #f6feaa; }
@@ -1728,8 +1729,8 @@ table.master td.nopad input { opacity: 0.8; }
       <input id="etqModelName" type="text" placeholder="Nom du modèle" aria-label="Nom du modèle à enregistrer" autocomplete="off">
       <button id="etqModelSave" class="btn small" type="button">Enregistrer le modèle</button>
       <button id="etqModelDel" class="btn small danger" type="button">Supprimer</button>
-      <button id="etqModelImp" class="btn small" type="button" title="Reprend les modèles de l'appli Étiquettes P-touch (fichier reglages.json)">Importer mes modèles P-touch…</button>
-      <input id="etqModelFile" type="file" accept=".json,application/json" hidden>
+      <button id="etqModelImp" class="btn small" type="button" title="Modèles .lbx de P-touch Editor (plusieurs d'un coup), ou reglages.json de l'appli Étiquettes P-touch du Mac">Importer des modèles P-touch…</button>
+      <input id="etqModelFile" type="file" accept=".lbx,.json,application/json" multiple hidden>
     </div>
   </div>
   <div class="etq">
@@ -8805,7 +8806,7 @@ table.master td.nopad input { opacity: 0.8; }
     L.cells.forEach((c) => {
       if (c.sepB) { g.fillRect(c.x0, c.y, c.x1 - c.x0 + 1, t); return; }
       if (!c.cell) return;
-      rects.push({ r: c.r, c: c.c, x: c.x, y: c.y + dy, w: c.w, h: c.h });
+      rects.push({ r: c.r, c: c.c, x: c.x, y: c.y + dy, w: c.w, h: c.h, empty: !c.text });
       if (c.sepR) g.fillRect(c.x + c.w, c.y, t, c.h);
       if (!c.text) return;
       const m = Math.floor(Math.min(c.w, c.h) * cfg.cell_pad / 100), bold = c.cell.bold ?? cfg.bold, align = c.cell.align || cfg.align;
@@ -8953,6 +8954,7 @@ table.master td.nopad input { opacity: 0.8; }
       b.style.left = q.x * s + "px"; b.style.top = q.y * s + "px"; b.style.width = q.w * s + "px"; b.style.height = q.h * s + "px";
       b.setAttribute("aria-pressed", q.r === sel.r && q.c === sel.c ? "true" : "false");
       const tpl = cfg.grid.rows[q.r].cells[q.c].template || "";
+      if (q.empty && tpl) { b.textContent = tpl; b.classList.add("unk"); } // colonne absente de ce type de données : on montre ce qui est attendu
       b.setAttribute("aria-label", `Case ${q.r + 1}.${q.c + 1}${tpl ? " : " + tpl : " vide"}`); b.title = tpl || "Case vide : glisse une colonne ici";
       host.append(b);
     });
@@ -9082,13 +9084,100 @@ table.master td.nopad input { opacity: 0.8; }
     etqSay(`« ${file} » enregistré : ouvre-le dans l'appli Étiquettes P-touch.`);
   }
   // Modèles de l'appli du Mac (reglages.json : « templates » plus le réglage en cours)
-  function etqImport(text) {
-    let j; try { j = JSON.parse(text); } catch (e) { etqSay("Ce fichier n'est pas un fichier de réglages lisible.", true); return; }
-    const m = etqUserModels(), got = [];
-    Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = ETQ_BUILTIN[n] ? `${n} (P-touch)` : n; m[name] = etqNorm(c); got.push(name); } });
-    if (!got.length && (j.grid || j.lines)) { m["Importé"] = etqNorm(j); got.push("Importé"); }
-    if (!got.length) { etqSay("Aucun modèle trouvé dans ce fichier.", true); return; }
-    etqSaveUserModels(m); renderEtiq(); etqSay(`Modèle${got.length > 1 ? "s" : ""} importé${got.length > 1 ? "s" : ""} : ${got.join(", ")}.`);
+  // ----- Modèles de P-touch Editor (.lbx : un zip avec label.xml) -----
+  // Lecture du zip sans bibliothèque : répertoire central, puis chaque fichier (stocké ou « deflate »)
+  async function etqUnzip(buf) {
+    const u = new Uint8Array(buf), dv = new DataView(buf), out = {};
+    let e = u.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    if (e < 0) throw new Error("fichier .lbx illisible");
+    let p = dv.getUint32(e + 16, true); const n = dv.getUint16(e + 10, true);
+    for (let i = 0; i < n; i++) {
+      const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(u.subarray(p + 46, p + 46 + nl));
+      const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = u.subarray(start, start + size);
+      if (method === 0) out[name] = data;
+      else if (method === 8) out[name] = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+      p += 46 + nl + xl + cl;
+    }
+    return out;
+  }
+  const ETQ_LBX_FONTS = { helsinki: "Helvetica", "helsinki narrow": "Arial Narrow", "utah condensed": "Arial Narrow", utah: "Arial", brussels: "Times New Roman", letter_gothic: "Courier New" };
+  // Un modèle P-touch Editor place ses textes librement : on les range en rangées (même hauteur sur le ruban) puis en cases
+  function etqFromLbx(xml) {
+    const doc = new DOMParser().parseFromString(xml, "application/xml");
+    const all = (el, name) => [...el.getElementsByTagName("*")].filter((x) => x.localName === name);
+    const pt = (v) => parseFloat(String(v || "0").replace(",", ".")) || 0;
+    const paper = all(doc, "paper")[0]; if (!paper) throw new Error("pas de mise en page dans ce fichier");
+    const tapePt = pt(paper.getAttribute("width")), lenPt = pt(paper.getAttribute("height"));
+    const mA = pt(paper.getAttribute("marginLeft")), mB = pt(paper.getAttribute("marginRight")), mL = pt(paper.getAttribute("marginTop")), mR = pt(paper.getAttribute("marginBottom"));
+    const fields = new Map(all(doc, "dbMergeFieldStyle").map((f) => [f.getAttribute("name"), f.getAttribute("fieldName")]));
+    const objs = [], links = [];
+    let font = "", bold = false;
+    all(doc, "text").filter((t) => t.namespaceURI && /\/text$/.test(t.namespaceURI)).forEach((t) => {
+      const st = [...t.children].find((c) => c.localName === "objectStyle"); if (!st) return;
+      const lf = all(t, "logFont")[0], fe = all(t, "fontExt")[0], tc = all(t, "textControl")[0], al = all(t, "textAlign")[0], ex = all(st, "expanded")[0];
+      const data = ([...t.children].find((c) => c.localName === "data") || {}).textContent || "";
+      const fieldKey = ex && ex.getAttribute("dbMergeFieldStyleName"), field = fieldKey ? fields.get(fieldKey) || fieldKey : "";
+      if (field) links.push({ field, data });
+      const f = lf ? lf.getAttribute("name") : ""; if (f && !font) { font = f; bold = Number(lf.getAttribute("weight")) >= 600; }
+      const h = al ? (al.getAttribute("horizontalAlignment") || "").toLowerCase() : "center";
+      objs.push({ x: pt(st.getAttribute("x")), y: pt(st.getAttribute("y")), w: pt(st.getAttribute("width")), h: pt(st.getAttribute("height")),
+        cell: { template: field ? `{${field}}` : data, bold: lf ? Number(lf.getAttribute("weight")) >= 600 : undefined, ...(fe && pt(fe.getAttribute("size")) ? { font_pt: pt(fe.getAttribute("size")) } : {}), ...(h === "left" || h === "right" ? { align: h } : {}), ...(tc && tc.getAttribute("autoLF") === "true" ? { overflow: "wrap" } : {}) } });
+    });
+    // Rangées : textes qui se chevauchent sur la largeur du ruban
+    objs.sort((a, b) => a.y - b.y || a.x - b.x);
+    const bands = [];
+    objs.forEach((o) => { const b = bands.find((x) => o.y < x.y1 - 0.5 && o.y + o.h > x.y0 + 0.5); if (b) { b.items.push(o); b.y0 = Math.min(b.y0, o.y); b.y1 = Math.max(b.y1, o.y + o.h); } else bands.push({ y0: o.y, y1: o.y + o.h, items: [o] }); });
+    bands.sort((a, b) => a.y0 - b.y0);
+    const top = mA, bottom = tapePt - mB, left = mL, right = lenPt - mR;
+    const rows = bands.map((b, i) => {
+      const y0 = i ? (bands[i - 1].y1 + b.y0) / 2 : top, y1 = i < bands.length - 1 ? (b.y1 + bands[i + 1].y0) / 2 : bottom;
+      const it = b.items.sort((a, c) => a.x - c.x);
+      const cells = it.map((o, j) => { const x0 = j ? (it[j - 1].x + it[j - 1].w + o.x) / 2 : left, x1 = j < it.length - 1 ? (o.x + o.w + it[j + 1].x) / 2 : right; return { ...o.cell, width: Math.max(1, Math.round((x1 - x0) * 10) / 10) }; });
+      return { height: Math.max(1, Math.round((y1 - y0) * 10) / 10), cells };
+    });
+    const framed = all(doc, "frame").length > 0 || all(doc, "table").length > 0;
+    const pen = all(doc, "pen").find((p) => p.getAttribute("style") && p.getAttribute("style") !== "NULL");
+    const cfg = {
+      tape_mm: etqTape(tapePt * 25.4 / 72).mm, length_mode: paper.getAttribute("autoLength") === "true" ? "auto" : "fixed", length_mm: Math.round(lenPt * 25.4 / 72 * 10) / 10,
+      padding_mm: Math.round(mL * 25.4 / 72 * 10) / 10, font: ETQ_LBX_FONTS[font.toLowerCase()] || font || "Arial", bold, frame: framed,
+      border_mm: pen ? Math.max(0.2, Math.round(pt(pen.getAttribute("widthX")) * 25.4 / 72 * 10) / 10) : 0.4, cell_pad: 6,
+      grid: { rows: rows.length ? rows : [{ height: 100, cells: [{ template: "", width: 100 }] }] }
+    };
+    const images = all(doc, "image").length + all(doc, "barcode").length;
+    return { cfg: etqNorm(cfg), links, images };
+  }
+  async function etqImportFiles(files) {
+    const m = etqUserModels(), got = [], notes = [];
+    for (const f of files) {
+      const base = f.name.replace(/\.[^.]+$/, "");
+      try {
+        if (/\.lbx$/i.test(f.name)) {
+          const z = await etqUnzip(await f.arrayBuffer()), xml = z["label.xml"]; if (!xml) throw new Error("pas de label.xml");
+          const r = etqFromLbx(new TextDecoder().decode(xml)), name = ETQ_BUILTIN[base] ? `${base} (P-touch)` : base;
+          // Champ de la base P-touch : on cherche la colonne du dossier qui contient le même exemple (« Choeur 1 » → Porteur)
+          const { src } = etqCur(), left = [];
+          r.links.forEach(({ field, data }) => {
+            const v = etqKey(data), col = v && src.cols.find((k) => src.rows.some((row) => etqKey(row.v[k]) === v));
+            const tpl = col || src.cols.find((k) => etqKey(k) === etqKey(field));
+            if (tpl) r.cfg.grid.rows.forEach((row) => row.cells.forEach((c) => { if (c.template === `{${field}}`) c.template = `{${tpl}}`; }));
+            else left.push(`${field}${data ? ` (« ${data} »)` : ""}`);
+          });
+          m[name] = r.cfg; got.push(name);
+          if (left.length) notes.push(`${name} : choisis la colonne des cases ${left.join(", ")}`);
+          if (r.images) notes.push(`${name} : images et codes-barres non repris`);
+        } else {
+          const j = JSON.parse(await f.text());
+          Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = ETQ_BUILTIN[n] ? `${n} (P-touch)` : n; m[name] = etqNorm(c); got.push(name); } });
+          if (!Object.keys(j.templates || {}).length && (j.grid || j.lines)) { m[base] = etqNorm(j); got.push(base); }
+        }
+      } catch (e) { notes.push(`${f.name} : ${e.message || "illisible"}`); }
+    }
+    if (!got.length) { etqSay(`Aucun modèle trouvé. ${notes.join(" · ")}`, true); return; }
+    etqSaveUserModels(m);
+    // Un seul modèle : il s'applique tout de suite à ce qu'on étiquette
+    if (got.length === 1) { const E = etqState(); E.cfgs[E.src] = etqClone(m[got[0]]); E.model[E.src] = got[0]; etqUi.sel = { r: 0, c: 0 }; commit(false); }
+    renderEtiq(); etqSay(`Importé${got.length > 1 ? "s" : ""} : ${got.join(", ")}.${notes.length ? " " + notes.join(" · ") + "." : ""}`);
   }
   // ----- Événements -----
   (() => {
@@ -9098,7 +9187,7 @@ table.master td.nopad input { opacity: 0.8; }
     $("#etqModelSave").addEventListener("click", () => { const E = etqState(), n = $("#etqModelName").value.trim(); if (!n) { $("#etqModelName").focus(); etqSay("Donne un nom au modèle.", true); return; } if (ETQ_BUILTIN[n]) { etqSay("Ce nom est pris par un modèle fourni : choisis-en un autre.", true); return; } const m = etqUserModels(); m[n] = etqClone(etqCur().cfg); etqSaveUserModels(m); E.model[E.src] = n; commit(false); renderEtiq(); etqSay(`Modèle « ${n} » enregistré sur ce navigateur.`); });
     $("#etqModelDel").addEventListener("click", () => { const E = etqState(), n = E.model[E.src], m = etqUserModels(); if (!m[n]) return; delete m[n]; etqSaveUserModels(m); E.model[E.src] = ""; commit(false); renderEtiq(); etqSay(`Modèle « ${n} » supprimé.`); });
     $("#etqModelImp").addEventListener("click", () => $("#etqModelFile").click());
-    $("#etqModelFile").addEventListener("change", async (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) etqImport(await f.text()); });
+    $("#etqModelFile").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) etqImportFiles(fs).catch((x) => etqSay(`Import impossible : ${x.message || x}`, true)); });
     $("#etqPrev").addEventListener("click", () => { etqUi.ix = Math.max(0, etqUi.ix - 1); etqPaintSel(); });
     $("#etqNext").addEventListener("click", () => { etqUi.ix++; etqPaintSel(); });
     // Cases : clic pour choisir, dépôt d'une colonne glissée (Alt ou Maj : ajoute au texte)
