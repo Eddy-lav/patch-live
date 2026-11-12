@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "332ab7103e";</script>
+<script>window.PL_VER = "847227c81b";</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -768,15 +768,15 @@ details.spxres[open] > summary { margin-bottom: 8px; }
 .hfg .hfhead .sp { flex: 1; }
 /* Repli des groupes HF, comme les stage racks : flèche ▾ / ▸, pictogramme de l'appareil, résumé des noms quand c'est replié */
 .hfg .hfhead { cursor: pointer; }
-.hfg .hfhead input, .hfg .hfhead button:not(.hffold) { cursor: auto; }
+.hfg .hfhead input { cursor: auto; }
 .hfg .hfhead button { cursor: pointer; }
 .hfg .hffold { border: 0; background: transparent; color: var(--muted); font-size: 13px; width: 22px; height: 26px; padding: 0; margin-right: -4px; border-radius: 4px; flex: none; }
 .hfg .hffold:hover, .hfg .hffold:focus-visible { color: var(--accent); background: var(--surface-2); }
 .hfg .hfico { width: 26px; height: 26px; color: var(--ink); opacity: 0.85; }
 .hfg.hfclosed { padding-top: 8px; padding-bottom: 8px; }
 .hfg.hfclosed .hfhead { margin-bottom: 0; flex-wrap: nowrap; }
-.hfg.hfclosed .hfhead span.hfmodel { font-weight: 700; font-size: 17px; padding: 2px 4px; white-space: nowrap; }
-.hfg.hfclosed .hfhead .kind { white-space: nowrap; }
+.hfg.hfclosed .hfhead span.hfmodel { font-weight: 700; font-size: 17px; padding: 2px 4px; white-space: nowrap; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.hfg.hfclosed .hfhead .kind { white-space: nowrap; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
 .hfg .hfsum { flex: 1 1 auto; min-width: 0; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hfg table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .hfg th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; padding: 3px 4px; border-bottom: 1px solid var(--line); }
@@ -2494,8 +2494,11 @@ table.master td.nopad input { opacity: 0.8; }
   }
   // Groupes HF repliés, comme les stage racks : gardés dans ce navigateur
   const closedHf = new Set((() => { try { return JSON.parse(localStorage.getItem("patch-live-closedHf") || "[]"); } catch (e) { return []; } })());
+  let hfDownT = null;
   function hfFold(ids, open) {
     ids.forEach((id) => { if (open) closedHf.delete(id); else closedHf.add(id); });
+    // La liste ne grossit pas sans fin : au-delà de 200, on oublie les groupes qui ne sont pas dans le dossier ouvert
+    if (closedHf.size > 200) { const live = new Set(hfState().map((x) => x.id)); [...closedHf].forEach((id) => { if (!live.has(id)) closedHf.delete(id); }); }
     try { localStorage.setItem("patch-live-closedHf", JSON.stringify([...closedHf])); } catch (err) { /* ignore */ }
     renderHf();
   }
@@ -2515,11 +2518,11 @@ table.master td.nopad input { opacity: 0.8; }
   function hfGroupHtml(g) {
     const K = HF_KINDS[g.kind] || HF_KINDS.tx, C = hfCols(g), S = SPX_SET[g.kind], shown = C !== K.cols, closed = closedHf.has(g.id);
     const names = g.rows.map((r) => hfName(r)).filter(Boolean), sum = names.length ? names.slice(0, 6).join(", ") + (names.length > 6 ? ` +${names.length - 6}` : "") : "aucun nom";
-    // Suggestions des réglages : valeur par défaut de Studio + valeurs déjà tapées
-    const setDl = S && shown ? S.map(([k, , d]) => `<datalist id="dlSet_${g.id}_${k}">${[...new Set([d, ...hfState().filter((x) => x.kind === g.kind).flatMap((x) => x.rows.map((r) => r["s_" + k])).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("") : "";
     if (closed) return `<div class="panel hfg hfclosed" data-hg="${g.id}">
       <div class="hfhead"><button class="hffold" type="button" data-hgfold aria-expanded="false" aria-label="Déplier ${esc(g.model)}" title="Déplier">▸</button>${hfIco(g)}<span class="hfmodel">${esc(g.model)}</span><span class="kind">${esc(K.t)} · ${g.rows.length}</span><span class="hfsum">${esc(sum)}</span></div>
     </div>`;
+    // Suggestions des réglages : valeur par défaut de Studio + valeurs déjà tapées
+    const setDl = S && shown ? S.map(([k, , d]) => `<datalist id="dlSet_${g.id}_${k}">${[...new Set([d, ...hfState().filter((x) => x.kind === g.kind).flatMap((x) => x.rows.map((r) => r["s_" + k])).filter(Boolean)])].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("") : "";
     return `<div class="panel hfg" data-hg="${g.id}"><datalist id="dlBand_${g.id}">${hfBands(g).map(([c, rg]) => `<option value="${esc(c)}"${rg ? ` label="${esc(rg)}"` : ""}>`).join("")}</datalist>${setDl}
       <div class="hfhead"><button class="hffold" type="button" data-hgfold aria-expanded="true" aria-label="Replier ${esc(g.model)}" title="Replier">▾</button>${hfIco(g)}<input class="hfmodel" type="text" data-hgf="model" value="${esc(g.model)}" aria-label="Modèle"><span class="kind">${esc(K.t)} · ${g.rows.length}</span><span class="sp"></span>${S ? `${shown ? `<button class="btn small" type="button" data-hgset="fill" title="Remplit les cases de réglage vides avec les valeurs par défaut de Spectera Studio">Réglages par défaut</button>` : ""}<button class="btn small" type="button" data-hgset="toggle" aria-pressed="${shown}">${shown ? "Masquer les réglages" : "Réglages " + (g.kind === "spxm" ? "SKM" : "SEK")}</button>` : ""}<button class="btn small danger" type="button" data-hgdel title="Supprimer ce groupe">Suppr.</button></div>
       <div class="hftw"><table><thead><tr><th>${esc(g.model)}</th>${C.map(([, t]) => `<th>${esc(t)}</th>`).join("")}<th></th></tr></thead><tbody>${g.rows.map((r, k) => `<tr data-hr="${r.id}"${hfSel.g === g.id && hfSel.ids.has(r.id) ? ' class="sel"' : ""}><td class="n" title="Clic : sélectionner · Maj+clic : plage · ${navigator.platform.includes("Mac") ? "Cmd" : "Ctrl"}+clic : ajouter">${k + 1}</td>${C.map(([f, t, dl], j) => `<td data-l="${esc(t)}"${j === 0 ? ' class="first"' : ""}${f.startsWith("s_") ? ' class="set"' : ""}>${hfInput(g, r, f, t, dl, k)}</td>`).join("")}<td class="x"><button type="button" data-hrdel aria-label="Retirer la ligne ${k + 1}" title="Retirer cette ligne">×</button></td></tr>`).join("")}</tbody></table></div>
@@ -2579,12 +2582,15 @@ table.master td.nopad input { opacity: 0.8; }
       }
       if (r && t.dataset.hf) { const pers = t.dataset.hf === "nom" && (g.kind === "iem" || g.kind === "spx"); r[t.dataset.hf] = pers ? canonMus(t.value) : t.value.trim(); if (pers) { t.value = r.nom; if (r.nom) addMusician(r.nom); } if (t.dataset.hf === "mix" && r.mix) { r.mix = mixStereoFix(r.mix); t.value = r.mix; } commit(false); if (t.dataset.hf === "copy") renderHf(); else if (g.kind === "spx" || g.kind === "spxm") refreshSpx(); }
     });
+    out.addEventListener("mousedown", (e) => { hfDownT = e.target; }, true);
     out.addEventListener("click", (e) => {
       const el = e.target.closest("[data-hg]"); if (!el) return;
       const g = hfState().find((x) => x.id === el.dataset.hg); if (!g) return;
       // Replier / déplier : la flèche, ou un clic dans le vide de l'en-tête (comme le titre d'un stage rack)
       const hd = e.target.closest(".hfhead");
-      if (hd && (e.target.closest("[data-hgfold]") || !e.target.closest("input, button, select, a, label"))) {
+      // Une sélection de texte commencée dans le nom du modèle et relâchée à côté ne replie pas le groupe
+      const fromField = hfDownT && hfDownT.closest && hfDownT.closest("input, button, select, a, label, textarea");
+      if (hd && (e.target.closest("[data-hgfold]") || (!e.target.closest("input, button, select, a, label") && !fromField && !String(getSelection() || "")))) {
         if (e.altKey) hfFold(hfState().map((x) => x.id), closedHf.has(g.id)); else hfFold([g.id], closedHf.has(g.id));
         const nh = document.querySelector(`[data-hg="${g.id}"] [data-hgfold]`); if (nh && e.detail === 0) nh.focus();
         return;
@@ -9437,7 +9443,7 @@ table.master td.nopad input { opacity: 0.8; }
       const go = t.closest("[data-pgo]");
       if (go) { const x = findAny(go.dataset.pgo); if (!x) return; setView(isOut(x) ? "sorties" : homeView()); focusRow(x.id); return; }
       const hf = t.closest("[data-phf]");
-      if (hf) { const [gid, rid] = hf.dataset.phf.split(":"); setView("hf"); const tr = document.querySelector(`[data-hg="${gid}"] tr[data-hr="${rid}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } return; }
+      if (hf) { const [gid, rid] = hf.dataset.phf.split(":"); setView("hf"); if (closedHf.has(gid)) hfFold([gid], true); const tr = document.querySelector(`[data-hg="${gid}"] tr[data-hr="${rid}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } return; }
       const d = t.closest("[data-pdel]");
       if (d) {
         const k = d.closest("tr[data-pk]").dataset.pk, name = personNames().find((n) => musKey(n) === k); if (!name) return;
@@ -11365,10 +11371,15 @@ table.master td.nopad input { opacity: 0.8; }
   const isObj = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
   const idList = (a) => Array.isArray(a) && a.length > 0 && a.every((x) => isObj(x) && x.id != null);
   const itemName = (x) => (x && (x.source || x.nom || x.mix || x.txt || (x.type && x.num != null ? x.type + " #" + x.num : "") || x.num)) || "élément";
+  // Une adresse (boîtier + entrée, stage rack + carte + entrée, port, horloge…) est une seule valeur :
+  // on ne prend jamais le boîtier de l'un et le numéro de l'autre
+  const ADDR_KEYS = new Set(["b", "i", "r", "c", "h", "in", "n", "p", "from", "src"]);
+  const isAddr = (x) => isObj(x) && Object.keys(x).length > 0 && Object.keys(x).every((k) => ADDR_KEYS.has(k)) && ["b", "r", "h", "n", "from"].some((k) => k in x) && Object.values(x).every((v) => v === null || typeof v !== "object");
   function merge3(b, l, r, path, labels, out) {
     if (J(l) === J(r)) return l;
     if (J(b) === J(l)) return r;
     if (J(b) === J(r)) return l;
+    if (isAddr(l) || isAddr(r)) { out.push({ path, labels, mine: l, theirs: r }); return l; }
     if (isObj(l) && isObj(r)) {
       const o = {}, bb = isObj(b) ? b : {};
       new Set([...Object.keys(l), ...Object.keys(r)]).forEach((k) => { const v = merge3(bb[k], l[k], r[k], [...path, k], [...labels, k], out); if (v !== undefined) o[k] = v; });
@@ -11479,13 +11490,20 @@ table.master td.nopad input { opacity: 0.8; }
     dbxSetFile(meta); dbxSetBase(next); state = next; record(); persist(); render(); dbxPaint();
     notice("Version Dropbox reprise sur cet appareil.");
   }
-  async function dbxSync() {
+  let dbxTypedAt = 0;
+  document.addEventListener("input", () => { dbxTypedAt = Date.now(); }, true);
+  async function dbxSync(force) {
+    force = force === true;
     if (!DBX_ON || !dbx.file || !dbx.tok) return;
     if (dbx.busy) { dbx.again = true; return; }
     if (!navigator.onLine) { dbxPaint("offline"); return; }
-    // On ne reconstruit pas l'écran sous les doigts de quelqu'un qui tape
+    // On ne reconstruit pas l'écran sous les doigts de quelqu'un qui tape. Mais une case restée active sans frappe
+    // depuis 5 s ne bloque plus la synchro : on la valide (comme en cliquant ailleurs) puis on synchronise.
     const a = document.activeElement;
-    if (a && a.matches("main input, main select, main textarea, header input") && !a.closest("dialog")) { clearTimeout(dbx.timer); dbx.timer = setTimeout(dbxSync, 1500); return; }
+    if (a && a.matches("main input, main select, main textarea, header input") && !a.closest("dialog")) {
+      if (!force && Date.now() - dbxTypedAt < 5000) { clearTimeout(dbx.timer); dbx.timer = setTimeout(dbxSync, 1500); return; }
+      a.blur();
+    }
     dbx.busy = true; const gen = dbx.gen; dbxPaint("sync"); clearTimeout(dbx.retry);
     let fromOthers = false, conflicts = [], report = null;
     try {
@@ -11710,7 +11728,8 @@ table.master td.nopad input { opacity: 0.8; }
     });
     addEventListener("online", () => dbxSync());
     addEventListener("offline", () => dbx.file && dbxPaint("offline"));
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) dbxSync(); });
+    // Appli mise en arrière-plan (téléphone verrouillé, autre appli) : on envoie tout de suite ce qui attend
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) dbxSync(); else if (/pending/.test(dbx.status || "")) { clearTimeout(dbx.timer); dbxSync(true); } });
     setInterval(() => { if (!document.hidden) dbxSync(); }, 60000);
   }
   async function dbxInit() {
@@ -12295,7 +12314,7 @@ table.master td.nopad input { opacity: 0.8; }
     else if ((g = t.closest("#gridOut li"))) m = ctxGrid(g);
     else if ((g = t.closest("#gridOut .box > h3"))) { const b = boxById(g.closest(".box").dataset.bid); m = b && ctxBoxHead(b); }
     else if ((g = t.closest("#rackOut details.rackd > summary"))) m = ctxRackHead(g.parentNode);
-    else if ((g = t.closest("#hfOut .hfg > .hfhead")) && !t.closest("input")) m = ctxHfHead(g.parentNode);
+    else if ((g = t.closest("#hfOut .hfg > .hfhead")) && (t.closest("[data-hgfold]") || !t.closest("input, button, select, a, label"))) m = ctxHfHead(g.parentNode);
     else if ((g = t.closest("tr.free")) && g.querySelector("input.quick")) m = ctxFree(g.querySelector("input.quick"));
     else if ((g = t.closest("tr[data-id]"))) {
       const l = state.lignes.find((z) => z.id === g.dataset.id), o = !l && (state.sorties || []).find((z) => z.id === g.dataset.id);
@@ -12356,7 +12375,7 @@ table.master td.nopad input { opacity: 0.8; }
     const out = [], cols = srCols();
     state.lignes.forEach((l, i) => out.push({ k: "Source", t: l.source || "(sans nom)", d: [i + 1, l.musicien, l.micro, boxAddr(l.box), ...cols.map((c) => rackAddr(lineSr(l, c.k)))].filter(Boolean).join(" · "), go: () => gotoRow(showMaster ? "master" : "racks", l.id) }));
     (state.sorties || []).forEach((o) => out.push({ k: "Sortie", t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, outDest(o), rackAddr(o.out)].filter(Boolean).join(" · "), go: () => gotoRow("sorties", o.id) }));
-    hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
+    hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); if (closedHf.has(g.id)) hfFold([g.id], true); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
     state.racks.forEach((r) => out.push({ k: "Rack / I/O", t: rackTitle(r), d: `${rackInputs(r).length} in / ${rackOutputs(r).length} out`, go: () => { setView("racks"); const d = document.querySelector(`details[data-rd="${r.id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } }));
     state.boites.forEach((b) => out.push({ k: "Boîtier", t: boxTitle(b), d: b.cote || "", go: () => { setView("boites"); const d = document.querySelector(`[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); d.classList.remove("flashbox"); void d.offsetWidth; d.classList.add("flashbox"); } } }));
     return out;
