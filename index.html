@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "f183404033";</script>
+<script>window.PL_VER = "85cfc52d97";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -2293,8 +2293,6 @@ table.master td.nopad input { opacity: 0.8; }
     });
   }
   function renderHf() {
-    // Ears HF et Spectera : un mix stéréo s'écrit sans L ni R, les deux côtés servent
-    hfState().forEach((g) => g.rows.forEach((r) => { if (r.mix) { const v = mixStereoFix(r.mix); if (v !== r.mix) r.mix = v; } }));
     renderDatalists();
     const out = $("#hfOut");
     const keep = $("#hfAddModel").value;
@@ -3215,7 +3213,8 @@ table.master td.nopad input { opacity: 0.8; }
     if (f === "pied") learn("pieds", l.pied);
     if (f === "musicien") { l.musicien = canonMus(l.musicien); if (l.musicien) addMusician(l.musicien); t.value = l.musicien; }
     if (f === "micro" || f === "pied" || f === "musicien" || f === "prov" || f === "accp") renderDatalists();
-    commit(f === "musicien");
+    // Musicien : la couleur de la ligne change, on réaffiche une fois que Tab a posé le curseur sur la case suivante
+    commit(false); if (f === "musicien") renderKeepFocus();
   }
   // Remplit une colonne (micro, pied, pad, 48V, provenance, notes ou musicien) sur toutes les lignes sélectionnées
   const SEL_FIELDS = { musicien: ["Musicien", "dlMus"], micro: ["Micro / DI", "dlMic"], pied: ["Pied", "dlPied"], accp: ["Accessoire", "dlAccP"], pad: ["Pad dB (ex. -15)", ""], p48: ["48V", ""], prov: ["Provenance", "dlProv"], notes: ["Notes", ""] };
@@ -3353,7 +3352,7 @@ table.master td.nopad input { opacity: 0.8; }
     u.src.forEach((l) => { l.musicien = nv; }); u.outs.forEach((o) => { o.dest = nv; }); u.hf.forEach(({ r }) => { r.nom = nv; }); u.plan.forEach((i) => { i.label = nv; });
     // Le nom garde sa place dans la liste des porteurs
     const order = personNames(), nk = musKey(nv), at = order.findIndex((m) => musKey(m) === ok);
-    state.musiciens = order.filter((m) => musKey(m) !== nk).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
+    state.musiciens = order.filter((m) => musKey(m) !== nk || nk === ok).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
     [musColors(), musPostes()].forEach((d) => { if (d[ok] && !d[nk]) d[nk] = d[ok]; if (ok !== nk) delete d[ok]; });
     log(`Musicien renommé : ${oldName} → ${nv} (${u.n} case${u.n > 1 ? "s" : ""}).`);
     return u.n;
@@ -3376,6 +3375,7 @@ table.master td.nopad input { opacity: 0.8; }
       (s.sorties || []).forEach((o) => { if (o.dest) o.dest = pick(o.dest); });
       (s.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => { if (r.nom) r.nom = pick(r.nom); }); });
       if (Array.isArray(s.musiciens)) s.musiciens = uniqCi(s.musiciens.map(pick));
+      hfMixFix();
     } finally { state = prev; }
   }
 
@@ -3528,6 +3528,9 @@ table.master td.nopad input { opacity: 0.8; }
     const o = v && (state.sorties || []).find((x) => x.pair && eqv(x.mix, v));
     return o ? mixName(o) : v;
   }
+  // Ears HF et Spectera : un mix stéréo s'écrit sans L ni R, les deux côtés servent. Fait à l'ouverture du dossier
+  // et à chaque modification (dans la même étape d'annulation que la paire stéréo qui l'a provoqué), jamais pendant l'affichage
+  function hfMixFix() { (state.hf || []).forEach((g) => (g.rows || []).forEach((r) => { if (r.mix) { const v = mixStereoFix(r.mix); if (v !== r.mix) r.mix = v; } })); }
 
   const PAIR_LINK = ["dest", "type", "tx", "rx"];
   // Sélection de sorties, comme au master : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter
@@ -3700,9 +3703,10 @@ table.master td.nopad input { opacity: 0.8; }
     }
     o[f] = f === "dest" ? canonMus(t.value) : t.value.trim();
     // Une paire stéréo partage destinataire, type, émetteur et récepteur
-    if (o.pair && PAIR_LINK.includes(f)) { const p = state.sorties.find((x) => x.id === o.pair); if (p) p[f] = o[f]; if (p) { commit(true); if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); } return; } }
-    if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); }
-    commit(f === "type" || f === "dest");
+    if (o.pair && PAIR_LINK.includes(f)) { const p = state.sorties.find((x) => x.id === o.pair); if (p) p[f] = o[f]; }
+    if (f === "dest" && o.dest) addMusician(o.dest);
+    // Destinataire et Type : on réaffiche une fois que Tab a posé le curseur sur la case suivante
+    if (f === "dest" || f === "type") { commit(false); renderKeepFocus(); } else commit(!!o.pair && PAIR_LINK.includes(f));
   }
   let armedOutDel = null;
   function onOutClick(e) {
@@ -6707,7 +6711,7 @@ table.master td.nopad input { opacity: 0.8; }
   // Copie d'un appareil (Alt + glisser, ou bouton « Dupliquer ») : un appareil lié devient un nouvel appareil, avec un nom suivant
   function rpNextName(nm, taken) {
     const set = new Set(taken.map((x) => String(x || "").toLowerCase())), m = /^(.*?)(\s*#?)(\d+)$/.exec(nm || "");
-    const base = m ? m[1] : (nm || "Élément"), sep = m ? m[2] || " " : " #"; let k = m ? Number(m[3]) + 1 : 2;
+    const base = m ? m[1] : (nm || "Élément"), sep = m ? m[2] : " #"; let k = m ? Number(m[3]) + 1 : 2;
     while (set.has(`${base}${sep}${k}`.toLowerCase())) k++;
     return `${base}${sep}${k}`;
   }
@@ -6952,8 +6956,10 @@ table.master td.nopad input { opacity: 0.8; }
       const half = it.half ? (p.x - rpX(col) - RP_SIDE > 241.5 ? "r" : "l") : undefined;
       if (at !== rpDrag.at || col !== rpDrag.col || half !== rpDrag.half) { rpDrag.at = at; rpDrag.col = col; rpDrag.half = half; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE + (half === "r" ? 241.5 : 0)} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, rpDrag.dup ? { ...it, id: "_dup" } : it, at, col, half)); }
     });
-    const end = () => {
+    const end = (e) => {
       if (!rpDrag) return; const { c, it, at, col, half, moved, dup, g } = rpDrag; rpDrag = null;
+      // Geste interrompu (appel, défilement du système…) : rien n'est copié ni déplacé
+      if (e && e.type === "pointercancel") { if (dup) g.remove(); else if (moved) renderRackplan(); return; }
       // Copie : posée là où on l'a lâchée si c'est libre, sinon à la place libre la plus proche (Alt + clic = copie juste en dessous)
       if (dup) { g.remove(); const r = moved ? rpDuplicate(c, it, at, col, half) : rpDuplicate(c, it); if (typeof r === "string") notice(r, true); return; }
       if (!moved) return;
@@ -9402,7 +9408,16 @@ table.master td.nopad input { opacity: 0.8; }
     render();
   }
   const undo = () => travel(undoStack, redoStack), redo = () => travel(redoStack, undoStack);
-  function commit(rerender) { record(); persist(); markSave("dirty"); if (rerender) render(); else renderHeader(); dbxDirty(); }
+  // Réaffiche après le changement de case (Tab, clic) : la case qui a le curseur le garde, avec sa sélection
+  function renderKeepFocus() {
+    setTimeout(() => {
+      const a = document.activeElement, s0 = a && a.selectionStart, s1 = a && a.selectionEnd;
+      render();
+      const b = document.activeElement;
+      if (b && b !== a && b.setSelectionRange && s0 != null) { try { b.setSelectionRange(s0, s1); } catch (e) { /* case sans sélection */ } }
+    }, 0);
+  }
+  function commit(rerender) { hfMixFix(); record(); persist(); markSave("dirty"); if (rerender) render(); else renderHeader(); dbxDirty(); }
   // Hauteur des onglets collants, pour placer les barres de sélection juste dessous
   function syncNavH() { const n = document.querySelector(".navs"); if (n) { document.documentElement.style.setProperty("--navh", Math.max(0, n.getBoundingClientRect().bottom) + "px"); document.documentElement.style.setProperty("--navstick", n.offsetHeight + "px"); } }
   addEventListener("scroll", syncNavH, { passive: true }); addEventListener("resize", syncNavH);
@@ -9893,7 +9908,8 @@ table.master td.nopad input { opacity: 0.8; }
     dlMix: {
       what: "le mix", uses: (v) => (state.sorties || []).filter((o) => eqv(o.mix, v) || eqv(mixName(o), v)).length + (state.hf || []).reduce((n, g) => n + g.rows.filter((r) => eqv(r.mix, v)).length, 0),
       // Une paire stéréo se renomme des deux côtés, en gardant L et R
-      rename: (a, b) => { let n = 0; (state.sorties || []).forEach((o) => { if (eqv(o.mix, a)) { o.mix = b; n++; } else if (o.pair && eqv(mixName(o), a)) { const m = (o.mix || "").match(LR); o.mix = `${b} ${m ? m[1].toUpperCase() : ""}`.trim(); n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
+      // (on repère d'abord les deux côtés : renommer L avant R casserait la paire au moment de tester R)
+      rename: (a, b) => { let n = 0; const outs = state.sorties || [], hit = outs.map((o) => (eqv(o.mix, a) ? "mono" : o.pair && eqv(mixName(o), a) ? "pair" : "")); outs.forEach((o, k) => { if (hit[k] === "mono") { o.mix = b; n++; } else if (hit[k] === "pair") { const m = (o.mix || "").match(LR); o.mix = `${b} ${m ? m[1].toUpperCase() : ""}`.trim(); n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
     }
   };
   function sugActions(input, v) {
@@ -9979,7 +9995,12 @@ table.master td.nopad input { opacity: 0.8; }
     let dl = document.getElementById("dlSelTyp");
     if (!dl) { dl = document.createElement("datalist"); dl.id = "dlSelTyp"; document.body.appendChild(dl); }
     const opts = [...sel.options].filter((o) => o.value !== "" && !o.disabled);
-    dl.innerHTML = opts.map((o) => { const g = o.parentElement && o.parentElement.tagName === "OPTGROUP" ? o.parentElement.label : ""; return `<option value="${esc(o.textContent.trim())}"${g ? ` label="${esc(g)}"` : ""}>`; }).join("");
+    // Un même libellé dans deux groupes (deux consoles, deux racks…) : on ajoute le groupe pour que chacun reste choisissable
+    const grp = (o) => (o.parentElement && o.parentElement.tagName === "OPTGROUP" ? o.parentElement.label : ""), txt = (o) => o.textContent.trim();
+    const cnt = new Map(); opts.forEach((o) => cnt.set(txt(o).toLowerCase(), (cnt.get(txt(o).toLowerCase()) || 0) + 1));
+    const byKey = new Map();
+    opts.forEach((o) => { let k = txt(o); if (cnt.get(k.toLowerCase()) > 1 && grp(o)) k = `${k} · ${grp(o)}`; let k2 = k, j = 2; while (byKey.has(k2)) k2 = `${k} (${j++})`; byKey.set(k2, o); });
+    dl.innerHTML = [...byKey].map(([k, o]) => `<option value="${esc(k)}"${grp(o) && k === txt(o) ? ` label="${esc(grp(o))}"` : ""}>`).join("");
     const r = sel.getBoundingClientRect(), input = document.createElement("input");
     input.type = "text"; input.className = "seltyp"; input.autocomplete = "off"; input.dataset.suggest = "dlSelTyp"; input.dataset.tok = "1";
     input.setAttribute("aria-label", (sel.getAttribute("aria-label") || "Choix") + " : tape pour chercher");
@@ -9987,21 +10008,22 @@ table.master td.nopad input { opacity: 0.8; }
     Object.assign(input.style, { left: r.left + "px", top: r.top + "px", width: Math.max(r.width, 140) + "px", height: Math.max(r.height, 28) + "px" });
     document.body.appendChild(input);
     const keep = focusInfo(sel), freeTo = sel.dataset.f === "box" && !!sel.closest("#outTbl, #rackOut") && !!sel.closest("tr[data-id]") && (state.sorties || []).some((o) => o.id === sel.closest("tr[data-id]").dataset.id);
-    selTyp = { input, sel, opts, keep, freeTo };
+    selTyp = { input, sel, opts, byKey, keep, freeTo };
     input.value = ch; input.focus(); sugOpen(input, false);
     input.addEventListener("change", () => selTypeApply(input.value));
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); selTypeApply(sugIsOpen() && sug.items.length ? sug.items[0] : input.value); }
+      // Un libellé tapé en entier l'emporte sur le premier de la liste (« 12N #1 → 3 » ne doit pas donner « → 30 »)
+      if (e.key === "Enter") { e.preventDefault(); const lq = input.value.trim().toLowerCase(), exact = lq && selTyp && [...selTyp.byKey.keys()].some((k) => k.toLowerCase() === lq); selTypeApply(!exact && sugIsOpen() && sug.items.length ? sug.items[0] : input.value); }
       else if (e.key === "Escape") { e.preventDefault(); selTypeClose(true); }
       else if (e.key === "Tab") selTypeClose(false);
     });
     input.addEventListener("blur", () => setTimeout(() => { if (selTyp && selTyp.input === input && document.activeElement !== input) selTypeClose(false); }, 150));
   }
   function selTypeApply(text) {
-    if (!selTyp) return; const { sel, opts, keep, freeTo } = selTyp, q = String(text || "").trim();
+    if (!selTyp) return; const { sel, opts, byKey, keep, freeTo } = selTyp, q = String(text || "").trim();
     selTypeClose(false);
     if (!q) { if (sel.isConnected) sel.focus({ preventScroll: true }); return; }
-    const lq = q.toLowerCase(), hit = opts.find((o) => o.textContent.trim() === q) || opts.find((o) => o.textContent.trim().toLowerCase() === lq);
+    const lq = q.toLowerCase(), hit = byKey.get(q) || [...byKey].find(([k]) => k.toLowerCase() === lq)?.[1] || opts.find((o) => o.textContent.trim() === q) || opts.find((o) => o.textContent.trim().toLowerCase() === lq);
     if (hit) {
       sel.value = hit.value; sel.dispatchEvent(new Event("change", { bubbles: true }));
     } else if (freeTo) {
