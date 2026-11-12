@@ -757,6 +757,12 @@ details.spxres[open] > summary { margin-bottom: 8px; }
 .hfg td input { width: 100%; min-width: 0; border: 1px solid transparent; background: transparent; padding: 4px 4px; border-radius: 3px; }
 .hfg td input:hover { border-color: var(--line); }
 .hfg .hftw { overflow-x: auto; }
+/* Réglages et notes : la case passe à la ligne et grandit, rien n'est coupé */
+.hfg td:has(> textarea.hfwrap) { min-width: 11rem; }
+.hfg td textarea.hfwrap { display: block; width: 100%; min-width: 0; min-height: 0; margin: 0; resize: none; overflow: hidden; field-sizing: content; font: inherit; font-size: 14px; line-height: 1.35; padding: 4px; border: 1px solid var(--field-line, var(--line)); border-radius: var(--r, 4px); background: transparent; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Plan : la bande (« A1-A4 », « Q1-Q5 ») tient en entier */
+.hfg td:has(> input[data-hf="plan"]) { min-width: 4.5rem; }
+.hfg td textarea.hfwrap:focus { border-color: var(--accent); background: var(--surface); outline: none; }
 .hfg td.set input { min-width: 64px; font-family: var(--font-mono); font-size: 13px; }
 .hfg td:has(> select[data-hf="base"]) { min-width: 170px; }
 .hfg td:has(> select[data-hf="iem"]), .hfg td:has(> select[data-hf="mic"]) { min-width: 190px; }
@@ -800,6 +806,8 @@ details.spxres[open] > summary { margin-bottom: 8px; }
   .hfg td.x { position: absolute; top: 4px; right: 0; }
   .hfg td.first { grid-column: 2 / 4; grid-row: 1; }
   .hfg td.first input { font-weight: 600; font-size: 16px; }
+  .hfg td:has(> textarea.hfwrap) { grid-column: 2 / 4; }
+  .hfg td textarea.hfwrap { font-size: 16px; }
 }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; margin-top: 12px; }
 .two .tbl table { min-width: 0; }
@@ -1047,7 +1055,7 @@ label.p48 input:checked + span { border-style: solid; }
   input[type="number"], input[type="search"] { min-height: 44px; }
   nav.tabs button { min-height: 40px; }
   table.master td input[type="text"], table.master td input[type="number"], table.master td select, table.master select.addr,
-  .hfdev input, .hfdev select, .hfg input, .hfg select, table.rack td input, table.rack td select { min-height: 32px; }
+  .hfdev input, .hfdev select, .hfg input, .hfg select, .hfg textarea.hfwrap, table.rack td input, table.rack td select { min-height: 32px; }
   .btn.xdel, .hfdev td.x button, .hfg td.x button, .acc .tag button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .box li { min-height: 40px; align-items: center; padding-block: 2px; }
   .box li button, .box li input.bquick { min-height: 34px; align-items: center; }
@@ -2083,6 +2091,8 @@ table.master td.nopad input { opacity: 0.8; }
       return `<select data-hf="${f}" aria-label="${esc(t)} ${k + 1}"${off}>${ch.map(([x, lab]) => `<option value="${esc(x)}"${x === v ? " selected" : ""}>${esc(lab)}</option>`).join("")}${unknown}</select>`;
     }
     if (f === "plan") dl = "dlBand_" + g.id;
+    // Réglages et notes : texte long, la case passe à la ligne et grandit au lieu de couper (Maj+Entrée : nouvelle ligne)
+    if (f === "infos" || f === "notes") return `<textarea class="hfwrap" rows="1" data-hf="${f}" aria-label="${esc(t)} ${k + 1}" spellcheck="false">${esc(r[f] || "")}</textarea>`;
     return `<input type="text" data-hf="${f}" value="${esc(r[f] || "")}" aria-label="${esc(t)} ${k + 1}"${dl ? ` data-suggest="${dl}" autocomplete="off"` : ""}>`;
   }
   // Utilisation des ressources : par base et par RF channel (% de la porteuse), et entrées IEM / sorties micro de chaque base
@@ -2400,8 +2410,15 @@ table.master td.nopad input { opacity: 0.8; }
     out.innerHTML = (spx.length ? `<div class="hfcol hfwide">${mode}${spxBoard ? spxBoardHtml() : `<div id="spxRes">${spxPanelHtml()}</div>${spx.map(hfGroupHtml).join("")}`}</div>` : "") + cols.map((c) => `<div class="hfcol">${c.map(hfGroupHtml).join("")}</div>`).join("");
     if ($("#spxKb")) $("#spxKb").scrollLeft = kbLeft;
     out.querySelectorAll("[data-hg]").forEach((el) => { const w = el.querySelector(".hftw"), l = tblLeft.get(el.dataset.hg); if (w && l) w.scrollLeft = l; });
+    hfGrowAll(out);
     out.style.minHeight = "";
   }
+  // Cases Réglages / Notes : hauteur au contenu là où le navigateur ne sait pas le faire seul (field-sizing)
+  const HF_FIELD_SIZING = typeof CSS !== "undefined" && CSS.supports && CSS.supports("field-sizing", "content");
+  function hfGrow(ta) { if (HF_FIELD_SIZING || !ta.offsetParent) return; ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; }
+  function hfGrowAll(root) { if (!HF_FIELD_SIZING) requestAnimationFrame(() => root.querySelectorAll("textarea.hfwrap").forEach(hfGrow)); }
+  document.addEventListener("input", (e) => { if (e.target.classList && e.target.classList.contains("hfwrap")) hfGrow(e.target); });
+  document.addEventListener("focusin", (e) => { if (e.target.classList && e.target.classList.contains("hfwrap")) hfGrow(e.target); });
   // Sélection de lignes dans un groupe HF, pour leur donner la même valeur d'un coup
   const hfSel = { g: null, ids: new Set(), anchor: null, f: null };
   function hfSelBar(g, K) {
@@ -2536,9 +2553,12 @@ table.master td.nopad input { opacity: 0.8; }
       if (t.dataset && t.dataset.hsv !== undefined && e.key === "Enter" && !sug.input) { e.preventDefault(); const b = t.closest("[data-hg]").querySelector("[data-hsgo]"); if (b) b.click(); return; }
       if (!t.dataset || !t.dataset.hf || sug.input) return;
       if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
+      // Case sur plusieurs lignes : Maj+Entrée ajoute une ligne, les flèches restent dans le texte tant qu'il y a plusieurs lignes
+      if (t.tagName === "TEXTAREA" && (e.key === "Enter" ? e.shiftKey : t.value.includes("\n"))) return;
       const tr = t.closest("tr"), nx = e.key === "ArrowUp" ? tr.previousElementSibling : tr.nextElementSibling;
-      const i = nx && nx.querySelector(`input[data-hf="${t.dataset.hf}"]`);
+      const i = nx && nx.querySelector(`input[data-hf="${t.dataset.hf}"], textarea[data-hf="${t.dataset.hf}"]`);
       if (i) { e.preventDefault(); i.focus(); i.select(); }
+      else if (e.key === "Enter" && t.tagName === "TEXTAREA") e.preventDefault();
     });
   }
   // Appareils HF pour la liste matériel : un groupe = un modèle, une ligne = un appareil
@@ -10262,6 +10282,7 @@ table.master td.nopad input { opacity: 0.8; }
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
     ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
+    if (v === "hf") hfGrowAll($("#v-hf"));
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
     const tools = $("#masterTools"), rg = $("#rangeForm");
     if (v === "racks") { $("#rackTools").append(tools, rg); }
