@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "1101b57e65";</script>
+<script>window.PL_VER = "57474b5cc2";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1672,6 +1672,7 @@ table.master td.nopad input { opacity: 0.8; }
     <label class="inl">Scène <input id="planW" type="number" min="2" max="60" step="0.5" inputmode="decimal" aria-label="Largeur de la scène en mètres"> × <input id="planD" type="number" min="2" max="40" step="0.5" inputmode="decimal" aria-label="Profondeur de la scène en mètres"> m</label>
     <select id="planAdd" aria-label="Élément à ajouter"></select>
     <button id="planAddBtn" class="btn small primary" type="button">+ Placer</button>
+    <label class="inl" title="Afficher le nom de chaque praticable sur le plan (et à l'export)"><input id="planRiserNames" type="checkbox"> Noms des praticables</label>
     <span class="zoom"><button id="planZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="planZoomVal" class="mono">100 %</span><button id="planZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
   </div>
   <div class="plan-wrap">
@@ -6431,7 +6432,7 @@ table.master td.nopad input { opacity: 0.8; }
     if (K.round) return `<ellipse class="shape" cx="${w / 2}" cy="${h / 2}" rx="${w / 2 - (mc ? 0.04 : 0)}" ry="${h / 2 - (mc ? 0.04 : 0)}" fill="${K.fill}" stroke="${mc || K.stroke}" stroke-width="${mc ? 0.08 : 0.03}"/>`;
     if (K.wedge) return `<polygon class="shape" points="0,${h} ${w},${h} ${w * 0.85},0 ${w * 0.15},0" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
     if (it.kind === "texte") return `<rect class="shape" width="${w}" height="${h}" fill="transparent" stroke="${planSel === it.id ? "#373737" : "none"}" stroke-width="0.03" stroke-dasharray="0.08"/>`;
-    return `<rect class="shape" width="${w}" height="${h}" rx="0.04" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
+    return `<rect class="shape" width="${w}" height="${h}" rx="0.04" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03">${it.kind === "riser" && it.label ? `<title>${esc(it.label)}</title>` : ""}</rect>`;
   }
   // Étiquettes du plan : mesurées, puis posées dans un espace libre (pas de chevauchement), avec un trait de rappel si elles s'éloignent
   const PLAN_FONT = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
@@ -6450,6 +6451,7 @@ table.master td.nopad input { opacity: 0.8; }
     const placed = [], out = [];
     [...items].sort((a, b) => (prio[a.kind] ?? 3) - (prio[b.kind] ?? 3)).forEach((it) => {
       const lab = String(planItemLabel(it) || "").trim(); if (!lab) return;
+      if (it.kind === "riser" && !planState().riserNames) return; // noms des praticables masqués (case dans la barre du plan)
       const size = it.kind === "riser" ? tf * 0.9 : it.kind === "musicien" ? tf : tf * 0.92;
       const weight = it.kind === "musicien" ? 700 : it.kind === "riser" || it.kind === "texte" ? 500 : 600;
       const lh = size * 1.15, pad = size * 0.15, gap = size * 0.2, b = planBox(it), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
@@ -6520,7 +6522,7 @@ table.master td.nopad input { opacity: 0.8; }
   function renderPlan() {
     const P = planState();
     if (planMulti.size) { [...planMulti].forEach((id) => { if (!P.items.some((i) => i.id === id)) planMulti.delete(id); }); if (planMulti.size < 2) planSetSel([...planMulti]); }
-    $("#planW").value = P.w; $("#planD").value = P.d;
+    $("#planW").value = P.w; $("#planD").value = P.d; $("#planRiserNames").checked = !!P.riserNames;
     $("#planAdd").innerHTML = planAddOptions();
     const wrap = $("#planSvg").parentNode, pxW = Math.max(200, (wrap.clientWidth - 12) * planZoom);
     wrap.innerHTML = planSvgMarkup(false, pxW).replace("<svg ", `<svg id="planSvg" role="img" aria-label="Plan de scène" style="width:${planZoom * 100}%" `);
@@ -6633,6 +6635,7 @@ table.master td.nopad input { opacity: 0.8; }
     // Au doigt : un élément se déplace, le fond fait défiler le plan
     host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#planSvg g.it, #planSvg g.lab")) e.preventDefault(); }, { passive: false });
     $("#planW").addEventListener("change", (e) => { planState().w = Math.max(2, Math.min(60, Number(e.target.value) || 12)); commit(true); });
+    $("#planRiserNames").addEventListener("change", (e) => { planState().riserNames = e.target.checked; commit(true); });
     $("#planD").addEventListener("change", (e) => { planState().d = Math.max(2, Math.min(40, Number(e.target.value) || 8)); commit(true); });
     $("#planSide").addEventListener("change", (e) => {
       const it = planState().items.find((i) => i.id === planSel), f = e.target.dataset.pp; if (!it || !f) return;
