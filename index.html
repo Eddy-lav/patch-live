@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "2e135e959d";</script>
+<script>window.PL_VER = "f183404033";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -9082,18 +9082,24 @@ table.master td.nopad input { opacity: 0.8; }
     ports: { nom: "I/O", flat: false, ports: [{ nom: "Port 1", in: 64, out: 64 }] }
   };
   // Appareil à créer d'après le titre d'un tableau importé (« INPUT SD RACK ID 11 », « OPTOCORE DD4MR - Madi 1 ID12 », « Ferrofish »…)
-  function impRackSpec(name, nrows) {
+  // nrows et out : nombre de lignes du tableau et sens (sorties) pour dimensionner l'appareil créé
+  function impRackSpec(name, nrows, out) {
     const n = impNorm(name); if (!n) return null;
     const kind = /SD ?RACK|SD-RACK/.test(n) ? "sd" : /DD4MR/.test(n) ? "dd4mr" : /ORANGE ?BOX/.test(n) ? "orange" : /\bM8\b/.test(n) ? "m8" : /SPECTERA/.test(n) ? "spectera" : /\bDL ?\d{3}\b/.test(n) ? "num" : /FERROFISH|\bRIO\b|STAGE ?BOX|\bI\/O\b/.test(n) ? "ports" : "";
     if (!kind) return null;
     const R = JSON.parse(JSON.stringify(RACK_PRESETS[kind])), id = (n.match(/(?:\bID|#)\s*(\d+)/) || [])[1] || "";
     if (kind === "ports") { const m = n.match(/FERROFISH|RIO|STAGE ?BOX/); R.nom = m ? m[0].charAt(0) + m[0].slice(1).toLowerCase() : "I/O"; }
     if (kind === "num") R.nom = (n.match(/DL ?\d{3}/) || ["DL431"])[0].replace(" ", "");
-    if (kind === "sd") R.n = Math.max(R.n, Math.ceil(nrows / 8));
-    if (kind === "num") R.n = Math.max(R.n, nrows);
-    if (R.ports && R.ports[0] && !R.ports[0].card) R.ports[0].in = Math.max(R.ports[0].in, nrows);
+    impGrowRack(R, nrows, out);
     if (kind === "spectera") R.nom = name.trim().slice(0, 30);
     return { num: kind === "spectera" ? "" : id, R, label: `${R.nom}${id && kind !== "spectera" ? " #" + id : ""}` };
+  }
+  // Agrandit un appareil (créé par l'import) pour qu'il ait au moins nrows entrées, ou sorties
+  function impGrowRack(R, nrows, out) {
+    if (!nrows) return;
+    if (R.ports) { const p = R.ports.find((x) => !x.card) || null; if (p) p[out ? "out" : "in"] = Math.max(Number(p[out ? "out" : "in"]) || 0, nrows); return; }
+    const k = out ? "out" : "n";
+    R[k] = Math.max(Number(R[k]) || 0, R.flat ? nrows : Math.ceil(nrows / 8));
   }
   // ---- Plusieurs tableaux : chaque tableau de la liste garde sa feuille, ses colonnes et son stage rack ----
   const IMP_KEYS = ["sheet", "mode", "head", "end", "map", "blocks", "range", "gaps"];
@@ -9188,7 +9194,8 @@ table.master td.nopad input { opacity: 0.8; }
     const jobs = imp.q.length ? imp.q : [{ ...impSnap(), rack: imp.rack, from: imp.from, name: imp.head ? impTabName(imp.sheet, imp.mode, imp.head) : "" }];
     if (!jobs.some((c) => impWith(c, () => impItems()).some((it) => !it.gap))) return;
     if (isNew) { dbxDetach(); state = vide(); state.dossier.nom = base || "Dossier repris"; }
-    const res = jobs.map((c) => impWith(c, () => impApplyOne(c, isNew)));
+    const made = {}; // appareils créés pendant cet import : un tableau d'entrées et un de sorties du même SD Rack #11 vont sur le même
+    const res = jobs.map((c) => impWith(c, () => impApplyOne(c, isNew, made)));
     learnDossier(state); state.exemple = false;
     $("#impDlg").close();
     const lastMode = jobs[jobs.length - 1].mode;
@@ -9198,7 +9205,7 @@ table.master td.nopad input { opacity: 0.8; }
     notice(`${jobs.length} tableaux repris de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}, ${tot} ligne${tot > 1 ? "s" : ""} en tout. ${res.map((x, k) => `${esc(jobs[k].name || "Tableau " + (k + 1))} : ${x.short}`).join(" ")} L'ancienne adresse reste dans les notes.`);
   }
   // Reprend un tableau (réglages déjà posés dans imp) ; renvoie de quoi écrire le message
-  function impApplyOne(cfg, isNew) {
+  function impApplyOne(cfg, isNew, made = {}) {
     const items = impItems(); if (!items.length) return { n: 0, short: "rien à reprendre.", msg: () => "Rien à reprendre." };
     const keep = (it) => Object.keys(IMP_KEEP).filter((f) => it[f]).map((f) => `${IMP_KEEP[f]} : ${it[f]}`);
     if (imp.mode === "master") {
@@ -9220,9 +9227,10 @@ table.master td.nopad input { opacity: 0.8; }
     let cab = "";
     let rk = cfg.rack === "new" ? null : !isNew && rackById(cfg.rack), made0 = "";
     if (cfg.rack === "new") {
-      const sp = impRackSpec(cfg.name || "", items.length);
+      const out = imp.mode !== "master", sp = impRackSpec(cfg.name || "", items.length, out), key = sp && sp.label;
+      if (sp && made[key]) { rk = made[key]; impGrowRack(rk, items.length, out); }
       // ID déjà pris par un autre appareil du dossier : on crée sans ID plutôt qu'un doublon
-      if (sp) { const num = sp.num && state.racks.some((r) => String(r.num || "").trim() === sp.num) ? "" : sp.num; rk = { id: nid(), num, console: "Partagé", n: 0, out: 0, ...sp.R }; state.racks.push(rk); made0 = `${esc(rackTitle(rk))} créé. `; }
+      else if (sp) { const num = sp.num && state.racks.some((r) => String(r.num || "").trim() === sp.num) ? "" : sp.num; rk = { id: nid(), num, console: "Partagé", n: 0, out: 0, ...sp.R }; state.racks.push(rk); made[key] = rk; made0 = `${esc(rackTitle(rk))} créé. `; }
     }
     let short = "";
     if (rk) {
