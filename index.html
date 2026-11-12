@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "f183404033";</script>
+<script>window.PL_VER = "1a8fe31fc1";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -206,7 +206,8 @@ table.portt tr.pdrop-a td { box-shadow: inset 0 3px 0 var(--accent); } table.por
 .pchip:hover { border-color: var(--muted); background: var(--rowhover); }
 th[data-ck] { cursor: grab; }
 .colord { display: flex; align-items: center; gap: 4px; } .colord span { flex: 1; } .colord button { min-width: 32px; min-height: 28px; }
-th[data-ck].coldrag { opacity: 0.45; }
+th[data-ck].coldrag, th[data-gc].coldrag { opacity: 0.45; }
+th[data-gc] { cursor: grab; }
 th.coldrop-l { box-shadow: inset 3px 0 0 var(--accent); }
 th.coldrop-r { box-shadow: inset -3px 0 0 var(--accent); }
 .btn.xdel { min-width: 30px; padding: 2px 8px; font-size: 17px; line-height: 1.2; font-weight: 700; color: var(--danger); }
@@ -484,7 +485,8 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 #planSvg { display: block; width: 100%; height: auto; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; }
 .zoom { display: inline-flex; align-items: center; gap: 4px; }
 .zoom .mono { font-size: 13px; min-width: 46px; text-align: center; }
-#planSvg .it { cursor: grab; }
+#planSvg .it, #planSvg .lab { cursor: grab; }
+#planSvg .lab.on text { fill: #000; font-weight: 800; }
 #planSvg .it.on > .shape { stroke: #373737; stroke-width: 0.06; }
 .plan-side h3 { margin: 0 0 8px; font-size: 16px; }
 .rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(420px * var(--rpz, 1))), 1fr)); gap: 14px; align-items: start; }
@@ -665,9 +667,9 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
   .hfdev .hfdt td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
   .hfdev .hfdt td input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
   .hfdev .hdlk { justify-content: flex-start; }
-  .hfdev .hfdt td:nth-child(1) { grid-area: mo; } .hfdev .hfdt td:nth-child(2) { grid-area: no; }
-  .hfdev .hfdt td:nth-child(3) { grid-area: ba; } .hfdev .hfdt td:nth-child(4) { grid-area: nn; }
-  .hfdev .hfdt td:nth-child(5) { grid-area: us; } .hfdev .hfdt td:nth-child(6) { grid-area: nt; }
+  .hfdev .hfdt td[data-cix="0"] { grid-area: mo; } .hfdev .hfdt td[data-cix="1"] { grid-area: no; }
+  .hfdev .hfdt td[data-cix="2"] { grid-area: ba; } .hfdev .hfdt td[data-cix="3"] { grid-area: nn; }
+  .hfdev .hfdt td[data-cix="4"] { grid-area: us; } .hfdev .hfdt td[data-cix="5"] { grid-area: nt; }
   .hfdev .hfdt td.x { grid-area: x; align-self: start; }
   .hfdev .hdlk input { width: 56px !important; }
   .hfdev .hdus { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 15px; }
@@ -1174,6 +1176,18 @@ label.p48 input:checked + span { border-style: solid; }
   :root:not([data-theme="light"]) { --case: #2b2e2f; --case-line: #44494b; --bg: #1c1e1f; --surface-2: #2f3233; --line: #3d4447; --btn-line: #59646a; --strip: #2e3a2d; --rowhover: #33382a; }
 }
 :root[data-theme="dark"] { --case: #2b2e2f; --case-line: #44494b; --bg: #1c1e1f; --surface-2: #2f3233; --line: #3d4447; --btn-line: #59646a; --strip: #2e3a2d; --rowhover: #33382a; }
+:root[data-theme="regie"] { --case: #161718; --case-ink: #c9c7ba; --case-muted: #8f948d; --case-line: #2a2e2f; --bg: #0b0c0d; --surface-2: #191b1c; --line: #262a2b; --btn-line: #3b4244; --strip: #1b2419; --rowhover: #22261b; }
+/* Lisibilité des survols et sélections : le texte suit toujours le fond */
+.dbxmenu button:hover, .dbxmenu button:focus, .appmenu .mi:hover, .gsres li.on, .gsres li:hover { color: var(--ink); }
+.appmenu button.armed, .appmenu button.armed:hover, .appmenu button.armed:focus,
+.dbxmenu button.armed, .dbxmenu button.armed:hover, .dbxmenu button.armed:focus,
+.btn.danger.armed, .btn.danger.armed:hover:not(:disabled),
+.btn.xdel.armed, .btn.xdel.armed:hover:not(:disabled) { background: var(--danger); color: #fff; border-color: var(--danger); }
+.spacepop button:hover { color: var(--ink); }
+.spacepop button.on, .spacepop button.on:hover { color: var(--accent-ink); background: var(--accent); }
+.rt summary h3 .hint { color: inherit; opacity: 1; }
+:root[data-theme="regie"] input, :root[data-theme="regie"] select, :root[data-theme="regie"] textarea { color: var(--ink); }
+:root[data-theme="regie"] :is(.addn input, .fxadd input, .bq-bar input, .bq-bar select, .toolbar select, .actions > select, .field input, .field select) { background-color: var(--surface-2); }
 
 /* En-tête : clair et posé, le nom du dossier en grand */
 header.top { padding-block: 8px 16px; border-bottom: 0; align-items: flex-end; }
@@ -1659,6 +1673,7 @@ table.master td.nopad input { opacity: 0.8; }
     <label class="inl">Scène <input id="planW" type="number" min="2" max="60" step="0.5" inputmode="decimal" aria-label="Largeur de la scène en mètres"> × <input id="planD" type="number" min="2" max="40" step="0.5" inputmode="decimal" aria-label="Profondeur de la scène en mètres"> m</label>
     <select id="planAdd" aria-label="Élément à ajouter"></select>
     <button id="planAddBtn" class="btn small primary" type="button">+ Placer</button>
+    <label class="inl" title="Afficher le nom de chaque praticable sur le plan (et à l'export)"><input id="planRiserNames" type="checkbox"> Noms des praticables</label>
     <span class="zoom"><button id="planZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="planZoomVal" class="mono">100 %</span><button id="planZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
   </div>
   <div class="plan-wrap">
@@ -2293,8 +2308,6 @@ table.master td.nopad input { opacity: 0.8; }
     });
   }
   function renderHf() {
-    // Ears HF et Spectera : un mix stéréo s'écrit sans L ni R, les deux côtés servent
-    hfState().forEach((g) => g.rows.forEach((r) => { if (r.mix) { const v = mixStereoFix(r.mix); if (v !== r.mix) r.mix = v; } }));
     renderDatalists();
     const out = $("#hfOut");
     const keep = $("#hfAddModel").value;
@@ -3215,7 +3228,8 @@ table.master td.nopad input { opacity: 0.8; }
     if (f === "pied") learn("pieds", l.pied);
     if (f === "musicien") { l.musicien = canonMus(l.musicien); if (l.musicien) addMusician(l.musicien); t.value = l.musicien; }
     if (f === "micro" || f === "pied" || f === "musicien" || f === "prov" || f === "accp") renderDatalists();
-    commit(f === "musicien");
+    // Musicien : la couleur de la ligne change, on réaffiche une fois que Tab a posé le curseur sur la case suivante
+    commit(false); if (f === "musicien") renderKeepFocus();
   }
   // Remplit une colonne (micro, pied, pad, 48V, provenance, notes ou musicien) sur toutes les lignes sélectionnées
   const SEL_FIELDS = { musicien: ["Musicien", "dlMus"], micro: ["Micro / DI", "dlMic"], pied: ["Pied", "dlPied"], accp: ["Accessoire", "dlAccP"], pad: ["Pad dB (ex. -15)", ""], p48: ["48V", ""], prov: ["Provenance", "dlProv"], notes: ["Notes", ""] };
@@ -3353,7 +3367,7 @@ table.master td.nopad input { opacity: 0.8; }
     u.src.forEach((l) => { l.musicien = nv; }); u.outs.forEach((o) => { o.dest = nv; }); u.hf.forEach(({ r }) => { r.nom = nv; }); u.plan.forEach((i) => { i.label = nv; });
     // Le nom garde sa place dans la liste des porteurs
     const order = personNames(), nk = musKey(nv), at = order.findIndex((m) => musKey(m) === ok);
-    state.musiciens = order.filter((m) => musKey(m) !== nk).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
+    state.musiciens = order.filter((m) => musKey(m) !== nk || nk === ok).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
     [musColors(), musPostes()].forEach((d) => { if (d[ok] && !d[nk]) d[nk] = d[ok]; if (ok !== nk) delete d[ok]; });
     log(`Musicien renommé : ${oldName} → ${nv} (${u.n} case${u.n > 1 ? "s" : ""}).`);
     return u.n;
@@ -3376,6 +3390,7 @@ table.master td.nopad input { opacity: 0.8; }
       (s.sorties || []).forEach((o) => { if (o.dest) o.dest = pick(o.dest); });
       (s.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => { if (r.nom) r.nom = pick(r.nom); }); });
       if (Array.isArray(s.musiciens)) s.musiciens = uniqCi(s.musiciens.map(pick));
+      hfMixFix();
     } finally { state = prev; }
   }
 
@@ -3393,21 +3408,83 @@ table.master td.nopad input { opacity: 0.8; }
   const inColOrder = (t, parts) => colOrder(t).map((k) => parts[k] || "").join("");
   const colTh = (t, k) => ` draggable="true" data-ct="${t}" data-ck="${k}"`;
   function moveCol(t, k, d) { const o = colOrder(t), i = o.indexOf(k), j = i + d; if (i < 0 || j < 0 || j >= o.length) return; o.splice(i, 1); o.splice(j, 0, k); setColOrder(t, o); }
+  // ---------- Colonnes déplaçables dans tous les autres tableaux ----------
+  // Même geste partout : glisser un titre (souris, trackpad) ou clic droit / appui long sur un titre (doigt, clavier).
+  // Chaque tableau garde son ordre dans ce navigateur ; les colonnes sans titre (boutons, poignées) ne bougent pas.
+  const GCOL_LS = "patch-live-colorder-g";
+  let gcolSaved = {}; try { gcolSaved = JSON.parse(localStorage.getItem(GCOL_LS) || "{}") || {}; } catch (e) { gcolSaved = {}; }
+  // Fusionne l'ordre enregistré avec les colonnes présentes (les nouvelles se placent après leur voisine par défaut)
+  function mergeOrder(def, saved) {
+    const o = (Array.isArray(saved) ? saved : []).filter((k, i, a) => def.includes(k) && a.indexOf(k) === i);
+    def.forEach((k, i) => { if (o.includes(k)) return; const prev = def.slice(0, i).reverse().find((p) => o.includes(p)); o.splice(prev ? o.indexOf(prev) + 1 : 0, 0, k); });
+    return o;
+  }
+  const headRow = (t) => (t.tHead && t.tHead.rows.length === 1 ? t.tHead.rows[0] : !t.tHead && t.rows[0] && [...t.rows[0].cells].every((c) => c.tagName === "TH") ? t.rows[0] : null);
+  function permRow(tr, perm) {
+    const cells = [...tr.cells];
+    if (cells.length !== perm.length || cells.some((c) => c.colSpan > 1)) return;
+    if (cells[0]._ci === undefined) cells.forEach((c, i) => { c._ci = i; c.dataset.cix = i; });
+    if (cells.every((c, i) => c._ci === perm[i])) return;
+    const by = []; cells.forEach((c) => { by[c._ci] = c; }); if (perm.some((ci) => !by[ci])) return;
+    const ae = document.activeElement, keep = ae && tr.contains(ae) ? ae : null;
+    let s = null; try { s = keep && keep.selectionStart != null ? [keep.selectionStart, keep.selectionEnd] : null; } catch (e) { s = null; }
+    perm.forEach((ci) => tr.appendChild(by[ci]));
+    if (keep && document.activeElement !== keep) { keep.focus({ preventScroll: true }); if (s) try { keep.setSelectionRange(s[0], s[1]); } catch (e) { /* ignore */ } }
+  }
+  function gcolApply(t) {
+    if (!t.isConnected || !t.closest('section[id^="v-"]') || t.querySelector("th[data-ck]")) return;
+    const hr = headRow(t); if (!hr) return;
+    const hs = [...hr.cells]; if (hs.length < 2 || hs.some((c) => c.colSpan > 1) || [...t.rows].some((r) => [...r.cells].some((c) => c.rowSpan > 1))) return;
+    if (hs[0]._ci === undefined) hs.forEach((c, i) => { c._ci = i; c.dataset.cix = i; });
+    const def = []; hs.forEach((c) => { def[c._ci] = c; });
+    const seen = {}, labels = def.map((c) => { const l = c.textContent.trim().replace(/\s+/g, " "); if (!l || c.querySelector("input, select, button, textarea")) return ""; seen[l] = (seen[l] || 0) + 1; return seen[l] > 1 ? `${l} (${seen[l]})` : l; });
+    const mov = labels.map((l, i) => (l ? i : -1)).filter((i) => i >= 0); if (mov.length < 2) return;
+    const key = t.closest('section[id^="v-"]').id + "|" + labels.filter(Boolean).sort().join("|");
+    t.dataset.gk = key; t._gmov = mov.map((i) => labels[i]);
+    mov.forEach((i) => { const th = def[i]; if (th.dataset.gc !== labels[i]) { th.dataset.gc = labels[i]; th.draggable = true; th.title = th.title || "Glisser pour déplacer la colonne (clic droit ou appui long : plus de choix)"; } });
+    const order = mergeOrder(t._gmov, gcolSaved[key]), perm = def.map((_, i) => i);
+    mov.forEach((slot, j) => { perm[slot] = labels.indexOf(order[j]); });
+    [...t.rows].forEach((r) => permRow(r, perm));
+  }
+  function gcolSet(key, o) {
+    if (o) gcolSaved[key] = o; else delete gcolSaved[key];
+    try { localStorage.setItem(GCOL_LS, JSON.stringify(gcolSaved)); } catch (e) { /* ignore */ }
+    document.querySelectorAll("table[data-gk]").forEach((t) => { if (t.dataset.gk === key) gcolApply(t); });
+  }
+  // Les tableaux sont redessinés souvent : on remet l'ordre choisi juste après, avant l'affichage
+  new MutationObserver((ms) => {
+    const ts = new Set();
+    ms.forEach((m) => {
+      const tb = m.target.closest ? m.target.closest("table") : null; if (tb) ts.add(tb);
+      m.addedNodes.forEach((n) => { if (n.nodeType !== 1) return; if (n.tagName === "TABLE") ts.add(n); else if (n.querySelectorAll && n.tagName !== "TR" && n.tagName !== "TBODY") n.querySelectorAll("table").forEach((x) => ts.add(x)); });
+    });
+    ts.forEach(gcolApply);
+  }).observe(document.body, { childList: true, subtree: true });
+  // Une colonne, qu'elle soit du master / des sorties (ordre partagé avec les racks) ou d'un autre tableau
+  function colRef(th) {
+    if (!th || th.tagName !== "TH") return null;
+    if (th.dataset.ck) { const t = th.dataset.ct; return { id: "m:" + t, k: th.dataset.ck, name: COL_NAME[t][th.dataset.ck], order: () => colOrder(t), set: (o) => setColOrder(t, o), master: t }; }
+    const tb = th.closest("table[data-gk]"); if (!th.dataset.gc || !tb) return null;
+    const key = tb.dataset.gk, mov = tb._gmov || [];
+    return { id: "g:" + key, k: th.dataset.gc, name: th.dataset.gc.replace(/ \(\d+\)$/, ""), order: () => mergeOrder(mov, gcolSaved[key]), set: (o) => gcolSet(key, o) };
+  }
+  function colPut(c, j) { const o = c.order().filter((k) => k !== c.k); o.splice(Math.max(0, Math.min(o.length, j)), 0, c.k); c.set(o); }
   // Glisser un titre de colonne sur un autre (souris ou trackpad)
   let colDrag = null;
-  document.addEventListener("dragstart", (e) => { const th = e.target.closest && e.target.closest("th[data-ck]"); if (!th) return; colDrag = { t: th.dataset.ct, k: th.dataset.ck }; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", th.dataset.ck); } catch (err) { /* ignore */ } th.classList.add("coldrag"); });
+  document.addEventListener("dragstart", (e) => { const th = e.target.closest && e.target.closest("th[data-ck], th[data-gc]"), c = colRef(th); if (!c) return; colDrag = c; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", c.k); } catch (err) { /* ignore */ } th.classList.add("coldrag"); });
+  const colOver = (e) => { const th = e.target.closest && e.target.closest("th[data-ck], th[data-gc]"), c = colRef(th); return c && c.id === colDrag.id && c.k !== colDrag.k ? [th, c] : null; };
   document.addEventListener("dragover", (e) => {
-    if (!colDrag) return; const th = e.target.closest && e.target.closest("th[data-ck]");
+    if (!colDrag) return; const hit = colOver(e);
     document.querySelectorAll("th.coldrop-l, th.coldrop-r").forEach((x) => x.classList.remove("coldrop-l", "coldrop-r"));
-    if (!th || th.dataset.ct !== colDrag.t || th.dataset.ck === colDrag.k) return;
-    e.preventDefault(); const r = th.getBoundingClientRect(); th.classList.add(e.clientX < r.left + r.width / 2 ? "coldrop-l" : "coldrop-r");
+    if (!hit) return;
+    e.preventDefault(); const r = hit[0].getBoundingClientRect(); hit[0].classList.add(e.clientX < r.left + r.width / 2 ? "coldrop-l" : "coldrop-r");
   });
   document.addEventListener("drop", (e) => {
-    if (!colDrag) return; const th = e.target.closest && e.target.closest("th[data-ck]"), d = colDrag; colDrag = null;
-    if (!th || th.dataset.ct !== d.t || th.dataset.ck === d.k) return;
-    e.preventDefault(); const r = th.getBoundingClientRect(), after = e.clientX >= r.left + r.width / 2;
-    const o = colOrder(d.t).filter((k) => k !== d.k); let j = o.indexOf(th.dataset.ck) + (after ? 1 : 0); o.splice(j, 0, d.k); setColOrder(d.t, o);
-    notice(`Colonne « ${esc(COL_NAME[d.t][d.k])} » déplacée. Ordre par défaut : menu … › Colonnes.`);
+    if (!colDrag) return; const hit = colOver(e), d = colDrag; colDrag = null;
+    if (!hit) return;
+    e.preventDefault(); const r = hit[0].getBoundingClientRect(), after = e.clientX >= r.left + r.width / 2;
+    const o = d.order().filter((k) => k !== d.k); o.splice(o.indexOf(hit[1].k) + (after ? 1 : 0), 0, d.k); d.set(o);
+    notice(`Colonne « ${esc(d.name)} » déplacée. Clic droit sur un titre pour remettre l'ordre par défaut.`);
   });
   document.addEventListener("dragend", () => { colDrag = null; document.querySelectorAll("th.coldrag, th.coldrop-l, th.coldrop-r").forEach((x) => x.classList.remove("coldrag", "coldrop-l", "coldrop-r")); });
 
@@ -3528,6 +3605,9 @@ table.master td.nopad input { opacity: 0.8; }
     const o = v && (state.sorties || []).find((x) => x.pair && eqv(x.mix, v));
     return o ? mixName(o) : v;
   }
+  // Ears HF et Spectera : un mix stéréo s'écrit sans L ni R, les deux côtés servent. Fait à l'ouverture du dossier
+  // et à chaque modification (dans la même étape d'annulation que la paire stéréo qui l'a provoqué), jamais pendant l'affichage
+  function hfMixFix() { (state.hf || []).forEach((g) => (g.rows || []).forEach((r) => { if (r.mix) { const v = mixStereoFix(r.mix); if (v !== r.mix) r.mix = v; } })); }
 
   const PAIR_LINK = ["dest", "type", "tx", "rx"];
   // Sélection de sorties, comme au master : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter
@@ -3700,9 +3780,10 @@ table.master td.nopad input { opacity: 0.8; }
     }
     o[f] = f === "dest" ? canonMus(t.value) : t.value.trim();
     // Une paire stéréo partage destinataire, type, émetteur et récepteur
-    if (o.pair && PAIR_LINK.includes(f)) { const p = state.sorties.find((x) => x.id === o.pair); if (p) p[f] = o[f]; if (p) { commit(true); if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); } return; } }
-    if (f === "dest" && o.dest) { state.musiciens = state.musiciens || []; if (!state.musiciens.includes(o.dest)) state.musiciens.push(o.dest); }
-    commit(f === "type" || f === "dest");
+    if (o.pair && PAIR_LINK.includes(f)) { const p = state.sorties.find((x) => x.id === o.pair); if (p) p[f] = o[f]; }
+    if (f === "dest" && o.dest) addMusician(o.dest);
+    // Destinataire et Type : on réaffiche une fois que Tab a posé le curseur sur la case suivante
+    if (f === "dest" || f === "type") { commit(false); renderKeepFocus(); } else commit(!!o.pair && PAIR_LINK.includes(f));
   }
   let armedOutDel = null;
   function onOutClick(e) {
@@ -6414,43 +6495,97 @@ table.master td.nopad input { opacity: 0.8; }
     if (K.round) return `<ellipse class="shape" cx="${w / 2}" cy="${h / 2}" rx="${w / 2 - (mc ? 0.04 : 0)}" ry="${h / 2 - (mc ? 0.04 : 0)}" fill="${K.fill}" stroke="${mc || K.stroke}" stroke-width="${mc ? 0.08 : 0.03}"/>`;
     if (K.wedge) return `<polygon class="shape" points="0,${h} ${w},${h} ${w * 0.85},0 ${w * 0.15},0" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
     if (it.kind === "texte") return `<rect class="shape" width="${w}" height="${h}" fill="transparent" stroke="${planSel === it.id ? "#373737" : "none"}" stroke-width="0.03" stroke-dasharray="0.08"/>`;
-    return `<rect class="shape" width="${w}" height="${h}" rx="0.04" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03"/>`;
+    return `<rect class="shape" width="${w}" height="${h}" rx="0.04" fill="${K.fill}" stroke="${K.stroke}" stroke-width="0.03">${it.kind === "riser" && it.label ? `<title>${esc(it.label)}</title>` : ""}</rect>`;
+  }
+  // Étiquettes du plan : mesurées, puis posées dans un espace libre (pas de chevauchement), avec un trait de rappel si elles s'éloignent
+  const PLAN_FONT = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+  const planCtx = (() => { try { return document.createElement("canvas").getContext("2d"); } catch (e) { return null; } })();
+  function planTextW(t, size, weight) { if (!planCtx) return t.length * size * 0.58; planCtx.font = `${weight} 100px ${PLAN_FONT}`; return (planCtx.measureText(t).width / 100) * size; }
+  function planSplit(t) {
+    const m = t.match(/^(.+?)\s+[-–·]\s+(.+)$/); if (m) return [m[1], m[2]];
+    const w = t.split(/\s+/); if (w.length < 2) return null;
+    let best = null; for (let i = 1; i < w.length; i++) { const a = w.slice(0, i).join(" "), b = w.slice(i).join(" "), d = Math.abs(a.length - b.length); if (!best || d < best[0]) best = [d, [a, b]]; }
+    return best[1];
+  }
+  function planLabels(items, tf, stage) {
+    const ov = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    const shapes = items.filter((i) => i.kind !== "riser" && i.kind !== "texte").map((i) => ({ id: i.id, r: planBox(i) }));
+    const prio = { texte: 0, musicien: 1, riser: 1.5, boite: 2, rack: 2, wedge: 3, side: 3, sub: 3, pied: 3 }; // le nom du praticable passe avant les boîtiers posés dessus
+    const placed = [], out = [];
+    [...items].sort((a, b) => (prio[a.kind] ?? 3) - (prio[b.kind] ?? 3)).forEach((it) => {
+      const lab = String(planItemLabel(it) || "").trim(); if (!lab) return;
+      if (it.kind === "riser" && !planState().riserNames) return; // noms des praticables masqués (case dans la barre du plan)
+      const size = it.kind === "riser" ? tf * 0.9 : it.kind === "musicien" ? tf : tf * 0.92;
+      const weight = it.kind === "musicien" ? 700 : it.kind === "riser" || it.kind === "texte" ? 500 : 600;
+      const lh = size * 1.15, pad = size * 0.15, gap = size * 0.2, b = planBox(it), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+      const variants = [[lab]], sp = planSplit(lab); if (sp && it.kind !== "texte" && it.kind !== "riser") variants.push(sp);
+      let best = null;
+      variants.forEach((ls, vi) => {
+        const w = Math.max(...ls.map((t) => planTextW(t, size, weight))) + 2 * pad, h = ls.length * lh, c = [];
+        const add = (x, y, k) => c.push({ x, y, k });
+        if (it.kind === "texte") add(cx - w / 2, cy - h / 2, 0);
+        else if (it.kind === "riser") { add(b.x + gap, b.y + gap, 0); add(b.x + b.w - w - gap, b.y + gap, 0.5); add(b.x + gap, b.y + b.h - h - gap, 1); add(b.x + b.w - w - gap, b.y + b.h - h - gap, 1.5); add(b.x, b.y - h - gap, 6); add(b.x, b.y + b.h + gap, 7); }
+        else {
+          if (it.kind === "musicien") add(cx - w / 2, cy - h / 2, w <= b.w * 1.4 && h <= b.h * 1.2 ? 0 : 1.1); // sur le rond s'il tient dedans, sinon à côté pour qu'on voie le rond
+          for (let ring = 0; ring < 5; ring++) {
+            const d = gap + ring * size * 1.1, k = 1 + ring * 3;
+            add(cx - w / 2, b.y + b.h + d, k); add(cx - w / 2, b.y - h - d, k + 0.3); add(b.x + b.w + d, cy - h / 2, k + 0.6); add(b.x - w - d, cy - h / 2, k + 0.6);
+            add(b.x + b.w + d, b.y + b.h + d, k + 1.2); add(b.x - w - d, b.y + b.h + d, k + 1.2); add(b.x + b.w + d, b.y - h - d, k + 1.4); add(b.x - w - d, b.y - h - d, k + 1.4);
+          }
+        }
+        c.forEach((q) => {
+          const r = { x: q.x, y: q.y, w, h }, s2 = size * size; let cost = q.k + vi * 0.8;
+          const ri = { x: r.x - pad, y: r.y - pad * 0.6, w: r.w + 2 * pad, h: r.h + 1.2 * pad }; placed.forEach((o) => { cost += (80 * ov(ri, o)) / s2; });
+          shapes.forEach((o) => { if (o.id !== it.id) cost += ((it.kind === "riser" ? 4 : 20) * ov(r, o.r)) / s2; }); // le nom d'un praticable peut passer sur un boîtier posé dessus plutôt que de quitter son praticable
+          cost += (12 * (Math.max(0, stage.x - r.x) + Math.max(0, r.x + r.w - stage.x - stage.w) + Math.max(0, stage.y - r.y) + Math.max(0, r.y + r.h - stage.y - stage.h))) / size;
+          if (!best || cost < best.cost) best = { cost, r, ls, size, weight, lh };
+        });
+      });
+      // Trait de rappel quand l'étiquette ne touche plus son objet
+      const r = best.r, px = Math.max(r.x, Math.min(cx, r.x + r.w)), py = Math.max(r.y, Math.min(cy, r.y + r.h));
+      const qx = Math.max(b.x, Math.min(px, b.x + b.w)), qy = Math.max(b.y, Math.min(py, b.y + b.h));
+      best.leader = it.kind !== "riser" && Math.hypot(px - qx, py - qy) > gap * 2.5 ? [px, py, qx, qy] : null;
+      placed.push(r); out.push({ it, ...best });
+    });
+    return out;
+  }
+  function planLabelMarkup(L, forExport) {
+    const it = L.it, r = L.r, ox = it.x, oy = it.y, riser = it.kind === "riser";
+    const fill = riser ? "#4b5563" : "#1f2937", tx = riser ? r.x + L.size * 0.15 : r.x + r.w / 2;
+    const halo = `stroke="#fafaf9" stroke-width="${L.size * 0.32}" stroke-linejoin="round" paint-order="stroke"`;
+    const lead = L.leader ? `<line x1="${L.leader[0] - ox}" y1="${L.leader[1] - oy}" x2="${L.leader[2] - ox}" y2="${L.leader[3] - oy}" stroke="#6b7280" stroke-width="${L.size * 0.08}" stroke-linecap="round"/><circle cx="${L.leader[2] - ox}" cy="${L.leader[3] - oy}" r="${L.size * 0.12}" fill="#6b7280"/>` : "";
+    const txt = `<text text-anchor="${riser ? "start" : "middle"}" dominant-baseline="central" font-size="${L.size}" font-weight="${L.weight}" font-family='${PLAN_FONT}' fill="${fill}" ${halo}>${L.ls.map((t, k) => `<tspan x="${tx - ox}" y="${r.y - oy + L.lh * (k + 0.5)}">${esc(t)}</tspan>`).join("")}</text>`;
+    return `<g class="lab${(planSel === it.id || planMulti.has(it.id)) && !forExport ? " on" : ""}" data-lid="${it.id}" transform="translate(${ox} ${oy})">${lead}${txt}</g>`;
   }
   function planSvgMarkup(forExport, pxW) {
-    const P = planState(), m = 1.2, W = P.w + 2 * m, H = P.d + 2 * m;
-    const fs = Math.max(0.22, Math.min(0.34, P.w / 40));
+    const P = planState(), fs = Math.max(0.26, Math.min(0.4, P.w / 34));
+    // Tailles de texte fixes à l'écran (12 px), quel que soit le zoom ou la taille de la scène ; à l'export, proportionnelles à la scène
+    let m = 1.2, ppm = pxW ? pxW / (P.w + 2 * m) : 0;
+    const px = (n) => (ppm ? n / ppm : 0);
+    const fl0 = Math.max(fs, px(12)); m = Math.max(1.2, fl0 * 2.2); if (pxW) ppm = pxW / (P.w + 2 * m);
+    const W = P.w + 2 * m, H = P.d + 2 * m, tf = Math.max(fs * 0.8, px(12)), fl = Math.max(fs, px(12));
     let g = "";
     for (let x = 1; x < P.w; x++) g += `<line x1="${x}" y1="0" x2="${x}" y2="${P.d}" stroke="#e5e7eb" stroke-width="0.01"/>`;
     for (let y = 1; y < P.d; y++) g += `<line x1="0" y1="${y}" x2="${P.w}" y2="${y}" stroke="#e5e7eb" stroke-width="0.01"/>`;
-    const tf = Math.max(fs * 0.72, pxW ? (11 * W) / pxW : 0), font = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827"`;
-    // Libellés lisibles à taille fixe : au centre pour musiciens et texte (sur deux lignes si besoin), en coin pour un praticable, sous l'objet sinon
-    const lines = (t, w) => { const words = t.split(/\s+/); if (t.length * tf * 0.5 <= w || words.length < 2) return [t]; const mid = Math.ceil(words.length / 2); return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")]; };
-    const items = [...P.items].sort((a, b) => (a.kind === "riser" ? -1 : 0) - (b.kind === "riser" ? -1 : 0)).map((it) => {
-      const lab = planItemLabel(it), cx = it.w / 2, cy = it.h / 2, back = `transform="rotate(${-(it.rot || 0)} ${cx} ${cy})"`;
-      let txt;
-      if (it.kind === "musicien" || it.kind === "texte") {
-        const ls = lines(lab, it.w * 1.1), y0 = cy - ((ls.length - 1) * tf * 1.05) / 2;
-        txt = `<text ${back} text-anchor="middle" dominant-baseline="central" font-size="${tf}" font-weight="${it.kind === "texte" ? 400 : 600}" ${font}>${ls.map((t, k) => `<tspan x="${cx}" y="${y0 + k * tf * 1.05}">${esc(t)}</tspan>`).join("")}</text>`;
-      } else if (it.kind === "riser") {
-        txt = `<text ${back} x="0.08" y="${tf * 0.95}" font-size="${tf * 0.85}" ${font} fill-opacity="0.75">${esc(lab)}</text>`;
-      } else {
-        txt = `<text ${back} x="${cx}" y="${it.h + tf * 0.95}" text-anchor="middle" font-size="${tf * 0.85}" font-weight="600" ${font}>${esc(lab)}</text>`;
-      }
-      return `<g class="it${(planSel === it.id || planMulti.has(it.id)) && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}${txt}</g>`;
+    const shapes = [...P.items].sort((a, b) => (a.kind === "riser" ? -1 : 0) - (b.kind === "riser" ? -1 : 0)).map((it) => {
+      const cx = it.w / 2, cy = it.h / 2;
+      return `<g class="it${(planSel === it.id || planMulti.has(it.id)) && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}</g>`;
     }).join("");
-    const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
+    const labels = planLabels(P.items, tf, { x: 0, y: 0, w: P.w, h: P.d }).map((L) => planLabelMarkup(L, forExport)).join("");
+    const ff = `font-family='${PLAN_FONT}'`, frame = `font-size="${fl}" font-weight="600" letter-spacing="${fl * 0.08}" text-anchor="middle" fill="#4b5563" ${ff}`;
+    const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" ${ff} fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"${forExport ? ` width="${Math.round(W * 100)}" height="${Math.round(H * 100)}"` : ""}><rect width="${W}" height="${H}" fill="#ffffff"/>${title}
       <g transform="translate(${m} ${m})"><rect width="${P.w}" height="${P.d}" fill="#fafaf9" stroke="#111827" stroke-width="0.05"/>${g}
-      <text x="${-m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
-      <text x="${P.w + m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
-      <text x="${P.w / 2}" y="${P.d + m * 0.55}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">FACE · PUBLIC</text>
-      <text x="${P.w / 2}" y="${-0.12}" font-size="${fs * 0.7}" text-anchor="middle" fill="#9ca3af" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">lointain · ${P.w} × ${P.d} m</text>
-      ${items}</g></svg>`;
+      <text x="${-m / 2}" y="${P.d / 2}" dominant-baseline="central" ${frame} transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
+      <text x="${P.w + m / 2}" y="${P.d / 2}" dominant-baseline="central" ${frame} transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
+      <text x="${P.w / 2}" y="${P.d + m / 2}" dominant-baseline="central" ${frame}>FACE · PUBLIC</text>
+      <text x="${P.w / 2}" y="${-m / 2}" dominant-baseline="central" ${frame} font-weight="500">LOINTAIN · ${P.w} × ${P.d} m</text>
+      ${shapes}<g class="labs">${labels}</g></g></svg>`;
   }
   function renderPlan() {
     const P = planState();
     if (planMulti.size) { [...planMulti].forEach((id) => { if (!P.items.some((i) => i.id === id)) planMulti.delete(id); }); if (planMulti.size < 2) planSetSel([...planMulti]); }
-    $("#planW").value = P.w; $("#planD").value = P.d;
+    $("#planW").value = P.w; $("#planD").value = P.d; $("#planRiserNames").checked = !!P.riserNames;
     $("#planAdd").innerHTML = planAddOptions();
     const wrap = $("#planSvg").parentNode, pxW = Math.max(200, (wrap.clientWidth - 12) * planZoom);
     wrap.innerHTML = planSvgMarkup(false, pxW).replace("<svg ", `<svg id="planSvg" role="img" aria-label="Plan de scène" style="width:${planZoom * 100}%" `);
@@ -6492,10 +6627,12 @@ table.master td.nopad input { opacity: 0.8; }
     const q = pt.matrixTransform(svg.getScreenCTM().inverse()); return { x: q.x - 1.2, y: q.y - 1.2 };
   }
   const snap = (v) => Math.round(v * 4) / 4;
+  // Pendant un glisser, l'étiquette suit son objet (elle est replacée au rendu suivant)
+  function planMoveLab(it) { const l = document.querySelector(`#planSvg g.lab[data-lid="${it.id}"]`); if (l) l.setAttribute("transform", `translate(${it.x} ${it.y})`); }
   function planBind() {
     const host = $("#v-plan");
     host.addEventListener("pointerdown", (e) => { if (e.button === 2) return; // clic droit : menu, pas de glisser
-      const g = e.target.closest("#planSvg g.it");
+      const lb = e.target.closest("#planSvg g.lab"), g = e.target.closest("#planSvg g.it") || (lb && document.querySelector(`#planSvg g.it[data-pid="${lb.dataset.lid}"]`));
       if (!e.target.closest("#planSvg")) return;
       const P = planState(), p = planPoint(e);
       if (!g) {
@@ -6509,7 +6646,7 @@ table.master td.nopad input { opacity: 0.8; }
         planDrag = { grp: P.items.filter((i) => planMulti.has(i.id)).map((i) => ({ i, x: i.x, y: i.y, g: document.querySelector(`#planSvg g.it[data-pid="${i.id}"]`) })), x0: p.x, y0: p.y, moved: false };
       } else {
         planDrag = { it, dx: p.x - it.x, dy: p.y - it.y, moved: false, g };
-        if (planSel !== it.id || planMulti.size) { planMulti.clear(); planSel = it.id; document.querySelectorAll("#planSvg g.it.on").forEach((x) => x.classList.remove("on")); g.classList.add("on"); renderPlanSide(); }
+        if (planSel !== it.id || planMulti.size) { planMulti.clear(); planSel = it.id; document.querySelectorAll("#planSvg g.on").forEach((x) => x.classList.remove("on")); g.classList.add("on"); const lab = document.querySelector(`#planSvg g.lab[data-lid="${it.id}"]`); if (lab) lab.classList.add("on"); renderPlanSide(); }
       }
       g.setPointerCapture && g.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -6525,14 +6662,14 @@ table.master td.nopad input { opacity: 0.8; }
       }
       if (planDrag.grp) {
         const d = planDrag, dx = snap(p.x - d.x0), dy = snap(p.y - d.y0);
-        d.grp.forEach((q) => { q.i.x = Math.max(-1, Math.min(P.w + 1 - q.i.w, q.x + dx)); q.i.y = Math.max(-1, Math.min(P.d + 1 - q.i.h, q.y + dy)); if (q.g) q.g.setAttribute("transform", `translate(${q.i.x} ${q.i.y}) rotate(${q.i.rot || 0} ${q.i.w / 2} ${q.i.h / 2})`); });
+        d.grp.forEach((q) => { q.i.x = Math.max(-1, Math.min(P.w + 1 - q.i.w, q.x + dx)); q.i.y = Math.max(-1, Math.min(P.d + 1 - q.i.h, q.y + dy)); if (q.g) q.g.setAttribute("transform", `translate(${q.i.x} ${q.i.y}) rotate(${q.i.rot || 0} ${q.i.w / 2} ${q.i.h / 2})`); planMoveLab(q.i); });
         d.moved = d.moved || !!(dx || dy); return;
       }
       const it = planDrag.it;
       it.x = Math.max(-1, Math.min(P.w + 1 - it.w, snap(p.x - planDrag.dx)));
       it.y = Math.max(-1, Math.min(P.d + 1 - it.h, snap(p.y - planDrag.dy)));
       planDrag.moved = true;
-      planDrag.g.setAttribute("transform", `translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${it.w / 2} ${it.h / 2})`);
+      planDrag.g.setAttribute("transform", `translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${it.w / 2} ${it.h / 2})`); planMoveLab(it);
     });
     const end = () => {
       if (!planDrag) return; const d = planDrag; planDrag = null;
@@ -6542,7 +6679,7 @@ table.master td.nopad input { opacity: 0.8; }
         const hits = planState().items.filter((i) => boxHit(d.r, planBox(i))).map((i) => i.id);
         planSetSel(d.add ? [...new Set([...d.base, ...hits])] : hits); renderPlan(); return;
       }
-      if (d.moved) commit(false);
+      if (d.moved) commit(false); // le rendu suivant replace les étiquettes
     };
     host.addEventListener("pointerup", end); host.addEventListener("pointercancel", end);
     $("#planAddBtn").addEventListener("click", () => {
@@ -6559,8 +6696,9 @@ table.master td.nopad input { opacity: 0.8; }
     $("#rpZoomOut").addEventListener("click", () => rpSetZoom(-1)); $("#rpZoomIn").addEventListener("click", () => rpSetZoom(1));
     $("#planZoomOut").addEventListener("click", () => { planZoom = ZOOMS[Math.max(0, ZOOMS.indexOf(planZoom) - 1)]; renderPlan(); });
     // Au doigt : un élément se déplace, le fond fait défiler le plan
-    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#planSvg g.it")) e.preventDefault(); }, { passive: false });
+    host.addEventListener("touchstart", (e) => { if (e.target.closest && e.target.closest("#planSvg g.it, #planSvg g.lab")) e.preventDefault(); }, { passive: false });
     $("#planW").addEventListener("change", (e) => { planState().w = Math.max(2, Math.min(60, Number(e.target.value) || 12)); commit(true); });
+    $("#planRiserNames").addEventListener("change", (e) => { planState().riserNames = e.target.checked; commit(true); });
     $("#planD").addEventListener("change", (e) => { planState().d = Math.max(2, Math.min(40, Number(e.target.value) || 8)); commit(true); });
     $("#planSide").addEventListener("change", (e) => {
       const it = planState().items.find((i) => i.id === planSel), f = e.target.dataset.pp; if (!it || !f) return;
@@ -6707,7 +6845,7 @@ table.master td.nopad input { opacity: 0.8; }
   // Copie d'un appareil (Alt + glisser, ou bouton « Dupliquer ») : un appareil lié devient un nouvel appareil, avec un nom suivant
   function rpNextName(nm, taken) {
     const set = new Set(taken.map((x) => String(x || "").toLowerCase())), m = /^(.*?)(\s*#?)(\d+)$/.exec(nm || "");
-    const base = m ? m[1] : (nm || "Élément"), sep = m ? m[2] || " " : " #"; let k = m ? Number(m[3]) + 1 : 2;
+    const base = m ? m[1] : (nm || "Élément"), sep = m ? m[2] : " #"; let k = m ? Number(m[3]) + 1 : 2;
     while (set.has(`${base}${sep}${k}`.toLowerCase())) k++;
     return `${base}${sep}${k}`;
   }
@@ -6952,8 +7090,10 @@ table.master td.nopad input { opacity: 0.8; }
       const half = it.half ? (p.x - rpX(col) - RP_SIDE > 241.5 ? "r" : "l") : undefined;
       if (at !== rpDrag.at || col !== rpDrag.col || half !== rpDrag.half) { rpDrag.at = at; rpDrag.col = col; rpDrag.half = half; rpDrag.moved = true; g.setAttribute("transform", `translate(${rpX(col) + RP_SIDE + (half === "r" ? 241.5 : 0)} ${RP_TOP + (at - 1) * RP_UH})`); g.classList.toggle("bad", !rpFits(c, rpDrag.dup ? { ...it, id: "_dup" } : it, at, col, half)); }
     });
-    const end = () => {
+    const end = (e) => {
       if (!rpDrag) return; const { c, it, at, col, half, moved, dup, g } = rpDrag; rpDrag = null;
+      // Geste interrompu (appel, défilement du système…) : rien n'est copié ni déplacé
+      if (e && e.type === "pointercancel") { if (dup) g.remove(); else if (moved) renderRackplan(); return; }
       // Copie : posée là où on l'a lâchée si c'est libre, sinon à la place libre la plus proche (Alt + clic = copie juste en dessous)
       if (dup) { g.remove(); const r = moved ? rpDuplicate(c, it, at, col, half) : rpDuplicate(c, it); if (typeof r === "string") notice(r, true); return; }
       if (!moved) return;
@@ -7137,7 +7277,24 @@ table.master td.nopad input { opacity: 0.8; }
     return { x: right ? n.x + n.w : n.x, y: n.y + (n.dy || 0) + SYN_TOP + k * SYN_ROW + SYN_ROW / 2, dir: right ? 1 : -1 };
   }
   const synStroke = (proto, extra) => { const P = PROTOS[proto] || PROTOS.Autre; return `stroke="${P.c}" stroke-width="${P.w + (extra || 0)}"${P.d ? ` stroke-dasharray="${P.d}"` : ""} fill="none" stroke-linecap="round"`; };
-  const synLabel = (x, y, t, col) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" ${SYN_FONT} fill="${col || "#374151"}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${esc(t)}</text>`;
+  // Étiquettes des liaisons : posées au-dessus des appareils, dans un espace libre le long du câble (pas sur un appareil ni sur une autre étiquette)
+  let synLabQ = [];
+  const synLabel = (pts, t, col, lk) => { synLabQ.push({ pts, ls: [t], col: col || "#374151", lk }); return ""; };
+  function synLabMarkup(nodes) {
+    const ov = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+    const rects = nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })), placed = [];
+    return synLabQ.map((L) => {
+      const sz = L.sizes || L.ls.map(() => 12), wt = L.wts || L.ls.map(() => 500), lh = sz.map((v) => v * 1.25), h = lh.reduce((a, b) => a + b, 0);
+      const w = Math.max(...L.ls.map((t, k) => planTextW(t, sz[k], wt[k]))) + 8;
+      let best = null;
+      const pts = [...L.pts, ...[-16, 16, -32, 32].flatMap((d) => L.pts.slice(0, 5).map(([x, y]) => [x, y + d]))]; // le long du câble, puis un peu au-dessus ou en dessous
+      pts.forEach(([x, y], k) => { const r = { x: x - w / 2, y: y - h / 2, w, h }; let c = k * 0.15; rects.forEach((o) => { c += ov(r, o) / 25; }); placed.forEach((o) => { c += ov(r, o) / 10; }); if (!best || c < best.c) best = { c, r }; });
+      placed.push(best.r);
+      let y = best.r.y; const cx = best.r.x + w / 2;
+      const txt = L.ls.map((t, k) => { const yy = y + lh[k] / 2; y += lh[k]; return `<text x="${cx.toFixed(1)}" y="${yy.toFixed(1)}" dominant-baseline="central" text-anchor="middle" font-size="${sz[k]}" font-weight="${wt[k]}" fill="${(L.cols || [])[k] || L.col}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${esc(t)}</text>`; }).join("");
+      return `<g${L.lk ? ` class="lnl" data-lk="${L.lk}"` : ""} ${SYN_FONT}>${txt}</g>`;
+    }).join("");
+  }
   // Sens d'une liaison : aller-retour (deux câbles, ou un câble duplex), ou un seul sens (sortie MADI d'un appareil vers l'entrée d'un autre)
   const SYN_DIRS = [["", "⇄ 2 sens"], ["ab", "De → Vers"], ["ba", "Vers → De"]];
   const synMk = (c) => c.replace("#", "");
@@ -7146,7 +7303,7 @@ table.master td.nopad input { opacity: 0.8; }
   const synRecv = (l, id) => (l.dir === "ab" ? (l.b || {}).n === id : l.dir === "ba" ? (l.a || {}).n === id : (l.a || {}).n === id || (l.b || {}).n === id);
   function synEdges(nodes, forExport) {
     const S = synState(), byId = new Map(nodes.map((n) => [n.id, n])), sel = forExport ? null : synSel;
-    let ring = "", labels = "";
+    let ring = "", labels = ""; synLabQ = [];
     loops().forEach((lp) => {
       const ns = nodes.filter((n) => n.loop === lp); if (!ns.length) return;
       if (ns.length > 1) {
@@ -7155,7 +7312,7 @@ table.master td.nopad input { opacity: 0.8; }
       }
       const tot = loopUse(lp).tot, max = Number(lp.max) || 0;
       const cx = ns.reduce((t, n) => t + synCenter(n)[0], 0) / ns.length, cy = ns.reduce((t, n) => t + synCenter(n)[1], 0) / ns.length;
-      if (ns.length > 2) labels += `<g ${SYN_FONT} text-anchor="middle"><text x="${cx.toFixed(1)}" y="${(cy - 4).toFixed(1)}" font-size="15" font-weight="700" fill="#b45309">${esc(lp.nom || "Loop")}</text><text x="${cx.toFixed(1)}" y="${(cy + 14).toFixed(1)}" font-size="12" fill="#6b7280">Optocore · ${lp.freq === "96" ? "96" : "48"} kHz · ${tot}${max ? " / " + max : ""} canaux</text></g>`;
+      if (ns.length > 2) synLabQ.push({ pts: [[cx, cy + 5], [cx, cy - 30], [cx, cy + 40], [cx - 60, cy + 5], [cx + 60, cy + 5]], ls: [lp.nom || "Loop", `Optocore · ${lp.freq === "96" ? "96" : "48"} kHz · ${tot}${max ? " / " + max : ""} canaux`], sizes: [15, 12], wts: [700, 400], cols: ["#b45309", "#4b5563"] });
     });
     // Plusieurs câbles sur un même port (MADI in et out vers deux appareils) : on les écarte un peu pour les voir tous
     const share = new Map();
@@ -7169,12 +7326,13 @@ table.master td.nopad input { opacity: 0.8; }
       const arrow = l.dir === "ab" ? ` marker-end="url(#ar${synMk(P.c)})"` : l.dir === "ba" ? ` marker-start="url(#ar${synMk(P.c)})"` : "";
       const pk = [A.id, B.id].sort().join("|"), pi = pairSeen.get(pk) || 0; pairSeen.set(pk, pi + 1);
       const d = Math.max(50, Math.abs(pb.x - pa.x) / 3) + pi * 30, c1 = [pa.x + pa.dir * d, pa.y + pi * 26], c2 = [pb.x + pb.dir * d, pb.y + pi * 26];
-      const mx = (pa.x + 3 * c1[0] + 3 * c2[0] + pb.x) / 8, my = (pa.y + 3 * c1[1] + 3 * c2[1] + pb.y) / 8;
       const hot = sel && (sel === A.id || sel === B.id);
       const lab = [pr === "Autre" ? "" : pr, l.cable].filter(Boolean).join(" · ");
-      return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}${arrow}/>${lab ? synLabel(mx, my + 4 + pi * 15, lab, P.c) : ""}</g>`;
+      const bz = (t) => { const u = 1 - t; return [u * u * u * pa.x + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * pb.x, u * u * u * pa.y + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * pb.y + pi * 15]; };
+      if (lab) synLabel([0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82].map(bz), lab, P.c, l.id);
+      return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}${arrow}/></g>`;
     }).join("");
-    const wc = synClock(nodes).edges.map(({ from, to }) => { const [tx, ty] = synCenter(to), [fx, fy] = synCenter(from), p = synClip(from, tx, ty), q = synClip(to, fx, fy); return `<g class="wc"><line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Word clock")} marker-end="url(#wcArrow)"/>${synLabel((p[0] + q[0]) / 2, (p[1] + q[1]) / 2 + 4, "WC", "#0f172a")}</g>`; }).join("");
+    const wc = synClock(nodes).edges.map(({ from, to }) => { const [tx, ty] = synCenter(to), [fx, fy] = synCenter(from), p = synClip(from, tx, ty), q = synClip(to, fx, fy); return `<g class="wc"><line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Word clock")} marker-end="url(#wcArrow)"/>${synLabel([0.5, 0.4, 0.6, 0.3, 0.7].map((t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]), "WC", "#0f172a")}</g>`; }).join("");
     return ring + links + wc + labels;
   }
   function synNodeMarkup(n, forExport) {
@@ -7217,7 +7375,7 @@ table.master td.nopad input { opacity: 0.8; }
     const legend = leg.map((k) => { const s = `<line x1="${lx}" y1="${ly}" x2="${lx + 30}" y2="${ly}" ${synStroke(k)}/><text x="${lx + 36}" y="${ly + 4}" font-size="12" fill="#374151" ${SYN_FONT}>${esc(k)}</text>`; lx += 52 + k.length * 7; return s; }).join("");
     const W = Math.max(x1 - x0, lx - x0), H = y1 - top;
     const size = forExport ? `width="${Math.round(W * 1.5)}" height="${Math.round(H * 1.5)}"` : `width="${Math.round(W * synZoom)}" height="${Math.round(H * synZoom)}"`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker>${synMarkers()}</defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synZones">${zones.map((z) => synZoneMarkup(z, forExport)).join("")}</g><g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${top} ${W} ${H}" ${size}><defs><marker id="wcArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0f172a"/></marker>${synMarkers()}</defs><rect x="${x0}" y="${top}" width="${W}" height="${H}" fill="#fff"/>${legend}<g id="synZones">${zones.map((z) => synZoneMarkup(z, forExport)).join("")}</g><g id="synEdges">${synEdges(nodes, forExport)}</g><g id="synNodes">${nodes.map((n) => synNodeMarkup(n, forExport)).join("")}</g><g id="synLabs">${synLabMarkup(nodes)}</g></svg>`;
   }
   const SYN_ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
   let synPick = null;
@@ -7230,7 +7388,7 @@ table.master td.nopad input { opacity: 0.8; }
   const synMulti = new Set();
   const synIds = () => (synMulti.size ? [...synMulti] : synSel && !synSel.startsWith("z:") ? [synSel] : []);
   function synSetSel(ids) { synMulti.clear(); if (ids.length === 1) synSel = ids[0]; else { synSel = null; ids.forEach((i) => synMulti.add(i)); } }
-  let synSel = null, synDrag = null, synZoom = matchMedia("(max-width: 760px)").matches ? 0.75 : 1;
+  let synSel = null, synDrag = null, synZoom = 1;
   const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
   function renderSyn() {
     const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
@@ -7345,7 +7503,7 @@ table.master td.nopad input { opacity: 0.8; }
         d.zone.x = d.zx + dx; d.zone.y = d.zy + dy; d.moved = d.moved || dx || dy;
         d.g.setAttribute("transform", `translate(${d.zone.x} ${d.zone.y})`);
         d.inside.forEach((q) => { q.n.x = q.x + dx; q.n.y = q.y + dy; const ng = document.querySelector(`#synSvg g.nd[data-nid="${CSS.escape(q.n.id)}"]`); if (ng) ng.setAttribute("transform", `translate(${q.n.x} ${q.n.y})`); });
-        if (d.inside.length) $("#synEdges").innerHTML = synEdges(d.nodes);
+        if (d.inside.length) { $("#synEdges").innerHTML = synEdges(d.nodes); $("#synLabs").innerHTML = synLabMarkup(d.nodes); }
         return;
       }
       const p = synPoint(e), n = synDrag.n;
@@ -7353,7 +7511,7 @@ table.master td.nopad input { opacity: 0.8; }
       synDrag.moved = true;
       synDrag.g.setAttribute("transform", `translate(${n.x} ${n.y})`);
       if (synDrag.grp) { const dx = n.x - synDrag.nx, dy = n.y - synDrag.ny; synDrag.grp.forEach((q) => { q.n.x = q.x + dx; q.n.y = q.y + dy; if (q.g) q.g.setAttribute("transform", `translate(${q.n.x} ${q.n.y})`); }); }
-      $("#synEdges").innerHTML = synEdges(synDrag.nodes);
+      $("#synEdges").innerHTML = synEdges(synDrag.nodes); $("#synLabs").innerHTML = synLabMarkup(synDrag.nodes);
     });
     const end = (e) => {
       if (!synDrag) return;
@@ -9402,7 +9560,16 @@ table.master td.nopad input { opacity: 0.8; }
     render();
   }
   const undo = () => travel(undoStack, redoStack), redo = () => travel(redoStack, undoStack);
-  function commit(rerender) { record(); persist(); markSave("dirty"); if (rerender) render(); else renderHeader(); dbxDirty(); }
+  // Réaffiche après le changement de case (Tab, clic) : la case qui a le curseur le garde, avec sa sélection
+  function renderKeepFocus() {
+    setTimeout(() => {
+      const a = document.activeElement, s0 = a && a.selectionStart, s1 = a && a.selectionEnd;
+      render();
+      const b = document.activeElement;
+      if (b && b !== a && b.setSelectionRange && s0 != null) { try { b.setSelectionRange(s0, s1); } catch (e) { /* case sans sélection */ } }
+    }, 0);
+  }
+  function commit(rerender) { hfMixFix(); record(); persist(); markSave("dirty"); if (rerender) render(); else renderHeader(); dbxDirty(); }
   // Hauteur des onglets collants, pour placer les barres de sélection juste dessous
   function syncNavH() { const n = document.querySelector(".navs"); if (n) { document.documentElement.style.setProperty("--navh", Math.max(0, n.getBoundingClientRect().bottom) + "px"); document.documentElement.style.setProperty("--navstick", n.offsetHeight + "px"); } }
   addEventListener("scroll", syncNavH, { passive: true }); addEventListener("resize", syncNavH);
@@ -9893,7 +10060,8 @@ table.master td.nopad input { opacity: 0.8; }
     dlMix: {
       what: "le mix", uses: (v) => (state.sorties || []).filter((o) => eqv(o.mix, v) || eqv(mixName(o), v)).length + (state.hf || []).reduce((n, g) => n + g.rows.filter((r) => eqv(r.mix, v)).length, 0),
       // Une paire stéréo se renomme des deux côtés, en gardant L et R
-      rename: (a, b) => { let n = 0; (state.sorties || []).forEach((o) => { if (eqv(o.mix, a)) { o.mix = b; n++; } else if (o.pair && eqv(mixName(o), a)) { const m = (o.mix || "").match(LR); o.mix = `${b} ${m ? m[1].toUpperCase() : ""}`.trim(); n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
+      // (on repère d'abord les deux côtés : renommer L avant R casserait la paire au moment de tester R)
+      rename: (a, b) => { let n = 0; const outs = state.sorties || [], hit = outs.map((o) => (eqv(o.mix, a) ? "mono" : o.pair && eqv(mixName(o), a) ? "pair" : "")); outs.forEach((o, k) => { if (hit[k] === "mono") { o.mix = b; n++; } else if (hit[k] === "pair") { const m = (o.mix || "").match(LR); o.mix = `${b} ${m ? m[1].toUpperCase() : ""}`.trim(); n++; } }); (state.hf || []).forEach((g) => g.rows.forEach((r) => { if (eqv(r.mix, a)) { r.mix = b; n++; } })); return n; }
     }
   };
   function sugActions(input, v) {
@@ -9979,7 +10147,12 @@ table.master td.nopad input { opacity: 0.8; }
     let dl = document.getElementById("dlSelTyp");
     if (!dl) { dl = document.createElement("datalist"); dl.id = "dlSelTyp"; document.body.appendChild(dl); }
     const opts = [...sel.options].filter((o) => o.value !== "" && !o.disabled);
-    dl.innerHTML = opts.map((o) => { const g = o.parentElement && o.parentElement.tagName === "OPTGROUP" ? o.parentElement.label : ""; return `<option value="${esc(o.textContent.trim())}"${g ? ` label="${esc(g)}"` : ""}>`; }).join("");
+    // Un même libellé dans deux groupes (deux consoles, deux racks…) : on ajoute le groupe pour que chacun reste choisissable
+    const grp = (o) => (o.parentElement && o.parentElement.tagName === "OPTGROUP" ? o.parentElement.label : ""), txt = (o) => o.textContent.trim();
+    const cnt = new Map(); opts.forEach((o) => cnt.set(txt(o).toLowerCase(), (cnt.get(txt(o).toLowerCase()) || 0) + 1));
+    const byKey = new Map();
+    opts.forEach((o) => { let k = txt(o); if (cnt.get(k.toLowerCase()) > 1 && grp(o)) k = `${k} · ${grp(o)}`; let k2 = k, j = 2; while (byKey.has(k2)) k2 = `${k} (${j++})`; byKey.set(k2, o); });
+    dl.innerHTML = [...byKey].map(([k, o]) => `<option value="${esc(k)}"${grp(o) && k === txt(o) ? ` label="${esc(grp(o))}"` : ""}>`).join("");
     const r = sel.getBoundingClientRect(), input = document.createElement("input");
     input.type = "text"; input.className = "seltyp"; input.autocomplete = "off"; input.dataset.suggest = "dlSelTyp"; input.dataset.tok = "1";
     input.setAttribute("aria-label", (sel.getAttribute("aria-label") || "Choix") + " : tape pour chercher");
@@ -9987,21 +10160,22 @@ table.master td.nopad input { opacity: 0.8; }
     Object.assign(input.style, { left: r.left + "px", top: r.top + "px", width: Math.max(r.width, 140) + "px", height: Math.max(r.height, 28) + "px" });
     document.body.appendChild(input);
     const keep = focusInfo(sel), freeTo = sel.dataset.f === "box" && !!sel.closest("#outTbl, #rackOut") && !!sel.closest("tr[data-id]") && (state.sorties || []).some((o) => o.id === sel.closest("tr[data-id]").dataset.id);
-    selTyp = { input, sel, opts, keep, freeTo };
+    selTyp = { input, sel, opts, byKey, keep, freeTo };
     input.value = ch; input.focus(); sugOpen(input, false);
     input.addEventListener("change", () => selTypeApply(input.value));
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); selTypeApply(sugIsOpen() && sug.items.length ? sug.items[0] : input.value); }
+      // Un libellé tapé en entier l'emporte sur le premier de la liste (« 12N #1 → 3 » ne doit pas donner « → 30 »)
+      if (e.key === "Enter") { e.preventDefault(); const lq = input.value.trim().toLowerCase(), exact = lq && selTyp && [...selTyp.byKey.keys()].some((k) => k.toLowerCase() === lq); selTypeApply(!exact && sugIsOpen() && sug.items.length ? sug.items[0] : input.value); }
       else if (e.key === "Escape") { e.preventDefault(); selTypeClose(true); }
       else if (e.key === "Tab") selTypeClose(false);
     });
     input.addEventListener("blur", () => setTimeout(() => { if (selTyp && selTyp.input === input && document.activeElement !== input) selTypeClose(false); }, 150));
   }
   function selTypeApply(text) {
-    if (!selTyp) return; const { sel, opts, keep, freeTo } = selTyp, q = String(text || "").trim();
+    if (!selTyp) return; const { sel, opts, byKey, keep, freeTo } = selTyp, q = String(text || "").trim();
     selTypeClose(false);
     if (!q) { if (sel.isConnected) sel.focus({ preventScroll: true }); return; }
-    const lq = q.toLowerCase(), hit = opts.find((o) => o.textContent.trim() === q) || opts.find((o) => o.textContent.trim().toLowerCase() === lq);
+    const lq = q.toLowerCase(), hit = byKey.get(q) || [...byKey].find(([k]) => k.toLowerCase() === lq)?.[1] || opts.find((o) => o.textContent.trim() === q) || opts.find((o) => o.textContent.trim().toLowerCase() === lq);
     if (hit) {
       sel.value = hit.value; sel.dispatchEvent(new Event("change", { bubbles: true }));
     } else if (freeTo) {
@@ -10853,7 +11027,7 @@ table.master td.nopad input { opacity: 0.8; }
   // ---------- Menus clic droit ----------
   // Un seul menu pour toute l'appli : clic droit à la souris, appui long au doigt, touche Menu (ou Maj+F10) au clavier.
   // Chaque écran y met ses actions rapides ; Maj+clic droit garde le menu habituel du navigateur (copier, coller).
-  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel]";
+  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel], [data-hddel], button[data-fxdel], button[data-netdel]";
   const boxUsed = (b) => [...state.lignes, ...(state.sorties || [])].some((x) => x.box && x.box.b === b.id);
   const CTX = { items: [], stack: [], title: "", xy: [0, 0], opened: 0 };
   function ctxRender() {
@@ -11045,7 +11219,7 @@ table.master td.nopad input { opacity: 0.8; }
       "-", { t: "Supprimer ce rack…", danger: true, fn: () => { P.cases = P.cases.filter((x) => x !== c); commit(true); } }]];
   }
   function ctxPlan(e, t) {
-    const P = planState(), gi = t.closest("#planSvg g.it");
+    const P = planState(), lb = t.closest("#planSvg g.lab"), gi = t.closest("#planSvg g.it") || (lb && document.querySelector(`#planSvg g.it[data-pid="${lb.dataset.lid}"]`));
     if (gi) {
       const it = P.items.find((i) => i.id === gi.dataset.pid); if (!it) return null;
       if (planMulti.has(it.id)) {
@@ -11115,33 +11289,143 @@ table.master td.nopad input { opacity: 0.8; }
       { t: "Ajouter une zone ici", fn: () => { const used = new Set(S.zones.map((z) => z.nom)); const id = nid(); S.zones.push({ id, nom: ZONE_PRESETS.find((v) => !used.has(v)) || "Zone", x: r10(p.x - 20), y: r10(p.y - 20), w: 420, h: 260 }); synSel = "z:" + id; commit(true); } },
       { t: "Nouvelle liaison", fn: () => $("#synAddLink").click() }]];
   }
+  // Monter / descendre dans une liste, en sautant les éléments d'un autre groupe (même type d'appareil, même section…)
+  function moveAmong(arr, x, d, same = () => true) { const i = arr.indexOf(x); let j = i + d; while (j >= 0 && j < arr.length && !same(arr[j])) j += d; if (i < 0 || j < 0 || j >= arr.length) return false; arr[i] = arr[j]; arr[j] = x; return true; }
+  const canMove = (arr, x, d, same = () => true) => { let j = arr.indexOf(x) + d; while (j >= 0 && j < arr.length && !same(arr[j])) j += d; return arr.includes(x) && j >= 0 && j < arr.length; };
+  const mvItems = (arr, x, same) => [
+    { t: "Monter d'un rang", off: !canMove(arr, x, -1, same), fn: () => { if (moveAmong(arr, x, -1, same)) commit(true); } },
+    { t: "Descendre d'un rang", off: !canMove(arr, x, 1, same), fn: () => { if (moveAmong(arr, x, 1, same)) commit(true); } }];
   function ctxRow(tr, del) {
     const name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
-    const rm = { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
+    const rm = del && { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
     const hr = tr.dataset.hr && tr.closest("[data-hg]");
     if (hr) {
       const g = hfState().find((x) => x.id === hr.dataset.hg), r = g && g.rows.find((x) => x.id === tr.dataset.hr); if (!r) return null;
       const blank = () => (g.kind === "spx" ? { id: nid(), nom: "", iem: "LIVE_S" } : g.kind === "spxm" ? { id: nid(), nom: "", mic: "LIVE" } : { id: nid(), nom: "" });
       const at = g.rows.indexOf(r);
-      return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } }, "-", rm]];
+      return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } },
+        "-", r.nom && personNames().some((n) => musKey(n) === musKey(r.nom)) && { t: "Voir dans Porteurs", fn: () => { setView("porteurs"); showSetupRow(`#portOut tr[data-pk="${CSS.escape(musKey(r.nom))}"] input`); } },
+        "-", ...mvItems(g.rows, r), "-", rm]];
+    }
+    if (tr.dataset.hd) {
+      const d = hfDevById(tr.dataset.hd); if (!d) return null;
+      const D = hfDevs(), same = (x) => x.kind === d.kind;
+      return [d.nom || d.model, [
+        { t: "Dupliquer", fn: () => { let k = D.filter((x) => x.model === d.model).length + 1; while (D.some((x) => x.nom === `${d.model} #${k}`)) k++; D.splice(D.indexOf(d) + 1, 0, { ...d, id: nid(), nom: `${d.model} #${k}` }); commit(true); } },
+        "-", rpPutItem("hf", d.id),
+        "-", ...mvItems(D, d, same), "-", rm]];
     }
     if (tr.dataset.mid) {
-      const m = (state.materiel || []).find((x) => x.id === tr.dataset.mid); if (!m) return null;
-      return [m.nom || "Matériel", [{ t: "Dupliquer", fn: () => { state.materiel.splice(state.materiel.indexOf(m) + 1, 0, { ...m, id: nid() }); commit(true); } }, "-", rm]];
+      const L = state.materiel || [], m = L.find((x) => x.id === tr.dataset.mid); if (!m) return null;
+      const ins = (at) => { const n = { id: nid(), nom: "", qte: 1, cat: m.cat || "", notes: "" }; L.splice(at, 0, n); commit(true); const i = document.querySelector(`#manTbl tr[data-mid="${n.id}"] input`); if (i) i.focus(); };
+      return [m.nom || "Matériel", [{ t: "Insérer une ligne au-dessus", fn: () => ins(L.indexOf(m)) }, { t: "Insérer une ligne en dessous", fn: () => ins(L.indexOf(m) + 1) }, { t: "Dupliquer", fn: () => { L.splice(L.indexOf(m) + 1, 0, { ...m, id: nid() }); commit(true); } }, "-", ...mvItems(L, m), "-", rm]];
     }
     if (tr.dataset.lk) {
-      const l = synState().links.find((x) => x.id === tr.dataset.lk); if (!l) return null;
-      return ["Liaison", [...SYN_DIRS.map(([k, t]) => ({ t: "Sens : " + t, on: (l.dir || "") === k, fn: () => { l.dir = k; commit(true); } })), "-", rm]];
+      const S = synState(), l = S.links.find((x) => x.id === tr.dataset.lk); if (!l) return null;
+      return ["Liaison", [{ t: "Dupliquer", fn: () => { S.links.splice(S.links.indexOf(l) + 1, 0, JSON.parse(JSON.stringify({ ...l, id: nid() }))); commit(true); } },
+        { t: "Sens", sub: () => SYN_DIRS.map(([k, t]) => ({ t, on: (l.dir || "") === k, fn: () => { l.dir = k; commit(true); } })) },
+        "-", ...mvItems(S.links, l), "-", rm]];
     }
-    if (del.matches("[data-delrack]")) {
+    if (tr.dataset.pk) {
+      const k = tr.dataset.pk, nm = personNames().find((n) => musKey(n) === k); if (!nm) return null;
+      const u = personUses(nm), L = personNames(), i = L.indexOf(nm);
+      return [nm, [
+        { t: "Couleur", sub: () => [...RES_COLORS.map(([v, t]) => ({ t, on: musColors()[k] === v, fn: () => { musColors()[k] = v; commit(true); } })), "-", { t: "Sans couleur", fn: () => { delete musColors()[k]; commit(true); } }] },
+        { t: "Renommer…", fn: () => { const x = tr.querySelector("input[data-pn]"); if (x) { x.focus(); x.select(); } } },
+        "-",
+        u.src.length && { t: `Voir ses sources dans le master (${u.src.length})`, fn: () => { setView(homeView()); focusRow(u.src[0].id); } },
+        u.outs.length && { t: `Voir ses mix dans Sorties (${u.outs.length})`, fn: () => { setView("sorties"); focusRow(u.outs[0].id); } },
+        "-",
+        { t: "Monter d'un rang", off: i === 0, fn: () => portMove(k, -1) },
+        { t: "Descendre d'un rang", off: i === L.length - 1, fn: () => portMove(k, 1) },
+        "-", { t: u.n ? `Retirer ${nm} (efface ${u.n} case${u.n > 1 ? "s" : ""})…` : `Retirer ${nm} de la liste`, danger: !!u.n, fn: () => { portArmed = null; removePerson(nm); commit(true); } }]];
+    }
+    if (tr.dataset.fr) {
+      const fk = tr.closest("#v-com") ? "com" : "locaux", S = freeState(fk), r = S.rows.find((x) => x.id === tr.dataset.fr); if (!r) return null;
+      const g = freeGroups(fk).find((x) => x.id === r.g), same = (x) => x.g === r.g && x.sens === r.sens, fixed = !!tr.querySelector(".fxport");
+      const blank = (extra) => ({ id: nid(), g: r.g, sens: r.sens, port: g ? nextPort(fk, g, r.sens) : "", nom: "", app: "", lien: "", qui: "", notes: "", ...extra });
+      const put = (n) => { S.rows.splice(S.rows.indexOf(r) + 1, 0, n); commit(true); };
+      return [[r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", [
+        { t: "Ajouter une ligne en dessous", fn: () => put(blank()) },
+        { t: "Dupliquer", fn: () => { const { id, port, ...rest } = r; put(blank({ ...rest, port: g ? nextPort(fk, g, r.sens) : "" })); } },
+        "-", ...(fixed ? [] : mvItems(S.rows, r, (x) => same(x) && !(g && g.auto && (consLocals(g.model) || []).some((p) => impNorm(p.port) === impNorm(x.port))))),
+        "-", rm && { ...rm, t: fixed ? "Vider la ligne" : "Supprimer…" }]];
+    }
+    if (tr.dataset.nk) {
+      const key = tr.dataset.nk, [kind, id] = [key.slice(0, 1), key.slice(2)];
+      const N = netState(), x = kind === "e" && N.extra.find((z) => z.id === id);
+      return [(tr.querySelector("b") || {}).textContent || (x && x.nom) || "Appareil", [
+        { t: "Copier l'adresse IP", off: !((tr.querySelector('input[data-nf="ip"]') || {}).value || "").trim(), fn: () => copyText(tr.querySelector('input[data-nf="ip"]').value.trim(), "Adresse IP copiée.") },
+        "-",
+        kind === "r" && { t: "Voir dans Racks et I/O", fn: () => showRack(id) },
+        kind === "r" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${id}"]`); } },
+        kind === "r" && rpPutItem("rack", id),
+        kind === "h" && hfDevById(id) && { t: "Voir dans l'onglet HF", fn: () => { setView(hfDevById(id).kind === "tx" ? "hftx" : "hfrx"); showSetupRow(`tr[data-hd="${id}"] input`); } },
+        kind === "x" && { t: "Voir dans le synoptique", fn: () => { synSel = id; setView("syn"); } },
+        x && { t: "Dupliquer", fn: () => { N.extra.splice(N.extra.indexOf(x) + 1, 0, { ...x, id: nid(), ip: "" }); commit(true); } },
+        "-", rm]];
+    }
+    if (tr.querySelector("[data-bqadd]")) {
+      const b = tr.querySelector("[data-bqadd]");
+      return [b.dataset.bqadd, [{ t: "Ajouter à la liste", fn: () => b.click() }]];
+    }
+    if (del && del.matches("[data-delrack]")) {
       const r = rackById(del.dataset.delrack); if (!r) return null;
-      return [rackTitle(r), [{ t: "Voir dans Racks et I/O", fn: () => showRack(r.id) }, { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } }, rpPutItem("rack", r.id), "-", rm]];
+      return [rackTitle(r), [{ t: "Voir dans Racks et I/O", fn: () => showRack(r.id) }, { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } }, rpPutItem("rack", r.id), "-", ...mvItems(state.racks, r), "-", rm]];
     }
-    if (del.matches("[data-delbox]")) {
+    if (del && del.matches("[data-delbox]")) {
       const b = boxById(del.dataset.delbox); if (!b) return null;
-      return [boxTitle(b), [{ t: "Voir dans Boîtiers", fn: () => { setView("boites"); const d = document.querySelector(`#gridOut .box[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); flash(d); } } }, boxUsed(b) && { t: "Dépatcher tout le boîtier", fn: () => unboxRange(b, 1, boxSize(b)) }, "-", rm]];
+      return [boxTitle(b), [{ t: "Voir dans Boîtiers", fn: () => { setView("boites"); const d = document.querySelector(`#gridOut .box[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); flash(d); } } }, boxUsed(b) && { t: "Dépatcher tout le boîtier", fn: () => unboxRange(b, 1, boxSize(b)) }, "-", ...mvItems(state.boites, b), "-", rm]];
     }
-    return [name || "Cette ligne", [rm]];
+    return rm ? [name || "Cette ligne", [rm]] : null;
+  }
+  // ---------- Fin de menu commune à toutes les lignes de tableau : copier, et la colonne touchée ----------
+  function copyText(txt, msg) {
+    const ok = () => notice(msg), ko = () => notice("Copie impossible ici : sélectionne le texte et fais Cmd+C (ou Ctrl+C).", true);
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(ok, ko); return; } } catch (e) { /* ignore */ }
+    const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select();
+    try { if (document.execCommand("copy")) ok(); else ko(); } catch (e) { ko(); } a.remove();
+  }
+  const tdText = (c) => {
+    const f = [...c.querySelectorAll("input:not([type=checkbox]):not([type=hidden]), select, textarea")];
+    if (!f.length) { const cb = c.querySelector("input[type=checkbox]"); if (cb) return cb.checked ? "oui" : ""; const k = c.cloneNode(true); k.querySelectorAll("button, .sr").forEach((x) => x.remove()); return k.textContent.trim().replace(/\s+/g, " "); }
+    return f.map((x) => (x.tagName === "SELECT" ? (x.selectedOptions[0] && x.value ? x.selectedOptions[0].textContent : "") : x.value)).filter(Boolean).join(" ").trim();
+  };
+  // Une ligne en texte séparé par des tabulations : elle se colle telle quelle dans Excel
+  function rowText(tr) {
+    const tb = tr.closest("table"), hr = tb && headRow(tb), hs = hr ? [...hr.cells] : [];
+    return [...tr.cells].filter((c, i) => !hs.length || hs.length !== tr.cells.length || hs[i].textContent.trim()).map(tdText).join("\t");
+  }
+  function tableText(tb) {
+    const hr = headRow(tb), hs = hr ? [...hr.cells] : [], keep = (i) => !hs.length || hs[i].textContent.trim();
+    const head = hs.filter((c, i) => keep(i)).map((c) => c.textContent.trim().replace(/\s+/g, " ")).join("\t");
+    const rows = [...tb.tBodies].flatMap((b) => [...b.rows]).filter((r) => r.offsetParent !== null).map((r) => (r.cells.length === hs.length ? [...r.cells].filter((c, i) => keep(i)).map(tdText).join("\t") : [...r.cells].map(tdText).join("\t")));
+    return [head, ...rows].filter((x) => x.trim()).join("\n");
+  }
+  // Menu d'une colonne (titre ou case) : la déplacer, revenir à l'ordre par défaut, et pour le master la masquer
+  function colItems(c) {
+    const o = c.order(), i = o.indexOf(c.k), hide = c.master === "master" && HIDEABLE.find(([k]) => k === c.k);
+    return [
+      { t: "Déplacer vers la gauche", off: i <= 0, fn: () => colPut(c, i - 1) },
+      { t: "Déplacer vers la droite", off: i < 0 || i >= o.length - 1, fn: () => colPut(c, i + 1) },
+      { t: "Mettre en premier", off: i <= 0, fn: () => colPut(c, 0) },
+      { t: "Mettre en dernier", off: i < 0 || i >= o.length - 1, fn: () => colPut(c, o.length) },
+      "-",
+      hide && { t: "Masquer cette colonne", fn: () => { hiddenCols.add(c.k); setPref("hidecols", [...hiddenCols].join(",")); paintCols(); notice(`Colonne « ${esc(c.name)} » masquée. Pour la remettre : menu … › Colonnes.`); } },
+      c.master && { t: "Colonnes affichées et ordre…", fn: () => { const m = $("#ctxMenu"); colsMenu(m); placeMenu(m, ...CTX.xy); } },
+      { t: "Remettre l'ordre par défaut", fn: () => { c.set(null); notice("Ordre des colonnes par défaut remis."); } }];
+  }
+  const colOfCell = (td) => { const tb = td && td.closest("table"), hr = tb && headRow(tb); if (!hr || td.parentNode.cells.length !== hr.cells.length) return null; return colRef(hr.cells[td.cellIndex]); };
+  function ctxHead(th) {
+    const c = colRef(th), tb = th.closest("table");
+    return [c ? `Colonne « ${c.name} »` : "Tableau", [...(c ? colItems(c) : []), "-", { t: "Copier tout le tableau", fn: () => copyText(tableText(tb), "Tableau copié : colle-le dans Excel.") }]];
+  }
+  function ctxTail(tr, cell) {
+    const c = cell && colOfCell(cell), tb = tr.closest("table");
+    return ["-",
+      { t: "Copier la ligne", fn: () => copyText(rowText(tr), "Ligne copiée : colle-la dans Excel.") },
+      { t: "Copier tout le tableau", fn: () => copyText(tableText(tb), "Tableau copié : colle-le dans Excel.") },
+      c && { t: `Colonne « ${c.name} »`, sub: () => colItems(c) }];
   }
   function ctxDispatch(e) {
     const t = e.target; if (!t || !t.closest || t.closest("#ctxMenu, #appMenu, dialog")) return false;
@@ -11159,7 +11443,15 @@ table.master td.nopad input { opacity: 0.8; }
       const l = state.lignes.find((z) => z.id === g.dataset.id), o = !l && (state.sorties || []).find((z) => z.id === g.dataset.id);
       m = l ? ctxLine(l, x, y) : o ? ctxOut(o) : null;
     }
-    if (!m && (g = t.closest("tr"))) { const d = g.querySelector(DEL_SEL); if (d) m = ctxRow(g, d); }
+    else if ((g = t.closest("#journalList li")) && g.querySelector(".when")) m = ["Journal", [{ t: "Copier cette entrée", fn: () => copyText(g.innerText.replace(/\s*\n\s*/g, " ").trim(), "Entrée copiée.") }, { t: "Copier tout le journal", fn: () => copyText([...g.parentNode.children].map((li) => li.innerText.replace(/\s*\n\s*/g, " ").trim()).join("\n"), "Journal copié.") }]];
+    // Titre de colonne, dans n'importe quel tableau de l'appli
+    const inTbl = (el) => el && el.closest('section[id^="v-"]') && el.closest("table");
+    if (!m && (g = t.closest("th")) && inTbl(g) && headRow(g.closest("table")) === g.parentNode) m = ctxHead(g);
+    else if ((g = t.closest("tr")) && inTbl(g) && headRow(g.closest("table")) !== g) {
+      if (!m) m = ctxRow(g, g.querySelector(DEL_SEL));
+      // Même fin de menu sur toutes les lignes : copier la ligne ou le tableau, déplacer la colonne touchée
+      if (g.cells.length > 1) { if (!m) m = [tdText([...g.cells].find((c) => tdText(c)) || g.cells[0]) || "Cette ligne", []]; m = [m[0], [...m[1], ...ctxTail(g, t.closest("td, th"))]]; }
+    }
     return !!m && ctxOpen(x, y, m[0], m[1]);
   }
   document.addEventListener("contextmenu", (e) => {
