@@ -490,6 +490,10 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .plan-side h3 { margin: 0 0 8px; font-size: var(--fs-base); }
 .rpcases { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(420px * var(--rpz, 1))), 1fr)); gap: 14px; align-items: start; }
 .rpcases.zin .rpsvg { width: calc(100% * var(--rpzi, 1)); max-width: none; }
+/* Dézoom (< 100 %) : le dessin rétrécit aussi quand la place ne permet pas une colonne de plus (téléphone, rack double ou triple qui prend toute la ligne) */
+.rpcases { container-type: inline-size; }
+.rpcases:not(.zin) .rpcase:not(.rpwide) .rpstage { width: min(100%, calc(100cqw * var(--rpz, 1))); }
+.rpcases:not(.zin) .rpcase.rpwide .rpstage { width: calc(100% * var(--rpz, 1)); min-width: min(100%, calc(var(--rpn, 1) * 260px * var(--rpz, 1) + 14px)); }
 .rpcase { padding: 10px; margin: 0; }
 .rpcase.rpwide { grid-column: 1 / -1; }
 .rphead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -7189,7 +7193,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     }).join("");
     const title = forExport ? `<text x="0" y="-14" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(c.nom || "Rack")} · ${n > 1 ? (n === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</text>` : "";
     const top = forExport ? 40 : 0;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : n > 1 ? ` style="min-width:${n * 260}px"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${-top} ${W} ${H + top}"${forExport ? ` width="${W}" height="${H + top}"` : n > 1 ? ` style="min-width:calc(${n * 260}px * var(--rpz, 1))"` : ""} class="rpsvg" data-rpc="${c.id}" role="img" aria-label="${esc(c.nom || "Rack")}"><rect x="0" y="${-top}" width="${W}" height="${H + top}" fill="#ffffff"/>${title}${s}${items}</svg>`;
   }
   const RP_ZOOMS = [0.4, 0.55, 0.75, 1, 1.5, 2];
   let rpZoom = (() => { try { const z = Number(localStorage.getItem("patch-live-rpzoom")); return RP_ZOOMS.includes(z) ? z : 1; } catch (e) { return 1; } })();
@@ -7208,7 +7212,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
         ${rpCols(c) > 1 ? `<button class="btn small" type="button" data-rpcsplit title="Faire un rack simple par colonne, avec ses appareils">Séparer en ${rpCols(c)} simples</button>` : ""}
         <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
         <div class="rpadd"><input type="text" data-rpadd data-suggest="dlRpAdd" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un appareil dans ce rack" placeholder="+ Ajouter : tape un nom (SD Rack, AD4Q, plaque…)" title="Tape un nom : la liste propose les appareils du dossier, les modèles et la banque de matériel. Un nom inconnu est ajouté comme élément libre (Entrée)."><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
-        <div class="rpstage">${rpCaseSvg(c)}</div></div>`;
+        <div class="rpstage" style="--rpn:${rpCols(c)}">${rpCaseSvg(c)}</div></div>`;
     }).join("") : `<div class="panel"><p class="hint" style="margin:0">Aucun rack pour l'instant. « + Flight rack » en crée un ; ajoute ensuite tes appareils dedans.</p></div>`;
     renderRackplanSide();
   }
