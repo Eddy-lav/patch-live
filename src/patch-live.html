@@ -1160,6 +1160,18 @@ label.p48 input:checked + span { border-style: solid; }
   :root:not([data-theme="light"]) { --case: #2b2e2f; --case-line: #44494b; --bg: #1c1e1f; --surface-2: #2f3233; --line: #3d4447; --btn-line: #59646a; --strip: #2e3a2d; --rowhover: #33382a; }
 }
 :root[data-theme="dark"] { --case: #2b2e2f; --case-line: #44494b; --bg: #1c1e1f; --surface-2: #2f3233; --line: #3d4447; --btn-line: #59646a; --strip: #2e3a2d; --rowhover: #33382a; }
+:root[data-theme="regie"] { --case: #161718; --case-ink: #c9c7ba; --case-muted: #8f948d; --case-line: #2a2e2f; --bg: #0b0c0d; --surface-2: #191b1c; --line: #262a2b; --btn-line: #3b4244; --strip: #1b2419; --rowhover: #22261b; }
+/* Lisibilité des survols et sélections : le texte suit toujours le fond */
+.dbxmenu button:hover, .dbxmenu button:focus, .appmenu .mi:hover, .gsres li.on, .gsres li:hover { color: var(--ink); }
+.appmenu button.armed, .appmenu button.armed:hover, .appmenu button.armed:focus,
+.dbxmenu button.armed, .dbxmenu button.armed:hover, .dbxmenu button.armed:focus,
+.btn.danger.armed, .btn.danger.armed:hover:not(:disabled),
+.btn.xdel.armed, .btn.xdel.armed:hover:not(:disabled) { background: var(--danger); color: #fff; border-color: var(--danger); }
+.spacepop button:hover { color: var(--ink); }
+.spacepop button.on, .spacepop button.on:hover { color: var(--accent-ink); background: var(--accent); }
+.rt summary h3 .hint { color: inherit; opacity: 1; }
+:root[data-theme="regie"] input, :root[data-theme="regie"] select, :root[data-theme="regie"] textarea { color: var(--ink); }
+:root[data-theme="regie"] :is(.addn input, .fxadd input, .bq-bar input, .bq-bar select, .toolbar select, .actions > select, .field input, .field select) { background-color: var(--surface-2); }
 
 /* En-tête : clair et posé, le nom du dossier en grand */
 header.top { padding-block: 8px 16px; border-bottom: 0; align-items: flex-end; }
@@ -6408,11 +6420,11 @@ table.master td.nopad input { opacity: 0.8; }
   }
   function planSvgMarkup(forExport, pxW) {
     const P = planState(), m = 1.2, W = P.w + 2 * m, H = P.d + 2 * m;
-    const fs = Math.max(0.22, Math.min(0.34, P.w / 40));
+    const fs = Math.max(0.26, Math.min(0.4, P.w / 34));
     let g = "";
     for (let x = 1; x < P.w; x++) g += `<line x1="${x}" y1="0" x2="${x}" y2="${P.d}" stroke="#e5e7eb" stroke-width="0.01"/>`;
     for (let y = 1; y < P.d; y++) g += `<line x1="0" y1="${y}" x2="${P.w}" y2="${y}" stroke="#e5e7eb" stroke-width="0.01"/>`;
-    const tf = Math.max(fs * 0.72, pxW ? (11 * W) / pxW : 0), font = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827"`;
+    const tf = Math.max(fs * 0.8, pxW ? (13 * W) / pxW : 0), font = `font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827" paint-order="stroke" stroke="#ffffff" stroke-opacity="0.9" stroke-width="${(tf * 0.24).toFixed(3)}" stroke-linejoin="round"`;
     // Libellés lisibles à taille fixe : au centre pour musiciens et texte (sur deux lignes si besoin), en coin pour un praticable, sous l'objet sinon
     const lines = (t, w) => { const words = t.split(/\s+/); if (t.length * tf * 0.5 <= w || words.length < 2) return [t]; const mid = Math.ceil(words.length / 2); return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")]; };
     const items = [...P.items].sort((a, b) => (a.kind === "riser" ? -1 : 0) - (b.kind === "riser" ? -1 : 0)).map((it) => {
@@ -6422,19 +6434,19 @@ table.master td.nopad input { opacity: 0.8; }
         const ls = lines(lab, it.w * 1.1), y0 = cy - ((ls.length - 1) * tf * 1.05) / 2;
         txt = `<text ${back} text-anchor="middle" dominant-baseline="central" font-size="${tf}" font-weight="${it.kind === "texte" ? 400 : 600}" ${font}>${ls.map((t, k) => `<tspan x="${cx}" y="${y0 + k * tf * 1.05}">${esc(t)}</tspan>`).join("")}</text>`;
       } else if (it.kind === "riser") {
-        txt = `<text ${back} x="0.08" y="${tf * 0.95}" font-size="${tf * 0.85}" ${font} fill-opacity="0.75">${esc(lab)}</text>`;
+        txt = `<text ${back} x="0.08" y="${tf * 0.95}" font-size="${tf * 0.9}" font-weight="600" ${font}>${esc(lab)}</text>`;
       } else {
-        txt = `<text ${back} x="${cx}" y="${it.h + tf * 0.95}" text-anchor="middle" font-size="${tf * 0.85}" font-weight="600" ${font}>${esc(lab)}</text>`;
+        txt = `<text ${back} x="${cx}" y="${it.h + tf * 1.0}" text-anchor="middle" font-size="${tf * 0.9}" font-weight="600" ${font}>${esc(lab)}</text>`;
       }
       return `<g class="it${(planSel === it.id || planMulti.has(it.id)) && !forExport ? " on" : ""}" data-pid="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0} ${cx} ${cy})">${planShape(it)}${txt}</g>`;
     }).join("");
     const title = forExport ? `<text x="${m}" y="${m * 0.42}" font-size="${fs * 1.2}" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" fill="#111827">${esc(state.dossier.nom)} · plan de scène</text>` : "";
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"${forExport ? ` width="${Math.round(W * 100)}" height="${Math.round(H * 100)}"` : ""}><rect width="${W}" height="${H}" fill="#ffffff"/>${title}
       <g transform="translate(${m} ${m})"><rect width="${P.w}" height="${P.d}" fill="#fafaf9" stroke="#111827" stroke-width="0.05"/>${g}
-      <text x="${-m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
-      <text x="${P.w + m / 2}" y="${P.d / 2}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
-      <text x="${P.w / 2}" y="${P.d + m * 0.55}" font-size="${fs}" text-anchor="middle" fill="#6b7280" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">FACE · PUBLIC</text>
-      <text x="${P.w / 2}" y="${-0.12}" font-size="${fs * 0.7}" text-anchor="middle" fill="#9ca3af" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">lointain · ${P.w} × ${P.d} m</text>
+      <text x="${-m / 2}" y="${P.d / 2}" font-size="${fs}" font-weight="600" letter-spacing="0.04" text-anchor="middle" fill="#374151" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(-90 ${-m / 2} ${P.d / 2})">JARDIN</text>
+      <text x="${P.w + m / 2}" y="${P.d / 2}" font-size="${fs}" font-weight="600" letter-spacing="0.04" text-anchor="middle" fill="#374151" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif" transform="rotate(90 ${P.w + m / 2} ${P.d / 2})">COUR</text>
+      <text x="${P.w / 2}" y="${P.d + m * 0.55}" font-size="${fs}" font-weight="600" letter-spacing="0.04" text-anchor="middle" fill="#374151" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">FACE · PUBLIC</text>
+      <text x="${P.w / 2}" y="${-0.12}" font-size="${fs * 0.8}" text-anchor="middle" fill="#4b5563" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif">lointain · ${P.w} × ${P.d} m</text>
       ${items}</g></svg>`;
   }
   function renderPlan() {
