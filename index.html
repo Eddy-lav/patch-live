@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "e48a6f90f5";</script>
+<script>window.PL_VER = "5050d138b6";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -1522,6 +1522,77 @@ section[data-dens="aere"] .box li.occ > input, section[data-dens="aere"] .box li
 section[data-dens="aere"] .box li .bact button { height: 32px !important; width: 26px !important; }
 section[data-dens="aere"] .box h3 { padding-top: 11px; padding-bottom: 11px; }
 section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: var(--fs-xs) !important; }
+/* ---------- To-do ---------- */
+nav.spaces button { position: relative; }
+.spc { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-family: var(--font-mono); font-size: var(--fs-2xs); font-weight: 700; line-height: 18px; text-align: center; letter-spacing: 0; }
+.spc.late { background: var(--warn); color: var(--on-danger); }
+@media (max-width: 760px) { .spc { position: absolute; top: 2px; left: calc(50% + 6px); } }
+.tdflt { display: inline-flex; }
+.tdflt button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); padding: 6px 11px; font-weight: 600; font-size: var(--fs-sm); margin-left: -1px; }
+.tdflt button:first-child { border-radius: var(--r-sm) 0 0 var(--r-sm); margin-left: 0; }
+.tdflt button:last-child { border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.tdflt button:hover { color: var(--ink); }
+.tdflt button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); position: relative; }
+#tdWho { max-width: 180px; }
+.tdonly { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border: 1px solid var(--accent); border-radius: var(--r-pill); background: var(--accent-soft); font-size: var(--fs-sm); }
+.tdonly button { border: 0; background: none; color: var(--muted); padding: 0 6px; font-size: var(--fs-lg); line-height: 1; }
+#tdTblWrap > .empty-state { margin: 4px 0; }
+#tdTbl { width: 100%; }
+#tdTbl td { vertical-align: top; }
+#tdTbl .tdck { width: 52px; text-align: center; }
+#tdTbl .tdck input { width: 18px; height: 18px; margin: 5px 0 0; accent-color: var(--ok); cursor: pointer; }
+#tdTbl textarea { display: block; width: 100%; min-height: 0; margin: 0; resize: none; overflow: hidden; field-sizing: content; font: inherit; font-size: var(--fs-md); line-height: 1.35; padding: 4px; border: 1px solid var(--field-line, var(--line)); border-radius: var(--r-sm); background: transparent; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 761px) { #tdTbl textarea { border-color: transparent; } #tdTbl textarea:hover { border-color: var(--line); } }
+#tdTbl textarea:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+#tdTbl td.tdtxt { min-width: 16rem; }
+#tdTbl td.tdnotes { min-width: 11rem; }
+#tdTbl td.tdtxt textarea { font-weight: 600; }
+#tdTbl tr.tddone td.tdtxt textarea { font-weight: 400; color: var(--muted); text-decoration: line-through; }
+#tdTbl tr.tddone td { color: var(--muted); }
+#tdTbl tr.tdlate input[type="date"] { color: var(--warn); border-color: var(--warn); font-weight: 700; }
+#tdTbl tr.tdtoday input[type="date"] { border-color: var(--accent); font-weight: 700; }
+.tdlinks { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 12rem; padding-top: 2px; }
+.tdchip { display: inline-flex; align-items: center; max-width: 100%; border: 1px solid var(--line); background: var(--accent-soft); border-radius: var(--r-md); font-size: var(--fs-xs); }
+.tdchip button { border: 0; background: none; color: inherit; font: inherit; padding: 2px 4px 2px 7px; min-height: 0; }
+.tdchip [data-tdgo] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 17rem; cursor: pointer; }
+.tdchip [data-tdgo]:hover { text-decoration: underline; }
+.tdchip .tdk { color: var(--muted); }
+.tdchip [data-tdunlink] { padding: 2px 6px 2px 2px; color: var(--muted); }
+.tdchip [data-tdunlink]:hover { color: var(--danger); }
+.tdchip.gone { background: transparent; border-style: dashed; }
+.tdchip.gone [data-tdgo] { text-decoration: line-through; color: var(--muted); }
+.tdlk-add { border: 1px dashed var(--line); background: none; color: var(--muted); border-radius: var(--r-md); padding: 2px 8px; font-size: var(--fs-xs); font-weight: 600; min-height: 0; }
+.tdlk-add:hover { color: var(--ink); border-color: var(--accent); }
+:where(td.td-host, li.td-host) { position: relative; }
+.tdbadge { position: absolute; top: 50%; left: 2px; transform: translateY(-50%); z-index: 2; display: inline-flex; align-items: center; gap: 3px; height: 15px; min-width: 0; padding: 0 4px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-family: var(--font-mono); font-size: 10px; font-weight: 700; line-height: 15px; cursor: pointer; box-shadow: 0 0 0 1px var(--surface); }
+.tdbadge::before { content: ""; width: 5px; height: 5px; border: 1.5px solid currentColor; border-radius: 1px; }
+section[data-dens] td .tdbadge, section[data-dens] li .tdbadge { min-height: 0 !important; height: 15px !important; }
+.tdbadge.inl { position: static; transform: none; margin-left: 8px; vertical-align: middle; }
+.tdbadge:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+tr.flash > td { animation: flash 1.6s ease-out; }
+@media (prefers-reduced-motion: reduce) { tr.flash > td { animation: none; } }
+.tdnew { padding: 14px 16px; }
+.tdnew form { display: flex; flex-direction: column; gap: 10px; }
+.tdnew-h { margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.tdnew-h span { color: var(--muted); font-size: var(--fs-sm); }
+.tdnew textarea { width: 100%; resize: vertical; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); color: var(--ink); }
+.tdnew-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tdnew-row .field { flex: 1 1 140px; }
+.tdnew .actions { display: flex; gap: 8px; justify-content: flex-end; }
+@media (max-width: 760px) {
+  #tdTbl tr { grid-template-columns: 34px 1fr 1fr; }
+  #tdTbl td.tdck { grid-column: 1; grid-row: 1 / span 6; width: auto; }
+  #tdTbl td.tdck input { width: 24px; height: 24px; }
+  #tdTbl td.tdqui { grid-column: 2; min-width: 0 !important; }
+  #tdTbl td.tdpour { grid-column: 3; }
+  #tdTbl td.x { grid-column: 3; justify-self: end; }
+  #tdTbl td.tdtxt { grid-column: 2 / 4; min-width: 0; }
+  #tdTbl td.tdlk { grid-column: 2 / 4; }
+  #tdTbl td.tdnotes { grid-column: 2 / 4; min-width: 0; }
+  #tdTbl td.tdtxt textarea { font-size: var(--fs-base); }
+  .tdlinks { min-width: 0; }
+  .tdbadge { height: 16px; }
+}
 </style>
 
 <div id="cover" class="cover empty">
@@ -1577,6 +1648,19 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   <div class="gsbox"><input id="gsIn" type="search" placeholder="Source, micro, HF, rack, boîtier, 12N #1 → 3…" autocomplete="off" aria-label="Rechercher partout"><kbd>Échap</kbd></div>
   <ul id="gsRes" class="gsres" role="listbox"></ul>
 </dialog>
+<dialog id="tdLinkDlg" class="gsdlg" aria-label="Lier la tâche à un élément du dossier">
+  <div class="gsbox"><input id="tdLinkIn" type="search" placeholder="Lier à : source, sortie, boîtier, rack, HF, plan, page…" autocomplete="off" aria-label="Élément à lier"><kbd>Échap</kbd></div>
+  <ul id="tdLinkRes" class="gsres" role="listbox"></ul>
+</dialog>
+<dialog id="tdNewDlg" class="gsdlg tdnew" aria-labelledby="tdNewH">
+  <form id="tdNewForm">
+    <p class="tdnew-h"><strong id="tdNewH">Nouvelle tâche</strong><span id="tdNewFor"></span></p>
+    <label class="field"><span>Tâche</span><textarea id="tdNewTxt" rows="2" placeholder="Ex. changer la capsule, vérifier la fréquence, prévoir un spare…" required></textarea></label>
+    <div class="tdnew-row"><label class="field"><span>Qui</span><input id="tdNewQui" type="text" autocomplete="off" data-suggest="dlTdQui" placeholder="—"></label><label class="field"><span>Pour le</span><input id="tdNewPour" type="date"></label></div>
+    <div class="actions"><button class="btn primary" type="submit">Ajouter la tâche</button><button class="btn" type="button" data-tdnclose>Annuler</button></div>
+  </form>
+</dialog>
+<datalist id="dlTdQui"></datalist>
 <dialog id="dbxDlg" class="dbxdlg" aria-labelledby="dbxTitle">
   <div class="dbxtop"><strong id="dbxTitle">Dropbox</strong><button class="btn small" type="button" data-dclose>Fermer</button></div>
   <div id="dbxCrumbs" class="dbxcrumbs"></div>
@@ -1622,7 +1706,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   <button role="tab" data-s="regie" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="17" r="1.2" fill="currentColor"/></svg><span>Régie</span></button>
   <button role="tab" data-s="scene" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17h18M5 17V9l7-4 7 4v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Scène</span></button>
   <button role="tab" data-s="mat" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8l8-4 8 4-8 4-8-4zM4 8v8l8 4 8-4V8M12 12v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Matériel</span></button>
-  <button role="tab" data-s="dossier" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Dossier</span></button>
+  <button role="tab" data-s="dossier" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Dossier</span><span class="spc" id="cTodoS" hidden></span></button>
 </nav>
 <nav class="tabs" role="tablist">
   <button role="tab" data-v="master" aria-selected="true">Master patch<span class="count" id="cMaster"></span></button>
@@ -1643,6 +1727,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="etiq" aria-selected="false">Étiquettes</button>
+  <button role="tab" data-v="todo" aria-selected="false">To-do<span class="count" id="cTodo"></span></button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
   <div id="densCtl" class="densctl" role="group" aria-label="Densité de cette page"><span>Densité</span><button type="button" data-dens="serre" title="Lignes serrées : plus de lignes à l'écran">Serrée</button><button type="button" data-dens="" title="Taille d'origine de la page">Normale</button><button type="button" data-dens="aere" title="Lignes aérées : plus faciles à lire et au doigt">Aérée</button><span class="tssep">Texte</span><button type="button" data-ts="-1" title="Texte plus petit, partout">A−</button><button type="button" data-ts="1" title="Texte plus grand, partout">A+</button></div>
@@ -1769,6 +1854,19 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   <div id="rackTools"></div>
   <div id="rackOut"></div>
   <p class="hint">Le patch vu depuis chaque stage rack ou équipement I/O, un trait sépare les cartes ou les ports. Chaque ligne se modifie comme dans le master (micro, pied, musicien, boîtier, entrée…). Tape un nom dans une case libre pour y mettre une source : elle est créée, ou reprise si elle n'a pas encore d'entrée ; Entrée passe à la case libre suivante. Les sources ajoutées avec « + Source » attendent dans « Sources sans entrée » en bas. Sélection : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter une ligne.</p>
+</section>
+
+<section id="v-todo" hidden>
+  <div class="toolbar">
+    <input id="tdSearch" class="search" type="search" placeholder="Chercher une tâche, une personne, un élément lié…" aria-label="Chercher une tâche">
+    <button id="tdAdd" class="btn" type="button">+ Tâche</button>
+    <span class="tdflt" role="group" aria-label="Tâches affichées"><button type="button" data-tdflt="open">À faire</button><button type="button" data-tdflt="all">Toutes</button><button type="button" data-tdflt="done">Faites</button></span>
+    <select id="tdWho" aria-label="Pour qui" hidden></select>
+    <span id="tdOnly" class="tdonly" hidden></span>
+    <span id="tdSum" class="hint" role="status"></span>
+  </div>
+  <div class="panel"><div class="tbl" id="tdTblWrap"></div></div>
+  <p class="hint">Chaque tâche peut être liée à des éléments du dossier : « + Lier » cherche une source, une sortie, un boîtier, un rack, une liaison HF, un appareil du plan de rack ou du plan de scène, une page… Un clic sur un lien y va. Depuis n'importe quelle page, clic droit (ou appui long) sur un élément › « Ajouter une tâche liée » ; une pastille montre ensuite ses tâches à faire. Entrée valide la case, Maj+Entrée passe à la ligne.</p>
 </section>
 
 <section id="v-infos" hidden>
@@ -9529,7 +9627,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -9594,6 +9692,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
     net: () => { const r = netExportRows(); return r.length ? `<table><thead><tr>${NET_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${r.map((x) => `<tr>${x.map((v) => `<td>${esc(v || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""; },
+    todo: () => (tds().length ? `<table><thead><tr><th>Fait</th><th>Tâche</th><th>Lié à</th><th>Qui</th><th>Pour le</th><th>Notes</th></tr></thead><tbody>${[...tds().filter((x) => !x.done), ...tds().filter((x) => x.done)].map((x) => `<tr${x.done ? ' class="muted"' : ""}><td>${x.done ? "✓" : "☐"}</td><td>${esc(x.txt)}</td><td>${esc(tdLinksText(x))}</td><td>${esc(x.qui || "")}</td><td>${x.pour ? esc(x.pour.split("-").reverse().join("/")) : ""}${tdLate(x) ? " (en retard)" : ""}</td><td>${esc(x.notes || "")}</td></tr>`).join("")}</tbody></table>` : ""),
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
   function printHtml(parts) {
@@ -10394,6 +10493,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     $("#cHf").textContent = hfState().reduce((n, g) => n + g.rows.length, 0) || "";
     $("#cHfRx").textContent = hfDevs().filter((d) => d.kind === "rx").length || ""; $("#cHfTx").textContent = hfDevs().filter((d) => d.kind === "tx").length || "";
     $("#cJournal").textContent = state.journal.length;
+    { const n = tds().filter((x) => !x.done).length, late = tds().filter(tdLate).length; $("#cTodo").textContent = n || ""; const sp = $("#cTodoS"); sp.hidden = !n; sp.textContent = n; sp.classList.toggle("late", !!late); sp.title = n ? `${n} tâche${n > 1 ? "s" : ""} à faire${late ? `, dont ${late} en retard` : ""}` : ""; }
     paintSave(); renderGuide();
   }
   // ---------- Enregistré ou pas ? (hors Dropbox, qui a son propre état) ----------
@@ -10458,6 +10558,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     if (view === "etiq") renderEtiq();
     if (view === "journal") renderJournal();
     if (view === "infos") renderInfos();
+    if (view === "todo") renderTodo();
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
     if (view === "rackplan") renderRackplan();
@@ -10532,7 +10633,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
   document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq"], dossier: ["infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq"], dossier: ["todo", "infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   const densMap = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem("patch-live-density") || "{}") || {}; } catch (e) { /* ignore */ } try { if (!("master" in m) && localStorage.getItem("patch-live-dense") === "1") m.master = "serre"; } catch (e) { /* ignore */ } return m; })();
@@ -10562,7 +10663,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     densApply();
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     if (v === "hf") hfGrowAll($("#v-hf"));
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
@@ -10811,6 +10912,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
       [30, 22, 18, 16, 16, 20, 34].forEach((w, i) => { ns.getColumn(i + 1).width = w; });
       page(ns, false);
     }
+    tdSheet(wb, titre);
     const jr = wb.addWorksheet("Journal");
     styleHead(jr.addRow(["Date", "Salle", "Changement"]));
     [18, 26, 80].forEach((w, i) => { jr.getColumn(i + 1).width = w; });
@@ -10867,6 +10969,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
       if (!ids.length || hit < Math.max(1, ids.length * 0.5)) { const e = new Error("pas-appli"); e.code = ids.length ? "autre-dossier" : "pas-appli"; e.buf = buf; throw e; }
       next = JSON.parse(JSON.stringify(state));
       const report = reconcile(next, ws);
+      tdReconcile(next, wb.getWorksheet("To-do"), report);
       report.problems.unshift("Ce fichier a perdu les données de l'appli (réenregistré par Numbers ou un autre tableur) : le dossier a été repris depuis cet appareil, avec les corrections du master patch. Les modifs faites dans les autres feuilles ne sont pas reprises.");
       next.sorties = next.sorties || []; learnDossier(next); next.exemple = false;
       return { next, report };
@@ -10878,6 +10981,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     // Fichier écrit par une version plus récente de l'appli : on ne le réécrit pas avec une version ancienne
     if ((Number(app.getCell(1, 4).value) || 0) > APP_FMT) { const e = new Error("trop-recent"); e.code = "trop-recent"; throw e; }
     const report = reconcile(next, wb.getWorksheet("Master patch"));
+    tdReconcile(next, wb.getWorksheet("To-do"), report);
     next.sorties = next.sorties || [];
     learnDossier(next);
     delete next.bibliotheque; delete next.savedAt; next.exemple = false;
@@ -11062,6 +11166,8 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     const starts = opts.filter((v) => v.toLowerCase().startsWith(q)), rest = opts.filter((v) => !v.toLowerCase().startsWith(q) && (v.toLowerCase().includes(q) || tokHit(v))), byLab = q ? opts.filter((v) => !v.toLowerCase().includes(q) && (lab0.get(v) || "").includes(q)) : [];
     sug.items = [...new Set([...starts, ...rest, ...byLab])].filter((v) => v !== input.value || !q);
     sug.input = input; sug.on = -1;
+    // Dans une boîte de dialogue (au premier plan), la liste doit être dans la boîte pour s'afficher par-dessus
+    { const host = input.closest("dialog[open]") || document.body; if (sug.el.parentNode !== host) host.appendChild(sug.el); }
     if (!sug.items.length) { sugClose(); return; }
     const hl = (v) => { const i = q ? v.toLowerCase().indexOf(q) : -1; if (i < 0) return esc(v); return esc(v.slice(0, i)) + "<b>" + esc(v.slice(i, i + q.length)) + "</b>" + esc(v.slice(i + q.length)); };
     const dl = document.getElementById(input.dataset.suggest), labs = new Map(dl ? [...dl.options].filter((o) => o.label && o.label !== o.value).map((o) => [o.value, o.label]) : []);
@@ -11333,7 +11439,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
       commit(true);
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
-    planBind(); rackplanBind();
+    planBind(); rackplanBind(); tdBind();
     synBind();
     hfBind(); kbBind(); spxPatchBind();
     ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
@@ -11528,7 +11634,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     const k = path[path.length - 1]; if (isObj(k)) return false;
     o[k] = v; return true;
   }
-  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version" };
+  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens" };
   const conflictWhere = (c) => c.labels.map((x) => (x in FIELD_FR ? FIELD_FR[x] : x)).filter(Boolean).join(" › ");
   const conflictVal = (v) => (v == null || v === "" ? "vide" : typeof v === "object" ? (v.b ? boxAddr(v) : v.r ? rackAddr(v) : "autre valeur") : v === true ? "oui" : v === false ? "non" : String(v));
   let lastConflicts = [];
@@ -12290,6 +12396,7 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     { t: "Monter d'un rang", off: !canMove(arr, x, -1, same), fn: () => { if (moveAmong(arr, x, -1, same)) commit(true); } },
     { t: "Descendre d'un rang", off: !canMove(arr, x, 1, same), fn: () => { if (moveAmong(arr, x, 1, same)) commit(true); } }];
   function ctxRow(tr, del) {
+    if (tr.dataset.td) return ctxTodo(tr);
     const name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
     const rm = del && { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
     const hr = tr.dataset.hr && tr.closest("[data-hg]");
@@ -12447,6 +12554,9 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
       // Même fin de menu sur toutes les lignes : copier la ligne ou le tableau, déplacer la colonne touchée
       if (g.cells.length > 1) { if (!m) m = [tdText([...g.cells].find((c) => tdText(c)) || g.cells[0]) || "Cette ligne", []]; m = [m[0], [...m[1], ...ctxTail(g, t.closest("td, th"))]]; }
     }
+    // Toute chose qu'on peut lier : ajouter une tâche liée, voir ses tâches
+    const tg = tdTargetOf(t), tgOk = tg && tdFind(tg.k, tg.id);
+    if (tgOk) m = m ? [m[0], [...m[1], ...tdCtxItems(tg)]] : [tgOk.t, tdCtxItems(tg)];
     return !!m && ctxOpen(x, y, m[0], m[1]);
   }
   document.addEventListener("contextmenu", (e) => {
@@ -12488,6 +12598,356 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     else if (e.key === "ArrowLeft" && CTX.stack.length) { e.preventDefault(); const bk = $("#ctxMenu [data-ci=back]"); if (bk) { bk.click(); CTX.kb = true; const f = $("#ctxMenu button:not([disabled])"); if (f) f.focus(); } }
     else if (e.key === "ArrowRight" && document.activeElement && document.activeElement.querySelector(".cxsub")) { e.preventDefault(); CTX.kb = true; document.activeElement.click(); }
   });
+  // ---------- To-do du dossier : chaque tâche peut être liée à des éléments (source, sortie, boîtier, rack, HF, plan…) ----------
+  // Une tâche : { id, txt, done, fait, qui, pour (AAAA-MM-JJ), notes, cree, links: [{ id, k, t }] } ; « t » garde le nom au moment du lien
+  const tds = () => (Array.isArray(state.todos) ? state.todos : []);
+  const tdsW = () => { if (!Array.isArray(state.todos)) state.todos = []; return state.todos; };
+  const tdPad = (n) => String(n).padStart(2, "0");
+  const tdToday = () => { const d = new Date(); return `${d.getFullYear()}-${tdPad(d.getMonth() + 1)}-${tdPad(d.getDate())}`; };
+  const tdLate = (x) => !x.done && !!x.pour && x.pour < tdToday();
+  const tdNewTask = (txt, links) => ({ id: nid(), txt: txt || "", done: false, fait: "", qui: "", pour: "", notes: "", cree: new Date().toISOString().slice(0, 19), links: links || [] });
+  const tdShort = (s, n = 48) => { s = String(s || "").replace(/\s+/g, " ").trim() || "(tâche sans texte)"; return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+  // Ligne ou cellule qu'on fait clignoter quand on y arrive
+  function tdFlashSel(sel) { const el = document.querySelector(sel); const tr = el && (el.closest("tr") || el); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } }
+  function tdFlashBox(el) { if (!el) return; el.scrollIntoView({ block: "center" }); el.classList.remove("flashbox"); void el.offsetWidth; el.classList.add("flashbox"); }
+  const tdViews = () => [...document.querySelectorAll("nav.tabs > button[data-v]")].filter((b) => b.dataset.v !== "todo" && (b.dataset.v !== "master" || showMaster)).map((b) => ({ id: b.dataset.v, t: (b.firstChild && b.firstChild.textContent || "").trim() }));
+  // Ce qu'on peut lier : un nom de type, la liste des éléments, comment y aller
+  const TD_K = {
+    l: { k: "Source", all: () => state.lignes.map((l, i) => ({ id: l.id, t: l.source || "(sans nom)", d: [i + 1, l.musicien, l.micro, boxAddr(l.box)].filter(Boolean).join(" · ") })), go: (id) => gotoRow(homeView(), id) },
+    o: { k: "Sortie", all: () => (state.sorties || []).map((o) => ({ id: o.id, t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, rackAddr(o.out)].filter(Boolean).join(" · ") })), go: (id) => gotoRow("sorties", id) },
+    b: { k: "Boîtier", all: () => state.boites.map((b) => ({ id: b.id, t: boxTitle(b), d: b.cote || "" })), go: (id) => { setView("boites"); tdFlashBox(document.querySelector(`#gridOut .box[data-bid="${id}"]`)); } },
+    r: { k: "Rack / I/O", all: () => state.racks.map((r) => ({ id: r.id, t: rackTitle(r), d: r.console || "" })), go: (id) => showRack(id) },
+    hg: { k: "Groupe HF", all: () => hfState().map((g) => ({ id: g.id, t: g.model || "Groupe HF", d: `${g.rows.length} ligne${g.rows.length > 1 ? "s" : ""}` })), go: (id) => { setView("hf"); if (closedHf.has(id)) hfFold([id], true); tdFlashBox(document.querySelector(`#hfOut .hfg[data-hg="${id}"]`)); } },
+    h: { k: "Liaison HF", all: () => hfState().flatMap((g) => g.rows.map((r) => ({ id: r.id, t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq].filter(Boolean).join(" · ") }))), go: (id) => { const g = hfState().find((x) => x.rows.some((r) => r.id === id)); setView("hf"); if (g && closedHf.has(g.id)) hfFold([g.id], true); tdFlashSel(`#hfOut tr[data-hr="${id}"]`); } },
+    hd: { k: "Appareil HF", all: () => hfDevs().map((d) => ({ id: d.id, t: d.nom || d.model, d: [d.model, d.band].filter(Boolean).join(" · ") })), go: (id) => { const d = hfDevById(id); setView(d && d.kind === "tx" ? "hftx" : "hfrx"); tdFlashSel(`tr[data-hd="${id}"]`); } },
+    p: { k: "Porteur", all: () => personNames().map((n) => ({ id: musKey(n), t: n, d: (state.musPoste || {})[musKey(n)] || "" })), go: (id) => { setView("porteurs"); tdFlashSel(`#portOut tr[data-pk="${CSS.escape(id)}"]`); } },
+    rc: { k: "Flight rack", all: () => rpState().cases.map((c) => ({ id: c.id, t: c.nom || "Rack", d: [c.u + " U", c.lieu].filter(Boolean).join(" · ") })), go: (id) => { setView("rackplan"); tdFlashBox(document.querySelector(`.rpcase[data-rpc="${id}"]`)); } },
+    ri: { k: "Plan de rack", all: () => rpState().cases.flatMap((c) => c.items.map((it) => ({ id: it.id, t: rpLabel(it), d: `${c.nom || "Rack"} · U${it.at}` }))), go: (id) => { const f = rpFind(id); rpSel = id; setView("rackplan"); if (f) { const el = document.querySelector(`.rpcase[data-rpc="${f.c.id}"]`); if (el) el.scrollIntoView({ block: "center" }); } } },
+    pl: { k: "Plan de scène", all: () => planState().items.map((it) => ({ id: it.id, t: planItemLabel(it), d: "" })), go: (id) => { planMulti.clear(); planSel = id; setView("plan"); } },
+    sn: { k: "Synoptique", all: () => synNodes().filter((n) => n.kind !== "rack").map((n) => ({ id: n.id, t: n.title, d: n.sub || "" })), go: (id) => { synMulti.clear(); synSel = id; setView("syn"); } },
+    sl: { k: "Liaison", all: () => synState().links.map((l, i) => ({ id: l.id, t: `Liaison ${i + 1}`, d: [l.cable, l.notes].filter(Boolean).join(" · ") })), go: (id) => { setView("syn"); tdFlashSel(`#synLinks tr[data-lk="${id}"]`); } },
+    m: { k: "Matériel", all: () => (state.materiel || []).map((x) => ({ id: x.id, t: x.nom || "(matériel)", d: [x.qte ? "×" + x.qte : "", x.cat].filter(Boolean).join(" · ") })), go: (id) => { setView("liste"); tdFlashSel(`#manTbl tr[data-mid="${id}"]`); } },
+    fx: { k: "Local / intercom", all: () => ["locaux", "com"].flatMap((k) => freeState(k).rows.filter(fxFilled).map((r) => ({ id: r.id, t: [r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", d: k === "com" ? "Intercom" : "Local console" }))), go: (id) => { setView(freeState("com").rows.some((r) => r.id === id) ? "com" : "local"); tdFlashSel(`tr[data-fr="${id}"]`); } },
+    n: { k: "Réseau", all: () => netState().extra.map((x) => ({ id: x.id, t: x.nom || "Appareil", d: x.ip || "" })), go: (id) => { setView("net"); tdFlashSel(`#netTbl tr[data-nk="e:${CSS.escape(id)}"]`); } },
+    v: { k: "Page", all: tdViews, go: (id) => { setView(id); scrollTo({ top: 0 }); } }
+  };
+  const tdKey = (L) => L.k + ":" + L.id;
+  function tdAll() { const out = []; Object.keys(TD_K).forEach((k) => { try { TD_K[k].all().forEach((x) => out.push({ ...x, k, kn: TD_K[k].k })); } catch (e) { /* type indisponible */ } }); return out; }
+  function tdFind(k, id) { const K = TD_K[k]; if (!K) return null; try { return K.all().find((x) => x.id === id) || null; } catch (e) { return null; } }
+  const tdLinkName = (L) => { const f = tdFind(L.k, L.id); return { kn: (TD_K[L.k] || {}).k || "Élément", t: f ? f.t : L.t || "?", gone: !f }; };
+  const tdLinksText = (x) => (x.links || []).map((L) => { const n = tdLinkName(L); return `${n.kn} : ${n.t}${n.gone ? " (supprimé)" : ""}`; }).join("; ");
+  const tdFor = (tg) => tds().filter((x) => (x.links || []).some((L) => L.k === tg.k && L.id === tg.id));
+  function tdGo(L) { const K = TD_K[L.k]; if (!K || !tdFind(L.k, L.id)) { notice("Cet élément n'est plus dans le dossier."); return; } K.go(L.id); }
+
+  // Élément de l'appli sous le doigt ou la souris → { k, id } (pour le clic droit et les pastilles)
+  function tdTargetOf(t) {
+    if (!t || !t.closest || t.closest("#v-todo")) return null;
+    let g;
+    const lo = (id) => (state.lignes.some((x) => x.id === id) ? { k: "l", id } : (state.sorties || []).some((x) => x.id === id) ? { k: "o", id } : null);
+    if ((g = t.closest("g.rpit[data-rpi]"))) return { k: "ri", id: g.dataset.rpi };
+    if ((g = t.closest(".rpcase[data-rpc]")) && !t.closest("g.rpit")) return { k: "rc", id: g.dataset.rpc };
+    if ((g = t.closest("#planSvg g.it[data-pid]"))) return { k: "pl", id: g.dataset.pid };
+    if ((g = t.closest("#planSvg g.lab[data-lid]"))) return { k: "pl", id: g.dataset.lid };
+    if ((g = t.closest("#synSvg g.nd[data-nid]"))) return rackById(g.dataset.nid) ? { k: "r", id: g.dataset.nid } : { k: "sn", id: g.dataset.nid };
+    if ((g = t.closest("#gridOut li")) && g.querySelector("[data-goto]")) return lo(g.querySelector("[data-goto]").dataset.goto);
+    if ((g = t.closest("#gridOut .box[data-bid]")) && !t.closest("li")) return { k: "b", id: g.dataset.bid };
+    if ((g = t.closest("#rackOut details.rackd[data-rd] > summary"))) return { k: "r", id: g.parentNode.dataset.rd };
+    if ((g = t.closest("#hfOut .hfg[data-hg] > .hfhead"))) return { k: "hg", id: g.parentNode.dataset.hg };
+    const tr = t.closest("tr"); if (!tr || tr.dataset.td) return null;
+    if (tr.dataset.id) return lo(tr.dataset.id);
+    if (tr.dataset.hr) return { k: "h", id: tr.dataset.hr };
+    if (tr.dataset.hd) return { k: "hd", id: tr.dataset.hd };
+    if (tr.dataset.mid) return { k: "m", id: tr.dataset.mid };
+    if (tr.dataset.lk) return { k: "sl", id: tr.dataset.lk };
+    if (tr.dataset.pk) return { k: "p", id: tr.dataset.pk };
+    if (tr.dataset.fr) return { k: "fx", id: tr.dataset.fr };
+    if (tr.dataset.nk) { const [a, id] = [tr.dataset.nk.slice(0, 1), tr.dataset.nk.slice(2)]; return { k: { r: "r", h: "hd", x: "sn", e: "n" }[a], id }; }
+    if ((g = tr.querySelector("button[data-delrack]"))) return { k: "r", id: g.dataset.delrack };
+    if ((g = tr.querySelector("button[data-delbox]"))) return { k: "b", id: g.dataset.delbox };
+    return null;
+  }
+  // Entrées du clic droit sur un élément : ajouter une tâche liée, voir ses tâches
+  function tdTaskItems(x) {
+    return [{ t: x.done ? "Rouvrir la tâche" : "Marquer comme faite", fn: () => tdToggle(x) }, { t: "Voir dans la To-do", fn: () => tdShow(x.id) }];
+  }
+  function tdCtxItems(tg) {
+    const all = tdFor(tg), open = all.filter((x) => !x.done), done = all.length - open.length;
+    return ["-", { t: "Ajouter une tâche liée…", fn: () => tdNewOpen(tg) },
+      all.length && { t: `Tâches liées : ${open.length} à faire${done ? `, ${done} faite${done > 1 ? "s" : ""}` : ""}`, sub: () => [...[...open, ...all.filter((x) => x.done)].map((x) => ({ t: (x.done ? "✓ " : "○ ") + tdShort(x.txt), sub: () => tdTaskItems(x) })), "-", { t: "Les voir dans la To-do", fn: () => tdShowFor(tg) }] }];
+  }
+  function tdToggle(x) { x.done = !x.done; x.fait = x.done ? new Date().toISOString().slice(0, 19) : ""; commit(true); }
+  let tdFilt = "open", tdWhoF = "", tdOnly = null, tdArmed = null;
+  try { tdFilt = localStorage.getItem("patch-live-todofilter") || "open"; } catch (e) { /* ignore */ }
+  function tdShow(id) {
+    const x = tds().find((z) => z.id === id); if (!x) return;
+    if ((x.done && tdFilt === "open") || (!x.done && tdFilt === "done")) tdFilt = "all";
+    tdWhoF = ""; tdOnly = null; $("#tdSearch").value = "";
+    setView("todo"); tdFlashSel(`#tdTbl tr[data-td="${id}"]`);
+  }
+  function tdShowFor(tg) { tdOnly = tg; tdWhoF = ""; $("#tdSearch").value = ""; if (tdFilt === "done") tdFilt = "all"; setView("todo"); scrollTo({ top: 0 }); }
+
+  // Dialogue « Nouvelle tâche liée à … » : on reste sur la page de l'élément
+  let tdNewFor = null;
+  function tdNewOpen(tg) {
+    tdNewFor = tg; const n = tg && tdLinkName(tg);
+    $("#tdNewFor").textContent = n ? `Liée à ${n.kn.toLowerCase()} « ${n.t} »` : "";
+    $("#tdNewTxt").value = ""; $("#tdNewQui").value = ""; $("#tdNewPour").value = "";
+    tdQuiList(); const d = $("#tdNewDlg"); try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } $("#tdNewTxt").focus();
+  }
+  function tdNewSubmit() {
+    const txt = $("#tdNewTxt").value.trim(); if (!txt) { $("#tdNewTxt").focus(); return; }
+    const x = tdNewTask(txt, tdNewFor ? [{ id: tdNewFor.id, k: tdNewFor.k, t: tdLinkName(tdNewFor).t }] : []);
+    x.qui = $("#tdNewQui").value.trim(); x.pour = $("#tdNewPour").value || "";
+    tdsW().push(x); $("#tdNewDlg").close(); commit(true);
+    notice(`Tâche ajoutée à la To-do : « ${esc(tdShort(txt))} ». <button class="btn small" type="button" data-tdshow="${x.id}">Voir la To-do</button>`);
+  }
+
+  // Choisir l'élément à lier (même recherche que Ctrl+K)
+  let tdLinkTask = null, tdLinkList = [], tdLinkIdx = 0;
+  function tdLinkOpen(x) { tdLinkTask = x; const d = $("#tdLinkDlg"); $("#tdLinkIn").value = ""; tdLinkPaint(); try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } $("#tdLinkIn").focus(); }
+  function tdLinkPaint() {
+    const words = $("#tdLinkIn").value.trim().toLowerCase().split(/\s+/).filter(Boolean), have = new Set((tdLinkTask && tdLinkTask.links || []).map(tdKey));
+    const all = tdAll().filter((x) => !have.has(x.k + ":" + x.id));
+    tdLinkList = (words.length ? all.filter((x) => { const h = (x.t + " " + x.d + " " + x.kn).toLowerCase(); return words.every((w) => h.includes(w)); }) : all).slice(0, 80);
+    tdLinkIdx = 0;
+    $("#tdLinkRes").innerHTML = tdLinkList.length ? tdLinkList.map((x, i) => `<li data-li="${i}"${i === 0 ? ' class="on"' : ""}><span class="gk">${esc(x.kn)}</span><b>${esc(x.t)}</b><span class="gd">${esc(x.d)}</span></li>`).join("") : `<li class="none">Rien trouvé</li>`;
+  }
+  function tdLinkPick(i) {
+    const x = tdLinkList[i], t = tdLinkTask; if (!x || !t) return;
+    $("#tdLinkDlg").close();
+    if (!tds().includes(t)) return;
+    t.links = [...(t.links || []), { id: x.id, k: x.k, t: x.t }]; commit(true);
+  }
+
+  // Pastilles sur les éléments qui ont des tâches à faire (nombre de tâches ; clic = la liste)
+  function tdMarkMap() {
+    const m = new Map();
+    tds().forEach((x) => { if (x.done) return; (x.links || []).forEach((L) => { const k = tdKey(L); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }); });
+    return m;
+  }
+  function tdHosts(k, id) {
+    const q = (s) => [...document.querySelectorAll(s)], e = CSS.escape(id);
+    switch (k) {
+      case "l": case "o": return [...q(`section:not([hidden]) tr[data-id="${e}"] > td:first-child`), ...q(`#gridOut [data-goto="${e}"]`).map((b) => b.closest("li")).filter(Boolean)];
+      case "h": return q(`#hfOut tr[data-hr="${e}"] > td:first-child`);
+      case "hd": return q(`tr[data-hd="${e}"] > td:first-child, #netTbl tr[data-nk="h:${e}"] > td:first-child`);
+      case "hg": return q(`#hfOut .hfg[data-hg="${e}"] > .hfhead`);
+      case "b": return [...q(`#gridOut .box[data-bid="${e}"] > h3`), ...q(`#boxesTbl button[data-delbox="${e}"]`).map((b) => b.closest("tr").cells[0])];
+      case "r": return [...q(`#rackOut details.rackd[data-rd="${e}"] > summary, #netTbl tr[data-nk="r:${e}"] > td:first-child`), ...q(`#racksTbl button[data-delrack="${e}"]`).map((b) => b.closest("tr").cells[0])];
+      case "m": return q(`#manTbl tr[data-mid="${e}"] > td:first-child`);
+      case "sl": return q(`#synLinks tr[data-lk="${e}"] > td:first-child`);
+      case "p": return q(`#portOut tr[data-pk="${e}"] > td:first-child`);
+      case "fx": return q(`tr[data-fr="${e}"] > td:first-child`);
+      case "n": return q(`#netTbl tr[data-nk="e:${e}"] > td:first-child`);
+      case "sn": return q(`#netTbl tr[data-nk="x:${e}"] > td:first-child`);
+      case "rc": return q(`.rpcase[data-rpc="${e}"] > .rphead`);
+      default: return [];
+    }
+  }
+  let tdMarkQ = 0;
+  function tdMarks() {
+    tdMarkQ = 0;
+    const m = tdMarkMap(), keep = new Set();
+    if (m.size) m.forEach((list, key) => {
+      const i = key.indexOf(":"), k = key.slice(0, i), id = key.slice(i + 1);
+      const title = `${list.length} tâche${list.length > 1 ? "s" : ""} à faire : ${list.map((x) => tdShort(x.txt, 60)).join(" ; ")}`;
+      tdHosts(k, id).forEach((h) => {
+        if (h.closest("#v-todo, [hidden]")) return;
+        let b = [...h.children].find((c) => c.classList && c.classList.contains("tdbadge"));
+        if (!b) { b = document.createElement("button"); b.type = "button"; b.className = "tdbadge" + (h.tagName === "TD" || h.tagName === "LI" ? "" : " inl"); b.tabIndex = -1; b.dataset.tdb = key; h.classList.add("td-host"); h.appendChild(b); }
+        if (b.textContent !== String(list.length)) b.textContent = list.length;
+        if (b.title !== title) { b.title = title; b.setAttribute("aria-label", title); }
+        keep.add(b);
+      });
+    });
+    document.querySelectorAll(".tdbadge").forEach((b) => { if (!keep.has(b)) { if (b.parentNode) b.parentNode.classList.remove("td-host"); b.remove(); } });
+  }
+  new MutationObserver(() => { if (!tdMarkQ && (tds().length || document.querySelector(".tdbadge"))) tdMarkQ = requestAnimationFrame(tdMarks); }).observe(document.body, { childList: true, subtree: true });
+  // La pastille ne sélectionne pas la ligne et n'ouvre pas le rack : elle montre les tâches
+  ["pointerdown", "mousedown", "touchstart"].forEach((ev) => document.addEventListener(ev, (e) => { if (e.target.closest && e.target.closest(".tdbadge")) e.stopPropagation(); }, { capture: true, passive: true }));
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".tdbadge"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const key = b.dataset.tdb, i = key.indexOf(":"), tg = { k: key.slice(0, i), id: key.slice(i + 1) }, n = tdLinkName(tg), r = b.getBoundingClientRect();
+    const all = tdFor(tg), open = all.filter((x) => !x.done);
+    CTX.kb = false;
+    ctxOpen(r.left, r.bottom + 2, `Tâches · ${n.t}`, [...open.map((x) => ({ t: "○ " + tdShort(x.txt), sub: () => tdTaskItems(x) })), "-", { t: "Ajouter une tâche liée…", fn: () => tdNewOpen(tg) }, { t: "Les voir dans la To-do", fn: () => tdShowFor(tg) }]);
+  }, true);
+  document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest("[data-tdshow]"); if (b) { $("#notice").hidden = true; tdShow(b.dataset.tdshow); } });
+
+  // ---------- Onglet To-do ----------
+  function tdQuiList() {
+    const seen = new Set(), out = [];
+    [...tds().map((x) => x.qui), ...personNames()].forEach((v) => { v = String(v || "").trim(); const k = v.toLowerCase(); if (v && !seen.has(k)) { seen.add(k); out.push(v); } });
+    $("#dlTdQui").innerHTML = out.map((v) => `<option value="${esc(v)}">`).join("");
+    return out;
+  }
+  function renderTodo() {
+    const L = tds(), q = ($("#tdSearch").value || "").trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean), today = tdToday();
+    const quis = tdQuiList().filter((v) => L.some((x) => (x.qui || "").trim().toLowerCase() === v.toLowerCase()));
+    if (tdWhoF && !quis.some((v) => v.toLowerCase() === tdWhoF.toLowerCase())) tdWhoF = "";
+    $("#tdWho").innerHTML = `<option value="">Tout le monde</option>${quis.map((v) => `<option value="${esc(v)}"${v.toLowerCase() === tdWhoF.toLowerCase() ? " selected" : ""}>${esc(v)}</option>`).join("")}`;
+    $("#tdWho").hidden = !quis.length;
+    document.querySelectorAll("#v-todo [data-tdflt]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tdflt === tdFilt ? "true" : "false"));
+    const only = tdOnly && tdLinkName(tdOnly);
+    $("#tdOnly").hidden = !only;
+    if (only) $("#tdOnly").innerHTML = `Lié à ${esc(only.kn.toLowerCase())} « ${esc(only.t)} » <button type="button" data-tdonlyx aria-label="Montrer toutes les tâches">×</button>`;
+    const nOpen = L.filter((x) => !x.done).length, nLate = L.filter(tdLate).length;
+    $("#tdSum").textContent = L.length ? `${nOpen} à faire${nLate ? `, dont ${nLate} en retard` : ""} · ${L.length - nOpen} faite${L.length - nOpen > 1 ? "s" : ""}` : "";
+    let rows = L.filter((x) => (tdFilt === "open" ? !x.done : tdFilt === "done" ? x.done : true));
+    if (tdWhoF) rows = rows.filter((x) => (x.qui || "").trim().toLowerCase() === tdWhoF.toLowerCase());
+    if (tdOnly) rows = rows.filter((x) => (x.links || []).some((z) => z.k === tdOnly.k && z.id === tdOnly.id));
+    if (words.length) rows = rows.filter((x) => { const h = [x.txt, x.qui, x.notes, tdLinksText(x)].join(" ").toLowerCase(); return words.every((w) => h.includes(w)); });
+    if (tdFilt === "all") rows = [...rows.filter((x) => !x.done), ...rows.filter((x) => x.done)];
+    const chip = (L2, i) => { const n = tdLinkName(L2); return `<span class="tdchip${n.gone ? " gone" : ""}"><button type="button" data-tdgo="${i}" title="${n.gone ? "Élément supprimé du dossier" : `Aller à ${esc(n.kn.toLowerCase())} « ${esc(n.t)} »`}"><span class="tdk">${esc(n.kn)}</span> ${esc(n.t)}</button><button type="button" data-tdunlink="${i}" aria-label="Retirer le lien vers ${esc(n.t)}" title="Retirer le lien">×</button></span>`; };
+    const empty = !L.length
+      ? `<div class="empty-state">Aucune tâche pour ce dossier. « + Tâche » en ajoute une ici ; depuis n'importe quelle page, clic droit (ou appui long) sur une source, une sortie, un boîtier, un appareil… › « Ajouter une tâche liée ».</div>`
+      : `<div class="empty-state">${tdFilt === "open" && !q && !tdOnly && !tdWhoF ? "Tout est fait." : "Aucune tâche ne correspond."}</div>`;
+    $("#tdTblWrap").innerHTML = rows.length ? `<table id="tdTbl" class="cards"><thead><tr><th class="tdck">Fait</th><th>Tâche</th><th>Lié à</th><th>Qui</th><th>Pour le</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map((x) => `
+      <tr data-td="${x.id}" class="${[x.done ? "tddone" : "", tdLate(x) ? "tdlate" : "", !x.done && x.pour === today ? "tdtoday" : ""].filter(Boolean).join(" ")}">
+        <td class="tdck" data-l="Fait"><input type="checkbox" data-tdf="done"${x.done ? " checked" : ""} aria-label="${x.done ? "Faite" : "À faire"} : ${esc(tdShort(x.txt))}"></td>
+        <td class="tdtxt wide2" data-l="Tâche"><textarea data-tdf="txt" rows="1" aria-label="Tâche" placeholder="Ce qu'il y a à faire">${esc(x.txt)}</textarea></td>
+        <td class="tdlk" data-l="Lié à"><div class="tdlinks">${(x.links || []).map(chip).join("")}<button type="button" class="tdlk-add" data-tdlink title="Lier à une source, une sortie, un boîtier, un appareil, une page…">+ Lier</button></div></td>
+        <td class="tdqui" data-l="Qui" style="min-width:110px"><input type="text" data-tdf="qui" value="${esc(x.qui)}" aria-label="Qui" placeholder="—" autocomplete="off" data-suggest="dlTdQui"></td>
+        <td class="tdpour" data-l="Pour le" style="width:150px"><input type="date" data-tdf="pour" value="${esc(x.pour)}" aria-label="Pour le"${tdLate(x) ? ' title="En retard"' : ""}></td>
+        <td class="tdnotes" data-l="Notes"><textarea data-tdf="notes" rows="1" aria-label="Notes" placeholder="—">${esc(x.notes)}</textarea></td>
+        <td class="x"><button class="btn small danger xdel" type="button" data-tddel="${x.id}" title="Supprimer la tâche" aria-label="Supprimer la tâche">×</button></td>
+      </tr>`).join("")}</tbody></table>` : empty;
+    if (rows.length) requestAnimationFrame(() => document.querySelectorAll("#tdTbl textarea").forEach(hfGrow));
+  }
+  function tdBind() {
+    const wrap = $("#tdTblWrap"), task = (el) => { const tr = el.closest("tr[data-td]"); return tr && tds().find((x) => x.id === tr.dataset.td); };
+    $("#tdAdd").addEventListener("click", () => {
+      const x = tdNewTask("", tdOnly ? [{ id: tdOnly.id, k: tdOnly.k, t: tdLinkName(tdOnly).t }] : []); if (tdWhoF) x.qui = tdWhoF;
+      tdsW().push(x); if (tdFilt === "done") tdFilt = "open"; $("#tdSearch").value = ""; commit(true);
+      const i = document.querySelector(`#tdTbl tr[data-td="${x.id}"] textarea[data-tdf="txt"]`); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); }
+    });
+    $("#tdSearch").addEventListener("input", renderTodo);
+    $("#tdWho").addEventListener("change", (e) => { tdWhoF = e.target.value; renderTodo(); });
+    $("#v-todo").addEventListener("click", (e) => {
+      const f = e.target.closest("[data-tdflt]"); if (f) { tdFilt = f.dataset.tdflt; try { localStorage.setItem("patch-live-todofilter", tdFilt); } catch (err) { /* ignore */ } renderTodo(); return; }
+      if (e.target.closest("[data-tdonlyx]")) { tdOnly = null; renderTodo(); }
+    });
+    wrap.addEventListener("change", (e) => {
+      const t = e.target, f = t.dataset.tdf, x = task(t); if (!f || !x) return;
+      if (f === "done") { x.done = t.checked; x.fait = x.done ? new Date().toISOString().slice(0, 19) : ""; commit(true); return; }
+      x[f] = f === "pour" ? t.value || "" : t.value.replace(/\s+$/, "");
+      if (f === "pour") { const tr = t.closest("tr"); tr.classList.toggle("tdlate", tdLate(x)); tr.classList.toggle("tdtoday", !x.done && x.pour === tdToday()); }
+      commit(false);
+    });
+    wrap.addEventListener("input", (e) => { if (e.target.tagName === "TEXTAREA") hfGrow(e.target); });
+    // Entrée valide la case (comme dans HF › Réglages) ; Maj+Entrée passe à la ligne
+    wrap.addEventListener("keydown", (e) => { if (e.target.tagName === "TEXTAREA" && e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.target.blur(); } });
+    wrap.addEventListener("click", (e) => {
+      const x = task(e.target); if (!x) return;
+      let b;
+      if ((b = e.target.closest("[data-tdgo]"))) { const L2 = (x.links || [])[+b.dataset.tdgo]; if (L2) tdGo(L2); return; }
+      if ((b = e.target.closest("[data-tdunlink]"))) { x.links = (x.links || []).filter((_, i) => i !== +b.dataset.tdunlink); commit(true); return; }
+      if (e.target.closest("[data-tdlink]")) { tdLinkOpen(x); return; }
+      if ((b = e.target.closest("[data-tddel]"))) {
+        if (tdArmed !== x.id || !b.classList.contains("armed")) { tdArmed = x.id; b.classList.add("armed"); b.textContent = "Confirmer"; setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "×"; } tdArmed = null; }, 3000); return; }
+        tdArmed = null; state.todos = tds().filter((z) => z !== x); commit(true);
+      }
+    });
+    $("#tdLinkIn").addEventListener("input", tdLinkPaint);
+    $("#tdLinkIn").addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); tdLinkIdx = Math.max(0, Math.min(tdLinkList.length - 1, tdLinkIdx + (e.key === "ArrowDown" ? 1 : -1))); document.querySelectorAll("#tdLinkRes li").forEach((li, i) => li.classList.toggle("on", i === tdLinkIdx)); const on = $("#tdLinkRes li.on"); if (on) on.scrollIntoView({ block: "nearest" }); }
+      if (e.key === "Enter") { e.preventDefault(); tdLinkPick(tdLinkIdx); }
+      if (e.key === "Escape") { e.preventDefault(); $("#tdLinkDlg").close(); }
+    });
+    $("#tdLinkRes").addEventListener("click", (e) => { const li = e.target.closest("li[data-li]"); if (li) tdLinkPick(Number(li.dataset.li)); });
+    $("#tdLinkDlg").addEventListener("click", (e) => { if (e.target.id === "tdLinkDlg") $("#tdLinkDlg").close(); });
+    $("#tdNewForm").addEventListener("submit", (e) => { e.preventDefault(); tdNewSubmit(); });
+    $("#tdNewTxt").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); tdNewSubmit(); } });
+    $("#tdNewDlg").addEventListener("click", (e) => { if (e.target.id === "tdNewDlg" || e.target.closest("[data-tdnclose]")) $("#tdNewDlg").close(); });
+  }
+  // Clic droit sur une tâche
+  function ctxTodo(tr) {
+    const L = tds(), x = L.find((z) => z.id === tr.dataset.td); if (!x) return null;
+    const ins = (at) => { const n = tdNewTask(""); L.splice(at, 0, n); commit(true); const i = document.querySelector(`#tdTbl tr[data-td="${n.id}"] textarea`); if (i) i.focus(); };
+    const ls = (x.links || []).filter((z) => tdFind(z.k, z.id));
+    return [tdShort(x.txt, 40), [
+      { t: x.done ? "Rouvrir la tâche" : "Marquer comme faite", fn: () => tdToggle(x) },
+      { t: "Lier à un élément…", fn: () => tdLinkOpen(x) },
+      ls.length === 1 && { t: `Aller à « ${tdLinkName(ls[0]).t} »`, fn: () => tdGo(ls[0]) },
+      ls.length > 1 && { t: "Aller à", sub: () => ls.map((z) => { const n = tdLinkName(z); return { t: `${n.kn} · ${n.t}`, fn: () => tdGo(z) }; }) },
+      "-",
+      { t: "Insérer une tâche en dessous", fn: () => ins(L.indexOf(x) + 1) },
+      { t: "Dupliquer", fn: () => { L.splice(L.indexOf(x) + 1, 0, { ...JSON.parse(JSON.stringify(x)), id: nid(), done: false, fait: "", cree: new Date().toISOString().slice(0, 19) }); commit(true); } },
+      ...mvItems(L, x),
+      "-", { t: "Supprimer la tâche…", danger: true, fn: () => { state.todos = tds().filter((z) => z !== x); commit(true); } }]];
+  }
+
+  // ---------- To-do dans Excel : feuille lisible sans l'appli, corrections reprises à la réouverture ----------
+  const TD_HEAD = ["Fait", "Tâche", "Lié à", "Qui", "Pour le", "Notes", "Créée le", "ID appli"];
+  function tdSheet(wb, titre) {
+    const ws = wb.addWorksheet("To-do", { views: [{ state: "frozen", ySplit: 2 }] });
+    ws.addRow([`To-do · ${titre}`]).font = { bold: true, size: 14 };
+    styleHead(ws.addRow(TD_HEAD));
+    [7, 46, 40, 16, 12, 34, 12, 12].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    ws.getColumn(5).numFmt = "dd/mm/yyyy"; ws.getColumn(7).numFmt = "dd/mm/yyyy";
+    const today = tdToday();
+    tds().forEach((x) => {
+      const d = (s) => (/^\d{4}-\d\d-\d\d/.test(s || "") ? new Date(s.slice(0, 10) + "T00:00:00Z") : "");
+      const row = ws.addRow([x.done ? "Oui" : "", x.txt, tdLinksText(x), x.qui || "", d(x.pour), x.notes || "", d(x.cree), x.id]);
+      row.eachCell({ includeEmpty: true }, (c) => { c.border = BORDER; c.alignment = { vertical: "top", wrapText: true }; });
+      if (x.done) row.eachCell({ includeEmpty: true }, (c) => { c.font = { color: { argb: "FF8A9096" }, strike: c.col === 2 }; });
+      else if (x.pour && x.pour < today) row.getCell(5).font = { bold: true, color: { argb: "FFA3201A" } };
+    });
+    ws.getColumn(TD_HEAD.length).hidden = true;
+    ws.addRow([]);
+    ws.addRow(["", "Fait : écris Oui quand c'est fait. Tu peux modifier les tâches ou en ajouter en bas (laisse « ID appli » vide) : l'appli les reprend à la réouverture. Lié à : « Type : nom », séparés par des points-virgules."]).getCell(2).font = { italic: true, color: { argb: "FF6B7177" } };
+    page(ws, true); ws.pageSetup.printTitlesRow = "2:2";
+  }
+  function tdCellDate(c) {
+    const v = c.value; if (v instanceof Date) return v.toISOString().slice(0, 10);
+    const t = cellText(c); let m;
+    if ((m = t.match(/^(\d{4})-(\d\d)-(\d\d)/))) return `${m[1]}-${m[2]}-${m[3]}`;
+    if ((m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/))) return `${m[3].length === 2 ? "20" + m[3] : m[3]}-${tdPad(m[2])}-${tdPad(m[1])}`;
+    return t ? null : "";
+  }
+  function tdReconcile(next, ws, rep) {
+    if (!ws) return;
+    const prev = state; state = next;
+    try {
+      const head = ws.getRow(2).values.map((v) => (v == null ? "" : String(v))), col = (n) => head.indexOf(n);
+      const iId = col("ID appli"), iT = col("Tâche"); if (iId < 1 || iT < 1) return;
+      const L = Array.isArray(next.todos) ? next.todos : [], order = [];
+      let all = null;
+      for (let r = 3; r <= ws.rowCount; r++) {
+        const row = ws.getRow(r), get = (n) => { const i = col(n); return i > 0 ? cellText(row.getCell(i)) : null; };
+        const id = get("ID appli"), txt = get("Tâche");
+        if (!id && !txt) continue;
+        if (!id && /^Fait : écris Oui/.test(txt)) continue;
+        let x = id ? L.find((z) => z.id === id) : null;
+        if (!x) { x = tdNewTask(txt); L.push(x); rep.added++; }
+        order.push(x);
+        let touched = false;
+        const set = (f, v) => { if (v !== null && v !== undefined && (x[f] || "") !== v) { x[f] = v; touched = true; } };
+        set("txt", txt); set("qui", get("Qui")); set("notes", get("Notes"));
+        if (get("Fait") !== null) { const done = /^(oui|x|1|yes|fait|ok|✓|✔)$/i.test(get("Fait")); if (!!x.done !== done) { x.done = done; x.fait = done ? new Date().toISOString().slice(0, 19) : ""; touched = true; } }
+        if (col("Pour le") > 0) { const d = tdCellDate(row.getCell(col("Pour le"))); if (d === null) rep.problems.push(`To-do, ligne ${r - 2} : « ${get("Pour le")} » n'est pas une date, ancienne échéance gardée.`); else set("pour", d); }
+        const lk = get("Lié à");
+        if (lk !== null && lk !== tdLinksText(x)) {
+          all = all || tdAll();
+          const keep = (x.links || []).map((z) => [`${tdLinkName(z).kn} : ${tdLinkName(z).t}`.toLowerCase(), z]);
+          const links = [];
+          lk.split(/\s*;\s*/).map((s) => s.trim().replace(/\s*\(supprimé\)$/, "")).filter(Boolean).forEach((s) => {
+            const old = keep.find(([n]) => n === s.toLowerCase());
+            if (old) { links.push(old[1]); return; }
+            const m = s.match(/^(.+?)\s*:\s*(.+)$/), hit = m && all.find((z) => z.kn.toLowerCase() === m[1].toLowerCase() && z.t.toLowerCase() === m[2].toLowerCase());
+            const hit2 = hit || all.find((z) => z.t.toLowerCase() === s.toLowerCase());
+            if (hit2) links.push({ id: hit2.id, k: hit2.k, t: hit2.t }); else rep.problems.push(`To-do, ligne ${r - 2} : « ${s} » ne correspond à aucun élément du dossier, lien non repris.`);
+          });
+          if (J(links) !== J(x.links || [])) { x.links = links; touched = true; }
+        }
+        if (touched && id) rep.changed++;
+      }
+      const kept = new Set(order.map((x) => x.id)), gone = L.filter((x) => !kept.has(x.id));
+      if (order.length && gone.length) rep.problems.push(`${gone.length} tâche${gone.length > 1 ? "s" : ""} absente${gone.length > 1 ? "s" : ""} de la feuille To-do supprimée${gone.length > 1 ? "s" : ""} : ${gone.map((x) => tdShort(x.txt, 30)).join(", ")}.`);
+      next.todos = order.length || !L.length ? order : L;
+    } finally { state = prev; }
+  }
   // Recherche globale : Ctrl+K ou « / » depuis n'importe quel onglet
   function gsItems() {
     const out = [], cols = srCols();
@@ -12495,6 +12955,8 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
     (state.sorties || []).forEach((o) => out.push({ k: "Sortie", t: o.mix || o.dest || "(sortie)", d: [o.dest, o.type, outDest(o), rackAddr(o.out)].filter(Boolean).join(" · "), go: () => gotoRow("sorties", o.id) }));
     hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); if (closedHf.has(g.id)) hfFold([g.id], true); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
     state.racks.forEach((r) => out.push({ k: "Rack / I/O", t: rackTitle(r), d: `${rackInputs(r).length} in / ${rackOutputs(r).length} out`, go: () => { setView("racks"); const d = document.querySelector(`details[data-rd="${r.id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } }));
+    tds().forEach((x) => out.push({ k: x.done ? "Tâche faite" : "Tâche", t: tdShort(x.txt, 80), d: [x.qui, x.pour, tdLinksText(x)].filter(Boolean).join(" · "), go: () => tdShow(x.id) }));
+    ["hd", "p", "rc", "ri", "pl", "sn", "sl", "m", "fx", "n"].forEach((k) => { try { TD_K[k].all().forEach((x) => out.push({ k: TD_K[k].k, t: x.t, d: x.d, go: () => TD_K[k].go(x.id) })); } catch (e) { /* ignore */ } });
     state.boites.forEach((b) => out.push({ k: "Boîtier", t: boxTitle(b), d: b.cote || "", go: () => { setView("boites"); const d = document.querySelector(`[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); d.classList.remove("flashbox"); void d.offsetWidth; d.classList.add("flashbox"); } } }));
     return out;
   }
