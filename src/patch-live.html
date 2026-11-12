@@ -192,7 +192,8 @@ table.portt tr.pdrop-a td { box-shadow: inset 0 3px 0 var(--accent); } table.por
 .pchip:hover { border-color: var(--muted); background: var(--rowhover); }
 th[data-ck] { cursor: grab; }
 .colord { display: flex; align-items: center; gap: 4px; } .colord span { flex: 1; } .colord button { min-width: 32px; min-height: 28px; }
-th[data-ck].coldrag { opacity: 0.45; }
+th[data-ck].coldrag, th[data-gc].coldrag { opacity: 0.45; }
+th[data-gc] { cursor: grab; }
 th.coldrop-l { box-shadow: inset 3px 0 0 var(--accent); }
 th.coldrop-r { box-shadow: inset -3px 0 0 var(--accent); }
 .btn.xdel { min-width: 30px; padding: 2px 8px; font-size: 17px; line-height: 1.2; font-weight: 700; color: var(--danger); }
@@ -652,9 +653,9 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
   .hfdev .hfdt td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
   .hfdev .hfdt td input { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
   .hfdev .hdlk { justify-content: flex-start; }
-  .hfdev .hfdt td:nth-child(1) { grid-area: mo; } .hfdev .hfdt td:nth-child(2) { grid-area: no; }
-  .hfdev .hfdt td:nth-child(3) { grid-area: ba; } .hfdev .hfdt td:nth-child(4) { grid-area: nn; }
-  .hfdev .hfdt td:nth-child(5) { grid-area: us; } .hfdev .hfdt td:nth-child(6) { grid-area: nt; }
+  .hfdev .hfdt td[data-cix="0"] { grid-area: mo; } .hfdev .hfdt td[data-cix="1"] { grid-area: no; }
+  .hfdev .hfdt td[data-cix="2"] { grid-area: ba; } .hfdev .hfdt td[data-cix="3"] { grid-area: nn; }
+  .hfdev .hfdt td[data-cix="4"] { grid-area: us; } .hfdev .hfdt td[data-cix="5"] { grid-area: nt; }
   .hfdev .hfdt td.x { grid-area: x; align-self: start; }
   .hfdev .hdlk input { width: 56px !important; }
   .hfdev .hdus { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 15px; }
@@ -3393,21 +3394,83 @@ table.master td.nopad input { opacity: 0.8; }
   const inColOrder = (t, parts) => colOrder(t).map((k) => parts[k] || "").join("");
   const colTh = (t, k) => ` draggable="true" data-ct="${t}" data-ck="${k}"`;
   function moveCol(t, k, d) { const o = colOrder(t), i = o.indexOf(k), j = i + d; if (i < 0 || j < 0 || j >= o.length) return; o.splice(i, 1); o.splice(j, 0, k); setColOrder(t, o); }
+  // ---------- Colonnes déplaçables dans tous les autres tableaux ----------
+  // Même geste partout : glisser un titre (souris, trackpad) ou clic droit / appui long sur un titre (doigt, clavier).
+  // Chaque tableau garde son ordre dans ce navigateur ; les colonnes sans titre (boutons, poignées) ne bougent pas.
+  const GCOL_LS = "patch-live-colorder-g";
+  let gcolSaved = {}; try { gcolSaved = JSON.parse(localStorage.getItem(GCOL_LS) || "{}") || {}; } catch (e) { gcolSaved = {}; }
+  // Fusionne l'ordre enregistré avec les colonnes présentes (les nouvelles se placent après leur voisine par défaut)
+  function mergeOrder(def, saved) {
+    const o = (Array.isArray(saved) ? saved : []).filter((k, i, a) => def.includes(k) && a.indexOf(k) === i);
+    def.forEach((k, i) => { if (o.includes(k)) return; const prev = def.slice(0, i).reverse().find((p) => o.includes(p)); o.splice(prev ? o.indexOf(prev) + 1 : 0, 0, k); });
+    return o;
+  }
+  const headRow = (t) => (t.tHead && t.tHead.rows.length === 1 ? t.tHead.rows[0] : !t.tHead && t.rows[0] && [...t.rows[0].cells].every((c) => c.tagName === "TH") ? t.rows[0] : null);
+  function permRow(tr, perm) {
+    const cells = [...tr.cells];
+    if (cells.length !== perm.length || cells.some((c) => c.colSpan > 1)) return;
+    if (cells[0]._ci === undefined) cells.forEach((c, i) => { c._ci = i; c.dataset.cix = i; });
+    if (cells.every((c, i) => c._ci === perm[i])) return;
+    const by = []; cells.forEach((c) => { by[c._ci] = c; }); if (perm.some((ci) => !by[ci])) return;
+    const ae = document.activeElement, keep = ae && tr.contains(ae) ? ae : null;
+    let s = null; try { s = keep && keep.selectionStart != null ? [keep.selectionStart, keep.selectionEnd] : null; } catch (e) { s = null; }
+    perm.forEach((ci) => tr.appendChild(by[ci]));
+    if (keep && document.activeElement !== keep) { keep.focus({ preventScroll: true }); if (s) try { keep.setSelectionRange(s[0], s[1]); } catch (e) { /* ignore */ } }
+  }
+  function gcolApply(t) {
+    if (!t.isConnected || !t.closest('section[id^="v-"]') || t.querySelector("th[data-ck]")) return;
+    const hr = headRow(t); if (!hr) return;
+    const hs = [...hr.cells]; if (hs.length < 2 || hs.some((c) => c.colSpan > 1) || [...t.rows].some((r) => [...r.cells].some((c) => c.rowSpan > 1))) return;
+    if (hs[0]._ci === undefined) hs.forEach((c, i) => { c._ci = i; c.dataset.cix = i; });
+    const def = []; hs.forEach((c) => { def[c._ci] = c; });
+    const seen = {}, labels = def.map((c) => { const l = c.textContent.trim().replace(/\s+/g, " "); if (!l || c.querySelector("input, select, button, textarea")) return ""; seen[l] = (seen[l] || 0) + 1; return seen[l] > 1 ? `${l} (${seen[l]})` : l; });
+    const mov = labels.map((l, i) => (l ? i : -1)).filter((i) => i >= 0); if (mov.length < 2) return;
+    const key = t.closest('section[id^="v-"]').id + "|" + labels.filter(Boolean).sort().join("|");
+    t.dataset.gk = key; t._gmov = mov.map((i) => labels[i]);
+    mov.forEach((i) => { const th = def[i]; if (th.dataset.gc !== labels[i]) { th.dataset.gc = labels[i]; th.draggable = true; th.title = th.title || "Glisser pour déplacer la colonne (clic droit ou appui long : plus de choix)"; } });
+    const order = mergeOrder(t._gmov, gcolSaved[key]), perm = def.map((_, i) => i);
+    mov.forEach((slot, j) => { perm[slot] = labels.indexOf(order[j]); });
+    [...t.rows].forEach((r) => permRow(r, perm));
+  }
+  function gcolSet(key, o) {
+    if (o) gcolSaved[key] = o; else delete gcolSaved[key];
+    try { localStorage.setItem(GCOL_LS, JSON.stringify(gcolSaved)); } catch (e) { /* ignore */ }
+    document.querySelectorAll("table[data-gk]").forEach((t) => { if (t.dataset.gk === key) gcolApply(t); });
+  }
+  // Les tableaux sont redessinés souvent : on remet l'ordre choisi juste après, avant l'affichage
+  new MutationObserver((ms) => {
+    const ts = new Set();
+    ms.forEach((m) => {
+      const tb = m.target.closest ? m.target.closest("table") : null; if (tb) ts.add(tb);
+      m.addedNodes.forEach((n) => { if (n.nodeType !== 1) return; if (n.tagName === "TABLE") ts.add(n); else if (n.querySelectorAll && n.tagName !== "TR" && n.tagName !== "TBODY") n.querySelectorAll("table").forEach((x) => ts.add(x)); });
+    });
+    ts.forEach(gcolApply);
+  }).observe(document.body, { childList: true, subtree: true });
+  // Une colonne, qu'elle soit du master / des sorties (ordre partagé avec les racks) ou d'un autre tableau
+  function colRef(th) {
+    if (!th || th.tagName !== "TH") return null;
+    if (th.dataset.ck) { const t = th.dataset.ct; return { id: "m:" + t, k: th.dataset.ck, name: COL_NAME[t][th.dataset.ck], order: () => colOrder(t), set: (o) => setColOrder(t, o), master: t }; }
+    const tb = th.closest("table[data-gk]"); if (!th.dataset.gc || !tb) return null;
+    const key = tb.dataset.gk, mov = tb._gmov || [];
+    return { id: "g:" + key, k: th.dataset.gc, name: th.dataset.gc.replace(/ \(\d+\)$/, ""), order: () => mergeOrder(mov, gcolSaved[key]), set: (o) => gcolSet(key, o) };
+  }
+  function colPut(c, j) { const o = c.order().filter((k) => k !== c.k); o.splice(Math.max(0, Math.min(o.length, j)), 0, c.k); c.set(o); }
   // Glisser un titre de colonne sur un autre (souris ou trackpad)
   let colDrag = null;
-  document.addEventListener("dragstart", (e) => { const th = e.target.closest && e.target.closest("th[data-ck]"); if (!th) return; colDrag = { t: th.dataset.ct, k: th.dataset.ck }; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", th.dataset.ck); } catch (err) { /* ignore */ } th.classList.add("coldrag"); });
+  document.addEventListener("dragstart", (e) => { const th = e.target.closest && e.target.closest("th[data-ck], th[data-gc]"), c = colRef(th); if (!c) return; colDrag = c; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", c.k); } catch (err) { /* ignore */ } th.classList.add("coldrag"); });
+  const colOver = (e) => { const th = e.target.closest && e.target.closest("th[data-ck], th[data-gc]"), c = colRef(th); return c && c.id === colDrag.id && c.k !== colDrag.k ? [th, c] : null; };
   document.addEventListener("dragover", (e) => {
-    if (!colDrag) return; const th = e.target.closest && e.target.closest("th[data-ck]");
+    if (!colDrag) return; const hit = colOver(e);
     document.querySelectorAll("th.coldrop-l, th.coldrop-r").forEach((x) => x.classList.remove("coldrop-l", "coldrop-r"));
-    if (!th || th.dataset.ct !== colDrag.t || th.dataset.ck === colDrag.k) return;
-    e.preventDefault(); const r = th.getBoundingClientRect(); th.classList.add(e.clientX < r.left + r.width / 2 ? "coldrop-l" : "coldrop-r");
+    if (!hit) return;
+    e.preventDefault(); const r = hit[0].getBoundingClientRect(); hit[0].classList.add(e.clientX < r.left + r.width / 2 ? "coldrop-l" : "coldrop-r");
   });
   document.addEventListener("drop", (e) => {
-    if (!colDrag) return; const th = e.target.closest && e.target.closest("th[data-ck]"), d = colDrag; colDrag = null;
-    if (!th || th.dataset.ct !== d.t || th.dataset.ck === d.k) return;
-    e.preventDefault(); const r = th.getBoundingClientRect(), after = e.clientX >= r.left + r.width / 2;
-    const o = colOrder(d.t).filter((k) => k !== d.k); let j = o.indexOf(th.dataset.ck) + (after ? 1 : 0); o.splice(j, 0, d.k); setColOrder(d.t, o);
-    notice(`Colonne « ${esc(COL_NAME[d.t][d.k])} » déplacée. Ordre par défaut : menu … › Colonnes.`);
+    if (!colDrag) return; const hit = colOver(e), d = colDrag; colDrag = null;
+    if (!hit) return;
+    e.preventDefault(); const r = hit[0].getBoundingClientRect(), after = e.clientX >= r.left + r.width / 2;
+    const o = d.order().filter((k) => k !== d.k); o.splice(o.indexOf(hit[1].k) + (after ? 1 : 0), 0, d.k); d.set(o);
+    notice(`Colonne « ${esc(d.name)} » déplacée. Clic droit sur un titre pour remettre l'ordre par défaut.`);
   });
   document.addEventListener("dragend", () => { colDrag = null; document.querySelectorAll("th.coldrag, th.coldrop-l, th.coldrop-r").forEach((x) => x.classList.remove("coldrag", "coldrop-l", "coldrop-r")); });
 
@@ -10950,7 +11013,7 @@ table.master td.nopad input { opacity: 0.8; }
   // ---------- Menus clic droit ----------
   // Un seul menu pour toute l'appli : clic droit à la souris, appui long au doigt, touche Menu (ou Maj+F10) au clavier.
   // Chaque écran y met ses actions rapides ; Maj+clic droit garde le menu habituel du navigateur (copier, coller).
-  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel]";
+  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel], [data-hddel], button[data-fxdel], button[data-netdel]";
   const boxUsed = (b) => [...state.lignes, ...(state.sorties || [])].some((x) => x.box && x.box.b === b.id);
   const CTX = { items: [], stack: [], title: "", xy: [0, 0], opened: 0 };
   function ctxRender() {
@@ -11212,33 +11275,143 @@ table.master td.nopad input { opacity: 0.8; }
       { t: "Ajouter une zone ici", fn: () => { const used = new Set(S.zones.map((z) => z.nom)); const id = nid(); S.zones.push({ id, nom: ZONE_PRESETS.find((v) => !used.has(v)) || "Zone", x: r10(p.x - 20), y: r10(p.y - 20), w: 420, h: 260 }); synSel = "z:" + id; commit(true); } },
       { t: "Nouvelle liaison", fn: () => $("#synAddLink").click() }]];
   }
+  // Monter / descendre dans une liste, en sautant les éléments d'un autre groupe (même type d'appareil, même section…)
+  function moveAmong(arr, x, d, same = () => true) { const i = arr.indexOf(x); let j = i + d; while (j >= 0 && j < arr.length && !same(arr[j])) j += d; if (i < 0 || j < 0 || j >= arr.length) return false; arr[i] = arr[j]; arr[j] = x; return true; }
+  const canMove = (arr, x, d, same = () => true) => { let j = arr.indexOf(x) + d; while (j >= 0 && j < arr.length && !same(arr[j])) j += d; return arr.includes(x) && j >= 0 && j < arr.length; };
+  const mvItems = (arr, x, same) => [
+    { t: "Monter d'un rang", off: !canMove(arr, x, -1, same), fn: () => { if (moveAmong(arr, x, -1, same)) commit(true); } },
+    { t: "Descendre d'un rang", off: !canMove(arr, x, 1, same), fn: () => { if (moveAmong(arr, x, 1, same)) commit(true); } }];
   function ctxRow(tr, del) {
     const name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
-    const rm = { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
+    const rm = del && { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
     const hr = tr.dataset.hr && tr.closest("[data-hg]");
     if (hr) {
       const g = hfState().find((x) => x.id === hr.dataset.hg), r = g && g.rows.find((x) => x.id === tr.dataset.hr); if (!r) return null;
       const blank = () => (g.kind === "spx" ? { id: nid(), nom: "", iem: "LIVE_S" } : g.kind === "spxm" ? { id: nid(), nom: "", mic: "LIVE" } : { id: nid(), nom: "" });
       const at = g.rows.indexOf(r);
-      return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } }, "-", rm]];
+      return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } },
+        "-", r.nom && personNames().some((n) => musKey(n) === musKey(r.nom)) && { t: "Voir dans Porteurs", fn: () => { setView("porteurs"); showSetupRow(`#portOut tr[data-pk="${CSS.escape(musKey(r.nom))}"] input`); } },
+        "-", ...mvItems(g.rows, r), "-", rm]];
+    }
+    if (tr.dataset.hd) {
+      const d = hfDevById(tr.dataset.hd); if (!d) return null;
+      const D = hfDevs(), same = (x) => x.kind === d.kind;
+      return [d.nom || d.model, [
+        { t: "Dupliquer", fn: () => { let k = D.filter((x) => x.model === d.model).length + 1; while (D.some((x) => x.nom === `${d.model} #${k}`)) k++; D.splice(D.indexOf(d) + 1, 0, { ...d, id: nid(), nom: `${d.model} #${k}` }); commit(true); } },
+        "-", rpPutItem("hf", d.id),
+        "-", ...mvItems(D, d, same), "-", rm]];
     }
     if (tr.dataset.mid) {
-      const m = (state.materiel || []).find((x) => x.id === tr.dataset.mid); if (!m) return null;
-      return [m.nom || "Matériel", [{ t: "Dupliquer", fn: () => { state.materiel.splice(state.materiel.indexOf(m) + 1, 0, { ...m, id: nid() }); commit(true); } }, "-", rm]];
+      const L = state.materiel || [], m = L.find((x) => x.id === tr.dataset.mid); if (!m) return null;
+      const ins = (at) => { const n = { id: nid(), nom: "", qte: 1, cat: m.cat || "", notes: "" }; L.splice(at, 0, n); commit(true); const i = document.querySelector(`#manTbl tr[data-mid="${n.id}"] input`); if (i) i.focus(); };
+      return [m.nom || "Matériel", [{ t: "Insérer une ligne au-dessus", fn: () => ins(L.indexOf(m)) }, { t: "Insérer une ligne en dessous", fn: () => ins(L.indexOf(m) + 1) }, { t: "Dupliquer", fn: () => { L.splice(L.indexOf(m) + 1, 0, { ...m, id: nid() }); commit(true); } }, "-", ...mvItems(L, m), "-", rm]];
     }
     if (tr.dataset.lk) {
-      const l = synState().links.find((x) => x.id === tr.dataset.lk); if (!l) return null;
-      return ["Liaison", [...SYN_DIRS.map(([k, t]) => ({ t: "Sens : " + t, on: (l.dir || "") === k, fn: () => { l.dir = k; commit(true); } })), "-", rm]];
+      const S = synState(), l = S.links.find((x) => x.id === tr.dataset.lk); if (!l) return null;
+      return ["Liaison", [{ t: "Dupliquer", fn: () => { S.links.splice(S.links.indexOf(l) + 1, 0, JSON.parse(JSON.stringify({ ...l, id: nid() }))); commit(true); } },
+        { t: "Sens", sub: () => SYN_DIRS.map(([k, t]) => ({ t, on: (l.dir || "") === k, fn: () => { l.dir = k; commit(true); } })) },
+        "-", ...mvItems(S.links, l), "-", rm]];
     }
-    if (del.matches("[data-delrack]")) {
+    if (tr.dataset.pk) {
+      const k = tr.dataset.pk, nm = personNames().find((n) => musKey(n) === k); if (!nm) return null;
+      const u = personUses(nm), L = personNames(), i = L.indexOf(nm);
+      return [nm, [
+        { t: "Couleur", sub: () => [...RES_COLORS.map(([v, t]) => ({ t, on: musColors()[k] === v, fn: () => { musColors()[k] = v; commit(true); } })), "-", { t: "Sans couleur", fn: () => { delete musColors()[k]; commit(true); } }] },
+        { t: "Renommer…", fn: () => { const x = tr.querySelector("input[data-pn]"); if (x) { x.focus(); x.select(); } } },
+        "-",
+        u.src.length && { t: `Voir ses sources dans le master (${u.src.length})`, fn: () => { setView(homeView()); focusRow(u.src[0].id); } },
+        u.outs.length && { t: `Voir ses mix dans Sorties (${u.outs.length})`, fn: () => { setView("sorties"); focusRow(u.outs[0].id); } },
+        "-",
+        { t: "Monter d'un rang", off: i === 0, fn: () => portMove(k, -1) },
+        { t: "Descendre d'un rang", off: i === L.length - 1, fn: () => portMove(k, 1) },
+        "-", { t: u.n ? `Retirer ${nm} (efface ${u.n} case${u.n > 1 ? "s" : ""})…` : `Retirer ${nm} de la liste`, danger: !!u.n, fn: () => { portArmed = null; removePerson(nm); commit(true); } }]];
+    }
+    if (tr.dataset.fr) {
+      const fk = tr.closest("#v-com") ? "com" : "locaux", S = freeState(fk), r = S.rows.find((x) => x.id === tr.dataset.fr); if (!r) return null;
+      const g = freeGroups(fk).find((x) => x.id === r.g), same = (x) => x.g === r.g && x.sens === r.sens, fixed = !!tr.querySelector(".fxport");
+      const blank = (extra) => ({ id: nid(), g: r.g, sens: r.sens, port: g ? nextPort(fk, g, r.sens) : "", nom: "", app: "", lien: "", qui: "", notes: "", ...extra });
+      const put = (n) => { S.rows.splice(S.rows.indexOf(r) + 1, 0, n); commit(true); };
+      return [[r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", [
+        { t: "Ajouter une ligne en dessous", fn: () => put(blank()) },
+        { t: "Dupliquer", fn: () => { const { id, port, ...rest } = r; put(blank({ ...rest, port: g ? nextPort(fk, g, r.sens) : "" })); } },
+        "-", ...(fixed ? [] : mvItems(S.rows, r, (x) => same(x) && !(g && g.auto && (consLocals(g.model) || []).some((p) => impNorm(p.port) === impNorm(x.port))))),
+        "-", rm && { ...rm, t: fixed ? "Vider la ligne" : "Supprimer…" }]];
+    }
+    if (tr.dataset.nk) {
+      const key = tr.dataset.nk, [kind, id] = [key.slice(0, 1), key.slice(2)];
+      const N = netState(), x = kind === "e" && N.extra.find((z) => z.id === id);
+      return [(tr.querySelector("b") || {}).textContent || (x && x.nom) || "Appareil", [
+        { t: "Copier l'adresse IP", off: !((tr.querySelector('input[data-nf="ip"]') || {}).value || "").trim(), fn: () => copyText(tr.querySelector('input[data-nf="ip"]').value.trim(), "Adresse IP copiée.") },
+        "-",
+        kind === "r" && { t: "Voir dans Racks et I/O", fn: () => showRack(id) },
+        kind === "r" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${id}"]`); } },
+        kind === "r" && rpPutItem("rack", id),
+        kind === "h" && hfDevById(id) && { t: "Voir dans l'onglet HF", fn: () => { setView(hfDevById(id).kind === "tx" ? "hftx" : "hfrx"); showSetupRow(`tr[data-hd="${id}"] input`); } },
+        kind === "x" && { t: "Voir dans le synoptique", fn: () => { synSel = id; setView("syn"); } },
+        x && { t: "Dupliquer", fn: () => { N.extra.splice(N.extra.indexOf(x) + 1, 0, { ...x, id: nid(), ip: "" }); commit(true); } },
+        "-", rm]];
+    }
+    if (tr.querySelector("[data-bqadd]")) {
+      const b = tr.querySelector("[data-bqadd]");
+      return [b.dataset.bqadd, [{ t: "Ajouter à la liste", fn: () => b.click() }]];
+    }
+    if (del && del.matches("[data-delrack]")) {
       const r = rackById(del.dataset.delrack); if (!r) return null;
-      return [rackTitle(r), [{ t: "Voir dans Racks et I/O", fn: () => showRack(r.id) }, { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } }, rpPutItem("rack", r.id), "-", rm]];
+      return [rackTitle(r), [{ t: "Voir dans Racks et I/O", fn: () => showRack(r.id) }, { t: "Voir dans le synoptique", fn: () => { synSel = r.id; setView("syn"); } }, rpPutItem("rack", r.id), "-", ...mvItems(state.racks, r), "-", rm]];
     }
-    if (del.matches("[data-delbox]")) {
+    if (del && del.matches("[data-delbox]")) {
       const b = boxById(del.dataset.delbox); if (!b) return null;
-      return [boxTitle(b), [{ t: "Voir dans Boîtiers", fn: () => { setView("boites"); const d = document.querySelector(`#gridOut .box[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); flash(d); } } }, boxUsed(b) && { t: "Dépatcher tout le boîtier", fn: () => unboxRange(b, 1, boxSize(b)) }, "-", rm]];
+      return [boxTitle(b), [{ t: "Voir dans Boîtiers", fn: () => { setView("boites"); const d = document.querySelector(`#gridOut .box[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); flash(d); } } }, boxUsed(b) && { t: "Dépatcher tout le boîtier", fn: () => unboxRange(b, 1, boxSize(b)) }, "-", ...mvItems(state.boites, b), "-", rm]];
     }
-    return [name || "Cette ligne", [rm]];
+    return rm ? [name || "Cette ligne", [rm]] : null;
+  }
+  // ---------- Fin de menu commune à toutes les lignes de tableau : copier, et la colonne touchée ----------
+  function copyText(txt, msg) {
+    const ok = () => notice(msg), ko = () => notice("Copie impossible ici : sélectionne le texte et fais Cmd+C (ou Ctrl+C).", true);
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(ok, ko); return; } } catch (e) { /* ignore */ }
+    const a = document.createElement("textarea"); a.value = txt; a.style.position = "fixed"; a.style.opacity = "0"; document.body.appendChild(a); a.select();
+    try { if (document.execCommand("copy")) ok(); else ko(); } catch (e) { ko(); } a.remove();
+  }
+  const tdText = (c) => {
+    const f = [...c.querySelectorAll("input:not([type=checkbox]):not([type=hidden]), select, textarea")];
+    if (!f.length) { const cb = c.querySelector("input[type=checkbox]"); if (cb) return cb.checked ? "oui" : ""; const k = c.cloneNode(true); k.querySelectorAll("button, .sr").forEach((x) => x.remove()); return k.textContent.trim().replace(/\s+/g, " "); }
+    return f.map((x) => (x.tagName === "SELECT" ? (x.selectedOptions[0] && x.value ? x.selectedOptions[0].textContent : "") : x.value)).filter(Boolean).join(" ").trim();
+  };
+  // Une ligne en texte séparé par des tabulations : elle se colle telle quelle dans Excel
+  function rowText(tr) {
+    const tb = tr.closest("table"), hr = tb && headRow(tb), hs = hr ? [...hr.cells] : [];
+    return [...tr.cells].filter((c, i) => !hs.length || hs.length !== tr.cells.length || hs[i].textContent.trim()).map(tdText).join("\t");
+  }
+  function tableText(tb) {
+    const hr = headRow(tb), hs = hr ? [...hr.cells] : [], keep = (i) => !hs.length || hs[i].textContent.trim();
+    const head = hs.filter((c, i) => keep(i)).map((c) => c.textContent.trim().replace(/\s+/g, " ")).join("\t");
+    const rows = [...tb.tBodies].flatMap((b) => [...b.rows]).filter((r) => r.offsetParent !== null).map((r) => (r.cells.length === hs.length ? [...r.cells].filter((c, i) => keep(i)).map(tdText).join("\t") : [...r.cells].map(tdText).join("\t")));
+    return [head, ...rows].filter((x) => x.trim()).join("\n");
+  }
+  // Menu d'une colonne (titre ou case) : la déplacer, revenir à l'ordre par défaut, et pour le master la masquer
+  function colItems(c) {
+    const o = c.order(), i = o.indexOf(c.k), hide = c.master === "master" && HIDEABLE.find(([k]) => k === c.k);
+    return [
+      { t: "Déplacer vers la gauche", off: i <= 0, fn: () => colPut(c, i - 1) },
+      { t: "Déplacer vers la droite", off: i < 0 || i >= o.length - 1, fn: () => colPut(c, i + 1) },
+      { t: "Mettre en premier", off: i <= 0, fn: () => colPut(c, 0) },
+      { t: "Mettre en dernier", off: i < 0 || i >= o.length - 1, fn: () => colPut(c, o.length) },
+      "-",
+      hide && { t: "Masquer cette colonne", fn: () => { hiddenCols.add(c.k); setPref("hidecols", [...hiddenCols].join(",")); paintCols(); notice(`Colonne « ${esc(c.name)} » masquée. Pour la remettre : menu … › Colonnes.`); } },
+      c.master && { t: "Colonnes affichées et ordre…", fn: () => { const m = $("#ctxMenu"); colsMenu(m); placeMenu(m, ...CTX.xy); } },
+      { t: "Remettre l'ordre par défaut", fn: () => { c.set(null); notice("Ordre des colonnes par défaut remis."); } }];
+  }
+  const colOfCell = (td) => { const tb = td && td.closest("table"), hr = tb && headRow(tb); if (!hr || td.parentNode.cells.length !== hr.cells.length) return null; return colRef(hr.cells[td.cellIndex]); };
+  function ctxHead(th) {
+    const c = colRef(th), tb = th.closest("table");
+    return [c ? `Colonne « ${c.name} »` : "Tableau", [...(c ? colItems(c) : []), "-", { t: "Copier tout le tableau", fn: () => copyText(tableText(tb), "Tableau copié : colle-le dans Excel.") }]];
+  }
+  function ctxTail(tr, cell) {
+    const c = cell && colOfCell(cell), tb = tr.closest("table");
+    return ["-",
+      { t: "Copier la ligne", fn: () => copyText(rowText(tr), "Ligne copiée : colle-la dans Excel.") },
+      { t: "Copier tout le tableau", fn: () => copyText(tableText(tb), "Tableau copié : colle-le dans Excel.") },
+      c && { t: `Colonne « ${c.name} »`, sub: () => colItems(c) }];
   }
   function ctxDispatch(e) {
     const t = e.target; if (!t || !t.closest || t.closest("#ctxMenu, #appMenu, dialog")) return false;
@@ -11256,7 +11429,15 @@ table.master td.nopad input { opacity: 0.8; }
       const l = state.lignes.find((z) => z.id === g.dataset.id), o = !l && (state.sorties || []).find((z) => z.id === g.dataset.id);
       m = l ? ctxLine(l, x, y) : o ? ctxOut(o) : null;
     }
-    if (!m && (g = t.closest("tr"))) { const d = g.querySelector(DEL_SEL); if (d) m = ctxRow(g, d); }
+    else if ((g = t.closest("#journalList li")) && g.querySelector(".when")) m = ["Journal", [{ t: "Copier cette entrée", fn: () => copyText(g.innerText.replace(/\s*\n\s*/g, " ").trim(), "Entrée copiée.") }, { t: "Copier tout le journal", fn: () => copyText([...g.parentNode.children].map((li) => li.innerText.replace(/\s*\n\s*/g, " ").trim()).join("\n"), "Journal copié.") }]];
+    // Titre de colonne, dans n'importe quel tableau de l'appli
+    const inTbl = (el) => el && el.closest('section[id^="v-"]') && el.closest("table");
+    if (!m && (g = t.closest("th")) && inTbl(g) && headRow(g.closest("table")) === g.parentNode) m = ctxHead(g);
+    else if ((g = t.closest("tr")) && inTbl(g) && headRow(g.closest("table")) !== g) {
+      if (!m) m = ctxRow(g, g.querySelector(DEL_SEL));
+      // Même fin de menu sur toutes les lignes : copier la ligne ou le tableau, déplacer la colonne touchée
+      if (g.cells.length > 1) { if (!m) m = [tdText([...g.cells].find((c) => tdText(c)) || g.cells[0]) || "Cette ligne", []]; m = [m[0], [...m[1], ...ctxTail(g, t.closest("td, th"))]]; }
+    }
     return !!m && ctxOpen(x, y, m[0], m[1]);
   }
   document.addEventListener("contextmenu", (e) => {
