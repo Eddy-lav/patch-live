@@ -8615,20 +8615,24 @@ table.master td.nopad input { opacity: 0.8; }
 
   // Réglages de l'appli du Mac : la présentation « Lignes » devient une case par ligne, « DIN Condensed Bold » une police en gras
   function etqNorm(cfg) {
-    const c = { ...ETQ_DEF, ...etqClone(cfg || {}) };
-    if (/ bold$/i.test(c.font || "")) { c.font = c.font.replace(/ bold$/i, ""); c.bold = true; }
-    if (c.layout === "lines" && Array.isArray(c.lines) && c.lines.length) c.grid = { rows: c.lines.map((l) => ({ height: Number(l.size) || 100, cells: [{ template: l.template || "", width: 100, bold: !!l.bold }] })) };
+    const c = { ...etqClone(ETQ_DEF), ...etqClone(cfg || {}) };
+    if (cfg && cfg.font && cfg.bold === undefined) c.bold = false; // police nommée sans « Bold » : texte normal, comme dans l'appli du Mac
+    const fontBold = / bold$/i.test(c.font || "");
+    if (fontBold) { c.font = c.font.replace(/ bold$/i, ""); c.bold = true; }
+    if (c.layout === "lines" && Array.isArray(c.lines) && c.lines.length) c.grid = { rows: c.lines.map((l) => ({ height: Number(l.size) || 100, cells: [{ template: l.template || "", width: 100, bold: !!l.bold || fontBold }] })) };
     if (c.layout === "lines" && c.length_mode !== "fixed") c.length_mode = "auto";
     if (c.layout === "grid") c.length_mode = "fixed"; // dans l'appli du Mac, une étiquette en cases a toujours sa longueur fixe
     delete c.layout; delete c.lines; delete c.src;
     if (!c.grid || !Array.isArray(c.grid.rows) || !c.grid.rows.length) c.grid = etqClone(ETQ_DEF.grid);
     c.grid.rows = c.grid.rows.filter((r) => r && Array.isArray(r.cells) && r.cells.length);
+    // « DIN Condensed Bold » est une police grasse en elle-même : ses cases restent en gras même si elles ne le demandent pas
+    if (fontBold) c.grid.rows.forEach((r) => r.cells.forEach((x) => { x.bold = true; }));
     if (!c.grid.rows.length) c.grid = etqClone(ETQ_DEF.grid);
     if (!ETQ_COLORS.some(([k]) => k === c.colors)) c.colors = "blanc";
     return c;
   }
   // Colonne d'une case : {Nom} retrouve « Nom », « nom » ou « Nom » sans accent ; une colonne vide ne laisse pas de séparateur seul
-  const etqKey = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9°]+/g, "");
+  const etqKey = (s) => bqNorm(s).replace(/[^a-z0-9°]+/g, "");
   const ETQ_SEP = "·•\\-–—/|,;:";
   function etqFill(template, row) {
     const keys = new Map(Object.keys(row).map((k) => [etqKey(k), k]));
@@ -8740,7 +8744,7 @@ table.master td.nopad input { opacity: 0.8; }
       });
       length = Math.max(Math.ceil(need) + 2 * pad, etqDots(cfg.min_length_mm), 16);
     }
-    const x0 = pad, x1 = length - pad, y0 = tp.off, y1 = tp.off + tp.h - 1;
+    const x0 = pad, x1 = length - pad - 1, y0 = tp.off, y1 = tp.off + tp.h - 1;
     const cells = []; let y = y0 + t;
     rows.forEach((r, ri) => {
       const rh = ri === rows.length - 1 ? y1 - t + 1 - y : hs[ri];
@@ -8842,7 +8846,7 @@ table.master td.nopad input { opacity: 0.8; }
       if (this.kind === "usb") { for (let i = 0; i < u8.length; i += 4096) await this.dev.transferOut(this.epOut, u8.subarray(i, i + 4096)); }
       else { for (let i = 0; i < u8.length; i += 1024) await this.writer.write(u8.subarray(i, i + 1024)); }
     }
-    async read(n, ms) { const end = Date.now() + ms; while (this.buf.length < n && Date.now() < end) await etqSleep(40); return this.buf.splice(0, n); }
+    async read(n, ms) { const end = Date.now() + ms; while (this.buf.length < n && Date.now() < end) await etqSleep(40); return this.buf.length >= n ? this.buf.splice(0, n) : []; }
     async close() {
       this.open = false;
       try { if (this.kind === "usb") await this.dev.close(); else { try { await this.reader.cancel(); } catch (e) { /* ignore */ } this.reader.releaseLock(); this.writer.releaseLock(); await this.dev.close(); } } catch (e) { /* déjà fermé */ }
@@ -8916,6 +8920,8 @@ table.master td.nopad input { opacity: 0.8; }
     etqPaint();
   }
   function etqPaint() { const { E, src, cfg } = etqCur(); etqPaintStage(cfg, src); etqPaintInsp(cfg, src); etqPaintList(E, src, cfg); etqPaintBar(); }
+  // Changement d'étiquette affichée : seul l'aperçu et la ligne surlignée changent, pas les vignettes de la liste
+  function etqPaintSel() { const { cfg, src } = etqCur(); etqPaintStage(cfg, src); $("#etqTbl").querySelectorAll("tr[data-eid]").forEach((tr, i) => tr.classList.toggle("cur", i === etqUi.ix)); }
   function etqPaintStage(cfg, src) {
     const host = $("#etqTape"), bench = $("#etqBench");
     const row = etqSample(src), cap = etqCaps(cfg, src.rows.filter((r) => etqOn(etqState(), src, r)).map((r) => r.v));
@@ -8994,7 +9000,12 @@ table.master td.nopad input { opacity: 0.8; }
     let mm = 0;
     $("#etqTbl").innerHTML = rows.length ? `<thead><tr><th title="Imprimer">✓</th><th>Étiquette</th><th>Données</th><th>Qté</th></tr></thead><tbody>${rows.map((r, i) => `<tr data-eid="${esc(r.id)}" class="${i === etqUi.ix ? "cur" : ""}${etqOn(E, src, r) ? "" : " off"}"><td><input type="checkbox" data-eon${etqOn(E, src, r) ? " checked" : ""} aria-label="Imprimer l'étiquette ${i + 1}"></td><td class="pv"></td><td class="vals">${esc(src.cols.slice(0, 4).map((k) => r.v[k]).filter(Boolean).join(" · "))}</td><td class="q"><input type="number" min="0" step="1" data-eq value="${E.qty[src.k + "|" + r.id] ?? ""}" placeholder="${etqQty({ qty: {} }, src, cfg, r)}" aria-label="Exemplaires de l'étiquette ${i + 1}"></td></tr>`).join("")}</tbody>` : `<tbody><tr><td class="hint">Rien à étiqueter ici pour l'instant : remplis d'abord ${esc(src.t.toLowerCase())} dans le dossier.</td></tr></tbody>`;
     const cells = $("#etqTbl").querySelectorAll("td.pv");
-    rows.forEach((r, i) => { if (i >= 400) return; const R = etqDraw(cfg, r.v, { k: 2, cap }); R.cv.style.width = Math.round(R.length * 0.55) + "px"; cells[i].append(R.cv); if (etqOn(E, src, r)) mm += (R.mm + (Number(cfg.margin_mm) || 0) * 2) * etqQty(E, src, cfg, r); });
+    rows.forEach((r, i) => {
+      let len;
+      if (i < 400) { const R = etqDraw(cfg, r.v, { k: 2, cap }); R.cv.style.width = Math.round(R.length * 0.55) + "px"; cells[i].append(R.cv); len = R.mm; }
+      else if (etqOn(E, src, r)) len = Math.round(etqLayout(cfg, r.v, cap).length * 254 / 180) / 10;
+      if (etqOn(E, src, r)) mm += (len + (Number(cfg.margin_mm) || 0) * 2) * etqQty(E, src, cfg, r);
+    });
     $("#etqCount").textContent = rows.length ? `${total} étiquette${total > 1 ? "s" : ""} à imprimer · environ ${(Math.round(mm / 100) / 10).toLocaleString("fr-FR")} m de ruban` : "";
   }
   const etqCanPrint = () => !!(navigator.usb || navigator.serial);
@@ -9045,8 +9056,9 @@ table.master td.nopad input { opacity: 0.8; }
   async function etqXlsx() {
     const wb = new ExcelJS.Workbook(); wb.creator = "Patch Live"; const used = new Set();
     etqSources().filter((s) => s.rows.length).forEach((s) => {
-      let name = s.t.replace(/[\\/*?:[\]]/g, " ").slice(0, 31).trim() || "Étiquettes", n = 2;
-      while (used.has(name.toLowerCase())) name = `${s.t.slice(0, 27)} (${n++})`; used.add(name.toLowerCase());
+      const base = s.t.replace(/[\\/*?:[\]]/g, " ").trim() || "Étiquettes";
+      let name = base.slice(0, 31).trim(), n = 2;
+      while (used.has(name.toLowerCase())) name = `${base.slice(0, 27).trim()} (${n++})`; used.add(name.toLowerCase());
       const ws = wb.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
       styleHead(ws.addRow(s.cols)); s.rows.forEach((r) => ws.addRow(s.cols.map((k) => r.v[k] ?? "")));
       s.cols.forEach((k, i) => { ws.getColumn(i + 1).width = Math.min(40, Math.max(8, k.length + 2, ...s.rows.map((r) => String(r.v[k] ?? "").length + 2))); });
@@ -9059,7 +9071,7 @@ table.master td.nopad input { opacity: 0.8; }
   function etqImport(text) {
     let j; try { j = JSON.parse(text); } catch (e) { etqSay("Ce fichier n'est pas un fichier de réglages lisible.", true); return; }
     const m = etqUserModels(), got = [];
-    Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const x = etqNorm(c); x.tape_mm = x.tape_mm || 12; m[n] = x; got.push(n); } });
+    Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = ETQ_BUILTIN[n] ? `${n} (P-touch)` : n; m[name] = etqNorm(c); got.push(name); } });
     if (!got.length && (j.grid || j.lines)) { m["Importé"] = etqNorm(j); got.push("Importé"); }
     if (!got.length) { etqSay("Aucun modèle trouvé dans ce fichier.", true); return; }
     etqSaveUserModels(m); renderEtiq(); etqSay(`Modèle${got.length > 1 ? "s" : ""} importé${got.length > 1 ? "s" : ""} : ${got.join(", ")}.`);
@@ -9073,8 +9085,8 @@ table.master td.nopad input { opacity: 0.8; }
     $("#etqModelDel").addEventListener("click", () => { const E = etqState(), n = E.model[E.src], m = etqUserModels(); if (!m[n]) return; delete m[n]; etqSaveUserModels(m); E.model[E.src] = ""; commit(false); renderEtiq(); etqSay(`Modèle « ${n} » supprimé.`); });
     $("#etqModelImp").addEventListener("click", () => $("#etqModelFile").click());
     $("#etqModelFile").addEventListener("change", async (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) etqImport(await f.text()); });
-    $("#etqPrev").addEventListener("click", () => { etqUi.ix = Math.max(0, etqUi.ix - 1); etqPaint(); });
-    $("#etqNext").addEventListener("click", () => { etqUi.ix++; etqPaint(); });
+    $("#etqPrev").addEventListener("click", () => { etqUi.ix = Math.max(0, etqUi.ix - 1); etqPaintSel(); });
+    $("#etqNext").addEventListener("click", () => { etqUi.ix++; etqPaintSel(); });
     // Cases : clic pour choisir, dépôt d'une colonne glissée (Alt ou Maj : ajoute au texte)
     $("#etqTape").addEventListener("click", (e) => { const b = e.target.closest(".etq-cell"); if (!b) return; etqUi.sel = { r: +b.dataset.er, c: +b.dataset.ec }; const { cfg, src } = etqCur(); etqPaintStage(cfg, src); etqPaintInsp(cfg, src); $("#etqTpl").focus(); });
     $("#etqTape").addEventListener("dragover", (e) => { const b = e.target.closest(".etq-cell"); if (!b) return; e.preventDefault(); V.querySelectorAll(".etq-cell.drop").forEach((x) => x.classList.remove("drop")); b.classList.add("drop"); });
@@ -9119,7 +9131,7 @@ table.master td.nopad input { opacity: 0.8; }
       if (e.target.matches("[data-eq]")) { const v = e.target.value.trim(); if (v === "") delete E.qty[k + "|" + id]; else E.qty[k + "|" + id] = Math.max(0, Math.floor(Number(v) || 0)); }
       commit(false); etqPaint();
     });
-    $("#etqTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-eid]"); if (!tr || e.target.closest("input")) return; etqUi.ix = [...tr.parentNode.children].indexOf(tr); etqPaint(); });
+    $("#etqTbl").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-eid]"); if (!tr || e.target.closest("input")) return; etqUi.ix = [...tr.parentNode.children].indexOf(tr); etqPaintSel(); });
     const all = (on) => { const E = etqState(), { src } = etqCur(); E.off[src.k] = on ? {} : Object.fromEntries(src.rows.map((r) => [r.id, 1])); commit(false); etqPaint(); };
     $("#etqAll").addEventListener("click", () => all(true)); $("#etqNone").addEventListener("click", () => all(false));
     $("#etqUsb").addEventListener("click", () => etqConnect("usb").then(etqPaintBar));
@@ -9127,7 +9139,7 @@ table.master td.nopad input { opacity: 0.8; }
     $("#etqGo").addEventListener("click", () => etqPrint());
     $("#etqStop").addEventListener("click", () => { if (etqUi.job) { etqUi.job.cancel = true; etqSay("Arrêt après l'étiquette en cours…"); } });
     $("#etqXlsx").addEventListener("click", () => etqXlsx().catch((e) => etqSay(`Excel impossible : ${e.message || e}`, true)));
-    if (navigator.usb) navigator.usb.addEventListener("disconnect", (e) => { if (etqUi.link && etqUi.link.dev === e.device) { etqUi.link = null; etqUi.job = null; etqSay("La P-touch a été débranchée.", true); } });
+    if (navigator.usb) navigator.usb.addEventListener("disconnect", (e) => { if (etqUi.link && etqUi.link.dev === e.device) { const l = etqUi.link; etqUi.link = null; if (etqUi.job) etqUi.job.cancel = true; etqUi.job = null; l.close(); etqSay("La P-touch a été débranchée.", true); } });
     addEventListener("resize", () => { if (view === "etiq") { const { cfg, src } = etqCur(); etqPaintStage(cfg, src); } });
     // Les polices du système arrivent parfois après le premier dessin
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (view === "etiq") renderEtiq(); });
