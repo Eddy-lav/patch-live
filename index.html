@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "1046845ef6";</script>
+<script>window.PL_VER = "cb580e3dc5";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -1597,7 +1597,7 @@ table.master td.nopad input { opacity: 0.8; }
   </form>
   <div class="table-wrap"><table class="master" id="masterTbl" data-rk="master"></table></div>
   <p class="hint">Les listes de boîtier et de stage rack ne proposent que les entrées libres. Pour prendre une entrée occupée, déplace d'abord la source qui l'utilise.</p>
-  <p class="hint">Clavier : ↑ et ↓ (ou Entrée) changent de ligne dans la même colonne, Tab et Maj+Tab changent de colonne. Sur une liste d'entrées, tape directement (« 12n 2 », « drums ») pour chercher, ou Alt+↓ / Espace pour l'ouvrir. Dans Micro, Pied ou Musicien, les suggestions s'ouvrent quand tu tapes ou cliques ; ↑ et ↓ les parcourent, Entrée choisit. Sélection : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter une ligne, Échap pour tout désélectionner.</p>
+  <p class="hint">Clavier : ↑ et ↓ (ou Entrée) changent de ligne dans la même colonne, Tab et Maj+Tab changent de colonne. Sur n'importe quel menu déroulant, tape directement (« 12n 2 », « drums ») pour chercher, ou Alt+↓ / Espace pour l'ouvrir. Dans Micro, Pied ou Musicien, les suggestions s'ouvrent quand tu tapes ou cliques ; ↑ et ↓ les parcourent, Entrée choisit. Sélection : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter une ligne, Échap pour tout désélectionner.</p>
 </section>
 
 <section id="v-sorties" hidden>
@@ -4188,7 +4188,7 @@ table.master td.nopad input { opacity: 0.8; }
       return `<div class="loopline" data-lid="${L.id}"><input type="text" data-lf="nom" value="${esc(L.nom)}" aria-label="Nom de la loop">
         <select data-lf="freq" aria-label="Fréquence de la loop"><option value="48"${L.freq === "96" ? "" : " selected"}>48 kHz</option><option value="96"${L.freq === "96" ? " selected" : ""}>96 kHz</option></select>
         ${kindSel}
-        <label class="inl">Capacité <input type="number" data-lf="max" min="0" max="4096" inputmode="numeric" value="${max || ""}" aria-label="Capacité en canaux" list="dlLoopMax"></label>
+        <label class="inl">Capacité <input type="number" data-lf="max" min="0" max="4096" inputmode="numeric" value="${max || ""}" aria-label="Capacité en canaux" data-suggest="dlLoopMax" autocomplete="off"></label>
         <span class="loopsum${max && tot > max ? " over" : ""}">${how}${max ? ` / ${max} · ${tot > max ? `<b>${tot - max} de trop</b>` : `reste ${max - tot}`}` : ""} <span class="hint">(${u.n} appareil${u.n > 1 ? "s" : ""})</span></span>
         ${loops().length > 1 ? `<button class="btn small danger" type="button" data-dellp="${L.id}" title="Supprimer cette loop (ses appareils passent hors loop)">×</button>` : ""}</div>`;
     }).join("") + `<datalist id="dlLoopMax"><option value="504">DiGiCo SD, 2 Gb (48 ou 96 kHz)</option><option value="224">DiGiCo SD, fibre 1 Gb à 96 kHz</option><option value="1024">Optocore 2 Gb natif à 48 kHz</option><option value="512">Optocore 2 Gb natif à 96 kHz</option></datalist>
@@ -7074,7 +7074,7 @@ table.master td.nopad input { opacity: 0.8; }
         <div class="rphead"><input type="text" data-rpcf="nom" value="${esc(c.nom || "")}" aria-label="Nom du rack" placeholder="Nom du rack">
         <label class="inl"><input type="number" min="1" max="48" data-rpcf="u" value="${c.u}" inputmode="numeric" aria-label="Hauteur en U"> U</label>
         <select data-rpcf="cols" aria-label="Colonnes">${[[1, "Simple"], [2, "Double"], [3, "Triple"]].map(([v, t]) => `<option value="${v}"${rpCols(c) === v ? " selected" : ""}>${t}</option>`).join("")}</select>
-        <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" list="dlRpLieu" class="rplieu">
+        <input type="text" data-rpcf="lieu" value="${esc(c.lieu || "")}" aria-label="Emplacement" placeholder="FOH, Monitor, plateau…" data-suggest="dlRpLieu" autocomplete="off" class="rplieu">
         ${rpCols(c) > 1 ? `<button class="btn small" type="button" data-rpcsplit title="Faire un rack simple par colonne, avec ses appareils">Séparer en ${rpCols(c)} simples</button>` : ""}
         <button class="btn small danger xdel" type="button" data-rpcdel title="Supprimer ce rack" aria-label="Supprimer ce rack">×</button></div>
         <div class="rpadd"><input type="text" data-rpadd data-suggest="dlRpAdd" autocomplete="off" enterkeyhint="done" aria-label="Ajouter un appareil dans ce rack" placeholder="+ Ajouter : tape un nom (SD Rack, AD4Q, plaque…)" title="Tape un nom : la liste propose les appareils du dossier, les modèles et la banque de matériel. Un nom inconnu est ajouté comme élément libre (Entrée)."><span class="hint">${used}/${c.u * rpCols(c)} U occupés</span></div>
@@ -7527,7 +7527,7 @@ table.master td.nopad input { opacity: 0.8; }
     }
     if (synSel && synSel.startsWith("z:")) {
       const z = (synState().zones || []).find((q) => "z:" + q.id === synSel);
-      if (z) { side.innerHTML = `<h3>Zone</h3><label>Nom<input type="text" data-sp="znom" value="${esc(z.nom || "")}" list="dlZone"></label><datalist id="dlZone">${ZONE_PRESETS.map((v) => `<option value="${esc(v)}">`).join("")}</datalist><div class="actions" style="flex-wrap:wrap;gap:4px;margin:6px 0">${ZONE_PRESETS.slice(0, 3).map((v) => `<button class="btn small" type="button" data-zpre="${esc(v)}">${esc(v)}</button>`).join("")}</div><p class="hint" style="margin:6px 0">Fais glisser le cadre pour le déplacer, avec les appareils qui sont dedans. Le carré noir en bas à droite le redimensionne.</p><div class="actions"><button class="btn small danger" type="button" data-zdel>Supprimer la zone</button></div>`; return; }
+      if (z) { side.innerHTML = `<h3>Zone</h3><label>Nom<input type="text" data-sp="znom" value="${esc(z.nom || "")}" data-suggest="dlZone" autocomplete="off"></label><datalist id="dlZone">${ZONE_PRESETS.map((v) => `<option value="${esc(v)}">`).join("")}</datalist><div class="actions" style="flex-wrap:wrap;gap:4px;margin:6px 0">${ZONE_PRESETS.slice(0, 3).map((v) => `<button class="btn small" type="button" data-zpre="${esc(v)}">${esc(v)}</button>`).join("")}</div><p class="hint" style="margin:6px 0">Fais glisser le cadre pour le déplacer, avec les appareils qui sont dedans. Le carré noir en bas à droite le redimensionne.</p><div class="actions"><button class="btn small danger" type="button" data-zdel>Supprimer la zone</button></div>`; return; }
     }
     const n = (nodes || synPlace(synNodes())).find((x) => x.id === synSel);
     if (!n) { side.innerHTML = `<h3>Synoptique</h3><p class="hint">Touche un appareil pour voir ses ports et ses liaisons. Fais-le glisser pour l'arranger ; « Disposition auto » remet tout en place. Le bouton + qui apparaît à côté de l'appareil tire une liaison vers un autre. À la souris, cliquer-glisser sur le fond sélectionne plusieurs appareils. « + Zone » encadre une partie du schéma (FOH, Monitor, Stage…).</p>`; return; }
@@ -10904,11 +10904,10 @@ table.master td.nopad input { opacity: 0.8; }
     const again = tr && document.querySelector(`table.master tr[data-id="${tr.dataset.id}"] ${fieldSel(input)}`);
     if (again) again.focus(); else if (input.isConnected && document.activeElement !== input && !input.dataset.accin) input.focus();
   }
-  // Menus déroulants longs : taper une lettre ouvre une case de saisie posée sur le menu, avec les choix du menu filtrés
+  // Menus déroulants (tous, petits ou longs) : taper une lettre ouvre une case de saisie posée sur le menu, avec les choix du menu filtrés
   // au fil de la frappe (Entrée prend le premier, ↑ ↓ pour choisir, Échap annule). Le menu reste cliquable comme avant.
   // Dans Arrivée (sorties), un texte qui ne correspond à rien devient une arrivée en texte libre.
   let selTyp = null;
-  const SELTYP_MIN = 13;
   function selTypeClose(refocus) {
     if (!selTyp) return; const { input, sel } = selTyp; selTyp = null;
     if (sug.input === input) sugClose(); input.remove();
@@ -10964,8 +10963,9 @@ table.master td.nopad input { opacity: 0.8; }
       const t = e.target;
       if (!t || t.tagName !== "SELECT" || t.multiple || t.size > 1 || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
       if (e.key.length !== 1 || e.key === " ") return;
-      // Seulement les longues listes et les adresses (entrées, liaisons, sorties) : les petites gardent le saut à la lettre du navigateur
-      if (t.options.length < SELTYP_MIN && !t.classList.contains("addr")) return;
+      // Tous les menus déroulants (12/11) : dès la première lettre, une case de recherche propose les choix qui correspondent.
+      // Seul un menu sans aucun choix utilisable garde le comportement du navigateur.
+      if (![...t.options].some((o) => o.value !== "" && !o.disabled)) return;
       e.preventDefault(); e.stopPropagation(); selTypeOpen(t, e.key);
     }, true);
     document.addEventListener("input", (e) => { if (e.target.dataset && e.target.dataset.suggest) sugOpen(e.target, false); });
