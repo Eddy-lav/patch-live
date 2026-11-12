@@ -1,3 +1,4 @@
+<script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -11740,7 +11741,8 @@ table.master td.nopad input { opacity: 0.8; }
     const th = THEMES.find((x) => x[0] === t) || THEMES[0], b = $("#themeBtn");
     b.innerHTML = th[1]; b.title = "Thème : " + th[2] + " · clic pour changer"; b.setAttribute("aria-label", "Thème : " + th[2]);
   }
-  let theme = ""; try { theme = localStorage.getItem("patch-live-theme") || ""; } catch (e) { /* ignore */ }
+  // Thème sombre par défaut ; « automatique » (suit l'appareil) reste au choix et est gardé comme "".
+  let theme = "dark"; try { const st = localStorage.getItem("patch-live-theme"); if (st != null) theme = st; } catch (e) { /* ignore */ }
   applyTheme(theme);
   $("#themeBtn").addEventListener("click", () => {
     theme = THEMES[(THEMES.findIndex((x) => x[0] === theme) + 1) % THEMES.length][0];
