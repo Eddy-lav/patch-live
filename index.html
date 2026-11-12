@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "737c35be5a";</script>
+<script>window.PL_VER = "f556d1358c";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -8947,14 +8947,14 @@ table.master td.nopad input { opacity: 0.8; }
     const R = etqDraw(cfg, row, { k, cap });
     R.cv.style.width = Math.round(base.length * s) + "px"; R.cv.style.height = Math.round(base.tapeH * s) + "px";
     R.cv.setAttribute("role", "img"); R.cv.setAttribute("aria-label", "Aperçu de l'étiquette");
-    const sel = etqUi.sel;
+    const sel = etqUi.sel, have = new Set(Object.keys(row).map(etqKey));
     host.innerHTML = ""; host.append(R.cv);
     R.rects.forEach((q) => {
       const b = document.createElement("button"); b.type = "button"; b.className = "etq-cell"; b.dataset.er = q.r; b.dataset.ec = q.c;
       b.style.left = q.x * s + "px"; b.style.top = q.y * s + "px"; b.style.width = q.w * s + "px"; b.style.height = q.h * s + "px";
       b.setAttribute("aria-pressed", q.r === sel.r && q.c === sel.c ? "true" : "false");
       const tpl = cfg.grid.rows[q.r].cells[q.c].template || "";
-      if (q.empty && tpl) { b.textContent = tpl; b.classList.add("unk"); } // colonne absente de ce type de données : on montre ce qui est attendu
+      if (q.empty && [...tpl.matchAll(/\{([^{}]+)\}/g)].some(([, k]) => !have.has(etqKey(k)))) { b.textContent = tpl; b.classList.add("unk"); } // colonne absente de ce type de données : on montre ce qui est attendu
       b.setAttribute("aria-label", `Case ${q.r + 1}.${q.c + 1}${tpl ? " : " + tpl : " vide"}`); b.title = tpl || "Case vide : glisse une colonne ici";
       host.append(b);
     });
@@ -9086,7 +9086,7 @@ table.master td.nopad input { opacity: 0.8; }
   // Modèles de l'appli du Mac (reglages.json : « templates » plus le réglage en cours)
   // ----- Modèles de P-touch Editor (.lbx : un zip avec label.xml) -----
   // Lecture du zip sans bibliothèque : répertoire central, puis chaque fichier (stocké ou « deflate »)
-  async function etqUnzip(buf) {
+  async function etqUnzip(buf, want) {
     const u = new Uint8Array(buf), dv = new DataView(buf), out = {};
     let e = u.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
     if (e < 0) throw new Error("fichier .lbx illisible");
@@ -9094,6 +9094,7 @@ table.master td.nopad input { opacity: 0.8; }
     for (let i = 0; i < n; i++) {
       const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
       const name = new TextDecoder().decode(u.subarray(p + 46, p + 46 + nl));
+      if (want && !want.includes(name)) { p += 46 + nl + xl + cl; continue; }
       const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), data = u.subarray(start, start + size);
       if (method === 0) out[name] = data;
       else if (method === 8) out[name] = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
@@ -9127,7 +9128,12 @@ table.master td.nopad input { opacity: 0.8; }
     // Rangées : textes qui se chevauchent sur la largeur du ruban
     objs.sort((a, b) => a.y - b.y || a.x - b.x);
     const bands = [];
-    objs.forEach((o) => { const b = bands.find((x) => o.y < x.y1 - 0.5 && o.y + o.h > x.y0 + 0.5); if (b) { b.items.push(o); b.y0 = Math.min(b.y0, o.y); b.y1 = Math.max(b.y1, o.y + o.h); } else bands.push({ y0: o.y, y1: o.y + o.h, items: [o] }); });
+    objs.forEach((o) => {
+      // Un texte à cheval sur plusieurs rangées les réunit en une seule
+      const hit = bands.filter((x) => o.y < x.y1 - 0.5 && o.y + o.h > x.y0 + 0.5);
+      const b = { y0: Math.min(o.y, ...hit.map((x) => x.y0)), y1: Math.max(o.y + o.h, ...hit.map((x) => x.y1)), items: [o, ...hit.flatMap((x) => x.items)] };
+      hit.forEach((x) => bands.splice(bands.indexOf(x), 1)); bands.push(b);
+    });
     bands.sort((a, b) => a.y0 - b.y0);
     const top = mA, bottom = tapePt - mB, left = mL, right = lenPt - mR;
     const rows = bands.map((b, i) => {
@@ -9153,23 +9159,29 @@ table.master td.nopad input { opacity: 0.8; }
       const base = f.name.replace(/\.[^.]+$/, "");
       try {
         if (/\.lbx$/i.test(f.name)) {
-          const z = await etqUnzip(await f.arrayBuffer()), xml = z["label.xml"]; if (!xml) throw new Error("pas de label.xml");
+          const z = await etqUnzip(await f.arrayBuffer(), ["label.xml"]), xml = z["label.xml"]; if (!xml) throw new Error("pas de label.xml");
           const r = etqFromLbx(new TextDecoder().decode(xml)), name = ETQ_BUILTIN[base] ? `${base} (P-touch)` : base;
           // Champ de la base P-touch : on cherche la colonne du dossier qui contient le même exemple (« Choeur 1 » → Porteur)
-          const { src } = etqCur(), left = [];
+          const { src } = etqCur(), left = [], map = new Map();
           r.links.forEach(({ field, data }) => {
+            if (map.has(field)) return;
             const v = etqKey(data), col = v && src.cols.find((k) => src.rows.some((row) => etqKey(row.v[k]) === v));
             const tpl = col || src.cols.find((k) => etqKey(k) === etqKey(field));
-            if (tpl) r.cfg.grid.rows.forEach((row) => row.cells.forEach((c) => { if (c.template === `{${field}}`) c.template = `{${tpl}}`; }));
-            else left.push(`${field}${data ? ` (« ${data} »)` : ""}`);
+            map.set(field, tpl);
+            if (!tpl) left.push(`${field}${data ? ` (« ${data} »)` : ""}`);
           });
+          // En une passe : un champ renommé ne doit pas être repris par le champ suivant
+          r.cfg.grid.rows.forEach((row) => row.cells.forEach((c) => { const k = /^\{(.+)\}$/.exec(c.template || ""), tpl = k && map.get(k[1]); if (tpl) c.template = `{${tpl}}`; }));
           m[name] = r.cfg; got.push(name);
           if (left.length) notes.push(`${name} : choisis la colonne des cases ${left.join(", ")}`);
           if (r.images) notes.push(`${name} : images et codes-barres non repris`);
         } else {
           const j = JSON.parse(await f.text());
-          Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = ETQ_BUILTIN[n] ? `${n} (P-touch)` : n; m[name] = etqNorm(c); got.push(name); } });
-          if (!Object.keys(j.templates || {}).length && (j.grid || j.lines)) { m[base] = etqNorm(j); got.push(base); }
+          if (!j || typeof j !== "object") throw new Error("pas un fichier de réglages");
+          const before = got.length, pname = (n) => (ETQ_BUILTIN[n] ? `${n} (P-touch)` : n);
+          Object.entries(j.templates || {}).forEach(([n, c]) => { if (c && typeof c === "object") { const name = pname(n); m[name] = etqNorm(c); got.push(name); } });
+          if (got.length === before && (j.grid || j.lines)) { const name = pname(base); m[name] = etqNorm(j); got.push(name); }
+          if (got.length === before) notes.push(`${f.name} : aucun modèle dedans`);
         }
       } catch (e) { notes.push(`${f.name} : ${e.message || "illisible"}`); }
     }
