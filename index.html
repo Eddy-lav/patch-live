@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "239082215b";</script>
+<script>window.PL_VER = "cb580e3dc5";</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style id="plfonts">
@@ -622,7 +622,8 @@ table.rack.spx th.col-box, table.rack.spx td[data-l^="Boîtier"], table.rack.spx
 /* Sans master, Racks et I/O devient le premier onglet */
 nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .viewopt { display: inline-flex; margin: 0 0 10px; }
-.hfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 430px), 1fr)); gap: 16px; align-items: start; margin-top: 8px; }
+/* Colonnes Micros / Ears : assez larges pour voir tout le tableau ; une seule colonne pleine largeur si l'écran est trop étroit, pas de colonne vide */
+.hfgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 780px), 1fr)); gap: 16px; align-items: start; margin-top: 8px; }
 .hfwide { grid-column: 1 / -1; }
 .hfdev { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface); }
 .hfdev h3 { margin: 0 0 4px; }
