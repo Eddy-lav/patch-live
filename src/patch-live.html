@@ -1400,6 +1400,34 @@ table.master td.nopad input { opacity: 0.8; }
 .etq-print progress { width: 120px; }
 @media (max-width: 900px) { .etq { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .etq-bench { padding: 20px 10px 10px; } .etq-insp .field input[type="text"] { min-width: 0; width: 100%; } .etq-print { position: static; } }
+/* ===== Tableaux alignés sur le master patch (référence) =====
+   Cadre blanc à filet, titres sur bande claire, filets de colonnes, ligne survolée,
+   champs sans bordure qui apparaissent au survol, colonne N° sur bande. Ordinateur seulement :
+   sur téléphone chaque tableau garde sa présentation en fiches. */
+@media (min-width: 761px) {
+  :is(.panel .tbl, .hfg .hftw, .hfdev .hftw):has(> table:not(.bq)) { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
+  .hfg table, .hfdev table.hfdt { font-size: 15.5px; }
+  :is(.panel .tbl, .hfg, .hfdev) table th { background: var(--surface-2); font-family: var(--font-head); font-size: 14px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); padding: 7px 6px; border-bottom: 1px solid var(--btn-line); }
+  :is(.panel .tbl, .hfg, .hfdev) table td { padding: 4px 6px; }
+  :is(.panel .tbl, .hfg, .hfdev) table th + th, :is(.panel .tbl, .hfg, .hfdev) table td + td { border-left: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+  :is(.panel .tbl, .hfg, .hfdev) table tbody tr:hover td { background: var(--rowhover); }
+  #netTbl tr.netgrp td, #netTbl tr.netgrp:hover td { background: var(--surface); border-left: 0; }
+  :is(.panel .tbl, .hfg, .hfdev) table td :is(input[type="text"], input[type="number"], input:not([type]), select),
+  .hfg td textarea.hfwrap { border: 1px solid transparent; border-color: transparent; background: transparent; border-radius: 3px; padding: 4px 5px; box-shadow: none; }
+  :is(.panel .tbl, .hfg, .hfdev) table td :is(input[type="text"], input[type="number"], input:not([type]), select):hover,
+  .hfg td textarea.hfwrap:hover { border-color: var(--line); }
+  :is(.panel .tbl, .hfg, .hfdev) table td :is(input[type="text"], input[type="number"], input:not([type]), select):focus,
+  .hfg td textarea.hfwrap:focus { border-color: var(--accent); background: var(--surface); }
+  .hfg td select:disabled { background: transparent; }
+  .hfg td.n { font-family: var(--font-mono); font-weight: 600; background: var(--strip); width: 40px; padding-right: 8px; }
+  .hfg tbody tr:hover td.n { background: color-mix(in srgb, var(--strip) 55%, var(--tape)); }
+  .hfg tr.sel td { background: var(--hl); }
+  .hfg tr.sel td.n { background: var(--accent); color: var(--accent-ink); }
+  #netTbl tr.netbad td.ipc input { border-color: var(--danger); }
+  /* Texte un peu plus grand qu'avant dans les tableaux HF : on garde les noms lisibles en entier */
+  .hfg td:has(> input[data-hf="mix"]), .hfg td:has(> input[data-hf="nom"]) { min-width: 130px; }
+  .hfg td:has(> select[data-hf="iem"]), .hfg td:has(> select[data-hf="mic"]) { min-width: 215px; }
+}
 </style>
 
 <div id="cover" class="cover empty">
