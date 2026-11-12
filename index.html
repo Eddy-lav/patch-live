@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "847227c81b";</script>
+<script>window.PL_VER = "26ae4689cd";</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -69,6 +69,9 @@ body {
 }
 .mono, .addr { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 button, input, select { font: inherit; color: inherit; }
+/* Champs sans style propre (nombres, recherches de la banque, listes des outils…) : même allure que les autres champs de l'appli
+   au lieu du gris du navigateur. :where() = priorité nulle, tout style existant reste prioritaire. */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]), select, textarea) { background-color: var(--surface); border: 1px solid var(--field-line, var(--line)); border-radius: 4px; padding: 4px 6px; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
@@ -457,7 +460,7 @@ details.rackd:not([open]) > summary h2::before { content: "▸ "; }
 @media (max-width: 600px) {
   table.rack td { font-size: 13px; padding: 4px 4px; }
   table.rack td.adr:not(:first-child) { white-space: normal; }
-  table.rack th { font-size: 10px; padding: 4px; }
+  table.rack th { font-size: 12px; padding: 4px; }
 }
 table.rack input.quick { width: 100%; border: 1px solid transparent; background: transparent; padding: 2px 4px; border-radius: 3px; font: inherit; }
 table.rack input.quick::placeholder { color: var(--muted); }
@@ -1455,6 +1458,51 @@ table.master td.nopad input { opacity: 0.8; }
   .hfg td:has(> input[data-hf="mix"]), .hfg td:has(> input[data-hf="nom"]) { min-width: 130px; }
   .hfg td:has(> select[data-hf="iem"]), .hfg td:has(> select[data-hf="mic"]) { min-width: 215px; }
 }
+
+
+/* Plan de scène et synoptique en thème sombre : le dessin passe en négatif doux (les couleurs gardent leur teinte),
+   les photos et façades d'appareils restent à l'endroit. L'export PDF / Excel garde le dessin clair d'origine. */
+:root[data-theme="dark"] .plan-stage:not(.rpstage), :root[data-theme="regie"] .plan-stage:not(.rpstage) { background: var(--surface); }
+:root[data-theme="dark"] #planSvg, :root[data-theme="dark"] #synStage > svg, :root[data-theme="regie"] #planSvg, :root[data-theme="regie"] #synStage > svg { filter: invert(0.88) hue-rotate(180deg); }
+:root[data-theme="dark"] #synStage > svg .devimg, :root[data-theme="dark"] #planSvg image,
+:root[data-theme="regie"] #synStage > svg .devimg, :root[data-theme="regie"] #planSvg image { filter: invert(1) hue-rotate(180deg); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .plan-stage:not(.rpstage) { background: var(--surface); }
+  :root:not([data-theme]) #planSvg, :root:not([data-theme]) #synStage > svg { filter: invert(0.88) hue-rotate(180deg); }
+  :root:not([data-theme]) #synStage > svg .devimg, :root:not([data-theme]) #planSvg image { filter: invert(1) hue-rotate(180deg); }
+}
+/* ---------- Densité réglable par page (Serrée / Normale / Aérée) ----------
+   Normale = la page telle qu'elle a toujours été. Serrée et Aérée ne changent que les hauteurs (marges des cases,
+   des lignes et des champs), jamais les colonnes ni les couleurs. */
+.densctl { display: none; }
+@media (min-width: 761px) {
+  nav.tabs { align-items: center; }
+  .densctl { display: inline-flex; align-items: center; gap: 0; margin-left: auto; position: sticky; right: 0; background: var(--bg); padding-left: 10px; flex: none; }
+  .densctl span { font-size: 12px; color: var(--muted); margin-right: 6px; font-weight: 600; }
+  nav.tabs .densctl button, nav.tabs .densctl button:hover { border: 1px solid var(--line); border-radius: 0; background: var(--surface); color: var(--muted); padding: 3px 10px; font-size: 12px; font-weight: 600; margin-left: -1px; min-height: 0; }
+  nav.tabs .densctl button:hover { color: var(--ink); }
+  nav.tabs .densctl button:first-of-type { border-radius: 4px 0 0 4px; }
+  nav.tabs .densctl button:last-of-type { border-radius: 0 4px 4px 0; }
+  nav.tabs .densctl button[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); position: relative; }
+}
+.appmenu #densBtn small, .appmenu #densAirBtn small { display: block; margin-left: 18px; color: var(--muted); font-size: 12px; font-weight: 400; }
+/* Serrée */
+section[data-dens="serre"] td, section[data-dens="serre"] th { padding-top: 0 !important; padding-bottom: 0 !important; }
+section[data-dens="serre"] td input:not([type="checkbox"]):not([type="radio"]), section[data-dens="serre"] td select, section[data-dens="serre"] td textarea { padding-top: 1px !important; padding-bottom: 1px !important; min-height: 0 !important; }
+section[data-dens="serre"] td .btn, section[data-dens="serre"] td button { padding-top: 0 !important; padding-bottom: 0 !important; min-height: 0 !important; }
+section[data-dens="serre"] .box li { padding-top: 0 !important; padding-bottom: 0 !important; min-height: 20px !important; }
+section[data-dens="serre"] .box li.occ > input, section[data-dens="serre"] .box li.occ > select { height: 20px !important; line-height: 18px !important; }
+section[data-dens="serre"] .panel { padding-top: 8px; padding-bottom: 8px; }
+/* Aérée : au moins la taille du master patch, et des cibles confortables au doigt */
+section[data-dens="aere"] td, section[data-dens="aere"] th { padding-top: 5px !important; padding-bottom: 5px !important; }
+section[data-dens="aere"] td input:not([type="checkbox"]):not([type="radio"]), section[data-dens="aere"] td select { padding-top: 7px !important; padding-bottom: 7px !important; min-height: 38px !important; font-size: 15.5px !important; }
+section[data-dens="aere"] td textarea { padding-top: 7px !important; padding-bottom: 7px !important; font-size: 15.5px !important; }
+section[data-dens="aere"] td .btn, section[data-dens="aere"] td button { min-height: 36px !important; }
+section[data-dens="aere"] .box li { padding-top: 4px !important; padding-bottom: 4px !important; min-height: 38px !important; font-size: 15px !important; }
+section[data-dens="aere"] .box li.occ > input, section[data-dens="aere"] .box li.occ > select { height: 32px !important; line-height: 28px !important; font-size: 15px !important; }
+section[data-dens="aere"] .box li .bact button { height: 32px !important; width: 26px !important; }
+section[data-dens="aere"] .box h3 { padding-top: 11px; padding-bottom: 11px; }
+section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: 12px !important; }
 </style>
 
 <div id="cover" class="cover empty">
@@ -1494,7 +1542,8 @@ table.master td.nopad input { opacity: 0.8; }
   <button id="printBtn" type="button" role="menuitem" aria-expanded="false">Imprimer ou faire un PDF…</button>
   <hr>
   <button id="themeMi" type="button" role="menuitem">Changer de thème</button>
-  <button id="densBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes serrées</button>
+  <button id="densBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes serrées<small>sur cette page</small></button>
+  <button id="densAirBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes aérées<small>sur cette page, plus faciles au doigt</small></button>
   <button id="colsBtn" type="button" role="menuitem">Colonnes à afficher…</button>
 </div>
 <div id="docMenu" class="dbxmenu appmenu" role="menu" hidden>
@@ -1576,6 +1625,7 @@ table.master td.nopad input { opacity: 0.8; }
   <button role="tab" data-v="etiq" aria-selected="false">Étiquettes</button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
   <button role="tab" data-v="journal" aria-selected="false">Journal<span class="count" id="cJournal"></span></button>
+  <div id="densCtl" class="densctl" role="group" aria-label="Densité de cette page"><span>Densité</span><button type="button" data-dens="serre" title="Lignes serrées : plus de lignes à l'écran">Serrée</button><button type="button" data-dens="" title="Taille d'origine de la page">Normale</button><button type="button" data-dens="aere" title="Lignes aérées : plus faciles à lire et au doigt">Aérée</button></div>
 </nav>
 </div>
 <div id="notice" hidden></div>
@@ -10465,17 +10515,31 @@ table.master td.nopad input { opacity: 0.8; }
   const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq"], dossier: ["infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
+  const densMap = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem("patch-live-density") || "{}") || {}; } catch (e) { /* ignore */ } try { if (!("master" in m) && localStorage.getItem("patch-live-dense") === "1") m.master = "serre"; } catch (e) { /* ignore */ } return m; })();
+  const densOf = (v) => (densMap[v] === "serre" || densMap[v] === "aere" ? densMap[v] : "");
+  function densApply() {
+    document.querySelectorAll("main > section[id^='v-'], section[id^='v-']").forEach((sec) => { const k = sec.id === "v-master-2" ? "master" : sec.id.slice(2), d = densOf(k); if (d) sec.dataset.dens = d; else delete sec.dataset.dens; });
+    document.body.classList.toggle("dense", densOf("master") === "serre");
+    const d = densOf(view); document.querySelectorAll("#densCtl button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.dens === d ? "true" : "false"));
+  }
+  function densSet(d) {
+    if (d) densMap[view] = d; else delete densMap[view];
+    try { localStorage.setItem("patch-live-density", JSON.stringify(densMap)); localStorage.setItem("patch-live-dense", densOf("master") === "serre" ? "1" : "0"); } catch (e) { /* ignore */ }
+    densApply(); if (view === "hf") hfGrowAll($("#v-hf")); stickHeads();
+  }
   function setView(v, fromHistory) {
     if (v === "master" && !showMaster) v = "racks";
     if (!fromHistory && view && v !== view) { try { history.pushState({ v }, ""); } catch (e) { /* ignore */ } }
     view = v;
     try { sessionStorage.setItem("patch-live-view", v); localStorage.setItem("patch-live-view", v); } catch (e) { /* ignore */ }
     $('nav.tabs button[data-v="master"]').hidden = !showMaster; $("nav.tabs").classList.toggle("nomaster", !showMaster); $("#showMaster").checked = showMaster;
-    document.querySelectorAll("nav.tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
+    document.querySelectorAll("nav.tabs > button[data-v]").forEach((b) => b.setAttribute("aria-selected", b.dataset.v === v ? "true" : "false"));
     const sp = spaceOf(v); lastIn[sp] = v;
     document.querySelectorAll("nav.spaces button").forEach((b) => b.setAttribute("aria-selected", b.dataset.s === sp ? "true" : "false"));
-    document.querySelectorAll("nav.tabs button").forEach((b) => { if (b.dataset.v !== "master" || showMaster) b.hidden = !SPACES[sp].includes(b.dataset.v); });
-    $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2;
+    document.querySelectorAll("nav.tabs > button[data-v]").forEach((b) => { if (b.dataset.v !== "master" || showMaster) b.hidden = !SPACES[sp].includes(b.dataset.v); });
+    // Sur ordinateur la barre reste visible même avec un seul onglet : elle porte le réglage de densité
+    $("nav.tabs").hidden = SPACES[sp].filter((k) => k !== "master" || showMaster).length < 2 && !matchMedia("(min-width: 761px)").matches;
+    densApply();
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
     ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
@@ -10662,6 +10726,25 @@ table.master td.nopad input { opacity: 0.8; }
         [16, 16, 16, 9, 12, 9, 22].forEach((w, j) => { hs.getColumn(col + j).width = w; });
       }
       page(hs, true);
+    }
+    // Porteurs : lisible sans l'appli (les données restent aussi dans la feuille _appli)
+    const pNames = personNames();
+    if (pNames.length) {
+      const ps = wb.addWorksheet("Porteurs", { views: [{ state: "frozen", ySplit: 2 }] });
+      ps.addRow([`Porteurs · ${titre}`]).font = { bold: true, size: 14 };
+      styleHead(ps.addRow(["Couleur", "Nom", "Instrument / poste", "Sources", "Mix (sorties)", "HF"]));
+      const mc = state.musCol || {}, mp = state.musPoste || {};
+      pNames.forEach((n) => {
+        const u = personUses(n), k = musKey(n), col = RES_BY.get(mc[k]);
+        const hfMic = (state.hf || []).filter((g) => g.kind === "tx" || g.kind === "spxm").flatMap((g) => g.rows.filter((r) => u.src.some((l) => musKey(l.source) === musKey(r.nom))).map((r) => ({ g, r })));
+        const hfTxt = [...u.hf, ...hfMic].map(({ g, r }) => `${g.model || (HF_KINDS[g.kind] || {}).t || "HF"}${r.mix ? " · " + r.mix : r.nom ? " · " + r.nom : ""}`).join(", ");
+        const row = ps.addRow([col ? col[1] : "", n, mp[k] || "", u.src.map((l) => `${canal(l)} ${l.source}`).join(", "), u.outs.map((o) => o.mix || "sans nom").join(", "), hfTxt]);
+        row.eachCell({ includeEmpty: true }, (c) => { c.border = BORDER; c.alignment = { vertical: "top", wrapText: true }; });
+        row.getCell(2).font = { bold: true };
+        if (col) xlMusColor(row.getCell(1), n);
+      });
+      [14, 22, 20, 46, 30, 34].forEach((w, j) => { ps.getColumn(j + 1).width = w; });
+      page(ps, true);
     }
     const png = await planPng();
     if (png) {
@@ -11082,7 +11165,7 @@ table.master td.nopad input { opacity: 0.8; }
       e.preventDefault();
       if (k === "y" || e.shiftKey) redo(); else undo();
     });
-    document.querySelectorAll("nav.tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
+    document.querySelectorAll("nav.tabs > button[data-v]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
     document.querySelectorAll("nav.spaces button").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.s, first = SPACES[k].find((x) => x !== "master" || showMaster); setView(lastIn[k] && (lastIn[k] !== "master" || showMaster) ? lastIn[k] : first); }));
     // Ordinateur : au survol d'un espace, ses onglets s'affichent dessous, un clic suffit pour y aller
     if (matchMedia("(hover: hover) and (pointer: fine)").matches) {
@@ -11856,7 +11939,8 @@ table.master td.nopad input { opacity: 0.8; }
   $("#menuBtn").addEventListener("click", (e) => {
     e.stopPropagation(); const m = $("#appMenu"); if (!m.hidden) { closeMenus(); return; }
     $("#exportBtn").hidden = !(DBX_ON && dbx.file);
-    $("#densBtn").setAttribute("aria-checked", document.body.classList.contains("dense") ? "true" : "false");
+    $("#densBtn").setAttribute("aria-checked", densOf(view) === "serre" ? "true" : "false");
+    $("#densAirBtn").setAttribute("aria-checked", densOf(view) === "aere" ? "true" : "false");
     const r = e.currentTarget.getBoundingClientRect(); placeMenu(m, r.right - 290, r.bottom + 4); m.style.width = "290px";
     $("#menuBtn").setAttribute("aria-expanded", "true");
   });
@@ -11866,9 +11950,11 @@ table.master td.nopad input { opacity: 0.8; }
   $("#appMenu").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setTimeout(() => { if (!(b.id === "newBtn" && b.classList.contains("armed"))) closeMenus(); }, 0); });
   $("#exportBtn").addEventListener("click", () => save());
   $("#themeMi").addEventListener("click", () => $("#themeBtn").click());
-  // Lignes serrées (ordinateur) : plus de lignes à l'écran
-  if (pref("dense", "0") === "1") document.body.classList.add("dense");
-  $("#densBtn").addEventListener("click", () => { const on = document.body.classList.toggle("dense"); setPref("dense", on ? "1" : "0"); stickHeads(); });
+  // Densité réglable sur chaque page : serrée, normale (la taille d'origine de la page) ou aérée. Gardée par page dans ce navigateur.
+  // « Lignes serrées » du master d'avant devient la densité serrée du master.
+  $("#densBtn").addEventListener("click", () => densSet(densOf(view) === "serre" ? "" : "serre"));
+  $("#densAirBtn").addEventListener("click", () => densSet(densOf(view) === "aere" ? "" : "aere"));
+  $("#densCtl").addEventListener("click", (e) => { const b = e.target.closest("button[data-dens]"); if (b) densSet(b.dataset.dens); });
   // Colonnes à afficher dans le master et les racks : chacun choisit selon son poste
   const HIDEABLE = [["mus", "Musicien"], ["pied", "Pied"], ["acc", "Accessoire"], ["pad", "Pad dB"], ["48", "48V"], ["prov", "Provenance"], ["notes", "Notes"]];
   const hiddenCols = new Set(pref("hidecols", "").split(",").filter(Boolean));
