@@ -1115,6 +1115,16 @@ label.p48 input:checked + span { border-style: solid; }
 .impmap .field select { width: 100%; }
 .impmap .field i { font-style: normal; color: var(--muted); font-weight: 400; }
 .impprev tr.impgap td { color: var(--muted); font-style: italic; }
+.impq { margin: 14px 0 0; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.impq h3 { margin: 0 0 6px; }
+.impq ol { margin: 0; padding: 0; list-style: none; }
+.impq li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+.impq li:first-child { border-top: 0; }
+.impq li .qn { flex: 1 1 220px; min-width: 0; }
+.impq li .qn b { display: block; }
+.impq li .qn span { font-size: 13px; color: var(--muted); }
+.impq li select { max-width: 220px; }
+.impq .qact { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .impgapsw { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 4px; font-size: 14px; max-width: 72ch; }
 .impgapsw input { margin-top: 3px; }
 .impprev { overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
@@ -1391,6 +1401,12 @@ table.master td.nopad input { opacity: 0.8; }
     <label class="impgapsw"><input type="checkbox" id="impGaps" checked> Garder les trous du patch : une entrée numérotée sans source devient une ligne vide, pour que les numéros restent ceux de l'ancien patch</label>
     <h3>Aperçu</h3>
     <div id="impPrev" class="impprev"></div>
+    <div id="impQ" class="impq">
+      <h3>Plusieurs tableaux</h3>
+      <p class="hint" id="impQHint">Un fichier contient souvent un tableau par stage rack ou par appareil (SD Rack, DD4MR, Ferrofish…). Ajoute chaque tableau à la liste, avec le stage rack où il se câble, puis reprends-les tous d'un coup, dans l'ordre de la liste.</p>
+      <ol id="impQList"></ol>
+      <div class="qact"><button id="impQAdd" class="btn small" type="button">Ajouter ce tableau à la liste</button><button id="impQAll" class="btn small" type="button">Ajouter tous les tableaux de la feuille</button></div>
+    </div>
   </div>
   <div class="impfoot">
     <label class="field"><span>Où</span><select id="impDest"><option value="new">Dans un nouveau dossier</option><option value="add">Ajouter au dossier ouvert</option></select></label>
@@ -8883,7 +8899,10 @@ table.master td.nopad input { opacity: 0.8; }
     (cells || []).forEach((v) => { if (!v) return; IMP_FIELDS[mode].forEach(([f]) => { if (impMatch(mode, f, v)) got.add(f); }); });
     if (got.has(IMP_FIELDS[mode][0][0])) return got.size;
     // Pas de titre « source » clair (Star Ac : « INPUT » au-dessus des noms) : une ligne avec au moins trois autres titres compte quand même
-    return mode === "master" && got.size >= 3 ? got.size - 0.5 : 0;
+    if (mode === "master" && got.size >= 3) return got.size - 0.5;
+    // Tableau d'appareil réduit à « INPUT | OUTPUT » (Orange Box, M8… chez Star Ac) : les noms sont sous INPUT
+    if (mode === "master" && got.has("entree") && (cells || []).some((v) => /^(OUTPUT|OUTPUTS|OUT|SORTIE|SORTIES)$/.test(impNorm(v)))) return 2;
+    return 0;
   }
   // Tous les tableaux de la feuille (une ligne de titres chacun), nommés par le titre posé juste au-dessus s'il y en a un
   function impTables(mode, G) {
@@ -8907,7 +8926,9 @@ table.master td.nopad input { opacity: 0.8; }
     const head = imp.grid.g[imp.head] || [], t = impNorm(head[c]), cols = [];
     if (t) head.forEach((v, k) => { if (impNorm(v) === t) cols.push(k); });
     imp.blocks = cols.length > 1 ? cols : c ? [c] : [];
-    const firstCol = Math.max(1, head.findIndex((v) => v));
+    let firstCol = Math.max(1, head.findIndex((v) => v));
+    // Numéros sans titre à gauche du tableau (Orange Box chez Star Ac) : ils en font partie, pour repérer les trous
+    for (let c = 1; c < firstCol; c++) { let k = 0; for (let r = imp.head + 1; r <= Math.min(imp.grid.rows, imp.head + 20); r++) if (/^\d{1,3}$/.test((imp.grid.g[r] || [])[c] || "")) k++; if (k >= 5) { firstCol = c; break; } }
     if (imp.blocks.length > 1) {
       // Chaque tableau fait la largeur qui sépare deux titres « nom » : on commence au premier titre rempli
       const period = imp.blocks[1] - imp.blocks[0];
@@ -8950,7 +8971,11 @@ table.master td.nopad input { opacity: 0.8; }
       const cells = G.g[r] || [];
       if (r > imp.head + 1 && impScoreRow(imp.mode, cells) >= 2) break;
       // Titre du tableau suivant (Star Ac : « OPTOCORE DD4MR - Madi 1 ID12 ») : une seule cellule remplie, sans numéro d'entrée
-      if (imp.map.entree && imp.blocks.length < 2 && !cells[imp.map.entree]) { let n = 0; for (let c = imp.range[0]; c <= impLastCol(); c++) if (cells[c]) n++; if (n === 1 && r > imp.head + 1) break; }
+      if (r > imp.head + 1 && imp.blocks.length < 2) {
+        let n = 0; for (let c = imp.range[0]; c <= impLastCol(); c++) if (cells[c]) n++;
+        const headSoon = [1, 2, 3, 4].some((k) => impScoreRow(imp.mode, G.g[r + k]) >= 2);
+        if (n === 1 && ((imp.map.entree && !cells[imp.map.entree]) || headSoon)) break;
+      }
       const any = imp.blocks.length > 1 ? impCols(main).some((c) => cells[c]) || imp.blocks.some((x, b) => impRowUsed(cells, b)) : impRowUsed(cells, 0);
       if (any) { end = r; empty = 0; } else if (++empty >= 15) break;
     }
@@ -9023,22 +9048,118 @@ table.master td.nopad input { opacity: 0.8; }
     const ng = items.filter((it) => it.gap).length, ns = items.length - ng;
     go.textContent = items.length ? `Reprendre ${ns} ${imp.mode === "master" ? "source" : "sortie"}${ns > 1 ? "s" : ""}${ng ? ` et ${ng} ligne${ng > 1 ? "s" : ""} vide${ng > 1 ? "s" : ""}` : ""}` : "Reprendre";
     $("#impGaps").checked = imp.gaps;
+    impPaintQ();
+    if (imp.q.length) {
+      const all = imp.q.map((c) => impWith(c, () => impItems())), n = all.reduce((t, x) => t + x.filter((it) => !it.gap).length, 0);
+      go.disabled = !n; const w = imp.q.every((c) => c.mode === "master") ? "source" : imp.q.every((c) => c.mode !== "master") ? "sortie" : "ligne";
+      go.textContent = `Reprendre les ${imp.q.length} tableau${imp.q.length > 1 ? "x" : ""} de la liste (${n} ${w}${n > 1 ? "s" : ""})`;
+    }
     if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
+  }
+  // Modèles de stage rack ou d'appareil (bouton « + » des Réglages racks et import des anciens Excel)
+  const RACK_PRESETS = {
+    sd: { nom: "SD Rack", flat: false, n: 6, out: 2 },
+    num: { nom: "DL431", flat: true, n: 24, out: 8, loopId: "" },
+    osend: { nom: "Opto Send", model: "osend", flat: true, n: 16, out: 0 },
+    dd4mr: { nom: "DD4MR", flat: false, ports: [{ nom: "MADI 1", in: 64, out: 64 }, { nom: "MADI 2", in: 64, out: 64 }] },
+    orange: { nom: "Orange Box", model: "orange", flat: false, ports: [{ nom: "Optocore (loop)", card: "OPTO", in: 0, out: 0 }, { nom: "MADI", card: "MADI-B", in: 64, out: 64 }] },
+    spectera: { nom: "Spectera", model: "spectera", flat: false, loopId: "", ports: [{ nom: "DANTE", card: "SPX_DANTE", in: 32, out: 32 }] },
+    m8: { nom: "M8", model: "m8", flat: false, ports: [{ nom: "MADI 1", in: 64, out: 64 }, { nom: "MADI 2", in: 64, out: 64 }] },
+    ports: { nom: "I/O", flat: false, ports: [{ nom: "Port 1", in: 64, out: 64 }] }
+  };
+  // Appareil à créer d'après le titre d'un tableau importé (« INPUT SD RACK ID 11 », « OPTOCORE DD4MR - Madi 1 ID12 », « Ferrofish »…)
+  // nrows et out : nombre de lignes du tableau et sens (sorties) pour dimensionner l'appareil créé
+  function impRackSpec(name, nrows, out) {
+    const n = impNorm(name); if (!n) return null;
+    const kind = /SD ?RACK|SD-RACK/.test(n) ? "sd" : /DD4MR/.test(n) ? "dd4mr" : /ORANGE ?BOX/.test(n) ? "orange" : /\bM8\b/.test(n) ? "m8" : /SPECTERA/.test(n) ? "spectera" : /\bDL ?\d{3}\b/.test(n) ? "num" : /FERROFISH|\bRIO\b|STAGE ?BOX|\bI\/O\b/.test(n) ? "ports" : "";
+    if (!kind) return null;
+    const R = JSON.parse(JSON.stringify(RACK_PRESETS[kind])), id = (n.match(/(?:\bID|#)\s*(\d+)/) || [])[1] || "";
+    if (kind === "ports") { const m = n.match(/FERROFISH|RIO|STAGE ?BOX/); R.nom = m ? m[0].charAt(0) + m[0].slice(1).toLowerCase() : "I/O"; }
+    if (kind === "num") R.nom = (n.match(/DL ?\d{3}/) || ["DL431"])[0].replace(" ", "");
+    impGrowRack(R, nrows, out);
+    if (kind === "spectera") R.nom = name.trim().slice(0, 30);
+    return { num: kind === "spectera" ? "" : id, R, label: `${R.nom}${id && kind !== "spectera" ? " #" + id : ""}` };
+  }
+  // Agrandit un appareil (créé par l'import) pour qu'il ait au moins nrows entrées, ou sorties
+  function impGrowRack(R, nrows, out) {
+    if (!nrows) return;
+    if (R.ports) { const p = R.ports.find((x) => !x.card) || null; if (p) p[out ? "out" : "in"] = Math.max(Number(p[out ? "out" : "in"]) || 0, nrows); return; }
+    const k = out ? "out" : "n";
+    R[k] = Math.max(Number(R[k]) || 0, R.flat ? nrows : Math.ceil(nrows / 8));
+  }
+  // ---- Plusieurs tableaux : chaque tableau de la liste garde sa feuille, ses colonnes et son stage rack ----
+  const IMP_KEYS = ["sheet", "mode", "head", "end", "map", "blocks", "range", "gaps"];
+  const impSnap = () => { const c = {}; IMP_KEYS.forEach((k) => { c[k] = JSON.parse(JSON.stringify(imp[k])); }); return c; };
+  function impGridOf(i) { imp.grids = imp.grids || {}; return imp.grids[i] || (imp.grids[i] = impGrid(imp.wb.worksheets[i])); }
+  // Lance fn avec les réglages d'un tableau de la liste, puis remet ceux de l'écran
+  function impWith(cfg, fn) {
+    const keep = impSnap(), g = imp.grid;
+    IMP_KEYS.forEach((k) => { imp[k] = JSON.parse(JSON.stringify(cfg[k])); }); imp.grid = impGridOf(cfg.sheet);
+    try { return fn(); } finally { IMP_KEYS.forEach((k) => { imp[k] = keep[k]; }); imp.grid = g; }
+  }
+  // Nom d'un tableau : le titre posé au-dessus, sinon la feuille et la ligne
+  function impTabName(sheet, mode, head) {
+    const t = impTables(mode, impGridOf(sheet)).find((x) => x.r === head);
+    return (t && t.name) || `${imp.wb.worksheets[sheet].name} · ligne ${head}`;
+  }
+  // Stage rack deviné d'après le nom du tableau : « ID 11 », « #12 », ou le nom du rack (« DD4MR », « Orange Box »…)
+  function impGuessRack(name, mode) {
+    const out = mode !== "master", ok = (r) => (out ? rackOutputs(r) : rackInputs(r)).length;
+    if ($("#impDest").value !== "add") return impRackSpec(name, 0) ? "new" : ""; // nouveau dossier : rien n'existe encore
+    const n = impNorm(name), id = (n.match(/(?:\bID|#)\s*(\d+)/) || [])[1];
+    // Même ID mais autre appareil (le #12 du dossier est un SD Rack, le tableau parle d'un DD4MR) : ce n'est pas le bon
+    const sp = impRackSpec(name, 0), same = (r) => !sp || sp.R.nom === "I/O" || impNorm(r.nom || "").includes(impNorm(sp.R.nom)) || impNorm(sp.R.nom).includes(impNorm(r.nom || "-"));
+    const byId = id && state.racks.filter((r) => ok(r) && String(r.num || "").trim() === id && same(r));
+    if (byId && byId.length === 1) return byId[0].id;
+    const byName = state.racks.filter((r) => ok(r) && r.nom && n.includes(impNorm(r.nom)) && !(id && String(r.num || "").trim() && String(r.num).trim() !== id));
+    if (byName.length === 1) return byName[0].id;
+    return impRackSpec(name, 0) ? "new" : "";
+  }
+  function impQAdd(cfg) {
+    imp.q = imp.q || [];
+    if (imp.q.some((x) => x.sheet === cfg.sheet && x.head === cfg.head && x.mode === cfg.mode)) return false;
+    cfg.name = impTabName(cfg.sheet, cfg.mode, cfg.head);
+    cfg.rack = cfg.rack != null ? cfg.rack : impGuessRack(cfg.name, cfg.mode);
+    cfg.from = cfg.from != null ? cfg.from : null;
+    imp.q.push(cfg); return true;
+  }
+  const impRackList = (mode) => ($("#impDest").value === "add" ? state.racks.filter((r) => (mode !== "master" ? rackOutputs(r) : rackInputs(r)).length) : []);
+  const impRackOpts = (mode, sel, name) => `<option value="">Rien, je câblerai après</option>` + ((sp) => (sp ? `<option value="new"${sel === "new" ? " selected" : ""}>Créer ${esc(sp.label)}${sp.num && $("#impDest").value === "add" && state.racks.some((r) => String(r.num || "").trim() === sp.num) ? ` (sans ID : le #${esc(sp.num)} est déjà pris)` : ""}</option>` : ""))(impRackSpec(name || "", 0)) + impRackList(mode).map((r) => `<option value="${r.id}"${r.id === sel ? " selected" : ""}>${esc(rackTitle(r))}${r.console ? " · " + esc(consLabel(r.console)) : ""}</option>`).join("");
+  function impFromOpts(mode, rid, sel) {
+    const r = rackById(rid); if (!r) return "";
+    const out = mode !== "master", occ = occupancy(), used = out ? occ.out : occ.rack, cells = out ? rackOutputs(r) : rackInputs(r);
+    return `<option value=""${sel == null ? " selected" : ""}>1re ${out ? "sortie" : "entrée"} libre</option>` + cells.map((a, k) => { const who = used.get(kRack({ r: r.id, ...a })); return `<option value="${k}"${k === sel ? " selected" : ""}>${out ? "out" : "in"} ${esc(rackShort(r, a.c, a.i))}${who ? " · " + esc(label(who) || "occupée") : ""}</option>`; }).join("");
+  }
+  function impPaintQ() {
+    const q = imp.q || [], add = $("#impDest").value === "add";
+    $("#impQList").innerHTML = q.map((c, k) => {
+      const its = impWith(c, () => impItems()), g = its.filter((it) => it.gap).length, n = its.length - g;
+      return `<li><span class="qn"><b>${k + 1}. ${esc(c.name.slice(0, 60))}</b><span>${c.mode === "master" ? "Sources" : "Sorties"} · ${n} ligne${n > 1 ? "s" : ""}${g ? ` + ${g} vide${g > 1 ? "s" : ""}` : ""} · feuille ${esc(imp.wb.worksheets[c.sheet].name)}, ligne ${c.head}</span></span>${add || impRackSpec(c.name, 0) ? `<select data-qrack="${k}" aria-label="Câbler sur">${impRackOpts(c.mode, c.rack, c.name)}</select>${c.rack && c.rack !== "new" ? `<select data-qfrom="${k}" aria-label="À partir de">${impFromOpts(c.mode, c.rack, c.from)}</select>` : ""}` : ""}<button class="btn small" type="button" data-qedit="${k}">Voir</button><button class="btn small" type="button" data-qdel="${k}" aria-label="Retirer de la liste">×</button></li>`;
+    }).join("");
+    const tabs = impTables(imp.mode, imp.grid);
+    $("#impQAll").hidden = tabs.length < 2;
+    $("#impQAdd").textContent = q.some((x) => x.sheet === imp.sheet && x.head === imp.head && x.mode === imp.mode) ? "Ce tableau est dans la liste" : "Ajouter ce tableau à la liste";
+    $("#impQAdd").disabled = !imp.head || $("#impQAdd").textContent.startsWith("Ce tableau");
+    // Avec une liste, le pied de page ne câble plus le tableau affiché : chaque tableau a son stage rack
+    if (q.length) { $("#impRackF").hidden = true; $("#impFromF").hidden = true; }
   }
   // Câbler directement sur un stage rack ou un appareil du dossier ouvert : la 1re ligne reprise va sur l'entrée choisie, les suivantes à la suite
   function impPaintRack() {
-    const add = $("#impDest").value === "add", out = imp.mode !== "master";
-    const racks = add ? state.racks.filter((r) => (out ? rackOutputs(r) : rackInputs(r)).length) : [];
-    $("#impRackF").hidden = !racks.length; $("#impFromF").hidden = !racks.length || !imp.rack;
-    if (!racks.some((r) => r.id === imp.rack)) imp.rack = "";
-    $("#impRack").innerHTML = `<option value="">Rien, je câblerai après</option>` + racks.map((r) => `<option value="${r.id}"${r.id === imp.rack ? " selected" : ""}>${esc(rackTitle(r))}${r.console ? " · " + esc(consLabel(r.console)) : ""}</option>`).join("");
-    const r = rackById(imp.rack); if (!r) return;
+    const out = imp.mode !== "master", racks = impRackList(imp.mode), name = imp.head ? impTabName(imp.sheet, imp.mode, imp.head) : "", sp = impRackSpec(name, 0);
+    $("#impRackF").hidden = !racks.length && !sp;
+    if (imp.rack == null) { imp.rack = imp.head ? impGuessRack(name, imp.mode) : ""; imp.from = null; } // stage rack deviné d'après le titre du tableau
+    if (imp.rack !== "new" && !racks.some((r) => r.id === imp.rack)) imp.rack = "";
+    if (imp.rack === "new" && !sp) imp.rack = "";
+    $("#impRack").innerHTML = impRackOpts(imp.mode, imp.rack, name);
+    const r = rackById(imp.rack); $("#impFromF").hidden = !r; if (!r) return;
     const occ = occupancy(), cells = out ? rackOutputs(r) : rackInputs(r), used = out ? occ.out : occ.rack;
-    if (imp.from == null || imp.from >= cells.length) { imp.from = cells.findIndex((a) => !used.get(kRack({ r: r.id, ...a }))); if (imp.from < 0) imp.from = 0; }
-    $("#impFrom").innerHTML = cells.map((a, k) => { const who = used.get(kRack({ r: r.id, ...a })); return `<option value="${k}"${k === imp.from ? " selected" : ""}>${out ? "out" : "in"} ${esc(rackShort(r, a.c, a.i))}${who ? " · " + esc(label(who) || "occupée") : ""}</option>`; }).join("");
+    if (imp.from == null || imp.from >= cells.length) { imp.from = cells.findIndex((x) => !used.get(kRack({ r: r.id, ...x }))); if (imp.from < 0) imp.from = 0; }
+    $("#impFrom").innerHTML = cells.map((x, k) => { const who = used.get(kRack({ r: r.id, ...x })); return `<option value="${k}"${k === imp.from ? " selected" : ""}>${out ? "out" : "in"} ${esc(rackShort(r, x.c, x.i))}${who ? " · " + esc(label(who) || "occupée") : ""}</option>`; }).join("");
   }
+
   function impLoadSheet(i, mode) {
-    imp.sheet = i; imp.grid = impGrid(imp.wb.worksheets[i]);
+    imp.rack = null;
+    imp.sheet = i; imp.grid = impGridOf(i);
     imp.mode = mode || (/out|sortie|ear|iem|retour/i.test(imp.wb.worksheets[i].name) ? "sorties" : "master");
     imp.head = impFindHead(imp.mode, imp.grid).row; imp.map = {}; imp.blocks = []; imp.range = [1, imp.grid.cols]; imp.end = imp.grid.rows;
     if (imp.head) impSetup(false);
@@ -9046,7 +9167,7 @@ table.master td.nopad input { opacity: 0.8; }
   async function impOpen(buf, name) {
     const wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
     if (!wb.worksheets.length) { notice("Ce fichier Excel ne contient aucune feuille.", true); return; }
-    imp = { wb, name: name || "fichier Excel", gaps: true };
+    imp = { wb, name: name || "fichier Excel", gaps: true, q: [], grids: {} };
     // Feuille de départ : celle où la ligne de titres du patch est la plus nette
     let best = 0, bi = 0;
     wb.worksheets.forEach((w, i) => { const s = impFindHead("master", impGrid(w)).score + (/patch|input|entr/i.test(w.name) ? 0.5 : 0); if (s > best) { best = s; bi = i; } });
@@ -9055,9 +9176,23 @@ table.master td.nopad input { opacity: 0.8; }
     impPaint();
   }
   function impApply() {
-    const items = impItems(); if (!items.length) return;
     const isNew = $("#impDest").value === "new", base = imp.name.replace(/\.xlsx$/i, "").trim();
+    const jobs = imp.q.length ? imp.q : [{ ...impSnap(), rack: imp.rack, from: imp.from, name: imp.head ? impTabName(imp.sheet, imp.mode, imp.head) : "" }];
+    if (!jobs.some((c) => impWith(c, () => impItems()).some((it) => !it.gap))) return;
     if (isNew) { dbxDetach(); state = vide(); state.dossier.nom = base || "Dossier repris"; }
+    const made = {}; // appareils créés pendant cet import : un tableau d'entrées et un de sorties du même SD Rack #11 vont sur le même
+    const res = jobs.map((c) => impWith(c, () => impApplyOne(c, isNew, made)));
+    learnDossier(state); state.exemple = false;
+    $("#impDlg").close();
+    const lastMode = jobs[jobs.length - 1].mode;
+    commit(true); setView(lastMode === "master" ? homeView() : "sorties");
+    if (jobs.length === 1) { notice(res[0].msg(isNew)); return; }
+    const tot = res.reduce((t, x) => t + x.n, 0);
+    notice(`${jobs.length} tableaux repris de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}, ${tot} ligne${tot > 1 ? "s" : ""} en tout. ${res.map((x, k) => `${esc(jobs[k].name || "Tableau " + (k + 1))} : ${x.short}`).join(" ")} L'ancienne adresse reste dans les notes.`);
+  }
+  // Reprend un tableau (réglages déjà posés dans imp) ; renvoie de quoi écrire le message
+  function impApplyOne(cfg, isNew, made = {}) {
+    const items = impItems(); if (!items.length) return { n: 0, short: "rien à reprendre.", msg: () => "Rien à reprendre." };
     const keep = (it) => Object.keys(IMP_KEEP).filter((f) => it[f]).map((f) => `${IMP_KEEP[f]} : ${it[f]}`);
     if (imp.mode === "master") {
       items.forEach((it) => {
@@ -9076,11 +9211,18 @@ table.master td.nopad input { opacity: 0.8; }
     }
     // Câblage sur le stage rack choisi : une ligne par entrée (ou sortie), dans l'ordre ; un trou garde son entrée libre
     let cab = "";
-    const rk = !isNew && rackById(imp.rack);
+    let rk = cfg.rack === "new" ? null : !isNew && rackById(cfg.rack), made0 = "";
+    if (cfg.rack === "new") {
+      const out = imp.mode !== "master", sp = impRackSpec(cfg.name || "", items.length, out), key = sp && sp.label;
+      if (sp && made[key]) { rk = made[key]; impGrowRack(rk, items.length, out); }
+      // ID déjà pris par un autre appareil du dossier : on crée sans ID plutôt qu'un doublon
+      else if (sp) { const num = sp.num && state.racks.some((r) => String(r.num || "").trim() === sp.num) ? "" : sp.num; rk = { id: nid(), num, console: "Partagé", n: 0, out: 0, ...sp.R }; state.racks.push(rk); made[key] = rk; made0 = `${esc(rackTitle(rk))} créé. `; }
+    }
+    let short = "";
     if (rk) {
       const out = imp.mode !== "master", cells = out ? rackOutputs(rk) : rackInputs(rk), occ = occupancy(), used = out ? occ.out : occ.rack;
       const made = (out ? state.sorties : state.lignes).slice(-items.length), ks = consoleKeys();
-      let pos = imp.from || 0, first = null, last = null, busy = 0, over = 0;
+      let pos = cfg.from != null ? cfg.from : Math.max(0, cells.findIndex((a) => !used.get(kRack({ r: rk.id, ...a })))), first = null, last = null, busy = 0, over = 0;
       made.forEach((x, k) => {
         if (pos >= cells.length) { if (!items[k].gap) over++; return; }
         const a = { r: rk.id, ...cells[pos++] };
@@ -9095,12 +9237,12 @@ table.master td.nopad input { opacity: 0.8; }
       if (first) cab = ` Câblées sur ${esc(rackTitle(rk))}, de ${out ? "out" : "in"} ${esc(rackShort(rk, first.c, first.i))} à ${esc(rackShort(rk, last.c, last.i))}.`;
       if (busy) cab += ` ${busy} ligne${busy > 1 ? "s" : ""} non câblée${busy > 1 ? "s" : ""} : ${out ? "sortie" : "entrée"} déjà occupée.`;
       if (over) cab += ` ${over} ligne${over > 1 ? "s" : ""} non câblée${over > 1 ? "s" : ""} : plus assez de place sur ce stage rack.`;
+      if (made0) cab = ` ${made0.trim()}${cab}`;
+      short = (first ? `${esc(rackTitle(rk))}${made0 ? " (créé)" : ""} ${out ? "out" : "in"} ${esc(rackShort(rk, first.c, first.i))} à ${esc(rackShort(rk, last.c, last.i))}${busy + over ? ` (${busy + over} non câblée${busy + over > 1 ? "s" : ""})` : ""}.` : `aucune ligne câblée sur ${esc(rackTitle(rk))}.`);
     }
-    learnDossier(state); state.exemple = false;
-    $("#impDlg").close();
-    commit(true); setView(imp.mode === "master" ? homeView() : "sorties");
     const g = items.filter((it) => it.gap).length, n = items.length - g, what = imp.mode === "master" ? `source${n > 1 ? "s" : ""}` : `sortie${n > 1 ? "s" : ""}`;
-    notice(`${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}${g ? `, avec ${g} ligne${g > 1 ? "s" : ""} vide${g > 1 ? "s" : ""} pour garder les trous du patch` : ""}. ${cab ? cab.trim() + " L'ancienne adresse reste dans les notes." : imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre un autre tableau (sorties, autre stage rack), rouvre le fichier, choisis-le et « Ajouter au dossier ouvert » : tu pourras le câbler directement." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`);
+    const msg = (isNew) => `${n} ${what} reprise${n > 1 ? "s" : ""} de « ${esc(imp.name)} »${isNew ? " dans un nouveau dossier" : ""}${g ? `, avec ${g} ligne${g > 1 ? "s" : ""} vide${g > 1 ? "s" : ""} pour garder les trous du patch` : ""}. ${cab ? cab.trim() + " L'ancienne adresse reste dans les notes." : imp.mode === "master" ? "Les entrées de stage rack et les boîtiers sont à refaire dans l'appli : l'ancienne adresse est gardée dans les notes. Pour reprendre un autre tableau (sorties, autre stage rack), rouvre le fichier, choisis-le et « Ajouter au dossier ouvert » : tu pourras le câbler directement." : "Les sorties de stage rack sont à refaire dans l'appli : l'ancienne sortie est gardée dans les notes."}`;
+    return { n, short: `${n} ${what}${g ? ` + ${g} vide${g > 1 ? "s" : ""}` : ""}${short ? ", câblées sur " + short : "."}`, msg };
   }
   function impBind() {
     const d = $("#impDlg");
@@ -9116,11 +9258,29 @@ table.master td.nopad input { opacity: 0.8; }
       if (f === main && c) { impBlocks(c); Object.keys(imp.map).forEach((k) => { if (imp.map[k] < imp.range[0] || imp.map[k] > imp.range[1]) delete imp.map[k]; }); imp.map[main] = c; }
       impPaint();
     });
-    $("#impTable").addEventListener("change", (e) => { const n = Number(e.target.value); if (!n) return; imp.head = n; impSetup(false); impPaint(); });
-    $("#impDest").addEventListener("change", () => { impPaint(); });
+    $("#impTable").addEventListener("change", (e) => { const n = Number(e.target.value); if (!n) return; imp.head = n; imp.rack = null; impSetup(false); impPaint(); });
+    $("#impDest").addEventListener("change", () => { imp.rack = null; imp.q.forEach((c) => { c.rack = impGuessRack(c.name, c.mode); c.from = null; }); impPaint(); });
     $("#impRack").addEventListener("change", (e) => { imp.rack = e.target.value; imp.from = null; impPaint(); });
     $("#impFrom").addEventListener("change", (e) => { imp.from = Number(e.target.value) || 0; });
     $("#impGaps").addEventListener("change", (e) => { imp.gaps = e.target.checked; impPaint(); });
+    $("#impQAdd").addEventListener("click", () => { impQAdd({ ...impSnap(), rack: imp.rack || null, from: imp.rack ? imp.from : null }); impPaint(); });
+    $("#impQAll").addEventListener("click", () => {
+      const keep = impSnap();
+      impTables(imp.mode, imp.grid).forEach((t) => { imp.head = t.r; impSetup(false); if (impItems().some((it) => !it.gap)) impQAdd(impSnap()); });
+      IMP_KEYS.forEach((k) => { imp[k] = keep[k]; });
+      impPaint();
+    });
+    $("#impQList").addEventListener("change", (e) => {
+      const t = e.target, q = imp.q;
+      if (t.dataset.qrack != null) { const c = q[+t.dataset.qrack]; c.rack = t.value; c.from = null; impPaint(); }
+      if (t.dataset.qfrom != null) { q[+t.dataset.qfrom].from = t.value === "" ? null : Number(t.value); }
+    });
+    $("#impQList").addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.qdel != null) { imp.q.splice(+b.dataset.qdel, 1); impPaint(); }
+      // Voir : le tableau revient à l'écran pour vérifier ses colonnes ; on le retire de la liste, « Ajouter » l'y remet
+      if (b.dataset.qedit != null) { const c = imp.q[+b.dataset.qedit]; IMP_KEYS.forEach((k) => { imp[k] = JSON.parse(JSON.stringify(c[k])); }); imp.grid = impGridOf(c.sheet); imp.rack = c.rack || ""; imp.from = c.from; imp.q.splice(+b.dataset.qedit, 1); impPaint(); }
+    });
     $("#impGo").addEventListener("click", impApply);
   }
 
@@ -10037,16 +10197,7 @@ table.master td.nopad input { opacity: 0.8; }
     $("#addRack").addEventListener("click", () => {
       const nums = state.racks.map((r) => Number(r.num) || 0);
       let num = String(Math.max(10, ...nums) + 1);
-      const P = {
-        sd: { nom: "SD Rack", flat: false, n: 6, out: 2 },
-        num: { nom: "DL431", flat: true, n: 24, out: 8, loopId: "" },
-        osend: { nom: "Opto Send", model: "osend", flat: true, n: 16, out: 0 },
-        dd4mr: { nom: "DD4MR", flat: false, ports: [{ nom: "MADI 1", in: 64, out: 64 }, { nom: "MADI 2", in: 64, out: 64 }] },
-        orange: { nom: "Orange Box", model: "orange", flat: false, ports: [{ nom: "Optocore (loop)", card: "OPTO", in: 0, out: 0 }, { nom: "MADI", card: "MADI-B", in: 64, out: 64 }] },
-        spectera: { nom: "Spectera", model: "spectera", flat: false, loopId: "", ports: [{ nom: "DANTE", card: "SPX_DANTE", in: 32, out: 32 }] },
-        m8: { nom: "M8", model: "m8", flat: false, ports: [{ nom: "MADI 1", in: 64, out: 64 }, { nom: "MADI 2", in: 64, out: 64 }] },
-        ports: { nom: "I/O", flat: false, ports: [{ nom: "Port 1", in: 64, out: 64 }] }
-      }[$("#addRackType").value];
+      const P = RACK_PRESETS[$("#addRackType").value];
       const R = JSON.parse(JSON.stringify(P));
       // Une base Spectera n'est pas sur la loop : pas d'ID, un nom numéroté
       // Un Opto Send vit sur la loop (il y prend des canaux) et suit l'horloge de la loop
