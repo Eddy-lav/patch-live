@@ -1488,7 +1488,10 @@ table.master td.nopad input { opacity: 0.8; }
   :is(.panel .tbl, .hfg .hftw, .hfdev .hftw):has(> table:not(.bq)) { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
   .hfg table, .hfdev table.hfdt { font-size: var(--fs-base); }
   .hfdev table.hfdt tr[data-hd] td { vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
-  .hfdev table.hfdt td.hdnotes { width: 170px; }
+  /* Cadre pleine largeur comme les autres pages ; Sources à la largeur de deux voies, Notes prend le reste */
+  .hfdev table.hfdt td.hdnotes { min-width: 160px; }
+  .hfdev table.hfdt td:has(> .hdus.rx) { width: 540px; }
+  .hfdev table.hfdt .hdus.rx { grid-template-columns: repeat(2, 250px); }
   .hfdev table.hfdt td.x { vertical-align: middle; }
   :is(.panel .tbl, .hfg, .hfdev) table th { background: var(--surface-2); font-family: var(--font-head); font-size: var(--fs-md); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); padding: 7px 6px; border-bottom: 1px solid var(--btn-line); }
   :is(.panel .tbl, .hfg, .hfdev) table td { padding: 4px 6px; }
