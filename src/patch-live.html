@@ -685,10 +685,17 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hdus.rx .hdu .hdbl { justify-self: center; }
 .hdus.rx .hdu input { width: 100%; box-sizing: border-box; }
 .hdus.rx .hdu select.hdret { width: 100%; max-width: none; text-overflow: ellipsis; }
-/* Sans renvoi, la liste « ↪ plateau » s'efface : elle revient au survol de la ligne, au clavier ou au toucher */
-.hdus.rx .hdu select.hdret.free { opacity: .35; transition: opacity .12s; }
+/* Sans renvoi, la liste « ↪ plateau » se réduit à sa flèche (sans texte ni chevron) : un clic l'ouvre en entier.
+   Elle s'efface et revient au survol de la ligne ou au clavier. */
+.hdus.rx .hdu select.hdret.free { -webkit-appearance: none; appearance: none; background-image: none; width: 2em; min-width: 2em; justify-self: start; overflow: hidden; white-space: nowrap; text-overflow: clip; padding: 2px 0 2px 6px !important; cursor: pointer; opacity: .4; transition: opacity .12s; }
 .hfdt tr:hover .hdus.rx select.hdret.free, .hdus.rx select.hdret.free:focus { opacity: 1; }
-@media (hover: none) { .hdus.rx .hdu select.hdret.free { opacity: .6; } }
+.hdus.rx .hdu select.hdret.free:hover, .hdus.rx .hdu select.hdret.free:focus { border-color: var(--line); }
+/* Renvoi posé : comme les adresses du master patch, la flèche de la liste n'apparaît qu'au survol de la ligne ou au focus */
+@media (min-width: 761px) {
+  .hdus.rx .hdu select.hdret:not(.free) { -webkit-appearance: none; appearance: none; background-image: none; padding-right: 18px; }
+  .hfdt tr:hover .hdus.rx select.hdret:not(.free), .hdus.rx select.hdret:not(.free):focus { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 10px) 52%, calc(100% - 6px) 52%; background-size: 4px 4px; background-repeat: no-repeat; }
+}
+@media (hover: none) { .hdus.rx .hdu select.hdret.free { opacity: .7; width: 1.7em; min-width: 1.7em; min-height: 32px; } }
 .hdu .hdbl { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; padding: 0 5px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 #hfRxOut .hfdev, #hfTxOut .hfdev { border: 0; padding: 0; background: transparent; }
 .hdlk input { width: 44px !important; }
