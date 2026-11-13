@@ -952,6 +952,8 @@ table.bq .bq-in { color: var(--muted); font-size: var(--fs-xs); margin-right: 6p
 .printform .prsub label.prsep { flex-basis: 100%; padding-top: 4px; border-top: 1px dashed var(--line); }
 #printRoot { display: none; }
 @media print {
+  /* Le rail (padding gauche de l'appli) décalait toute l'impression de 3 cm vers la droite */
+  body { padding: 0 !important; margin: 0 !important; background: #fff !important; }
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block; }
 }
@@ -10144,16 +10146,36 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     }).join("");
   }
   // Page de garde : nom du dossier, tournée, version, lieu, photo de couverture
+  // Page de garde : à gauche la photo de couverture (ou un fond graphite) barrée d'un morceau de gaffer jasmine,
+  // à droite le nom, puis une fiche en un coup d'œil (régies, sources, boîtiers, HF, horloge), le sommaire et le contact
   function prCoverPage(parts) {
-    const d = state.dossier, cov = coverCss(d.cover), today = new Date().toLocaleDateString("fr-FR");
+    const d = state.dossier, cov = coverCss(d.cover), today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
     const toc = parts.map((k) => (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1]);
-    return `<div class="part prcov">${cov ? `<div class="covimg" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""}<div class="covtxt"><div class="covk">${esc(d.type || "Dossier technique")}</div><div class="covn">${esc(d.nom)}</div><div class="covs">${esc([d.version, d.lieu].filter(Boolean).join(" · "))}</div><div class="covd">Dossier son · ${today}</div></div><ol class="covtoc">${toc.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>${d.contact ? `<div class="covc">Contact : ${esc(d.contact)}</div>` : ""}</div>`;
+    const ks = consoleKeys(), cons = ks.map((k) => { const md = ((synState().cons || {})[k] || {}).model; return `${consLabel(k)}${md ? " : " + md : ""}`; });
+    const pairs = state.lignes.filter((l) => l.pair).length / 2, hfMic = hfState().filter((g) => g.kind === "tx" || g.kind === "spxm").reduce((n, g) => n + g.rows.length, 0), ears = hfState().filter((g) => g.kind === "iem" || g.kind === "spx").reduce((n, g) => n + g.rows.length, 0);
+    const lps = loops().filter((lp) => state.racks.some((r) => rackLoop(r) === lp));
+    const fiche = [
+      ["Régies", cons.join(", ")],
+      ["Sources", state.lignes.length ? `${state.lignes.length}${pairs ? `, dont ${pairs} paire${pairs > 1 ? "s" : ""} stéréo` : ""}` : ""],
+      ["Sorties", (state.sorties || []).length || ""],
+      ["Boîtiers", countMultis().map(([k, n]) => `${n} × ${k}`).join(", ")],
+      ["Stage racks", state.racks.length ? [...state.racks.reduce((m, r) => m.set(r.nom || "I/O", (m.get(r.nom || "I/O") || 0) + 1), new Map())].map(([k, n]) => `${n} × ${k}`).join(", ") : ""],
+      ["HF", hfMic || ears ? [hfMic ? `${hfMic} micro${hfMic > 1 ? "s" : ""}` : "", ears ? `${ears} ear${ears > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ") : ""],
+      ["Horloge", lps.map((lp) => `${lp.nom}, ${lp.freq === "96" ? "96" : "48"} kHz`).join(" ; ")]
+    ].filter(([, v]) => v !== "" && v != null);
+    return `<div class="part prcov"><div class="covl"${cov ? ` style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"` : ""}><div class="gaffer">Dossier son<span>${esc(today)}</span></div></div>
+      <div class="covr"><div class="covk">${esc(d.type || "Dossier technique")}${d.version ? `, ${esc(d.version)}` : ""}</div><div class="covn">${esc(d.nom)}</div>${d.lieu ? `<div class="covs">${esc(d.lieu)}</div>` : ""}
+      ${fiche.length ? `<dl class="covf">${fiche.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(String(v))}</dd>`).join("")}</dl>` : ""}
+      <div class="covtoc"><div class="covh">Dans ce dossier</div><ol>${toc.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></div>
+      ${d.contact ? `<div class="covc">Contact<b>${esc(d.contact)}</b></div>` : ""}</div></div>`;
   }
   const PRINT_CSS_AERE = `@page { size: A4 landscape; margin: 12mm 14mm 14mm; @bottom-center { content: counter(page); font: 9pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } @bottom-right { content: none; } }
     .pr.aere { font-size: 10.5pt; color: #1a1a1a; }
     .pr.aere .prhead { display: none; }
-    .pr.aere h1 { text-align: center; font-size: 28pt; font-weight: 300; font-variant: small-caps; letter-spacing: .02em; margin: 2mm 0 7mm; color: #222; }
-    .pr.aere h2 { font-size: 14pt; font-weight: 400; font-variant: small-caps; letter-spacing: .02em; margin: 8mm 0 3mm; border: 0; color: #222; }
+    .pr.aere { font-family: Barlow, -apple-system, "Segoe UI", Arial, sans-serif; }
+    .pr.aere h1 { text-align: center; font: 600 26pt/1.1 "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 1mm 0 2mm; color: #1e1f20; }
+    .pr.aere h1::after { content: ""; display: block; width: 22mm; height: 2.2mm; margin: 2.5mm auto 6mm; background: #fce694 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere h2 { font: 600 14pt "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 7mm 0 2.5mm; border: 0; color: #1e1f20; }
     .pr.aere h3 { font-size: 11pt; font-weight: 600; margin: 5mm 0 2mm; }
     .pr.aere table { margin-bottom: 4mm; }
     .pr.aere th { background: #eef0f2 !important; border: 0; border-bottom: 1.5px solid #555; font-size: 8.5pt; padding: 4px 7px; color: #333 !important; }
@@ -10166,7 +10188,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr.aere .prbref { font-size: 11pt; line-height: 1.55; } .pr.aere .prbref li { margin-bottom: 3px; }
     .pr.aere .prkey { border: 0; gap: 5mm; margin-bottom: 6mm; } .pr.aere .prkey div { border: 0; border-top: 2.5px solid #222; padding: 3px 0 0; } .pr.aere .prkey b { font-size: 22pt; font-weight: 300; }
     .pr.aere .prmat { columns: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0 10mm; align-items: start; } .pr.aere .prcat { margin-bottom: 6mm; }
-    .pr.aere .prcat h2 { background: none !important; color: #222; font-size: 13pt; padding: 0 0 2px; border-bottom: 2px solid #222; margin: 0 0 1mm; }
+    .pr.aere .prcat h2 { background: none !important; color: #1e1f20; font-size: 13pt; padding: 0 0 2px; border-bottom: 2px solid #222; margin: 0 0 1mm; }
     .pr.aere .prcat td { padding: 4px 6px; font-size: 9.5pt; }
     .pr.aere h2.side { margin-top: 2mm; }
     .pr.aere .boxcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84mm, 1fr)); gap: 6mm; align-items: start; margin-bottom: 4mm; }
@@ -10178,13 +10200,21 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr.aere .boxcard tr.free td { height: 13px; }
     .pr.aere .rpblk { break-before: page; grid-template-columns: 1.2fr 1fr; gap: 10mm; } .pr.aere .part > .rpblk:first-of-type { break-before: auto; }
     .pr.aere .rpblk h2.rpt { grid-column: 1 / -1; text-align: center; font-size: 20pt; margin: 0 0 2mm; } .pr.aere .rpblk h2.rpt span { display: block; font-size: 10pt; font-variant: normal; color: #666; }
-    .pr.aere .prcov { display: flex; flex-direction: column; justify-content: center; min-height: 175mm; }
-    .pr.aere .covimg { height: 82mm; background-size: cover; background-repeat: no-repeat; margin-bottom: 9mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .pr.aere .covk { font-size: 11pt; letter-spacing: .25em; text-transform: uppercase; color: #666; }
-    .pr.aere .covn { font-size: 40pt; font-weight: 300; font-variant: small-caps; line-height: 1.05; margin: 2mm 0 3mm; }
-    .pr.aere .covs { font-size: 15pt; color: #333; } .pr.aere .covd { font-size: 10pt; color: #666; margin-top: 2mm; }
-    .pr.aere .covtoc { margin: 10mm 0 0; padding-left: 5mm; columns: 3; column-gap: 8mm; font-size: 10.5pt; color: #333; } .pr.aere .covtoc li { margin-bottom: 2px; }
-    .pr.aere .covc { margin-top: 8mm; font-size: 10.5pt; }`;
+    .pr.aere .prcov { display: grid; grid-template-columns: 42% 1fr; height: 182mm; overflow: hidden; break-after: page; font-family: Barlow, -apple-system, "Segoe UI", Arial, sans-serif; color: #1e1f20; }
+    .pr.aere .covl { position: relative; background: #373737 center / cover no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .gaffer { position: absolute; left: -4mm; right: 14mm; bottom: 26mm; transform: rotate(-2.2deg); background: #fce694; color: #2a2b2c; padding: 4.5mm 10mm 4mm 14mm; font: 700 21pt/1 "Barlow Semi Condensed", Barlow, Arial, sans-serif; box-shadow: 0 .6mm 0 rgba(0,0,0,.18); -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      clip-path: polygon(0 4%, 3% 0, 97% 3%, 100% 0, 99% 50%, 100% 100%, 96% 97%, 2% 100%, 0 96%, 1% 50%); }
+    .pr.aere .gaffer span { display: block; margin-top: 1.6mm; font: 500 10.5pt Barlow, Arial, sans-serif; }
+    .pr.aere .covr { padding: 12mm 4mm 2mm 14mm; display: flex; flex-direction: column; }
+    .pr.aere .covk { font-size: 12pt; color: #555; }
+    .pr.aere .covn { font: 700 40pt/1.02 "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 2mm 0 2mm; letter-spacing: -.01em; }
+    .pr.aere .covs { font-size: 14pt; color: #333; }
+    .pr.aere .covf { display: grid; grid-template-columns: 30mm 1fr; margin: 8mm 0 0; border-top: 2.5px solid #373737; font-size: 10.5pt; }
+    .pr.aere .covf dt, .pr.aere .covf dd { margin: 0; padding: 2mm 0; border-bottom: 1px solid #d8dadc; }
+    .pr.aere .covf dt { color: #555; } .pr.aere .covf dd { font-weight: 500; }
+    .pr.aere .covtoc { margin-top: 7mm; font-size: 10pt; color: #333; } .pr.aere .covh { font: 600 11.5pt "Barlow Semi Condensed", Barlow, Arial, sans-serif; color: #1e1f20; margin-bottom: 1.5mm; }
+    .pr.aere .covtoc ol { margin: 0; padding-left: 5mm; columns: 2; column-gap: 10mm; } .pr.aere .covtoc li { margin-bottom: 1mm; }
+    .pr.aere .covc { margin-top: auto; padding-top: 6mm; font-size: 10pt; color: #555; } .pr.aere .covc b { display: block; font-size: 12pt; color: #1e1f20; font-weight: 600; }`;
   function printHtml(parts) {
     const d = state.dossier, today = new Date().toLocaleDateString("fr-FR");
     const head = `<div class="prhead"><b>${esc(d.nom)}</b><span>${esc([d.type, d.version, d.lieu].filter(Boolean).join(" · "))} · imprimé le ${today}</span></div>`;
