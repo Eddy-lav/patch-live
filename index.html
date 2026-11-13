@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "80ddd5aa3d";</script>
+<script>window.PL_VER = "edb602c5c4";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -689,6 +689,20 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hdu select.hdret { max-width: 150px; font: inherit; font-size: var(--fs-xs); padding: 2px 4px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--ink); }
 .hdu select.hdret:hover { border-color: var(--line); } .hdu select.hdret:focus { border-color: var(--accent); background: var(--surface); }
 .hdu select.hdret.free { color: var(--muted); }
+/* Lisibilité des récepteurs : chaque voie suit la même grille (n° · BL · source · renvoi), les voies
+   s'alignent d'un appareil à l'autre ; la place du badge BL est gardée même sans badge. */
+.hdu .hdbl.off { visibility: hidden; }
+.hdus.rx { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 2px 20px; }
+.hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.4em 2.6em minmax(0, 1fr) minmax(0, 10em); align-items: center; gap: 0 4px; max-width: 420px; }
+.hdus.rx .hdu.hdrx > label { display: contents; }
+.hdus.rx .hdu b { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.hdus.rx .hdu .hdbl { justify-self: center; }
+.hdus.rx .hdu input { width: 100%; box-sizing: border-box; }
+.hdus.rx .hdu select.hdret { width: 100%; max-width: none; text-overflow: ellipsis; }
+/* Sans renvoi, la liste « ↪ plateau » s'efface : elle revient au survol de la ligne, au clavier ou au toucher */
+.hdus.rx .hdu select.hdret.free { opacity: .35; transition: opacity .12s; }
+.hfdt tr:hover .hdus.rx select.hdret.free, .hdus.rx select.hdret.free:focus { opacity: 1; }
+@media (hover: none) { .hdus.rx .hdu select.hdret.free { opacity: .6; } }
 .hdu .hdbl { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; padding: 0 5px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 #hfRxOut .hfdev, #hfTxOut .hfdev { border: 0; padding: 0; background: transparent; }
 .hdlk input { width: 44px !important; }
@@ -710,6 +724,10 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
   .hfdev .hdus { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: var(--fs-base); }
   .hfdev .hdu { display: flex; gap: 8px; align-items: baseline; padding: 4px 8px; border-radius: var(--r-md); background: var(--surface-2); }
   .hfdev .hdu b { flex: none; min-width: 34px; }
+  .hfdev .hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.2em 2.3em minmax(0, 1fr) minmax(0, 7.6em); align-items: center; gap: 0 4px; padding: 4px; }
+  .hfdev .hdus.rx .hdu input { padding: 6px; }
+  .hfdev .hdus.rx .hdu select.hdret { padding: 2px 0; }
+  .hfdev .hdus.rx .hdu b { min-width: 0; }
   .hfdev .hftw { overflow: visible; }
 }
 .spxres h3 { margin: 0 0 8px; font-size: var(--fs-base); }
@@ -1467,6 +1485,9 @@ table.master td.nopad input { opacity: 0.8; }
 @media (min-width: 761px) {
   :is(.panel .tbl, .hfg .hftw, .hfdev .hftw):has(> table:not(.bq)) { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
   .hfg table, .hfdev table.hfdt { font-size: var(--fs-base); }
+  .hfdev table.hfdt tr[data-hd] td { vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+  .hfdev table.hfdt td.hdnotes { width: 170px; }
+  .hfdev table.hfdt td.x { vertical-align: middle; }
   :is(.panel .tbl, .hfg, .hfdev) table th { background: var(--surface-2); font-family: var(--font-head); font-size: var(--fs-md); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--muted); padding: 7px 6px; border-bottom: 1px solid var(--btn-line); }
   :is(.panel .tbl, .hfg, .hfdev) table td { padding: 4px 6px; }
   :is(.panel .tbl, .hfg, .hfdev) table th + th, :is(.panel .tbl, .hfg, .hfdev) table td + td { border-left: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
@@ -2247,7 +2268,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const U = rx && hfRxUsed(), P = rx && new Set(state.lignes.map((l) => (l.prov || "").trim().toLowerCase())), occ = rx && occupancy();
     const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const bl = hfBl(d, j + 1, U, P), r0 = U.get(`${d.id}:${j + 1}`), w = bl ? (r0 ? r0.mix || "" : "") : hfSlotWho(d, j + 1, true);
       // Voie qui ne part qu'au plateau (sans console) : la case nomme la sortie du renvoi, rien n'est créé au master
-      return `<span class="hdu hdrx${w ? "" : " free"}"><label><b>${j + 1}</b>${bl ? '<span class="hdbl" title="Backline : ne passe pas par la console (clic droit pour changer)">BL</span>' : ""}<input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="${bl ? "backline" : "libre"}" autocomplete="off"${bl ? "" : ' data-suggest="dlSrc"'} aria-label="${bl ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${bl ? "Backline, sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master. Clic droit pour changer" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1, U, occ)}</span>`; }).join("");
+      return `<span class="hdu hdrx${w ? "" : " free"}"><label><b>${j + 1}</b>${bl ? '<span class="hdbl" title="Backline : ne passe pas par la console (clic droit pour changer)">BL</span>' : '<span class="hdbl off" aria-hidden="true"></span>'}<input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="${bl ? "backline" : "libre"}" autocomplete="off"${bl ? "" : ' data-suggest="dlSrc"'} aria-label="${bl ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${bl ? "Backline, sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master. Clic droit pour changer" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1, U, occ)}</span>`; }).join("");
     return `<div class="hfdev">
       <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack. La liste « ↪ plateau » renvoie une voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : la sortie apparaît dans Sorties et dans Boîtiers. Clic droit sur une voie › « Backline » : elle ne passe pas par la console, sa case nomme le renvoi et rien n'arrive au master." : "Émetteurs des ears, en liaisons stéréo L/R. Choisis le mix de chaque liaison dans la colonne « Mix des sorties » : une paire stéréo prend L et R. C'est la même chose que l'arrivée « P10T #1 · 2 L » dans Sorties, et l'appareil se range dans les plans de rack."}</p>
       <div class="hdadd"><label class="field"><span>Ajouter ${rx ? "un récepteur" : "un émetteur"}</span><select data-hdmodel>${opt}</select></label><label class="field"><span>Nombre</span><input type="number" data-hdn min="1" max="24" value="1" inputmode="numeric"></label><button class="btn primary" type="button" data-hdadd>+ Ajouter</button></div>
@@ -2256,8 +2277,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <td data-l="Nom" style="width:160px"><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
         <td data-l="Plage" style="width:100px"><input type="text" data-hdf="band" value="${esc(d.band || "")}" aria-label="Plage de fréquences" placeholder="${esc(((HFDEV_BANDS()[normModel(d.model)] || [])[0] || ["plage"])[0])}" autocomplete="off" data-suggest="dlHdBand_${d.id}"${hfBandRange(d.model, d.band) ? ` title="${hfBandRange(d.model, d.band).join("–")} MHz"` : ""}><datalist id="dlHdBand_${d.id}">${(HFDEV_BANDS()[normModel(d.model)] || []).map(([c, rg]) => `<option value="${esc(c)}" label="${esc(rg)}">`).join("")}</datalist></td>
         <td data-l="${rx ? "Voies" : "Liaisons"}" style="width:${rx ? 64 : 120}px">${rx ? `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">` : `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">stéréo</span></span>`}</td>
-        <td data-l="${rx ? "Sources" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
-        <td data-l="Notes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
+        <td data-l="${rx ? "Sources" : "Mix des sorties"}"><div class="hdus${rx ? " rx" : ""}">${use(d)}</div></td>
+        <td data-l="Notes" class="hdnotes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
         <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle au-dessus et clique « + Ajouter ».</div>`}
       <datalist id="dlHfDevModel_${kind}">${bqUniq([...HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]), ...(rx ? banqueNoms("Récepteurs HF") : (BANQUE["Ears HF"] || []).filter((x) => /^Émetteur/.test(x[2])).map((x) => x[0]))]).map(optFiche).join("")}</datalist></div>`;
   }
