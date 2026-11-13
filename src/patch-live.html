@@ -2074,9 +2074,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // ---------- Données d'exemple ----------
   // ---------- Distribution HF ----------
   const HF_KINDS = {
-    tx: { t: "Micros HF", cols: [["nom", "Nom", "dlSrc"], ["plan", "Plan"], ["infos", "Réglages"], ["acc", "Accessoires"], ["notes", "Notes"]] },
+    tx: { t: "Micros HF", cols: [["nom", "Nom", "dlSrc"], ["por", "Porteur", "dlMus"], ["plan", "Plan"], ["infos", "Réglages"], ["acc", "Accessoires"], ["notes", "Notes"]] },
     iem: { t: "Ears HF", cols: [["nom", "Porteur", "dlMus"], ["mix", "Mix", "dlMix"], ["plan", "Plan"], ["acc", "Accessoires"], ["notes", "Notes"]] },
-    spxm: { t: "Micros Spectera", cols: [["nom", "Nom", "dlSrc"], ["base", "Base"], ["rf", "RF channel"], ["mic", "Codec micro"], ["acc", "Accessoires"], ["notes", "Notes"]] },
+    spxm: { t: "Micros Spectera", cols: [["nom", "Nom", "dlSrc"], ["por", "Porteur", "dlMus"], ["base", "Base"], ["rf", "RF channel"], ["mic", "Codec micro"], ["acc", "Accessoires"], ["notes", "Notes"]] },
     spx: { t: "Spectera", cols: [["nom", "Porteur", "dlMus"], ["mix", "Mix", "dlMix"], ["base", "Base"], ["rf", "RF channel"], ["iem", "Codec ears"], ["copy", "Copie mix"], ["mic", "Codec micro"], ["acc", "Accessoires"], ["notes", "Notes"]] }
   };
   // Réglages des appareils Spectera, comme dans Spectera Studio (colonnes affichées à la demande, groupe par groupe)
@@ -2382,6 +2382,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const SPX_RF = ["1", "2"];
   // Un SEK sans nom de porteur est désigné par son mix
   const hfName = (r) => (r.nom || "").trim() || (r.mix || "").trim();
+  // Porteur d'un pack HF. Ears et SEK : la case Porteur (nom). Micros HF : la case Porteur (por) ; vide, c'est le musicien
+  // de la source du même nom au master (déduit, affiché en grisé)
+  const hfPersF = (g) => (g.kind === "iem" || g.kind === "spx" ? "nom" : "por");
+  const hfMicMus = (r) => { const k = musKey(r.nom); const l = k && state.lignes.find((x) => musKey(x.source) === k && musClean(x.musicien)); return l ? musClean(l.musicien) : ""; };
+  const hfPorteur = (g, r) => (hfPersF(g) === "nom" ? r.nom || "" : r.por || hfMicMus(r));
   // 4 ports antenne par base (doc Sennheiser), chacun affecté à un RF channel avec sa zone de couverture
   const SPX_ANT = 4;
   const spxAnt = (b) => Array.from({ length: SPX_ANT }, (_, i) => ({ rf: "", zone: "", ...((b.ant || [])[i] || {}) }));
@@ -2409,10 +2414,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   function hfCell(g, r, f) {
     if (f === "acc") return (r.acc || []).join(", ");
+    if (f === "por") return hfPorteur(g, r);
     const ch = hfChoices(g, f);
     if (ch) { if (!r[f]) return ""; const c = ch.find(([v]) => v === String(r[f])); return c ? c[1] : r[f] + (f === "base" ? " (inconnue)" : ""); }
     return r[f] || "";
   }
+  // Valeur donnée à plusieurs lignes d'un coup : un porteur s'écrit comme partout ailleurs et rejoint la liste des porteurs
+  function hfSelVal(g, f, v) { if (f !== hfPersF(g) || !v) return v; const c = canonMus(v); if (c) addMusician(c); return c; }
   function hfInput(g, r, f, t, dl, k) {
     // Accessoires : une étiquette par article, chacune comptée dans la liste matériel
     if (f === "acc") return `<div class="acc">${(r.acc || []).map((a, i) => `<span class="tag">${esc(a)}<button type="button" data-accdel="${i}" aria-label="Retirer ${esc(a)}">×</button></span>`).join("")}<input type="text" data-accin="1" placeholder="${(r.acc || []).length ? "+" : "+ accessoire"}" aria-label="Ajouter un accessoire ${k + 1}" autocomplete="off" data-suggest="dlAcc"></div>`;
@@ -2426,7 +2434,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (f === "plan") dl = "dlBand_" + g.id;
     // Réglages et notes : texte long, la case passe à la ligne et grandit au lieu de couper (Maj+Entrée : nouvelle ligne)
     if (f === "infos" || f === "notes") return `<textarea class="hfwrap" rows="1" data-hf="${f}" aria-label="${esc(t)} ${k + 1}" spellcheck="false">${esc(r[f] || "")}</textarea>`;
-    return `<input type="text" data-hf="${f}" value="${esc(r[f] || "")}" aria-label="${esc(t)} ${k + 1}"${dl ? ` data-suggest="${dl}" autocomplete="off"` : ""}>`;
+    const ph = f === "por" && !r.por && hfMicMus(r) ? ` placeholder="${esc(hfMicMus(r))}" title="Musicien de la source ${esc(r.nom)} au master. Écris un nom pour en choisir un autre."` : "";
+    return `<input type="text" data-hf="${f}" value="${esc(r[f] || "")}" aria-label="${esc(t)} ${k + 1}"${dl ? ` data-suggest="${dl}" autocomplete="off"` : ""}${ph}>`;
   }
   // Utilisation des ressources : par base et par RF channel (% de la porteuse), et entrées IEM / sorties micro de chaque base
   function spxUsage() {
@@ -2519,7 +2528,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const iem = r.copy ? null : spxMode(SPX_IEM, r.iem), mic = spxMode(SPX_MIC, r.mic);
       const cost = (iem ? iem[2] : 0) + (mic ? mic[2] : 0);
       const codecs = [src ? `copie de ${hfName(src) || "SEK"}` : iem && `ears ${iem[1]}`, mic && `micro ${mic[1]}`].filter(Boolean).join(" · ") || "aucun codec";
-      return `<div class="kbcard${skm ? " skm" : ""}${src ? " cp" : ""}${kbSel.has(r.id) ? " sel" : ""}" data-kb="${r.id}" title="Clic : sélectionner · double-clic sur le nom : renommer · glisser vers une base et un RF channel" aria-pressed="${kbSel.has(r.id)}"><div class="t"><b>${esc(hfName(r) || (skm ? "SKM" : "SEK") + " " + (k + 1))}</b><span class="pc">${cost ? pctTxt(cost) : src ? "0 %" : ""}</span><button type="button" class="kbmb" data-kbmenu aria-label="Envoyer vers…" title="Envoyer vers… (ou clic droit)">⋯</button></div><div class="s">${esc((multi ? g.model : skm ? "SKM" : "SEK") + " " + (k + 1))}${r.mix && r.nom ? " · " + esc(r.mix) : ""} · ${esc(codecs)}</div></div>`;
+      return `<div class="kbcard${skm ? " skm" : ""}${src ? " cp" : ""}${kbSel.has(r.id) ? " sel" : ""}" data-kb="${r.id}" title="Clic : sélectionner · double-clic sur le nom : renommer · glisser vers une base et un RF channel" aria-pressed="${kbSel.has(r.id)}"><div class="t"><b>${esc(hfName(r) || (skm ? "SKM" : "SEK") + " " + (k + 1))}</b><span class="pc">${cost ? pctTxt(cost) : src ? "0 %" : ""}</span><button type="button" class="kbmb" data-kbmenu aria-label="Envoyer vers…" title="Envoyer vers… (ou clic droit)">⋯</button></div><div class="s">${esc((multi ? g.model : skm ? "SKM" : "SEK") + " " + (k + 1))}${r.mix && r.nom ? " · " + esc(r.mix) : ""}${skm && hfPorteur(g, r) ? " · " + esc(hfPorteur(g, r)) : ""} · ${esc(codecs)}</div></div>`;
     };
     const cards = (list) => (list.length ? list.map(card).join("") : `<div class="kbempty">Glisse un SEK ou un SKM ici</div>`);
     const loose = items.filter((x) => !bases.some((u) => u.b.id === x.r.base));
@@ -2857,7 +2866,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         const i = document.querySelector(`[data-hg="${g.id}"] tr[data-hr="${r.id}"] input[data-accin]`); if (i) i.focus();
         return;
       }
-      if (r && t.dataset.hf) { const pers = t.dataset.hf === "nom" && (g.kind === "iem" || g.kind === "spx"); r[t.dataset.hf] = pers ? canonMus(t.value) : t.value.trim(); if (pers) { t.value = r.nom; if (r.nom) addMusician(r.nom); } if (t.dataset.hf === "mix" && r.mix) { r.mix = mixStereoFix(r.mix); t.value = r.mix; } commit(false); if (t.dataset.hf === "copy") renderHf(); else if (g.kind === "spx" || g.kind === "spxm") refreshSpx(); }
+      if (r && t.dataset.hf) { const pers = t.dataset.hf === hfPersF(g); r[t.dataset.hf] = pers ? canonMus(t.value) : t.value.trim(); if (pers) { t.value = r[t.dataset.hf]; if (r[t.dataset.hf]) addMusician(r[t.dataset.hf]); } if (t.dataset.hf === "mix" && r.mix) { r.mix = mixStereoFix(r.mix); t.value = r.mix; }
+        // Micro HF renommé : le porteur déduit du master suit (case Porteur vide)
+        if (t.dataset.hf === "nom" && hfPersF(g) === "por") { const pi = tr.querySelector('input[data-hf="por"]'), m = hfMicMus(r); if (pi) { if (m) { pi.placeholder = m; pi.title = `Musicien de la source ${r.nom} au master. Écris un nom pour en choisir un autre.`; } else { pi.removeAttribute("placeholder"); pi.removeAttribute("title"); } } }
+        commit(false); if (t.dataset.hf === "copy") renderHf(); else if (g.kind === "spx" || g.kind === "spxm") refreshSpx(); }
     });
     out.addEventListener("mousedown", (e) => { hfDownT = e.target; }, true);
     out.addEventListener("click", (e) => {
@@ -2891,13 +2903,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
           if (!sets.length) { notice("Choisis au moins une valeur à changer."); return; }
           rows.forEach((r) => sets.forEach(([c, val]) => { r[c] = val; }));
           if (f === "acc" && v) { rows.forEach((r) => { r.acc = [...(r.acc || []), v]; }); learn("acc", v); }
-          else if (f && f !== "acc" && v) rows.forEach((r) => { r[f] = v; });
+          else if (f && f !== "acc" && v) { const vv = hfSelVal(g, f, v); rows.forEach((r) => { r[f] = vv; }); }
           hfSel.f = f; commit(true);
           notice(`${rows.length} ligne${rows.length > 1 ? "s" : ""} de ${esc(g.model)} : ${sets.map(([c, val]) => `${esc(tit(c))} = ${esc(val ? hfCell(g, { [c]: val }, c) : "vide")}`).join(" · ")}${f && v ? ` · ${esc(tit(f))} ${f === "acc" ? "+" : "="} ${esc(v)}` : ""}.`);
           return;
         }
         if (f === "acc") { rows.forEach((r) => { r.acc = v ? [...(r.acc || []), v] : []; }); learn("acc", v); hfSel.f = f; commit(true); notice(v ? `${esc(v)} ajouté à ${rows.length} ligne${rows.length > 1 ? "s" : ""} de ${esc(g.model)}.` : `Accessoires retirés de ${rows.length} ligne${rows.length > 1 ? "s" : ""}.`); return; }
-        rows.forEach((r) => { r[f] = v; });
+        { const vv = hfSelVal(g, f, v); rows.forEach((r) => { r[f] = vv; }); }
         hfSel.f = f; commit(true);
         const t = (hfCols(g).find(([x]) => x === f) || [, f])[1];
         notice(`${rows.length} ligne${rows.length > 1 ? "s" : ""} de ${esc(g.model)} : ${esc(t)} = ${esc(v ? hfCell(g, { [f]: v }, f) : "vide")}.`);
@@ -3812,7 +3824,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     (state.musiciens || []).forEach(add);
     state.lignes.forEach((l) => add(l.musicien));
     (state.sorties || []).forEach((o) => add(o.dest));
-    (state.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => add(r.nom)); });
+    (state.hf || []).forEach((g) => { const f = hfPersF(g); g.rows.forEach((r) => add(r[f])); });
     return [...seen.values()];
   }
   function addMusician(v) { const c = canonMus(v); if (!c) return ""; state.musiciens = state.musiciens || []; if (!state.musiciens.some((m) => musKey(m) === musKey(c))) state.musiciens.push(c); return c; }
@@ -3821,7 +3833,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const k = musKey(name);
     const src = state.lignes.filter((l) => musKey(l.musicien) === k);
     const outs = (state.sorties || []).filter((o) => musKey(o.dest) === k);
-    const hf = []; (state.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => { if (musKey(r.nom) === k) hf.push({ g, r }); }); });
+    const hf = []; (state.hf || []).forEach((g) => { const f = hfPersF(g); g.rows.forEach((r) => { if (musKey(r[f]) === k) hf.push({ g, r, f }); }); });
     const plan = ((state.plan && state.plan.items) || []).filter((i) => i.kind === "musicien" && musKey(i.label) === k);
     return { src, outs, hf, plan, n: src.length + outs.length + hf.length };
   }
@@ -3829,7 +3841,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function renamePerson(oldName, newName) {
     const ok = musKey(oldName), nv = musClean(newName); if (!ok || !nv) return 0;
     const u = personUses(oldName);
-    u.src.forEach((l) => { l.musicien = nv; }); u.outs.forEach((o) => { o.dest = nv; }); u.hf.forEach(({ r }) => { r.nom = nv; }); u.plan.forEach((i) => { i.label = nv; });
+    u.src.forEach((l) => { l.musicien = nv; }); u.outs.forEach((o) => { o.dest = nv; }); u.hf.forEach(({ r, f }) => { r[f] = nv; }); u.plan.forEach((i) => { i.label = nv; });
     // Le nom garde sa place dans la liste des porteurs
     const order = personNames(), nk = musKey(nv), at = order.findIndex((m) => musKey(m) === ok);
     state.musiciens = order.filter((m) => musKey(m) !== nk || nk === ok).map((m) => (musKey(m) === ok ? nv : m)); if (at < 0) state.musiciens.push(nv);
@@ -3840,7 +3852,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Retirer une personne : son nom est effacé partout où il est écrit
   function removePerson(name) {
     const k = musKey(name), u = personUses(name);
-    u.src.forEach((l) => { l.musicien = ""; }); u.outs.forEach((o) => { o.dest = ""; }); u.hf.forEach(({ r }) => { r.nom = ""; });
+    u.src.forEach((l) => { l.musicien = ""; }); u.outs.forEach((o) => { o.dest = ""; }); u.hf.forEach(({ r, f }) => { r[f] = ""; });
     state.musiciens = (state.musiciens || []).filter((m) => musKey(m) !== k); delete musColors()[k]; delete musPostes()[k];
     return u.n;
   }
@@ -3853,7 +3865,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       (s.musiciens || []).forEach(pick);
       (s.lignes || []).forEach((l) => { if (l.musicien) l.musicien = pick(l.musicien); });
       (s.sorties || []).forEach((o) => { if (o.dest) o.dest = pick(o.dest); });
-      (s.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => { if (r.nom) r.nom = pick(r.nom); }); });
+      (s.hf || []).forEach((g) => { const f = hfPersF(g); (g.rows || []).forEach((r) => { if (r[f]) r[f] = pick(r[f]); }); });
       if (Array.isArray(s.musiciens)) s.musiciens = uniqCi(s.musiciens.map(pick));
       hfMixFix();
       // Renvois plateau faits avant la règle « rien au master » : la voie quitte le master (noté au journal)
@@ -9693,6 +9705,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const it = [["Sources", state.lignes.length], ["Sorties", (state.sorties || []).length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ["Appareils HF", hfN], ["Changements au journal", state.journal.length]];
     $("#infoStats").innerHTML = it.map(([t, n]) => `<div><b class="mono">${n}</b><span>${esc(t)}</span></div>`).join("");
   }
+  // Micros HF sans porteur écrit, rattachés à la personne par une de ses sources au master
+  const hfMicOf = (u) => (state.hf || []).filter((g) => hfPersF(g) === "por").flatMap((g) => g.rows.filter((r) => !musClean(r.por) && u.src.some((l) => musKey(l.source) === musKey(r.nom))).map((r) => ({ g, r })));
   // ---------- Onglet Porteurs : chaque musicien ou porteur, sa couleur, ses sources, ses mix et ses packs HF ----------
   let portArmed = null;
   const RES_ORDER = ["marron", "rouge", "orange", "jaune", "vert", "bleu", "violet", "gris", "blanc", "noir"];
@@ -9710,7 +9724,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const chip = (attr, txt, title) => `<button type="button" class="pchip" ${attr} title="${esc(title)}">${esc(txt)}</button>`;
     const rows = names.map((n) => {
       const u = personUses(n), k = musKey(n), col = RES_BY.get(mc[k]);
-      const hfMic = (state.hf || []).filter((g) => g.kind === "tx" || g.kind === "spxm").flatMap((g) => g.rows.filter((r) => u.src.some((l) => musKey(l.source) === musKey(r.nom))).map((r) => ({ g, r })));
+      const hfMic = hfMicOf(u);
       const ix = names.indexOf(n);
       return `<tr data-pk="${esc(k)}"${col ? ` style="--mc:${col[2]}"` : ""}>
         <td class="pord" data-l=""><span class="pgrip" draggable="true" title="Glisser pour déplacer" aria-hidden="true">⠿</span><button type="button" data-pmv="-1"${ix ? "" : " disabled"} aria-label="Monter ${esc(n)}" title="Monter">↑</button><button type="button" data-pmv="1"${ix < names.length - 1 ? "" : " disabled"} aria-label="Descendre ${esc(n)}" title="Descendre">↓</button></td>
@@ -9719,7 +9733,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <td data-l="Instrument / poste"><input type="text" data-pp value="${esc(mp[k] || "")}" placeholder="—" aria-label="Instrument ou poste de ${esc(n)}" autocomplete="off" data-suggest="dlPoste"></td>
         <td data-l="Sources">${u.src.map((l) => chip(`data-pgo="${l.id}"`, `${canal(l)} ${l.source}`, `Voir ${l.source} dans le master`)).join("") || '<span class="hint">—</span>'}</td>
         <td data-l="Mix (sorties)">${u.outs.map((o) => chip(`data-pgo="${o.id}"`, o.mix || "sans nom", `Voir ${o.mix} dans Sorties`)).join("") || '<span class="hint">—</span>'}</td>
-        <td data-l="HF">${[...u.hf.map(({ g, r }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t}${r.mix ? " · " + r.mix : ""}`, "Voir dans Distribution HF")), ...hfMic.map(({ g, r }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t} · ${r.nom}`, "Voir dans Distribution HF"))].join("") || '<span class="hint">—</span>'}</td>
+        <td data-l="HF">${[...u.hf.map(({ g, r, f }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t}${r.mix ? " · " + r.mix : f === "por" && r.nom ? " · " + r.nom : ""}`, "Voir dans Distribution HF")), ...hfMic.map(({ g, r }) => chip(`data-phf="${g.id}:${r.id}"`, `${g.model || HF_KINDS[g.kind].t} · ${r.nom}`, "Voir dans Distribution HF"))].join("") || '<span class="hint">—</span>'}</td>
         <td class="x" data-l=""><button class="btn small danger xdel${portArmed === k ? " armed" : ""}" type="button" data-pdel title="${u.n ? `Retirer ${n} : le nom est effacé de ${u.n} case${u.n > 1 ? "s" : ""}` : `Retirer ${n} de la liste`}" aria-label="Retirer ${esc(n)}">${portArmed === k ? "Confirmer" : "×"}</button></td></tr>`;
     }).join("");
     host.innerHTML = bar + `<div class="table-wrap"><table class="master portt"><thead><tr><th aria-label="Ordre"></th><th>Couleur</th><th class="col-src"><span>Nom</span></th><th>Instrument / poste</th><th>Sources</th><th>Mix (sorties)</th><th>HF</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -10993,7 +11007,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
           spxUsageRows().forEach((rr, k) => rr.forEach((v, j) => { const c = hs.getCell(row + 1 + k, col + j); c.value = v; c.border = BORDER; }));
         }
         K = HF_KINDS[kind];
-        hs.getColumn(col).width = 12; K.cols.forEach(([f], j) => { hs.getColumn(col + 1 + j).width = f === "nom" || f === "notes" || f === "infos" || f === "acc" ? 18 : 11; });
+        hs.getColumn(col).width = 12; K.cols.forEach(([f], j) => { hs.getColumn(col + 1 + j).width = f === "nom" || f === "por" || f === "notes" || f === "infos" || f === "acc" ? 18 : 11; });
         for (let j = K.cols.length; j < maxC; j++) hs.getColumn(col + 1 + j).width = 11;
         col += Math.max(maxC, K.cols.length, kind === "spx" ? SPX_USAGE_HEAD.length - 1 : 0) + 2;
       });
@@ -11014,7 +11028,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const mc = state.musCol || {}, mp = state.musPoste || {};
       pNames.forEach((n) => {
         const u = personUses(n), k = musKey(n), col = RES_BY.get(mc[k]);
-        const hfMic = (state.hf || []).filter((g) => g.kind === "tx" || g.kind === "spxm").flatMap((g) => g.rows.filter((r) => u.src.some((l) => musKey(l.source) === musKey(r.nom))).map((r) => ({ g, r })));
+        const hfMic = hfMicOf(u);
         const hfTxt = [...u.hf, ...hfMic].map(({ g, r }) => `${g.model || (HF_KINDS[g.kind] || {}).t || "HF"}${r.mix ? " · " + r.mix : r.nom ? " · " + r.nom : ""}`).join(", ");
         const row = ps.addRow([col ? col[1] : "", n, mp[k] || "", u.src.map((l) => `${canal(l)} ${l.source}`).join(", "), u.outs.map((o) => o.mix || "sans nom").join(", "), hfTxt]);
         row.eachCell({ includeEmpty: true }, (c) => { c.border = BORDER; c.alignment = { vertical: "top", wrapText: true }; });
@@ -12566,7 +12580,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const blank = () => (g.kind === "spx" ? { id: nid(), nom: "", iem: "LIVE_S" } : g.kind === "spxm" ? { id: nid(), nom: "", mic: "LIVE" } : { id: nid(), nom: "" });
       const at = g.rows.indexOf(r);
       return [r.nom || g.model, [{ t: "Insérer une ligne au-dessus", fn: () => { g.rows.splice(at, 0, blank()); commit(true); } }, { t: "Insérer une ligne en dessous", fn: () => { g.rows.splice(at + 1, 0, blank()); commit(true); } }, { t: "Dupliquer", fn: () => { g.rows.splice(at + 1, 0, { ...r, id: nid() }); commit(true); } },
-        "-", r.nom && personNames().some((n) => musKey(n) === musKey(r.nom)) && { t: "Voir dans Porteurs", fn: () => { setView("porteurs"); showSetupRow(`#portOut tr[data-pk="${CSS.escape(musKey(r.nom))}"] input`); } },
+        "-", hfPorteur(g, r) && personNames().some((n) => musKey(n) === musKey(hfPorteur(g, r))) && { t: "Voir dans Porteurs", fn: () => { setView("porteurs"); showSetupRow(`#portOut tr[data-pk="${CSS.escape(musKey(hfPorteur(g, r)))}"] input`); } },
         "-", ...mvItems(g.rows, r), "-", rm]];
     }
     if (tr.dataset.hd) {
