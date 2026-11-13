@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "8b03eb0fef";</script>
+<script>window.PL_VER = "96422b7546";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -953,6 +953,11 @@ table.bq .bq-in { color: var(--muted); font-size: var(--fs-xs); margin-right: 6p
 .printform .prchecks label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-md); }
 .printform .prpresets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; width: 100%; }
 .printform .prpresets span { color: var(--muted); font-size: var(--fs-sm); margin-right: 4px; }
+.printform .prlay { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; width: 100%; }
+.printform .prlay span { color: var(--muted); font-size: var(--fs-sm); }
+.printform .prlay label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-sm); }
+.printform .prct { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; width: 100%; font-size: var(--fs-sm); color: var(--muted); }
+.printform .prct input { flex: 1 1 220px; max-width: 420px; }
 .printform .prsubs { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .printform .prsubs:empty { display: none; }
 .printform .prsub { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 6px 10px 8px; border: 1px solid var(--line); border-radius: var(--r-md); }
@@ -1806,6 +1811,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <div class="prpresets" role="group" aria-label="Choix tout faits"><span>Choix rapide</span><button class="btn small" type="button" data-prpreset="presta" title="Configuration, matériel à fournir, patch, sorties, HF, boîtiers, racks et plans : sans to-do ni journal">Pour un prestataire</button><button class="btn small" type="button" data-prpreset="all">Tout</button><button class="btn small" type="button" data-prpreset="view">Page affichée</button></div>
   <div class="prchecks" id="prChecks"></div>
   <div class="prsubs" id="prSubs"></div>
+  <div class="prlay" role="radiogroup" aria-label="Présentation"><span>Présentation</span><label><input type="radio" name="prLay" value="aere" checked> Aérée, comme un dossier de tournée (page de garde, une partie par page, une carte par boîtier)</label><label><input type="radio" name="prLay" value="compact"> Compacte, tableaux serrés</label></div>
+  <label class="prct">Contact en bas de page <input type="text" id="prContact" placeholder="ex. Prénom Nom · 06 00 00 00 00" autocomplete="off"></label>
   <div class="actions">
     <button class="btn primary" type="submit">Imprimer</button>
     <button class="btn" type="button" id="prFile">Fichier à imprimer (.html)</button>
@@ -9965,6 +9972,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Une colonne par boîtier, comme dans l'onglet Boîtiers
       if (!state.boites.length) return "";
       const occ = occupancy();
+      if (prLayNow === "aere") return prBoxCards(keep, occ);
       return [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].filter(([sd]) => keep(sd)).map(([sd, nm]) => {
         const bx = state.boites.filter((b) => (b.cote || "") === sd).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num); if (!bx.length) return "";
         const max = Math.max(...bx.map(boxSize)), rows = [];
@@ -9975,7 +9983,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
-    rackplan: (keep = () => true) => rpState().cases.filter((c) => keep(c.id)).map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
+    rackplan: (keep = () => true) => rpState().cases.filter((c) => keep(c.id)).map((c) => `<div class="blk rpblk">${prLayNow === "aere" ? `<h2 class="rpt">${esc(c.nom || "Rack")}<span>${rpCols(c) > 1 ? (rpCols(c) === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</span></h2>` : ""}<div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -10104,13 +10112,15 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     rackplan: () => rpState().cases.map((c) => [c.id, c.nom || "Rack"])
   };
   const PR_KEY = "patch-live-print";
-  function prOpts() { try { const o = JSON.parse(localStorage.getItem(PR_KEY) || "{}"); return { off: o.off && typeof o.off === "object" ? o.off : {}, prep: o.prep !== false }; } catch (err) { return { off: {}, prep: true }; } }
+  function prOpts() { try { const o = JSON.parse(localStorage.getItem(PR_KEY) || "{}"); return { off: o.off && typeof o.off === "object" ? o.off : {}, prep: o.prep !== false, lay: o.lay === "compact" ? "compact" : "aere" }; } catch (err) { return { off: {}, prep: true, lay: "aere" }; } }
   function prSaveOpts(o) { try { localStorage.setItem(PR_KEY, JSON.stringify(o)); } catch (err) { /* navigation privée : rien à garder */ } }
   // Ce qui est décoché dans le formulaire, sous-partie par sous-partie (gardé d'une impression à l'autre sur cet appareil)
   function prReadForm() {
     const o = prOpts(), f = $("#printForm");
     f.querySelectorAll("[data-prsub]").forEach((box) => { const k = box.dataset.prsub, off = [...box.querySelectorAll("input[data-sk]")].filter((i) => !i.checked).map((i) => i.dataset.sk); if (off.length) o.off[k] = off; else delete o.off[k]; });
     const p = $("#prPrep"); if (p) o.prep = p.checked;
+    const lay = f.querySelector('input[name="prLay"]:checked'); if (lay) o.lay = lay.value;
+    const ct = $("#prContact"); if (ct && ct.value.trim() !== (state.dossier.contact || "")) { state.dossier.contact = ct.value.trim(); commit(true); }
     prSaveOpts(o); return o;
   }
   const prKeep = (k) => { const off = new Set(prOpts().off[k] || []); return (s) => !off.has(s === "" ? "-" : s); };
@@ -10121,28 +10131,93 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   function prSyncSubs() { document.querySelectorAll("#printForm [data-prsub]").forEach((b) => { const p = document.querySelector(`#prChecks input[value="${b.dataset.prsub}"]`); b.hidden = !(p && p.checked); }); }
   // Choix tout faits : pour un prestataire (matériel + patch et plans, sans to-do ni journal), tout, ou la page affichée
-  const PR_PRESETS = { presta: ["config", "presta", "master", "sorties", "hf", "boites", "racks", "plan", "syn", "rackplan"] };
+  const PR_PRESETS = { presta: ["config", "presta", "master", "sorties", "hf", "boites", "plan", "syn", "rackplan"] };
   function prApplyPreset(p) {
     const boxes = [...document.querySelectorAll("#prChecks input[value]")];
     boxes.forEach((b) => { b.checked = p === "all" ? true : p === "view" ? b.value === view : PR_PRESETS[p].includes(b.value); });
     const all = $("#prAll"); if (all) all.checked = boxes.every((b) => b.checked);
     prSyncSubs();
   }
+  // ---------- Présentation aérée (comme un dossier de tournée : une idée par page, grands titres, cartes par boîtier) ----------
+  let prLayNow = "aere";
+  const prInk = (hex) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || ""); if (!m) return "#111"; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#111" : "#fff"; };
+  function prBoxCards(keep, occ) {
+    const cols = srCols();
+    return [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].filter(([sd]) => keep(sd)).map(([sd, nm]) => {
+      const bx = state.boites.filter((b) => (b.cote || "") === sd).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num); if (!bx.length) return "";
+      return `<h2 class="side">${esc(nm)}</h2><div class="boxcards">${bx.map((b) => {
+        const n = boxSize(b), ls = [], cnt = new Map();
+        for (let i = 1; i <= n; i++) { const l = occ.box.get(`${b.id}:${i}`); ls.push(l); if (l && !isOut(l) && musColorOf(l.musicien)) { const c = musColorOf(l.musicien); cnt.set(c, (cnt.get(c) || 0) + 1); } }
+        const col = [...cnt.entries()].sort((x, y) => y[1] - x[1])[0], bg = col ? col[0] : "#e3e6ea";
+        return `<div class="boxcard"><table><thead><tr><th colspan="${3 + cols.length}" class="bh" style="background:${bg} !important;color:${prInk(bg)} !important">${esc(boxTitle(b))}</th></tr><tr><th class="n">N°</th><th>Source</th><th>Micro</th>${cols.map((c) => `<th class="in">In ${esc(c.k === "ALL" ? "rack" : consLabel(c.k))}</th>`).join("")}</tr></thead><tbody>${ls.map((l, k) => {
+          if (!l) return `<tr class="free"><td class="n">${k + 1}</td><td></td><td></td>${cols.map(() => "<td></td>").join("")}</tr>`;
+          const mc = isOut(l) ? "" : musColorOf(l.musicien), a = (c) => (isOut(l) ? "" : rackAddr(lineSr(l, c.k)));
+          return `<tr><td class="n"${mc ? ` style="background:${mc} !important;color:${prInk(mc)} !important"` : ""}>${k + 1}</td><td><b>${esc(label(l))}</b></td><td>${esc(isOut(l) ? l.type || "Sortie" : l.micro || "")}</td>${cols.map((c) => `<td class="in">${esc(a(c))}</td>`).join("")}</tr>`;
+        }).join("")}</tbody></table></div>`;
+      }).join("")}</div>`;
+    }).join("");
+  }
+  // Page de garde : nom du dossier, tournée, version, lieu, photo de couverture
+  function prCoverPage(parts) {
+    const d = state.dossier, cov = coverCss(d.cover), today = new Date().toLocaleDateString("fr-FR");
+    const toc = parts.map((k) => (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1]);
+    return `<div class="part prcov">${cov ? `<div class="covimg" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""}<div class="covtxt"><div class="covk">${esc(d.type || "Dossier technique")}</div><div class="covn">${esc(d.nom)}</div><div class="covs">${esc([d.version, d.lieu].filter(Boolean).join(" · "))}</div><div class="covd">Dossier son · ${today}</div></div><ol class="covtoc">${toc.map((t) => `<li>${esc(t)}</li>`).join("")}</ol>${d.contact ? `<div class="covc">Contact : ${esc(d.contact)}</div>` : ""}</div>`;
+  }
+  const PRINT_CSS_AERE = `@page { size: A4 landscape; margin: 12mm 14mm 14mm; @bottom-center { content: counter(page); font: 9pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } @bottom-right { content: none; } }
+    .pr.aere { font-size: 10.5pt; color: #1a1a1a; }
+    .pr.aere .prhead { display: none; }
+    .pr.aere h1 { text-align: center; font-size: 28pt; font-weight: 300; font-variant: small-caps; letter-spacing: .02em; margin: 2mm 0 7mm; color: #222; }
+    .pr.aere h2 { font-size: 14pt; font-weight: 400; font-variant: small-caps; letter-spacing: .02em; margin: 8mm 0 3mm; border: 0; color: #222; }
+    .pr.aere h3 { font-size: 11pt; font-weight: 600; margin: 5mm 0 2mm; }
+    .pr.aere table { margin-bottom: 4mm; }
+    .pr.aere th { background: #eef0f2 !important; border: 0; border-bottom: 1.5px solid #555; font-size: 8.5pt; padding: 4px 7px; color: #333 !important; }
+    .pr.aere td { border: 0; border-bottom: 1px solid #d5d8dc; padding: 3px 5px; font-size: 9pt; }
+    .pr.aere .prconf td { font-size: 10pt; padding: 4px 6px; }
+    .pr.aere svg { max-height: 160mm; }
+    .pr.aere .cols { gap: 8mm; } .pr.aere .cols.wide { grid-template-columns: repeat(auto-fill, minmax(118mm, 1fr)); }
+    .pr.aere .prconf .blk { break-inside: avoid; margin-bottom: 5mm; }
+    .pr.aere .prconf h2 { border-bottom: 0; margin-top: 4mm; }
+    .pr.aere .prbref { font-size: 11pt; line-height: 1.55; } .pr.aere .prbref li { margin-bottom: 3px; }
+    .pr.aere .prkey { border: 0; gap: 5mm; margin-bottom: 6mm; } .pr.aere .prkey div { border: 0; border-top: 2.5px solid #222; padding: 3px 0 0; } .pr.aere .prkey b { font-size: 22pt; font-weight: 300; }
+    .pr.aere .prmat { columns: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0 10mm; align-items: start; } .pr.aere .prcat { margin-bottom: 6mm; }
+    .pr.aere .prcat h2 { background: none !important; color: #222; font-size: 13pt; padding: 0 0 2px; border-bottom: 2px solid #222; margin: 0 0 1mm; }
+    .pr.aere .prcat td { padding: 4px 6px; font-size: 9.5pt; }
+    .pr.aere h2.side { margin-top: 2mm; }
+    .pr.aere .boxcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84mm, 1fr)); gap: 6mm; align-items: start; margin-bottom: 4mm; }
+    .pr.aere .boxcard { break-inside: avoid; } .pr.aere .boxcard table { margin: 0; border: 1px solid #444; }
+    .pr.aere .boxcard th.bh { font-size: 10.5pt; text-align: center; padding: 5px; border-bottom: 1px solid #444; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .boxcard td, .pr.aere .boxcard th { padding: 2px 5px; font-size: 8.5pt; border-bottom: 1px solid #ddd; }
+    .pr.aere .boxcard td.n, .pr.aere .boxcard th.n { width: 7mm; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .boxcard td.in, .pr.aere .boxcard th.in { width: 19mm; white-space: nowrap; border-left: 1px solid #ddd; }
+    .pr.aere .boxcard tr.free td { height: 13px; }
+    .pr.aere .rpblk { break-before: page; grid-template-columns: 1.2fr 1fr; gap: 10mm; } .pr.aere .part > .rpblk:first-of-type { break-before: auto; }
+    .pr.aere .rpblk h2.rpt { grid-column: 1 / -1; text-align: center; font-size: 20pt; margin: 0 0 2mm; } .pr.aere .rpblk h2.rpt span { display: block; font-size: 10pt; font-variant: normal; color: #666; }
+    .pr.aere .prcov { display: flex; flex-direction: column; justify-content: center; min-height: 175mm; }
+    .pr.aere .covimg { height: 82mm; background-size: cover; background-repeat: no-repeat; margin-bottom: 9mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .covk { font-size: 11pt; letter-spacing: .25em; text-transform: uppercase; color: #666; }
+    .pr.aere .covn { font-size: 40pt; font-weight: 300; font-variant: small-caps; line-height: 1.05; margin: 2mm 0 3mm; }
+    .pr.aere .covs { font-size: 15pt; color: #333; } .pr.aere .covd { font-size: 10pt; color: #666; margin-top: 2mm; }
+    .pr.aere .covtoc { margin: 10mm 0 0; padding-left: 5mm; columns: 3; column-gap: 8mm; font-size: 10.5pt; color: #333; } .pr.aere .covtoc li { margin-bottom: 2px; }
+    .pr.aere .covc { margin-top: 8mm; font-size: 10.5pt; }`;
   function printHtml(parts) {
     const d = state.dossier, today = new Date().toLocaleDateString("fr-FR");
     const head = `<div class="prhead"><b>${esc(d.nom)}</b><span>${esc([d.type, d.version, d.lieu].filter(Boolean).join(" · "))} · imprimé le ${today}</span></div>`;
     const cov = coverCss(d.cover);
     let first = true;
-    prPartsNow = parts;
-    const body = parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](prKeep(k)); if (!h) return ""; const band = first && cov ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
+    prPartsNow = parts; prLayNow = prOpts().lay;
+    const aere = prLayNow === "aere";
+    const body = (aere ? prCoverPage(parts) : "") + parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](prKeep(k)); if (!h) return ""; const band = first && cov && !aere ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
     render();
-    return `<style>${PRINT_CSS}</style><div class="pr">${body}</div>`;
+    const foot = aere ? JSON.stringify([d.nom, d.version, d.contact ? "Contact : " + d.contact : ""].filter(Boolean).join(" · ")).replace(/</g, "\\3C ") : "";
+    const footCss = aere ? `@page { @bottom-left { content: ${foot}; font: italic 8pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } }` : "";
+    return `<style>${PRINT_CSS}${aere ? PRINT_CSS_AERE + footCss : ""}</style><div class="pr${aere ? " aere" : ""}">${body}</div>`;
   }
   function printParts() { return [...document.querySelectorAll("#prChecks input[value]:checked")].map((i) => i.value); }
   function openPrint(preset) {
     const f = $("#printForm"); if (!f.hidden && typeof preset !== "string") { f.hidden = true; return; }
     $("#prChecks").innerHTML = `<label><input type="checkbox" id="prAll"> <b>Tout</b></label>` + PRINT_PARTS.map(([k, t, on]) => `<label><input type="checkbox" value="${k}"${k === view || (on && !PRINT_PARTS.some((x) => x[0] === view)) ? " checked" : ""}> ${esc(t)}</label>`).join("");
     $("#prSubs").innerHTML = prSubsHtml();
+    { const o = prOpts(); f.querySelectorAll('input[name="prLay"]').forEach((i) => { i.checked = i.value === o.lay; }); $("#prContact").value = state.dossier.contact || ""; }
     if (typeof preset === "string") prApplyPreset(preset); else prSyncSubs();
     f.hidden = false; f.scrollIntoView({ block: "nearest" });
   }
