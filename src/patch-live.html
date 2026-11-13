@@ -937,8 +937,23 @@ table.bq .bq-in { color: var(--muted); font-size: var(--fs-xs); margin-right: 6p
 .suggest div .sl { color: var(--muted); font-size: var(--fs-xs); margin-left: 6px; }
 .printform .prchecks { display: flex; flex-wrap: wrap; gap: 6px 16px; width: 100%; }
 .printform .prchecks label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-md); }
+.printform .prpresets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; width: 100%; }
+.printform .prpresets span { color: var(--muted); font-size: var(--fs-sm); margin-right: 4px; }
+.printform .prlay { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; width: 100%; }
+.printform .prlay span { color: var(--muted); font-size: var(--fs-sm); }
+.printform .prlay label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-sm); }
+.printform .prct { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; width: 100%; font-size: var(--fs-sm); color: var(--muted); }
+.printform .prct input { flex: 1 1 220px; max-width: 420px; }
+.printform .prsubs { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.printform .prsubs:empty { display: none; }
+.printform .prsub { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 6px 10px 8px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.printform .prsub legend { padding: 0 4px; font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
+.printform .prsub label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-sm); }
+.printform .prsub label.prsep { flex-basis: 100%; padding-top: 4px; border-top: 1px dashed var(--line); }
 #printRoot { display: none; }
 @media print {
+  /* Le rail (padding gauche de l'appli) décalait toute l'impression de 3 cm vers la droite */
+  body { padding: 0 !important; margin: 0 !important; background: #fff !important; }
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block; }
 }
@@ -1673,6 +1688,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
 <div id="appMenu" class="dbxmenu appmenu" role="menu" hidden>
   <button id="exportBtn" type="button" role="menuitem" hidden>Enregistrer une copie Excel sur l'appareil</button>
   <button id="printBtn" type="button" role="menuitem" aria-expanded="false">Imprimer ou faire un PDF…</button>
+  <button id="printPrestaBtn" type="button" role="menuitem">PDF pour un prestataire…<small>configuration, matériel, patch et plans</small></button>
   <hr>
   <button id="themeMi" type="button" role="menuitem">Changer de thème</button>
   <button id="densBtn" type="button" role="menuitemcheckbox" aria-checked="false">Lignes serrées<small>sur cette page</small></button>
@@ -1780,7 +1796,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
 <div id="guide" class="guide" hidden></div>
 <form id="printForm" class="newbox printform" hidden>
   <strong>Imprimer ou faire un PDF</strong>
+  <div class="prpresets" role="group" aria-label="Choix tout faits"><span>Choix rapide</span><button class="btn small" type="button" data-prpreset="presta" title="Configuration, matériel à fournir, patch, sorties, HF, boîtiers, racks et plans : sans to-do ni journal">Pour un prestataire</button><button class="btn small" type="button" data-prpreset="all">Tout</button><button class="btn small" type="button" data-prpreset="view">Page affichée</button></div>
   <div class="prchecks" id="prChecks"></div>
+  <div class="prsubs" id="prSubs"></div>
+  <div class="prlay" role="radiogroup" aria-label="Présentation"><span>Présentation</span><label><input type="radio" name="prLay" value="aere" checked> Aérée, comme un dossier de tournée (page de garde, une partie par page, une carte par boîtier)</label><label><input type="radio" name="prLay" value="compact"> Compacte, tableaux serrés</label></div>
+  <label class="prct">Contact en bas de page <input type="text" id="prContact" placeholder="ex. Prénom Nom · 06 00 00 00 00" autocomplete="off"></label>
   <div class="actions">
     <button class="btn primary" type="submit">Imprimer</button>
     <button class="btn" type="button" id="prFile">Fichier à imprimer (.html)</button>
@@ -9870,7 +9890,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["config", "Configuration", false], ["presta", "Matériel à fournir", false], ["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -9891,7 +9911,24 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr .cols.wide { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
     .pr ul { padding-left: 16px; } .pr li { margin-bottom: 3px; }
     .pr svg { max-width: 100%; height: auto; }
-    .pr .muted { color: #666; }`;
+    .pr .muted { color: #666; }
+    @page { @bottom-right { content: counter(page) " / " counter(pages); font: 8pt -apple-system, "Segoe UI", Arial, sans-serif; color: #555; } }
+    .pr .prkey { display: flex; flex-wrap: wrap; gap: 0; border: 1.5px solid #111; margin: 2px 0 6px; }
+    .pr .prkey div { flex: 1 1 0; padding: 4px 8px; border-left: 1px solid #999; display: flex; flex-direction: column; } .pr .prkey div:first-child { border-left: 0; }
+    .pr .prkey b { font-size: 16pt; line-height: 1.1; } .pr .prkey span { font-size: 8pt; color: #333; }
+    .pr .prnote { margin: 0 0 8px; font-size: 8.5pt; color: #333; }
+    .pr .prmat { column-count: 2; column-gap: 7mm; }
+    .pr .prcat { break-inside: avoid; margin-bottom: 7px; display: inline-block; width: 100%; }
+    .pr .prcat h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 0; padding: 3px 6px; font-size: 10.5pt; color: #fff; background: #222 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr .prcat h2 span { font-size: 9pt; font-weight: 600; }
+    .pr .prcat table { margin: 0; } .pr .prcat td { padding: 3px 5px; font-size: 9pt; } .pr .prcat td .muted { font-size: 8pt; }
+    .pr .prcat .q { width: 9mm; text-align: right; font-weight: 700; font-size: 10.5pt; font-variant-numeric: tabular-nums; }
+    .pr .prcat .ck { width: 9mm; text-align: center; font-size: 11pt; }
+    .pr .prcat .pour { width: 38%; color: #333; font-size: 8pt; }
+    .pr .prconf h2 { font-size: 11pt; margin: 10px 0 4px; padding-bottom: 2px; border-bottom: 1.5px solid #111; }
+    .pr .prconf .blk:first-child h2 { margin-top: 0; }
+    .pr .prconf td { padding: 3px 5px; } .pr .prconf .q { width: 14mm; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pr ul.prbref, .pr ol.prbref { margin: 2px 0 6px; padding-left: 18px; font-size: 9.5pt; } .pr .prbref li { margin-bottom: 2px; }`;
   function printTables(root) {
     // Une copie sans boutons ni champs : chaque champ devient son texte
     const c = root.cloneNode(true);
@@ -9908,19 +9945,23 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return c.innerHTML;
   }
   const PRINT_SRC = {
+    config: (keep) => configHtml(keep),
+    presta: (keep) => prestaHtml(keep),
     master: () => { renderMaster(); return printTables($("#masterTbl").parentNode); },
     sorties: () => { if (!(state.sorties || []).length) return ""; renderOut(); return printTables($("#outTbl").parentNode); },
-    hf: () => {
-      const devs = hfDevs().length ? `<div class="blk"><h3>Récepteurs et émetteurs en rack</h3><table><thead><tr><th>Nom</th><th>Type</th><th>Modèle</th><th>Plage</th><th>Voies</th><th>Utilisées</th><th>Notes</th></tr></thead><tbody>${hfDevs().map((d) => `<tr><td>${esc(d.nom)}</td><td>${esc(HFDEV_KIND[d.kind] || "")}</td><td>${esc(d.model)}</td><td>${esc(d.band || "")}</td><td>${hfVoiesTxt(d)}</td><td>${hfDevUsed(d)}</td><td>${esc(d.notes || "")}</td></tr>`).join("")}</tbody></table></div>` : "";
-      if (!hfState().length) return devs;
+    hf: (keep = () => true) => {
+      const devs = hfDevs().length && keep("devs") ? `<div class="blk"><h3>Récepteurs et émetteurs en rack</h3><table><thead><tr><th>Nom</th><th>Type</th><th>Modèle</th><th>Plage</th><th>Voies</th><th>Utilisées</th><th>Notes</th></tr></thead><tbody>${hfDevs().map((d) => `<tr><td>${esc(d.nom)}</td><td>${esc(HFDEV_KIND[d.kind] || "")}</td><td>${esc(d.model)}</td><td>${esc(d.band || "")}</td><td>${hfVoiesTxt(d)}</td><td>${hfDevUsed(d)}</td><td>${esc(d.notes || "")}</td></tr>`).join("")}</tbody></table></div>` : "";
+      const groups = hfState().filter((g) => keep(g.id));
+      if (!groups.length) return devs;
       const usage = hfState().some((g) => g.kind === "spx" || g.kind === "spxm") && spxBases().length ? `<div class="blk"><h3>Ressources Spectera</h3><table><thead><tr>${SPX_USAGE_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${spxUsageRows().map((r) => `<tr>${r.map((v) => `<td>${esc(String(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : "";
-      return devs + usage + `<div class="cols wide">${hfState().map((g) => { const K = HF_KINDS[g.kind] || HF_KINDS.tx; return `<div class="blk"><h3>${esc(g.model)} <span class="muted">· ${esc(K.t)} · ${g.rows.length}</span></h3><table><thead><tr><th>N°</th>${hfCols(g).map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${g.rows.map((r, k) => `<tr><td>${k + 1}</td>${hfCols(g).map(([f]) => `<td>${esc(hfCell(g, r, f))}</td>`).join("")}</tr>`).join("")}</tbody></table>${g.notes ? `<p>${esc(g.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
+      return devs + usage + `<div class="cols wide">${groups.map((g) => { const K = HF_KINDS[g.kind] || HF_KINDS.tx; return `<div class="blk"><h3>${esc(g.model)} <span class="muted">· ${esc(K.t)} · ${g.rows.length}</span></h3><table><thead><tr><th>N°</th>${hfCols(g).map(([, t]) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${g.rows.map((r, k) => `<tr><td>${k + 1}</td>${hfCols(g).map(([f]) => `<td>${esc(hfCell(g, r, f))}</td>`).join("")}</tr>`).join("")}</tbody></table>${g.notes ? `<p>${esc(g.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
     },
-    boites: () => {
+    boites: (keep = () => true) => {
       // Une colonne par boîtier, comme dans l'onglet Boîtiers
       if (!state.boites.length) return "";
       const occ = occupancy();
-      return [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].map(([sd, nm]) => {
+      if (prLayNow === "aere") return prBoxCards(keep, occ);
+      return [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].filter(([sd]) => keep(sd)).map(([sd, nm]) => {
         const bx = state.boites.filter((b) => (b.cote || "") === sd).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num); if (!bx.length) return "";
         const max = Math.max(...bx.map(boxSize)), rows = [];
         for (let i = 1; i <= max; i++) rows.push(`<tr>${bx.map((b) => { if (i > boxSize(b)) return "<td></td><td></td>"; const l = occ.box.get(`${b.id}:${i}`); return `<td class="muted">${i}</td><td>${l ? esc(label(l)) : ""}</td>`; }).join("")}</tr>`);
@@ -9930,7 +9971,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
-    rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
+    rackplan: (keep = () => true) => rpState().cases.filter((c) => keep(c.id)).map((c) => `<div class="blk rpblk">${prLayNow === "aere" ? `<h2 class="rpt">${esc(c.nom || "Rack")}<span>${rpCols(c) > 1 ? (rpCols(c) === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</span></h2>` : ""}<div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -9938,24 +9979,268 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     todo: () => (tds().length ? `<table><thead><tr><th>Fait</th><th>Tâche</th><th>Lié à</th><th>Qui</th><th>Pour le</th><th>Notes</th></tr></thead><tbody>${[...tds().filter((x) => !x.done), ...tds().filter((x) => x.done)].map((x) => `<tr${x.done ? ' class="muted"' : ""}><td>${x.done ? "✓" : "☐"}</td><td>${esc(x.txt)}</td><td>${esc(tdLinksText(x))}</td><td>${esc(x.qui || "")}</td><td>${x.pour ? esc(x.pour.split("-").reverse().join("/")) : ""}${tdLate(x) ? " (en retard)" : ""}</td><td>${esc(x.notes || "")}</td></tr>`).join("")}</tbody></table>` : ""),
     journal: () => (state.journal.length ? `<ul>${[...state.journal].reverse().map((j) => `<li><b>${esc(j.t.replace("T", " ").slice(0, 16))}</b>${j.lieu ? " · " + esc(j.lieu) : ""} : ${esc(j.txt)}</li>`).join("")}</ul>` : "")
   };
+  // ---------- PDF pour un prestataire : configuration ----------
+  // Pour comprendre l'installation sans l'appli : régies et consoles, chemin plateau → boîtiers → stage racks, HF, sorties, horloge, et comment lire les notations.
+  let prPartsNow = [];
+  const PR_DESC = { presta: "tout le matériel à préparer, par catégorie", master: "chaque source : micro, pied, boîtier et entrée de stage rack", sorties: "chaque mix de retour, d'où il part et où il arrive", hf: "micros HF, ears et réglages, groupe par groupe", boites: "le contenu de chaque boîtier, entrée par entrée", racks: "les stage racks et leurs cartes", liste: "les quantités comptées dans l'appli", plan: "l'implantation sur le plateau", syn: "le schéma des liaisons numériques et l'horloge", rackplan: "le contenu de chaque flight rack, U par U", local: "inserts, effets et entrées locales des consoles", com: "le patch intercom", net: "les adresses IP", todo: "les tâches", journal: "l'historique des changements" };
+  // Entrées en plages : « 1 à 10, 2-1 à 2-4 » (une plage seulement quand les entrées se suivent vraiment)
+  const prRange = (xs) => {
+    const runs = [];
+    [...new Set(xs)].forEach((x) => { const m = /^(.*?)(\d+)$/.exec(x), last = runs[runs.length - 1];
+      if (m && last && last.p === m[1] && last.n + 1 === Number(m[2])) { last.n++; last.to = x; } else runs.push({ p: m ? m[1] : null, n: m ? Number(m[2]) : NaN, from: x, to: x }); });
+    return runs.map((r) => (r.from === r.to ? r.from : `${r.from}${/^(.*?)(\d+)$/.exec(r.to)[2] - /^(.*?)(\d+)$/.exec(r.from)[2] === 1 ? ", " : " à "}${r.to}`)).join(", ");
+  };
+  function configHtml(keep) {
+    const out = [], L = state.lignes, S = state.sorties || [], ks = consoleKeys(), cols = srCols(), nodes = synNodes();
+    const consName = (k) => { const md = ((synState().cons || {})[k] || {}).model; return `${k === "ALL" ? "Console" : "Console " + consLabel(k)}${md ? " · " + md : ""}`; };
+    if (keep("bref")) {
+      const pairs = L.filter((l) => l.pair).length / 2, hfMic = hfState().filter((g) => g.kind === "tx" || g.kind === "spxm").reduce((n, g) => n + g.rows.length, 0), ears = hfState().filter((g) => g.kind === "iem" || g.kind === "spx").reduce((n, g) => n + g.rows.length, 0);
+      const split = ks.length > 1 && L.some((l) => ks.filter((k) => l.sr && l.sr[k]).length > 1), shared = state.racks.filter((r) => r.console === "Partagé");
+      const li = [
+        `<b>${L.length} source${L.length > 1 ? "s" : ""}</b> au patch${pairs ? ` (dont ${pairs} paire${pairs > 1 ? "s" : ""} stéréo)` : ""}, <b>${S.length} sortie${S.length > 1 ? "s" : ""}</b>.`,
+        ks.length ? `Régie${ks.length > 1 ? "s" : ""} : ${ks.map((k) => `<b>${esc(consName(k))}</b>`).join(", ")}.` : "",
+        split ? "Plateau <b>splitté</b> : les sources arrivent à la fois sur les stage racks de chaque console (voir « Du plateau aux consoles »)." : "",
+        shared.length ? `Stage rack${shared.length > 1 ? "s" : ""} partagé${shared.length > 1 ? "s" : ""} entre les consoles : ${shared.map((r) => esc(rackTitle(r))).join(", ")}.` : "",
+        state.boites.length ? `<b>${state.boites.length} boîtier${state.boites.length > 1 ? "s" : ""}</b> sur le plateau : ${["Jardin", "Cour", ""].map((sd) => { const n = state.boites.filter((b) => (b.cote || "") === sd).length; return n ? `${n} ${sd ? "côté " + sd.toLowerCase() : "sans côté"}` : ""; }).filter(Boolean).join(", ")}.` : "",
+        hfMic || ears ? `HF : <b>${hfMic} micro${hfMic > 1 ? "s" : ""} HF</b>, <b>${ears} ear${ears > 1 ? "s" : ""}</b> (retours intra-auriculaires).` : "",
+        ...loops().map((lp) => { const rs = state.racks.filter((r) => rackLoop(r) === lp); return rs.length ? `${esc(lp.nom)} à <b>${lp.freq === "96" ? "96" : "48"} kHz</b> : ${rs.map((r) => esc(rackTitle(r))).join(", ")}.` : ""; })
+      ].filter(Boolean);
+      out.push(`<div class="blk"><h2>En bref</h2><ul class="prbref">${li.map((x) => `<li>${x}</li>`).join("")}</ul></div>`);
+    }
+    if (keep("regies") && (ks.length || state.racks.length)) {
+      const rows = (ks.length ? ks : ["ALL"]).map((k) => {
+        const rs = racksFor(k), ins = L.filter((l) => lineSr(l, k)).length, outs = S.filter((o) => o.out && rs.some((r) => r.id === o.out.r)).length;
+        return `<tr><td><b>${esc(consName(k))}</b></td><td>${rs.map((r) => `${esc(rackTitle(r))}<span class="muted"> · ${esc(ioDetail(r))}${r.console === "Partagé" ? " · partagé" : ""}</span>`).join("<br>") || '<span class="muted">aucun</span>'}</td><td class="q">${ins}</td><td class="q">${outs}</td></tr>`;
+      });
+      out.push(`<div class="blk"><h2>Régies et consoles</h2><table><thead><tr><th>Console</th><th>Stage racks et I/O</th><th class="q">Entrées</th><th class="q">Sorties</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`);
+    }
+    if (keep("plateau") && L.length) {
+      const grp = new Map();
+      L.forEach((l) => { const b = l.box && boxById(l.box.b), k = b ? b.id : ""; if (!grp.has(k)) grp.set(k, { b, ls: [] }); grp.get(k).ls.push(l); });
+      const order = [...grp.values()].sort((x, y) => (!x.b) - (!y.b) || (x.b && y.b ? ["Jardin", "Cour", ""].indexOf(x.b.cote || "") - ["Jardin", "Cour", ""].indexOf(y.b.cote || "") || x.b.type.localeCompare(y.b.type) || x.b.num - y.b.num : 0));
+      const where = (ls, c) => { const m = new Map(); ls.forEach((l) => { const a = lineSr(l, c.k), r = a && rackById(a.r); if (!r) return; if (!m.has(r.id)) m.set(r.id, { r, xs: [] }); m.get(r.id).xs.push(rackShort(r, a.c, a.i)); }); return [...m.values()].map(({ r, xs }) => `${esc(rackTitle(r))} <span class="muted">${esc(prRange(xs))}</span>`).join("<br>") || '<span class="muted">—</span>'; };
+      out.push(`<div class="blk"><h2>Du plateau aux consoles</h2><table><thead><tr><th>Boîtier</th><th>Côté</th><th>Sources</th>${cols.map((c) => `<th>Arrive sur ${esc(c.label.replace("Stage rack", "").trim() || "stage rack")}</th>`).join("")}</tr></thead><tbody>${order.map(({ b, ls }) => `<tr><td><b>${b ? esc(boxTitle(b)) : "Sans boîtier"}</b>${b ? `<span class="muted"> · ${ls.length}/${boxSize(b)}</span>` : ""}</td><td>${b ? esc(b.cote || "") : ""}</td><td>${esc(prestaFor(ls.map((l) => l.source)))}</td>${cols.map((c) => `<td>${where(ls, c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+    }
+    if (keep("hf") && (hfState().length || hfDevs().length)) {
+      out.push(`<div class="blk"><h2>HF et ears</h2><table><thead><tr><th>Modèle</th><th>Type</th><th class="q">Qté</th><th>Pour</th></tr></thead><tbody>${hfState().map((g) => `<tr><td><b>${esc(g.model)}</b></td><td>${esc((HF_KINDS[g.kind] || HF_KINDS.tx).t)}</td><td class="q">${g.rows.length}</td><td>${esc(prestaFor(g.rows.map((r) => r.por || r.nom)))}</td></tr>`).join("")}${[...hfDevs().reduce((m, d) => { const k = `${d.model || d.nom}\u0000${d.kind}`; if (!m.has(k)) m.set(k, []); m.get(k).push(d); return m; }, new Map()).values()].map((ds) => `<tr><td><b>${esc(ds[0].model || ds[0].nom)}</b></td><td>${esc(HFDEV_KIND[ds[0].kind] || "HF")} en rack</td><td class="q">${ds.length}</td><td>${esc(hfVoiesTxt(ds[0]))} chacun · ${esc(prestaFor(ds.map((d) => d.nom)))}</td></tr>`).join("")}</tbody></table></div>`);
+    }
+    if (keep("sorties") && S.length) {
+      const m = new Map(); S.forEach((o) => { if (o.pair && S.some((z) => z.id === o.pair && S.indexOf(z) < S.indexOf(o))) return; const k = o.type || "Autre"; if (!m.has(k)) m.set(k, []); m.get(k).push(o); });
+      out.push(`<div class="blk"><h2>Retours et sorties</h2><table><thead><tr><th>Type</th><th class="q">Mix</th><th>Mix (destinataire)</th></tr></thead><tbody>${[...m.entries()].map(([t, os]) => `<tr><td><b>${esc(t)}</b></td><td class="q">${os.length}</td><td>${esc(os.map((o) => (o.pair ? o.mix.replace(/\s+[LG]$/i, "") + " (stéréo)" : o.mix) + (o.dest ? " · " + o.dest : "")).join(", "))}</td></tr>`).join("")}</tbody></table></div>`);
+    }
+    if (keep("horloge") && nodes.length > 1) {
+      const rows = synClockRows();
+      out.push(`<div class="blk"><h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(String(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+    }
+    if (keep("lecture")) {
+      const lb = L.find((l) => l.box && boxById(l.box.b)), c0 = cols[0], ls = c0 && L.find((l) => lineSr(l, c0.k) && rackById(lineSr(l, c0.k).r));
+      const ex = [
+        lb ? `<li><b>${esc(boxAddr(lb.box))}</b> : boîtier ${esc(boxName(boxById(lb.box.b)))}, entrée ${lb.box.i} (ici ${esc(lb.source)}). Une colonne par boîtier dans la page Boîtiers.</li>` : "",
+        ls ? (() => { const a = lineSr(ls, c0.k), r = rackById(a.r); return `<li><b>${esc(rackAddr(a))}</b> : stage rack ${esc(rackTag(r))}, puis ${r.ports ? "port et entrée" : r.flat ? "entrée" : "carte et entrée"} (ici ${esc(ls.source)}).</li>`; })() : "",
+        L.some((l) => l.pair) ? "<li>Deux lignes liées par une accolade ou notées L / R = une paire stéréo.</li>" : "",
+        "<li>Jardin = gauche vu de la salle, cour = droite vu de la salle.</li>"
+      ].filter(Boolean);
+      const pages = prPartsNow.filter((k) => k !== "config").map((k) => `<li><b>${esc((PRINT_PARTS.find((x) => x[0] === k) || [, k])[1])}</b> : ${esc(PR_DESC[k] || "")}</li>`);
+      out.push(`<div class="blk"><h2>Comment lire ce dossier</h2><ul class="prbref">${ex.join("")}</ul>${pages.length ? `<h3>Dans ce dossier</h3><ol class="prbref">${pages.join("")}</ol>` : ""}</div>`);
+    }
+    return out.length ? `<div class="prconf">${out.join("")}</div>` : "";
+  }
+  // ---------- PDF pour un prestataire : matériel à fournir ----------
+  // Une liste à préparer, rangée par catégorie, tirée de tout le dossier (patch, HF, boîtiers, racks, synoptique, plans de rack, liste à la main).
+  // Chaque catégorie peut être décochée avant l'impression ; la colonne ☐ sert à cocher la prépa sur papier.
+  const PRESTA_CATS = [["cons", "Consoles"], ["io", "Stage racks et I/O"], ["mic", "Micros et DI"], ["pied", "Pieds et fixations"], ["acc", "Accessoires"], ["hf", "HF et ears"], ["ret", "Retours et diffusion"], ["multi", "Boîtiers et multis"], ["cab", "Câblage"], ["net", "Réseau et périphériques"], ["rack", "Flight racks et accessoires de rack"], ["div", "Divers"]];
+  const PRESTA_MAN = { "Câblage": "cab", "Réseau": "net", "HF": "hf", "Ears": "hf", "Console": "cons", "Rack": "rack", "Accessoires": "acc" };
+  const prestaFor = (names) => { const u = [...new Set(names.filter(Boolean))]; return u.length > 6 ? `${u.slice(0, 6).join(", ")} +${u.length - 6}` : u.join(", "); };
+  function prestaList() {
+    const cats = new Map(PRESTA_CATS.map(([k]) => [k, new Map()]));
+    // add(catégorie, désignation, qté, pour qui / où, notes) : même désignation = une ligne, quantités additionnées
+    const add = (c, nom, n, pour, notes) => {
+      nom = String(nom || "").trim(); if (!nom || !(n > 0)) return; const m = cats.get(c), k = nom.toLowerCase();
+      const x = m.get(k) || { nom, n: 0, pour: [], notes: [] }; x.n += n; if (pour) x.pour.push(pour); if (notes) x.notes.push(notes); m.set(k, x);
+    };
+    consoleKeys().forEach((k) => { const md = ((synState().cons || {})[k] || {}).model; add("cons", md || `Console ${consLabel(k)} (modèle à préciser)`, 1, `Console ${consLabel(k)}`); });
+    state.racks.forEach((r) => add("io", r.nom || "I/O", 1, [r.console && r.console !== "Partagé" ? consLabel(r.console) : r.console, ioDetail(r)].filter(Boolean).join(" · ")));
+    state.lignes.forEach((l) => {
+      const mic = bqNom(l.micro); if (mic && !/^(SEK|SKM) Spectera$/i.test(mic)) add("mic", mic, 1, l.source);
+      const p = (l.pied || "").trim(); if (p) add("pied", p, 1, l.source, PIEDS_LEGENDE[p] || "");
+      accList(l).map(bqAcc).forEach((a) => add("acc", a, 1, l.source));
+    });
+    hfDevs().forEach((d) => add("hf", d.model || "Appareil HF", 1, [HFDEV_KIND[d.kind], hfVoiesTxt(d)].filter(Boolean).join(" · "), d.notes));
+    hfState().forEach((g) => {
+      const K = HF_KINDS[g.kind] || HF_KINDS.tx;
+      g.rows.forEach((r) => { add("hf", g.model || K.t, 1, r.por || r.nom); (r.acc || []).forEach((a) => add("acc", a, 1, `${g.model || "HF"} · ${r.por || r.nom || ""}`)); });
+    });
+    (state.sorties || []).forEach((o) => { const t = `${o.type || ""}`; if (!o.rx || /ear|iem|\bhf\b|envoi/i.test(t)) return; add("ret", bqNom(o.rx), 1, [o.mix, o.dest].filter(Boolean).join(" · "), t); });
+    state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; add("multi", k, 1, [boxTitle(b), b.cote].filter(Boolean).join(" · ")); });
+    const nodes = synNodes(), nm = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
+    synState().links.forEach((l) => { const pr = synLinkProto(l, nodes), what = `${nm((l.a || {}).n)} → ${nm((l.b || {}).n)}`; add("cab", l.cable || `Liaison ${pr || "audio"} (câble à préciser)`, 1, what, l.cable && pr ? pr : ""); });
+    synState().nodes.forEach((x) => { const m = EXTRA_MODELS[extraModel(x)]; add("net", m ? m.t : x.nom || x.type || "Élément", 1, x.nom, m ? "" : x.type); });
+    rpState().cases.forEach((c) => {
+      add("rack", `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U`, 1, [c.nom, c.lieu].filter(Boolean).join(" · "));
+      c.items.filter((it) => it.kind === "free").forEach((it) => add("rack", rpLabel(it) + (it.h > 1 ? ` ${it.h} U` : ""), 1, c.nom));
+    });
+    (state.materiel || []).forEach((x) => add(PRESTA_MAN[x.cat] || ((banqueFiche(x.nom) || {}).cat === "Câblage" ? "cab" : "div"), x.nom, Number(x.qte) || 0, "", [PRESTA_MAN[x.cat] || !x.cat ? "" : x.cat, x.notes].filter(Boolean).join(" · ")));
+    return PRESTA_CATS.map(([k, t]) => ({ k, t, rows: [...cats.get(k).values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { numeric: true })) })).filter((c) => c.rows.length);
+  }
+  function prestaHtml(keep) {
+    const list = prestaList().filter((c) => keep(c.k)); if (!list.length) return "";
+    const prep = prOpts().prep, hf = hfState().reduce((n, g) => n + g.rows.length, 0);
+    const key = [[state.lignes.length, "entrées au patch"], [(state.sorties || []).length, "sorties"], [state.boites.length, "boîtiers"], [state.racks.length, "stage racks / I/O"], [hf, "liaisons HF et ears"], [rpState().cases.length, "flight racks"]].filter(([n]) => n);
+    const tot = list.reduce((n, c) => n + c.rows.reduce((m, x) => m + x.n, 0), 0);
+    return `<div class="prkey">${key.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
+      <p class="prnote">Liste tirée du dossier : ${tot} pièce${tot > 1 ? "s" : ""} en ${list.length} catégorie${list.length > 1 ? "s" : ""}. Les quantités sont celles utilisées, <b>sans spare</b>. « Pour » dit où va chaque pièce ; le détail est dans les pages suivantes.</p>
+      <div class="prmat">${list.map((c) => `<div class="prcat"><h2>${esc(c.t)}<span>${c.rows.reduce((m, x) => m + x.n, 0)}</span></h2><table><thead><tr>${prep ? '<th class="ck">Prêt</th>' : ""}<th class="q">Qté</th><th>Désignation</th><th>Pour</th></tr></thead><tbody>${c.rows.map((x) => `<tr>${prep ? '<td class="ck">☐</td>' : ""}<td class="q">${x.n}</td><td><b>${esc(x.nom)}</b>${x.notes.length ? `<div class="muted">${esc([...new Set(x.notes)].join(" · "))}</div>` : ""}</td><td class="pour">${esc(prestaFor(x.pour))}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>`;
+  }
+  // Sous-parties à cocher, partie par partie (une catégorie de matériel, un groupe HF, un côté de boîtiers, un flight rack)
+  const PRINT_SUBS = {
+    config: () => [["bref", "En bref"], ["regies", "Régies et consoles"], ["plateau", "Du plateau aux consoles"], ["hf", "HF et ears"], ["sorties", "Retours et sorties"], ["horloge", "Horloge"], ["lecture", "Comment lire ce dossier"]],
+    presta: () => prestaList().map((c) => [c.k, `${c.t} (${c.rows.reduce((m, x) => m + x.n, 0)})`]),
+    hf: () => [...(hfDevs().length ? [["devs", "Récepteurs et émetteurs en rack"]] : []), ...hfState().map((g) => [g.id, `${g.model} · ${(HF_KINDS[g.kind] || HF_KINDS.tx).t} (${g.rows.length})`])],
+    boites: () => [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].filter(([sd]) => state.boites.some((b) => (b.cote || "") === sd)).map(([sd, t]) => [sd || "-", t]),
+    rackplan: () => rpState().cases.map((c) => [c.id, c.nom || "Rack"])
+  };
+  const PR_KEY = "patch-live-print";
+  function prOpts() { try { const o = JSON.parse(localStorage.getItem(PR_KEY) || "{}"); return { off: o.off && typeof o.off === "object" ? o.off : {}, prep: o.prep !== false, lay: o.lay === "compact" ? "compact" : "aere" }; } catch (err) { return { off: {}, prep: true, lay: "aere" }; } }
+  function prSaveOpts(o) { try { localStorage.setItem(PR_KEY, JSON.stringify(o)); } catch (err) { /* navigation privée : rien à garder */ } }
+  // Ce qui est décoché dans le formulaire, sous-partie par sous-partie (gardé d'une impression à l'autre sur cet appareil)
+  function prReadForm() {
+    const o = prOpts(), f = $("#printForm");
+    f.querySelectorAll("[data-prsub]").forEach((box) => { const k = box.dataset.prsub, off = [...box.querySelectorAll("input[data-sk]")].filter((i) => !i.checked).map((i) => i.dataset.sk); if (off.length) o.off[k] = off; else delete o.off[k]; });
+    const p = $("#prPrep"); if (p) o.prep = p.checked;
+    const lay = f.querySelector('input[name="prLay"]:checked'); if (lay) o.lay = lay.value;
+    const ct = $("#prContact"); if (ct && ct.value.trim() !== (state.dossier.contact || "")) { state.dossier.contact = ct.value.trim(); commit(true); }
+    prSaveOpts(o); return o;
+  }
+  const prKeep = (k) => { const off = new Set(prOpts().off[k] || []); return (s) => !off.has(s === "" ? "-" : s); };
+  function prSubsHtml() {
+    const o = prOpts();
+    return Object.entries(PRINT_SUBS).map(([k, fn]) => { const it = fn(); if (!it.length) return ""; const t = PRINT_PARTS.find((x) => x[0] === k)[1], off = new Set(o.off[k] || []);
+      return `<fieldset class="prsub" data-prsub="${k}" hidden><legend>${esc(t)}</legend>${it.map(([s, l]) => `<label><input type="checkbox" data-sk="${esc(s)}"${off.has(s) ? "" : " checked"}> ${esc(l)}</label>`).join("")}${k === "presta" ? `<label class="prsep"><input type="checkbox" id="prPrep"${o.prep ? " checked" : ""}> Colonne ☐ pour cocher la prépa</label>` : ""}</fieldset>`; }).join("");
+  }
+  function prSyncSubs() { document.querySelectorAll("#printForm [data-prsub]").forEach((b) => { const p = document.querySelector(`#prChecks input[value="${b.dataset.prsub}"]`); b.hidden = !(p && p.checked); }); }
+  // Choix tout faits : pour un prestataire (matériel + patch et plans, sans to-do ni journal), tout, ou la page affichée
+  const PR_PRESETS = { presta: ["config", "presta", "master", "sorties", "hf", "boites", "plan", "syn", "rackplan"] };
+  function prApplyPreset(p) {
+    const boxes = [...document.querySelectorAll("#prChecks input[value]")];
+    boxes.forEach((b) => { b.checked = p === "all" ? true : p === "view" ? b.value === view : PR_PRESETS[p].includes(b.value); });
+    const all = $("#prAll"); if (all) all.checked = boxes.every((b) => b.checked);
+    prSyncSubs();
+  }
+  // ---------- Présentation aérée (comme un dossier de tournée : une idée par page, grands titres, cartes par boîtier) ----------
+  let prLayNow = "aere";
+  const prInk = (hex) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || ""); if (!m) return "#111"; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#111" : "#fff"; };
+  function prBoxCards(keep, occ) {
+    const cols = srCols();
+    return [["Jardin", "Jardin"], ["Cour", "Cour"], ["", "Sans côté"]].filter(([sd]) => keep(sd)).map(([sd, nm]) => {
+      const bx = state.boites.filter((b) => (b.cote || "") === sd).sort((a, b) => a.type.localeCompare(b.type) || a.num - b.num); if (!bx.length) return "";
+      return `<h2 class="side">${esc(nm)}</h2><div class="boxcards">${bx.map((b) => {
+        const n = boxSize(b), ls = [], cnt = new Map();
+        for (let i = 1; i <= n; i++) { const l = occ.box.get(`${b.id}:${i}`); ls.push(l); if (l && !isOut(l) && musColorOf(l.musicien)) { const c = musColorOf(l.musicien); cnt.set(c, (cnt.get(c) || 0) + 1); } }
+        const col = [...cnt.entries()].sort((x, y) => y[1] - x[1])[0], bg = col ? col[0] : "#e3e6ea";
+        return `<div class="boxcard"><table><thead><tr><th colspan="${3 + cols.length}" class="bh" style="background:${bg} !important;color:${prInk(bg)} !important">${esc(boxTitle(b))}</th></tr><tr><th class="n">N°</th><th>Source</th><th>Micro</th>${cols.map((c) => `<th class="in">In ${esc(c.k === "ALL" ? "rack" : consLabel(c.k))}</th>`).join("")}</tr></thead><tbody>${ls.map((l, k) => {
+          if (!l) return `<tr class="free"><td class="n">${k + 1}</td><td></td><td></td>${cols.map(() => "<td></td>").join("")}</tr>`;
+          const mc = isOut(l) ? "" : musColorOf(l.musicien), a = (c) => (isOut(l) ? "" : rackAddr(lineSr(l, c.k)));
+          return `<tr><td class="n"${mc ? ` style="background:${mc} !important;color:${prInk(mc)} !important"` : ""}>${k + 1}</td><td><b>${esc(label(l))}</b></td><td>${esc(isOut(l) ? l.type || "Sortie" : l.micro || "")}</td>${cols.map((c) => `<td class="in">${esc(a(c))}</td>`).join("")}</tr>`;
+        }).join("")}</tbody></table></div>`;
+      }).join("")}</div>`;
+    }).join("");
+  }
+  // Page de garde : nom du dossier, tournée, version, lieu, photo de couverture
+  // Page de garde : à gauche la photo de couverture (ou un fond graphite) barrée d'un morceau de gaffer jasmine,
+  // à droite le nom, puis une fiche en un coup d'œil (régies, sources, boîtiers, HF, horloge), le sommaire et le contact
+  function prCoverPage(parts) {
+    const d = state.dossier, cov = coverCss(d.cover), today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    const toc = parts.map((k) => (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1]);
+    const ks = consoleKeys(), cons = ks.map((k) => { const md = ((synState().cons || {})[k] || {}).model; return `${consLabel(k)}${md ? " : " + md : ""}`; });
+    const pairs = state.lignes.filter((l) => l.pair).length / 2, hfMic = hfState().filter((g) => g.kind === "tx" || g.kind === "spxm").reduce((n, g) => n + g.rows.length, 0), ears = hfState().filter((g) => g.kind === "iem" || g.kind === "spx").reduce((n, g) => n + g.rows.length, 0);
+    const lps = loops().filter((lp) => state.racks.some((r) => rackLoop(r) === lp));
+    const fiche = [
+      ["Régies", cons.join(", ")],
+      ["Sources", state.lignes.length ? `${state.lignes.length}${pairs ? `, dont ${pairs} paire${pairs > 1 ? "s" : ""} stéréo` : ""}` : ""],
+      ["Sorties", (state.sorties || []).length || ""],
+      ["Boîtiers", countMultis().map(([k, n]) => `${n} × ${k}`).join(", ")],
+      ["Stage racks", state.racks.length ? [...state.racks.reduce((m, r) => m.set(r.nom || "I/O", (m.get(r.nom || "I/O") || 0) + 1), new Map())].map(([k, n]) => `${n} × ${k}`).join(", ") : ""],
+      ["HF", hfMic || ears ? [hfMic ? `${hfMic} micro${hfMic > 1 ? "s" : ""}` : "", ears ? `${ears} ear${ears > 1 ? "s" : ""}` : ""].filter(Boolean).join(", ") : ""],
+      ["Horloge", lps.map((lp) => `${lp.nom}, ${lp.freq === "96" ? "96" : "48"} kHz`).join(" ; ")]
+    ].filter(([, v]) => v !== "" && v != null);
+    return `<div class="part prcov"><div class="covl"${cov ? ` style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"` : ""}><div class="gaffer">Dossier son<span>${esc(today)}</span></div></div>
+      <div class="covr"><div class="covk">${esc(d.type || "Dossier technique")}${d.version ? `, ${esc(d.version)}` : ""}</div><div class="covn">${esc(d.nom)}</div>${d.lieu ? `<div class="covs">${esc(d.lieu)}</div>` : ""}
+      ${fiche.length ? `<dl class="covf">${fiche.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(String(v))}</dd>`).join("")}</dl>` : ""}
+      <div class="covtoc"><div class="covh">Dans ce dossier</div><ol>${toc.map((t) => `<li>${esc(t)}</li>`).join("")}</ol></div>
+      ${d.contact ? `<div class="covc">Contact<b>${esc(d.contact)}</b></div>` : ""}</div></div>`;
+  }
+  const PRINT_CSS_AERE = `@page { size: A4 landscape; margin: 12mm 14mm 14mm; @bottom-center { content: counter(page); font: 9pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } @bottom-right { content: none; } }
+    .pr.aere { font-size: 10.5pt; color: #1a1a1a; }
+    .pr.aere .prhead { display: none; }
+    .pr.aere { font-family: Barlow, -apple-system, "Segoe UI", Arial, sans-serif; }
+    .pr.aere h1 { text-align: center; font: 600 26pt/1.1 "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 1mm 0 2mm; color: #1e1f20; }
+    .pr.aere h1::after { content: ""; display: block; width: 22mm; height: 2.2mm; margin: 2.5mm auto 6mm; background: #fce694 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere h2 { font: 600 14pt "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 7mm 0 2.5mm; border: 0; color: #1e1f20; }
+    .pr.aere h3 { font-size: 11pt; font-weight: 600; margin: 5mm 0 2mm; }
+    .pr.aere table { margin-bottom: 4mm; }
+    .pr.aere th { background: #eef0f2 !important; border: 0; border-bottom: 1.5px solid #555; font-size: 8.5pt; padding: 4px 7px; color: #333 !important; }
+    .pr.aere td { border: 0; border-bottom: 1px solid #d5d8dc; padding: 3px 5px; font-size: 9pt; }
+    .pr.aere .prconf td { font-size: 10pt; padding: 4px 6px; }
+    .pr.aere svg { max-height: 160mm; }
+    .pr.aere .cols { gap: 8mm; } .pr.aere .cols.wide { grid-template-columns: repeat(auto-fill, minmax(118mm, 1fr)); }
+    .pr.aere .prconf .blk { break-inside: avoid; margin-bottom: 5mm; }
+    .pr.aere .prconf h2 { border-bottom: 0; margin-top: 4mm; }
+    .pr.aere .prbref { font-size: 11pt; line-height: 1.55; } .pr.aere .prbref li { margin-bottom: 3px; }
+    .pr.aere .prkey { border: 0; gap: 5mm; margin-bottom: 6mm; } .pr.aere .prkey div { border: 0; border-top: 2.5px solid #222; padding: 3px 0 0; } .pr.aere .prkey b { font-size: 22pt; font-weight: 300; }
+    .pr.aere .prmat { columns: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0 10mm; align-items: start; } .pr.aere .prcat { margin-bottom: 6mm; }
+    .pr.aere .prcat h2 { background: none !important; color: #1e1f20; font-size: 13pt; padding: 0 0 2px; border-bottom: 2px solid #222; margin: 0 0 1mm; }
+    .pr.aere .prcat td { padding: 4px 6px; font-size: 9.5pt; }
+    .pr.aere h2.side { margin-top: 2mm; }
+    .pr.aere .boxcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84mm, 1fr)); gap: 6mm; align-items: start; margin-bottom: 4mm; }
+    .pr.aere .boxcard { break-inside: avoid; } .pr.aere .boxcard table { margin: 0; border: 1px solid #444; }
+    .pr.aere .boxcard th.bh { font-size: 10.5pt; text-align: center; padding: 5px; border-bottom: 1px solid #444; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .boxcard td, .pr.aere .boxcard th { padding: 2px 5px; font-size: 8.5pt; border-bottom: 1px solid #ddd; }
+    .pr.aere .boxcard td.n, .pr.aere .boxcard th.n { width: 7mm; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .boxcard td.in, .pr.aere .boxcard th.in { width: 19mm; white-space: nowrap; border-left: 1px solid #ddd; }
+    .pr.aere .boxcard tr.free td { height: 13px; }
+    .pr.aere .rpblk { break-before: page; grid-template-columns: 1.2fr 1fr; gap: 10mm; } .pr.aere .part > .rpblk:first-of-type { break-before: auto; }
+    .pr.aere .rpblk h2.rpt { grid-column: 1 / -1; text-align: center; font-size: 20pt; margin: 0 0 2mm; } .pr.aere .rpblk h2.rpt span { display: block; font-size: 10pt; font-variant: normal; color: #666; }
+    .pr.aere .prcov { display: grid; grid-template-columns: 42% 1fr; height: 182mm; overflow: hidden; break-after: page; font-family: Barlow, -apple-system, "Segoe UI", Arial, sans-serif; color: #1e1f20; }
+    .pr.aere .covl { position: relative; background: #373737 center / cover no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr.aere .gaffer { position: absolute; left: -4mm; right: 14mm; bottom: 26mm; transform: rotate(-2.2deg); background: #fce694; color: #2a2b2c; padding: 4.5mm 10mm 4mm 14mm; font: 700 21pt/1 "Barlow Semi Condensed", Barlow, Arial, sans-serif; box-shadow: 0 .6mm 0 rgba(0,0,0,.18); -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      clip-path: polygon(0 4%, 3% 0, 97% 3%, 100% 0, 99% 50%, 100% 100%, 96% 97%, 2% 100%, 0 96%, 1% 50%); }
+    .pr.aere .gaffer span { display: block; margin-top: 1.6mm; font: 500 10.5pt Barlow, Arial, sans-serif; }
+    .pr.aere .covr { padding: 12mm 4mm 2mm 14mm; display: flex; flex-direction: column; }
+    .pr.aere .covk { font-size: 12pt; color: #555; }
+    .pr.aere .covn { font: 700 40pt/1.02 "Barlow Semi Condensed", Barlow, Arial, sans-serif; margin: 2mm 0 2mm; letter-spacing: -.01em; }
+    .pr.aere .covs { font-size: 14pt; color: #333; }
+    .pr.aere .covf { display: grid; grid-template-columns: 30mm 1fr; margin: 8mm 0 0; border-top: 2.5px solid #373737; font-size: 10.5pt; }
+    .pr.aere .covf dt, .pr.aere .covf dd { margin: 0; padding: 2mm 0; border-bottom: 1px solid #d8dadc; }
+    .pr.aere .covf dt { color: #555; } .pr.aere .covf dd { font-weight: 500; }
+    .pr.aere .covtoc { margin-top: 7mm; font-size: 10pt; color: #333; } .pr.aere .covh { font: 600 11.5pt "Barlow Semi Condensed", Barlow, Arial, sans-serif; color: #1e1f20; margin-bottom: 1.5mm; }
+    .pr.aere .covtoc ol { margin: 0; padding-left: 5mm; columns: 2; column-gap: 10mm; } .pr.aere .covtoc li { margin-bottom: 1mm; }
+    .pr.aere .covc { margin-top: auto; padding-top: 6mm; font-size: 10pt; color: #555; } .pr.aere .covc b { display: block; font-size: 12pt; color: #1e1f20; font-weight: 600; }`;
   function printHtml(parts) {
     const d = state.dossier, today = new Date().toLocaleDateString("fr-FR");
     const head = `<div class="prhead"><b>${esc(d.nom)}</b><span>${esc([d.type, d.version, d.lieu].filter(Boolean).join(" · "))} · imprimé le ${today}</span></div>`;
     const cov = coverCss(d.cover);
     let first = true;
-    const body = parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](); if (!h) return ""; const band = first && cov ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
+    prPartsNow = parts; prLayNow = prOpts().lay;
+    const aere = prLayNow === "aere";
+    const body = (aere ? prCoverPage(parts) : "") + parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](prKeep(k)); if (!h) return ""; const band = first && cov && !aere ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
     render();
-    return `<style>${PRINT_CSS}</style><div class="pr">${body}</div>`;
+    const foot = aere ? JSON.stringify([d.nom, d.version, d.contact ? "Contact : " + d.contact : ""].filter(Boolean).join(" · ")).replace(/</g, "\\3C ") : "";
+    const footCss = aere ? `@page { @bottom-left { content: ${foot}; font: italic 8pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } }` : "";
+    return `<style>${PRINT_CSS}${aere ? PRINT_CSS_AERE + footCss : ""}</style><div class="pr${aere ? " aere" : ""}">${body}</div>`;
   }
   function printParts() { return [...document.querySelectorAll("#prChecks input[value]:checked")].map((i) => i.value); }
-  function openPrint() {
-    const f = $("#printForm"); if (!f.hidden) { f.hidden = true; return; }
+  function openPrint(preset) {
+    const f = $("#printForm"); if (!f.hidden && typeof preset !== "string") { f.hidden = true; return; }
     $("#prChecks").innerHTML = `<label><input type="checkbox" id="prAll"> <b>Tout</b></label>` + PRINT_PARTS.map(([k, t, on]) => `<label><input type="checkbox" value="${k}"${k === view || (on && !PRINT_PARTS.some((x) => x[0] === view)) ? " checked" : ""}> ${esc(t)}</label>`).join("");
+    $("#prSubs").innerHTML = prSubsHtml();
+    { const o = prOpts(); f.querySelectorAll('input[name="prLay"]').forEach((i) => { i.checked = i.value === o.lay; }); $("#prContact").value = state.dossier.contact || ""; }
+    if (typeof preset === "string") prApplyPreset(preset); else prSyncSubs();
     f.hidden = false; f.scrollIntoView({ block: "nearest" });
   }
   function doPrint(e) {
     e.preventDefault();
     const parts = printParts(); if (!parts.length) { notice("Coche au moins une partie à imprimer.", true); return; }
+    prReadForm();
     let root = document.getElementById("printRoot");
     if (!root) { root = document.createElement("div"); root.id = "printRoot"; document.body.appendChild(root); }
     root.innerHTML = printHtml(parts);
@@ -9972,6 +10257,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   async function printFile() {
     const parts = printParts(); if (!parts.length) { notice("Coche au moins une partie à imprimer.", true); return; }
+    prReadForm();
     const d = state.dossier;
     const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(d.nom)}</title></head><body style="margin:0">${printHtml(parts)}<script>addEventListener("load",()=>setTimeout(()=>print(),300))<\/script></body></html>`;
     const name = `${d.nom.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Dossier"} ${d.version || ""} impression`.trim() + ".html";
@@ -11708,8 +11994,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#prCancel").addEventListener("click", () => { $("#printForm").hidden = true; });
     $("#printForm").addEventListener("change", (e) => {
       const all = $("#prAll"), boxes = [...document.querySelectorAll("#prChecks input[value]")];
+      if (e.target.closest("[data-prsub]")) return;
       if (e.target === all) boxes.forEach((b) => { b.checked = all.checked; }); else all.checked = boxes.every((b) => b.checked);
+      prSyncSubs();
     });
+    $("#printForm").addEventListener("click", (e) => { const b = e.target.closest("[data-prpreset]"); if (b) prApplyPreset(b.dataset.prpreset); });
+    $("#printPrestaBtn").addEventListener("click", () => openPrint("presta"));
     $("#fileIn").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) openFile(f); e.target.value = ""; });
     let armedNew = false;
     $("#newBtn").addEventListener("click", (e) => {
