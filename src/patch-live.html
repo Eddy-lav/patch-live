@@ -592,6 +592,18 @@ td.tot { font-family: var(--font-mono); color: var(--muted); text-align: center;
 .occ-tip .free { opacity: 0.7; font-style: italic; }
 .rack-occ { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .rack-occ h3 { margin: 0; font-size: var(--fs-md); }
+/* SD-Rack vu de l'arrière : cartes verticales de gauche à droite, voies 1 à 8 de haut en bas */
+.rack-occ > .occ-sd.big { grid-column: span 2; }
+@media (max-width: 760px) { .rack-occ > .occ-sd.big { grid-column: auto; } }
+.occ-legend { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.occ-card.out .lbl { color: #5f9fb3; }
+.occ-cards { display: flex; gap: 3px; margin-top: 6px; align-items: flex-start; }
+.occ-nums, .occ-card { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.occ-card { padding: 2px 2px 3px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); }
+.occ-nums { padding: 3px 0; }
+.occ-nums span, .occ-card .lbl { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); height: 14px; line-height: 14px; min-width: 14px; text-align: center; }
+.occ-nums span:first-child { height: 14px; }
+.occ-card .lbl { font-weight: 600; color: var(--ink); }
 
 html { overflow-anchor: none; }
 /* Un défilement vers la gauche ne doit pas déclencher « Précédent » (geste du trackpad, Chrome / Edge) */
@@ -1879,7 +1891,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       <h2>Stage racks et I/O</h2>
       <p class="hint">Stage racks, mais aussi DD4MR, Orange Box ou tout équipement de la loop : choisis le format « Ports nommés » pour décrire ses ports (MADI 1, Dante, DMI…) avec leur nombre de canaux. Rattache chaque équipement à sa console. Si les consoles (FOH, monitor, broadcast ou autre) ne partagent pas les stages, le master affiche une colonne de stage rack par console ; « Partagé » sert à toutes.</p>
       <div class="tbl"><table id="racksTbl" class="cards"></table></div>
-      <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">Stage rack (cartes de 8)</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="osend">Envoi Optocore d'une console DiGiCo (Opto Send)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
+      <div class="actions" style="margin-top:8px"><select id="addRackType" aria-label="Type d'équipement à ajouter"><option value="sd">DiGiCo SD Rack</option><option value="num">Entrées numérotées (ex. DL431)</option><option value="osend">Envoi Optocore d'une console DiGiCo (Opto Send)</option><option value="dd4mr">Optocore DD4MR-FX (2 MADI)</option><option value="orange">DiGiCo Orange Box (2 slots DMI)</option><option value="m8">Optocore M8 (routeur MADI)</option><option value="spectera">Sennheiser Spectera (base, Dante / MADI)</option><option value="ports">Autre (ports à nommer)</option></select><button id="addRack" class="btn small" type="button">+ Ajouter</button><button id="sortRacks" class="btn small" type="button" title="Range la liste par ID (les appareils sans ID à la fin) ; l'ordre sert partout : menus, Excel, impression">Trier par ID</button></div>
       <div id="consModels"></div>
     </div>
   </div>
@@ -2950,7 +2962,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       la.pair = lz.id; lz.pair = la.id;
     });
     { const t = lignes.find((l) => l.source === "TALK MON"); if (t) t.accp = ["Pédale de talk"]; }
-    // Entrées de stage rack : FOH sur les DL431 dans l'ordre, MON sur les SD Rack, cartes de 8
+    // Entrées de stage rack : FOH sur les DL431 dans l'ordre, MON sur les SD Rack, cartes 8 voies
     lignes.forEach((l, k) => {
       if (l.source === "TALK MON") return;
       l.sr.FOH = k < 24 ? { r: racks[0].id, c: 0, i: k + 1 } : { r: racks[1].id, c: 0, i: k - 23 };
@@ -3033,7 +3045,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const boxName = (b) => `${b.type} #${b.num}`;
   const boxTitle = (b) => `${boxName(b)}${b.nom ? " - " + b.nom : ""}`;
   const boxAddr = (a) => { if (!a) return ""; const b = boxById(a.b); return b ? `${boxName(b)} → ${a.i}` : ""; };
-  // Trois formats d'I/O : cartes de 8 (SD Rack), entrées numérotées (DL431), ports nommés (DD4MR, Orange Box : MADI, Dante, DMI…)
+  // Trois formats d'I/O : cartes SD-Rack 8 voies, entrées numérotées (DL431), ports nommés (DD4MR, Orange Box : MADI, Dante, DMI…)
   // Cartes DMI DiGiCo (Orange Box) : canaux [48 kHz, 96 kHz]. La carte Optocore est le lien vers la loop, sans canal local.
   const DMI = {
     "MADI-B": { nom: "MADI", in: [64, 64], out: [64, 64], t: "MADI BNC (64)" },
@@ -4619,7 +4631,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     rpio622: { nom: "RPio622", type: "Stage rack Rivage", t: "Yamaha RPio622 · 6 cartes RY, TWINLANe", re: /rpio\s*-?\s*622/i, ports: [["TWINLANe in", "Autre"], ["TWINLANe out", "Autre"], ["Carte HY (Dante)", "Dante"]] },
     stage32: { nom: "Stage 32", type: "Stage rack AVB", t: "Avid Stage 32 · 24 entrées, 8 sorties, AVB", re: /stage\s*-?\s*32\b/i, ports: [["AVB 1", "AVB"], ["AVB 2 (fibre)", "AVB"]] },
     e6l: { nom: "E6L-144", type: "Moteur de console", t: "Avid VENUE E6L · moteur S6L (AVB)", re: /\be6l\b/i, ports: [["AVB console", "AVB"], ["AVB stage", "AVB"], ["Réseau (ECx)", "Réseau"]] },
-    sdmini: { nom: "SD-Mini Rack", type: "Stage rack MADI / fibre", t: "DiGiCo SD-Mini Rack · 4 cartes de 8", re: /mini\s*-?\s*rack/i, ports: [["Optocore A", "Optocore"], ["Optocore B", "Optocore"], ["MADI", "MADI"]] },
+    sdmini: { nom: "SD-Mini Rack", type: "Stage rack MADI / fibre", t: "DiGiCo SD-Mini Rack · 4 cartes 8 voies", re: /mini\s*-?\s*rack/i, ports: [["Optocore A", "Optocore"], ["Optocore B", "Optocore"], ["MADI", "MADI"]] },
     madirack: { nom: "MADI Rack", type: "Stage rack MADI", t: "DiGiCo MADI Rack (ancienne génération)", re: /madi\s*-?\s*rack/i, ports: [["MADI A", "MADI"], ["MADI B", "MADI"]] },
     ml32: { nom: "ML32.32", type: "Stage rack SSL", t: "SSL ML32.32 · 32 entrées micro / ligne, 32 sorties", re: /\bml\s*-?\s*32/i, ports: [["MADI principal", "MADI"], ["MADI secours", "MADI"]] },
     d3232: { nom: "D32.32", type: "Stage rack AES", t: "SSL D32.32 · 16 paires AES in / out", re: /\bd\s*-?\s*32\s*\.?\s*32/i, ports: [["MADI principal", "MADI"], ["MADI secours", "MADI"]] },
@@ -6697,13 +6709,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function renderSetup() {
     const occ = occupancy();
     const usedRack = (r) => state.lignes.some((l) => Object.values(l.sr || {}).some((a) => a && a.r === r.id));
-    const FMT = [["cartes", "Cartes de 8"], ["num", "Numérotées"], ["ports", "Ports nommés"]];
+    const FMT = [["cartes", "SD Rack (DiGiCo)"], ["num", "Numérotées"], ["ports", "Ports nommés"]];
     $("#racksTbl").innerHTML = `<thead><tr><th></th><th>ID</th><th>Nom</th><th>Console</th><th>Format</th><th>Entrées</th><th>Sorties</th><th title="Loop sur laquelle l'appareil est compté">Loop</th><th></th></tr></thead><tbody>${state.racks.map((r) => {
       const f = rFmt(r), cartes = f === "cartes";
       const nums = r.ports
         ? `<td class="tot">${rackInputs(r).length}</td><td class="tot">${rackOutputs(r).length}</td>`
-        : `<td style="width:90px"><input type="number" min="1" max="64" data-rf="n" value="${r.n}" aria-label="${cartes ? "Nombre de cartes d'entrée" : "Nombre d'entrées"}" title="${cartes ? "Nombre de cartes d'entrée" : "Nombre d'entrées"}"></td>
-        <td style="width:90px"><input type="number" min="0" max="64" data-rf="out" value="${Number(r.out) || 0}" aria-label="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}" title="${cartes ? "Nombre de cartes de sortie" : "Nombre de sorties"}"></td>`;
+        : `<td style="width:90px"><input type="number" min="1" max="64" data-rf="n" value="${r.n}" aria-label="${cartes ? "Nombre de cartes d'entrées micro/ligne (8 voies)" : "Nombre d'entrées"}" title="${cartes ? "Nombre de cartes d'entrées micro/ligne (8 voies)" : "Nombre d'entrées"}"></td>
+        <td style="width:90px"><input type="number" min="0" max="64" data-rf="out" value="${Number(r.out) || 0}" aria-label="${cartes ? "Nombre de cartes de sorties analogiques (8 voies)" : "Nombre de sorties"}" title="${cartes ? "Nombre de cartes de sorties analogiques (8 voies)" : "Nombre de sorties"}"></td>`;
       const ports = r.ports ? `<tr class="ports" data-rid="${r.id}"><td></td><td></td><td colspan="7"><div class="portlist">${r.ports.map((p, k) => `
           <div class="port" data-pi="${k}">${r.model === "orange" || r.model === "spectera" || p.card ? `<select data-pf="card" aria-label="Interface du port"><option value="">Interface : manuel</option>${Object.entries(DMI).filter(([, d]) => (d.m || "orange") === (r.model === "spectera" ? "spectera" : "orange")).map(([v, d]) => `<option value="${v}"${p.card === v ? " selected" : ""}>${esc(d.t)}</option>`).join("")}</select>` : ""}<input type="text" data-pf="nom" value="${esc(p.nom)}" aria-label="Nom du port" placeholder="MADI 1">
           <label${r.model === "spectera" ? ' title="Sorties de la base : micros HF vers la console"' : ""}>${r.model === "spectera" ? "Micros" : "In"} <input type="number" min="0" max="512" data-pf="in" value="${portN(p, "in", r)}" aria-label="Entrées du port"${p.card ? " disabled" : ""}></label>
@@ -6765,10 +6777,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       });
       return rows;
     };
+    // SD-Rack vu de l'arrière : les cartes sont verticales, côte à côte de gauche à droite (entrées puis sorties), les 8 voies numérotées de haut en bas
+    const rear = (r, cellsAll, get, out, nums) => {
+      const groups = new Map(); cellsAll.forEach((a) => { if (!groups.has(a.c)) groups.set(a.c, []); groups.get(a.c).push(a); });
+      const max = Math.max(0, ...[...groups.values()].map((g) => g.length));
+      if (!groups.size) return "";
+      return `${nums ? `<div class="occ-nums" aria-hidden="true"><span></span>${Array.from({ length: max }, (_, k) => `<span>${k + 1}</span>`).join("")}</div>` : ""}${[...groups].map(([c, cells]) => `<div class="occ-card${out ? " out" : ""}" role="group" aria-label="Carte ${out ? "de sorties" : "d'entrées"} ${c}"><span class="lbl">${c}</span>${cells.map(({ i }) => { const x = get(c, i); return `<span role="img" class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`).join("")}`;
+    };
     $("#rackOcc").innerHTML = state.racks.length ? state.racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
       const gIn = (c, i) => occ.rack.get(`${r.id}:${c}:${i}`), gOut = (c, i) => occ.out.get(`${r.id}:${c}:${i}`);
       const uIn = ins.filter(({ c, i }) => gIn(c, i)).length, uOut = outs.filter(({ c, i }) => gOut(c, i)).length;
+      if (rFmt(r) === "cartes") return `<div class="occ-sd${ins.length + outs.length > 48 ? " big" : ""}"><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)}</span></h3>
+        <div class="occ-rear" title="Vu de l'arrière : cartes de gauche à droite, voies 1 à 8 de haut en bas">
+          <div class="occ-legend">${ins.length ? `<span class="occ-sub">Entrées ${uIn}/${ins.length}</span>` : ""}${outs.length ? `<span class="occ-sub out">Sorties ${uOut}/${outs.length}</span>` : ""}</div>
+          <div class="occ-cards">${rear(r, ins, gIn, false, true)}${rear(r, outs, gOut, true, !ins.length)}</div>
+        </div></div>`;
       return `<div><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)}</span></h3>
         ${ins.length ? `<div class="occ-sub">Entrées ${uIn}/${ins.length}</div><div class="occ${r.ports ? " wide" : ""}">${grid(r, ins, gIn, false)}</div>` : ""}
         ${outs.length ? `<div class="occ-sub out">Sorties ${uOut}/${outs.length}</div><div class="occ${r.ports ? " wide" : ""}">${grid(r, outs, gOut, true)}</div>` : ""}</div>`;
@@ -8191,7 +8215,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Racks et I/O regroupés par nom et configuration, boîtiers par type de multi
   function ioDetail(r) {
     if (r.ports) return r.ports.map((p) => (p.card && DMI[p.card] ? DMI[p.card].t.split(" (")[0] : `${p.nom} ${portN(p, "in", r)}/${portN(p, "out", r)}`)).join(" + ");
-    return r.flat ? `${r.n} in / ${Number(r.out) || 0} out` : `${r.n} cartes in / ${Number(r.out) || 0} cartes out`;
+    return r.flat ? `${r.n} in / ${Number(r.out) || 0} out` : `${r.n} cartes micro/ligne / ${Number(r.out) || 0} cartes de sorties`;
   }
   function countIO() { const m = new Map(); state.racks.forEach((r) => { const k = `${r.nom || "I/O"}\u0000${ioDetail(r)}`; m.set(k, (m.get(k) || 0) + 1); }); hfDevs().forEach((d) => { const k = `${d.model || "Appareil HF"}\u0000${HFDEV_KIND[d.kind] || "HF"} · ${hfVoiesTxt(d)}`; m.set(k, (m.get(k) || 0) + 1); }); rpState().cases.forEach((c) => { const k = `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U\u0000plans de rack`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()].map(([k, n]) => { const [nom, det] = k.split("\u0000"); return { nom, det, n }; }); }
   function countMultis() { const m = new Map(); state.boites.forEach((b) => { const k = b.type === "Autre" ? `Boîtier ${boxSize(b)} entrées` : boxSize(b) === MULTIS[b.type] ? b.type : `${b.type} (${boxSize(b)} entrées)`; m.set(k, (m.get(k) || 0) + 1); }); return [...m.entries()]; }
