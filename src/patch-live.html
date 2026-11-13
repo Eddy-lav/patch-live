@@ -678,24 +678,34 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 /* Lisibilité des récepteurs : chaque voie suit la même grille (n° · BL · source · renvoi), les voies
    s'alignent d'un appareil à l'autre ; la place du badge BL est gardée même sans badge. */
 .hdu .hdbl.off { visibility: hidden; }
-.hdus.rx { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 2px 20px; }
-.hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.4em 2.6em minmax(0, 1fr) minmax(0, 10em); align-items: center; gap: 0 4px; max-width: 420px; }
+.hdus.rx { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2px 20px; }
+.hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.4em 2.6em minmax(0, 1fr) 2em; align-items: center; gap: 0 4px; max-width: 340px; }
 .hdus.rx .hdu.hdrx > label { display: contents; }
 .hdus.rx .hdu b { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .hdus.rx .hdu .hdbl { justify-self: center; }
 .hdus.rx .hdu input { width: 100%; box-sizing: border-box; }
-.hdus.rx .hdu select.hdret { width: 100%; max-width: none; text-overflow: ellipsis; }
-/* Sans renvoi, la liste « ↪ plateau » se réduit à sa flèche (sans texte ni chevron) : un clic l'ouvre en entier.
-   Elle s'efface et revient au survol de la ligne ou au clavier. */
-.hdus.rx .hdu select.hdret.free { -webkit-appearance: none; appearance: none; background-image: none; width: 2em; min-width: 2em; justify-self: start; overflow: hidden; white-space: nowrap; text-overflow: clip; padding: 2px 0 2px 6px !important; cursor: pointer; opacity: .4; transition: opacity .12s; }
-.hfdt tr:hover .hdus.rx select.hdret.free, .hdus.rx select.hdret.free:focus { opacity: 1; }
-.hdus.rx .hdu select.hdret.free:hover, .hdus.rx .hdu select.hdret.free:focus { border-color: var(--line); }
-/* Renvoi posé : comme les adresses du master patch, la flèche de la liste n'apparaît qu'au survol de la ligne ou au focus */
-@media (min-width: 761px) {
-  .hdus.rx .hdu select.hdret:not(.free) { -webkit-appearance: none; appearance: none; background-image: none; padding-right: 18px; }
-  .hfdt tr:hover .hdus.rx select.hdret:not(.free), .hdus.rx select.hdret:not(.free):focus { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 10px) 52%, calc(100% - 6px) 52%; background-size: 4px 4px; background-repeat: no-repeat; }
-}
-@media (hover: none) { .hdus.rx .hdu select.hdret.free { opacity: .7; width: 1.7em; min-width: 1.7em; min-height: 32px; } }
+/* Renvoi plateau : une flèche ↪. Sans renvoi elle est grise et s'estompe (revient au survol de la ligne ou au clavier) ;
+   renvoi posé : flèche pleine dans une pastille. Un clic ouvre la fenêtre volante de la liaison. */
+.hdretb { justify-self: start; width: 1.9em; height: 1.7em; display: inline-grid; place-items: center; padding: 0; font: inherit; font-size: var(--fs-md); line-height: 1; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--muted); cursor: pointer; opacity: .4; transition: opacity .12s; }
+.hfdt tr:hover .hdretb, .hdretb:focus-visible, .hdretb:hover { opacity: 1; border-color: var(--line); }
+.hdretb.on { opacity: 1; color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.hdretb.on:hover, .hdretb.on:focus-visible { border-color: var(--ink); }
+.hdretb:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (hover: none) { .hdretb { opacity: .7; min-height: 34px; min-width: 34px; } }
+.hdpop { position: fixed; inset: auto; margin: 0; width: min(320px, calc(100vw - 16px)); padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); box-shadow: 0 10px 30px rgba(0,0,0,.28); font-size: var(--fs-sm); }
+.hdpop:not(:popover-open):not(.open) { display: none; }
+.hdpop.open { display: block; z-index: 60; }
+.hdpop-h { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.hdpop-h span { font-size: var(--fs-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.hdpop-h b, .hdus.rx .hdu .hdpop-h b { font-size: var(--fs-md); font-weight: 700; color: var(--ink); text-align: left; margin: 0; min-width: 0; }
+.hdpop-cur { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 10px; }
+.hdpop-dest { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-md); padding: 1px 8px; border-radius: var(--r-pill); background: var(--accent); color: var(--accent-ink); }
+.hdpop-dest.todo { background: var(--accent-soft); color: var(--ink); font-family: inherit; }
+.hdpop .field { display: flex; flex-direction: column; gap: 3px; }
+.hdpop .field select.hdret, .hfdev table .hdpop .field select.hdret { width: 100%; max-width: none; font-size: var(--fs-md); padding: 6px 30px 6px 10px; border: 1px solid var(--field-line); border-radius: var(--r); background-color: var(--surface); color: var(--ink); -webkit-appearance: none; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
+.hdpop .field select.hdret:focus { border-color: var(--accent); }
+.hdpop-act { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.hdpop-note { margin: 8px 0 0; }
 .hdu .hdbl { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; padding: 0 5px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 #hfRxOut .hfdev, #hfTxOut .hfdev { border: 0; padding: 0; background: transparent; }
 .hdlk input { width: 44px !important; }
@@ -717,9 +727,8 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
   .hfdev .hdus { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: var(--fs-base); }
   .hfdev .hdu { display: flex; gap: 8px; align-items: baseline; padding: 4px 8px; border-radius: var(--r-md); background: var(--surface-2); }
   .hfdev .hdu b { flex: none; min-width: 34px; }
-  .hfdev .hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.2em 2.3em minmax(0, 1fr) minmax(0, 7.6em); align-items: center; gap: 0 4px; padding: 4px; }
+  .hfdev .hdus.rx .hdu.hdrx { display: grid; grid-template-columns: 1.2em 2.3em minmax(0, 1fr) 2.2em; align-items: center; gap: 0 6px; padding: 4px; max-width: none; }
   .hfdev .hdus.rx .hdu input { padding: 6px; }
-  .hfdev .hdus.rx .hdu select.hdret { padding: 2px 0; }
   .hfdev .hdus.rx .hdu b { min-width: 0; }
   .hfdev .hftw { overflow: visible; }
 }
@@ -2225,8 +2234,29 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     });
     // Renvoi sans liaison de boîtier : arrivée directe, ou liaison encore à choisir ; « — » le retire
     if (o && !o.box) opts += `<option value="__keep" selected>↪ ${o.to ? esc(outDest(o).replace(/^→\s*/, "")) : "plateau : à choisir"}</option>`;
-    return `<select class="hdret${o ? "" : " free"}" data-hdret="${k}" aria-label="Renvoi au plateau de la voie ${k} de ${esc(d.nom)}" title="Renvoyer la voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : une sortie est créée dans Sorties">${opts}</select>`;
+    return `<select class="hdret${o ? "" : " free"}" data-hdret="${k}" aria-label="Renvoi au plateau de la voie ${k} de ${esc(d.nom)}${o ? " : " + esc(o.box ? boxAddr(o.box) : o.to ? outDest(o).replace(/^→\s*/, "") : "à choisir") : ""}" title="${o ? `Renvoyée au plateau : ${esc(o.box ? boxAddr(o.box) : o.to ? outDest(o).replace(/^→\s*/, "") : "liaison à choisir")}. Clic pour changer` : "Renvoyer la voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : une sortie est créée dans Sorties"}">${opts}</select>`;
   }
+  // Renvoi plateau d'une voie : une flèche ↪ (pleine si la voie part au plateau) qui ouvre une fenêtre volante
+  // avec la liaison, la liste pour la changer et les raccourcis (Sorties, Boîtiers, retirer)
+  const hfRetDest = (o) => (o.box ? boxAddr(o.box) : o.to ? outDest(o).replace(/^→\s*/, "") : "");
+  function hfRetPop(d, k, U, occ, w) {
+    const o = (U || hfRxUsed()).get(`${d.id}:${k}`), id = `hdp_${d.id}_${k}`, dest = o ? hfRetDest(o) : "", v = hfVoie(d, k);
+    return `<button type="button" class="hdretb${o ? " on" : ""}" popovertarget="${id}" data-hdpop="${id}" aria-label="Renvoi au plateau de la voie ${k} de ${esc(d.nom)}${o ? ` : ${esc(dest || "liaison à choisir")}` : ""}" title="${o ? `Renvoyée au plateau : ${esc(dest || "liaison à choisir")}` : "Renvoyer la voie au plateau (ampli guitare, pedalboard…)"}">↪</button><div popover id="${id}" class="hdpop">
+      <div class="hdpop-h"><span>↪ Renvoi plateau</span><b>${esc(v)}${w ? ` · ${esc(w)}` : ""}</b></div>
+      <p class="hdpop-cur">${o ? `${dest ? `<span class="hdpop-dest">${esc(dest)}</span>` : `<span class="hdpop-dest todo">Liaison à choisir</span>`}${o.mix ? `<span class="hint">sortie « ${esc(o.mix)} »</span>` : ""}` : `<span class="hint">Pas de renvoi : la voie n'est pas renvoyée au plateau.</span>`}</p>
+      <label class="field"><span>Liaison de boîtier</span>${hfRetSel(d, k, U, occ)}</label>
+      ${o ? `<div class="hdpop-act"><button class="btn small" type="button" data-hdgo="out">Voir dans Sorties</button>${o.box ? `<button class="btn small" type="button" data-hdgo="box">Voir dans Boîtiers</button>` : ""}<button class="btn small danger" type="button" data-hdgo="del">Retirer le renvoi</button></div>` : `<p class="hint hdpop-note">Une sortie Backline est créée dans Sorties et dans Boîtiers.</p>`}
+    </div>`;
+  }
+  // Place la fenêtre volante sous la flèche (au-dessus si la place manque), dans l'écran
+  function hfPopPlace(p) {
+    const b = document.querySelector(`[data-hdpop="${p.id}"]`); if (!b) return;
+    const r = b.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight;
+    const x = Math.max(8, Math.min(r.left - 12, innerWidth - w - 8));
+    let y = r.bottom + 6; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    p.style.left = `${x}px`; p.style.top = `${y}px`;
+  }
+  document.addEventListener("toggle", (e) => { const p = e.target; if (p && p.classList && p.classList.contains("hdpop") && e.newState === "open") { hfPopPlace(p); const s = p.querySelector("select"); if (s) s.focus(); } }, true);
   function hfRetSet(d, k, val) {
     if (val === "__keep") return;
     state.sorties = state.sorties || [];
@@ -2261,7 +2291,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const U = rx && hfRxUsed(), P = rx && new Set(state.lignes.map((l) => (l.prov || "").trim().toLowerCase())), occ = rx && occupancy();
     const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const bl = hfBl(d, j + 1, U, P), r0 = U.get(`${d.id}:${j + 1}`), w = bl ? (r0 ? r0.mix || "" : "") : hfSlotWho(d, j + 1, true);
       // Voie qui ne part qu'au plateau (sans console) : la case nomme la sortie du renvoi, rien n'est créé au master
-      return `<span class="hdu hdrx${w ? "" : " free"}"><label><b>${j + 1}</b>${bl ? '<span class="hdbl" title="Backline : ne passe pas par la console (clic droit pour changer)">BL</span>' : '<span class="hdbl off" aria-hidden="true"></span>'}<input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="${bl ? "backline" : "libre"}" autocomplete="off"${bl ? "" : ' data-suggest="dlSrc"'} aria-label="${bl ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${bl ? "Backline, sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master. Clic droit pour changer" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1, U, occ)}</span>`; }).join("");
+      return `<span class="hdu hdrx${w ? "" : " free"}"><label><b>${j + 1}</b>${bl ? '<span class="hdbl" title="Backline : ne passe pas par la console (clic droit pour changer)">BL</span>' : '<span class="hdbl off" aria-hidden="true"></span>'}<input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="${bl ? "backline" : "libre"}" autocomplete="off"${bl ? "" : ' data-suggest="dlSrc"'} aria-label="${bl ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${bl ? "Backline, sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master. Clic droit pour changer" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetPop(d, j + 1, U, occ, w)}</span>`; }).join("");
     return `<div class="hfdev">
       <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack. La liste « ↪ plateau » renvoie une voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : la sortie apparaît dans Sorties et dans Boîtiers. Clic droit sur une voie › « Backline » : elle ne passe pas par la console, sa case nomme le renvoi et rien n'arrive au master." : "Émetteurs des ears, en liaisons stéréo L/R. Choisis le mix de chaque liaison dans la colonne « Mix des sorties » : une paire stéréo prend L et R. C'est la même chose que l'arrivée « P10T #1 · 2 L » dans Sorties, et l'appareil se range dans les plans de rack."}</p>
       <div class="hdadd"><label class="field"><span>Ajouter ${rx ? "un récepteur" : "un émetteur"}</span><select data-hdmodel>${opt}</select></label><label class="field"><span>Nombre</span><input type="number" data-hdn min="1" max="24" value="1" inputmode="numeric"></label><button class="btn primary" type="button" data-hdadd>+ Ajouter</button></div>
@@ -2859,6 +2889,17 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       host.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.dataset && e.target.dataset.hdv && !sug.input) { e.preventDefault(); e.target.blur(); } });
       host.addEventListener("click", (e) => {
         if (e.target.closest("[data-hdadd]")) { hfDevAdd(host); return; }
+        // Navigateur sans fenêtres « popover » : la flèche ouvre la fenêtre à la main
+        const pb = e.target.closest("[data-hdpop]");
+        if (pb && !("popover" in HTMLElement.prototype)) { const p = document.getElementById(pb.dataset.hdpop); if (p) { p.classList.toggle("open"); if (p.classList.contains("open")) hfPopPlace(p); } return; }
+        const go = e.target.closest("[data-hdgo]");
+        if (go) {
+          const tr = go.closest("tr[data-hd]"), d = tr && hfDevById(tr.dataset.hd), pop = go.closest(".hdpop"), k = pop && +pop.id.split("_").pop(), o = d && hfRxUsed().get(`${d.id}:${k}`);
+          if (pop && pop.hidePopover && pop.matches(":popover-open")) pop.hidePopover();
+          if (!d || !o) return;
+          if (go.dataset.hdgo === "out") gotoRow("sorties", o.id); else if (go.dataset.hdgo === "box") showInGrid(o); else if (go.dataset.hdgo === "del") hfRetSet(d, k, "");
+          return;
+        }
         const del = e.target.closest("[data-hddel]"); if (!del) return;
         if (!del.classList.contains("armed")) { del.classList.add("armed"); del.textContent = "Confirmer"; setTimeout(() => { if (del.isConnected) { del.classList.remove("armed"); del.textContent = "×"; } }, 3000); return; }
         hfDevDel(del.dataset.hddel);
