@@ -2164,16 +2164,18 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function hfDevHtml(kind) {
     const D = hfDevs().filter((d) => d.kind === kind), rx = kind === "rx";
     const opt = HFDEV_MODELS.map(([m, k, n, t], i) => (k === kind ? `<option value="${i}"${String(i) === hfDevPick ? " selected" : ""}>${esc(t)} · ${k === "tx" ? `${n / 2} liaison${n > 2 ? "s" : ""} stéréo` : `${n} voie${n > 1 ? "s" : ""}`}</option>` : "")).join("");
-    const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const w = hfSlotWho(d, j + 1, true); return `<span class="hdu hdrx${w ? "" : " free"}"><label><b>${j + 1}</b><input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="libre" autocomplete="off" data-suggest="dlSrc" aria-label="Source sur la voie ${j + 1} de ${esc(d.nom)}" title="Tape le nom d'une source du master : sa provenance devient cette voie"></label>${hfRetSel(d, j + 1)}</span>`; }).join("");
+    const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const m = hfSlotWho(d, j + 1, true), ret = !m && hfRxUsed().get(`${d.id}:${j + 1}`), w = m || (ret ? ret.mix || "" : "");
+      // Voie qui ne part qu'au plateau (sans console) : la case nomme la sortie du renvoi, rien n'est créé au master
+      return `<span class="hdu hdrx${w ? "" : " free"}${ret ? " ret" : ""}"><label><b>${j + 1}</b><input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="libre" autocomplete="off"${ret ? "" : ' data-suggest="dlSrc"'} aria-label="${ret ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${ret ? "Renvoi plateau sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1)}</span>`; }).join("");
     return `<div class="hfdev">
       <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack. La liste « ↪ plateau » renvoie une voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : la sortie apparaît dans Sorties et dans Boîtiers." : "Émetteurs des ears, en liaisons stéréo L/R. Choisis le mix de chaque liaison dans la colonne « Mix des sorties » : une paire stéréo prend L et R. C'est la même chose que l'arrivée « P10T #1 · 2 L » dans Sorties, et l'appareil se range dans les plans de rack."}</p>
       <div class="hdadd"><label class="field"><span>Ajouter ${rx ? "un récepteur" : "un émetteur"}</span><select data-hdmodel>${opt}</select></label><label class="field"><span>Nombre</span><input type="number" data-hdn min="1" max="24" value="1" inputmode="numeric"></label><button class="btn primary" type="button" data-hdadd>+ Ajouter</button></div>
-      ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Modèle</th><th>Nom</th><th>Plage</th><th>${rx ? "Voies" : "Liaisons"}</th><th>${rx ? "Sources du master" : "Mix des sorties"}</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
+      ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Modèle</th><th>Nom</th><th>Plage</th><th>${rx ? "Voies" : "Liaisons"}</th><th>${rx ? "Sources" : "Mix des sorties"}</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
         <td data-l="Modèle" style="width:150px"><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" data-suggest="dlHfDevModel_${kind}" autocomplete="off"></td>
         <td data-l="Nom" style="width:160px"><input type="text" data-hdf="nom" value="${esc(d.nom)}" aria-label="Nom"></td>
         <td data-l="Plage" style="width:100px"><input type="text" data-hdf="band" value="${esc(d.band || "")}" aria-label="Plage de fréquences" placeholder="${esc(((HFDEV_BANDS()[normModel(d.model)] || [])[0] || ["plage"])[0])}" autocomplete="off" data-suggest="dlHdBand_${d.id}"${hfBandRange(d.model, d.band) ? ` title="${hfBandRange(d.model, d.band).join("–")} MHz"` : ""}><datalist id="dlHdBand_${d.id}">${(HFDEV_BANDS()[normModel(d.model)] || []).map(([c, rg]) => `<option value="${esc(c)}" label="${esc(rg)}">`).join("")}</datalist></td>
         <td data-l="${rx ? "Voies" : "Liaisons"}" style="width:${rx ? 64 : 120}px">${rx ? `<input type="number" min="1" max="32" data-hdf="n" value="${d.n}" aria-label="Nombre de voies" inputmode="numeric">` : `<span class="hdlk"><input type="number" min="1" max="16" data-hdf="n" value="${d.n / 2}" aria-label="Nombre de liaisons stéréo" inputmode="numeric"><span class="hint">stéréo</span></span>`}</td>
-        <td data-l="${rx ? "Sources du master" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
+        <td data-l="${rx ? "Sources" : "Mix des sorties"}"><div class="hdus">${use(d)}</div></td>
         <td data-l="Notes"><input type="text" data-hdf="notes" value="${esc(d.notes || "")}" aria-label="Notes"></td>
         <td class="x"><button type="button" data-hddel="${d.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Aucun ${rx ? "récepteur" : "émetteur"} pour l'instant. Choisis un modèle au-dessus et clique « + Ajouter ».</div>`}
       <datalist id="dlHfDevModel_${kind}">${bqUniq([...HFDEV_MODELS.filter((x) => x[1] === kind).map((x) => x[0]), ...(rx ? banqueNoms("Récepteurs HF") : (BANQUE["Ears HF"] || []).filter((x) => /^Émetteur/.test(x[2])).map((x) => x[0]))]).map(optFiche).join("")}</datalist></div>`;
@@ -2230,7 +2232,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (d.kind === "rx") {
       const v = hfVoie(d, k);
       // Le renvoi plateau encore nommé d'après la voie prend le nom de la source
-      const ret = hfRxUsed().get(`${d.id}:${k}`); if (ret && name && ret.mix === `HF ${v}`) ret.mix = name;
+      const ret = hfRxUsed().get(`${d.id}:${k}`);
+      // Renvoi plateau seul (ne passe pas par la console) : on renomme la sortie, le master n'est pas touché
+      if (ret && !state.lignes.some((x) => eqv(x.prov, v))) {
+        if (name && name !== ret.mix) { log(`${ret.mix} : renvoi plateau renommé ${name}.`); ret.mix = name; }
+        commit(true); return;
+      }
       const l = name && (state.lignes.find((x) => eqv(x.source, name) && !(x.prov || "").trim()) || state.lignes.find((x) => eqv(x.source, name)));
       state.lignes.forEach((x) => { if (eqv(x.prov, v) && x !== l) { x.prov = ""; log(`${x.source} : provenance ${v} retirée.`); } });
       if (name && !l) { const n = newLine(name); n.prov = v; state.lignes.push(n); commit(true); notice(`${esc(name)} créée en N° ${state.lignes.length} du master, provenance ${esc(v)}.`); return; }
