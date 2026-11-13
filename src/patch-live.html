@@ -2135,35 +2135,42 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Voies de récepteur qui ne partent pas encore au plateau
   function hfRxFree() { const u = hfRxUsed(), r = []; hfDevs().filter((d) => d.kind === "rx").forEach((d) => { for (let k = 1; k <= d.n; k++) if (!u.has(`${d.id}:${k}`)) r.push({ d, k, src: hfSlotWho(d, k, true) }); }); return r; }
   // Voie « Backline » : ne passe pas par la console, sa case nomme le renvoi plateau et rien n'arrive au master.
-  // Coché au clic droit (d.bl[voie]) ; sans choix enregistré, une voie renvoyée au plateau sans source au master l'est
-  // Une source du master qui arrive sur la voie l'emporte toujours : la voie passe alors par la console.
+  // Règle d'Eddy : une voie renvoyée au plateau est Backline et n'apparaît pas au master, sauf si on décoche la case
+  // au clic droit (d.bl[voie] = "c" : elle passe aussi par la console). Sans renvoi, la case cochée (true) en fait une voie
+  // Backline, mais une source du master posée ensuite sur la voie l'emporte.
   // U (renvois) et P (provenances du master en minuscules) se passent quand on dessine plusieurs voies
   function hfBl(d, k, U, P) {
-    const v = hfVoie(d, k), onMaster = P ? P.has(v.toLowerCase()) : state.lignes.some((x) => eqv(x.prov, v)); if (onMaster) return false;
-    const f = d.bl && d.bl[k]; if (f !== undefined) return !!f;
-    // Dossiers faits avant la case : un renvoi sans source au master était déjà un backline
-    return !!(U || hfRxUsed()).get(`${d.id}:${k}`);
+    const f = d.bl && d.bl[k]; if (f === "c") return false;
+    if ((U || hfRxUsed()).get(`${d.id}:${k}`)) return true;
+    const v = hfVoie(d, k), onMaster = P ? P.has(v.toLowerCase()) : state.lignes.some((x) => eqv(x.prov, v));
+    return !onMaster && f === true;
   }
-  const hfBlFix = (d, k, on) => { d.bl = { ...(d.bl || {}), [k]: !!on }; };
+  const hfBlFix = (d, k, on) => { d.bl = { ...(d.bl || {}), [k]: on ? true : "c" }; };
   // Sortie d'un renvoi plateau : part de la voie, type Backline
   function hfRetNew(d, k, name) { const o = newOut(name); o.type = OUT_RET; o.rxv = { h: d.id, in: String(k) }; (state.sorties = state.sorties || []).push(o); return o; }
   // Ligne du master qui n'a que son nom : créée par la case de la voie, rien d'autre ne s'y rattache
   const lineBare = (l) => !l.box && !Object.values(l.sr || {}).some(Boolean) && !l.pair && !(l.musicien || "").trim() && !(l.micro || "").trim() && !(l.pied || "").trim() && !(l.notes || "").trim() && !(l.acc || []).length;
-  function hfBlSet(d, k, on) {
-    hfBlFix(d, k, on);
-    const v = hfVoie(d, k);
-    if (!on) { log(`${v} : Backline décoché, la voie repasse par la console.`); commit(true); return; }
-    const L = state.lignes.filter((x) => eqv(x.prov, v)), name = (L[0] && L[0].source) || "";
+  // Détache la voie du master : la source qui n'a que son nom (créée par la case de la voie) part et donne son nom au renvoi ;
+  // une source qui a d'autres infos garde sa ligne, seule la provenance est retirée
+  function hfBlApply(d, k) {
+    const v = hfVoie(d, k), L = state.lignes.filter((x) => eqv(x.prov, v)), name = (L[0] && L[0].source) || "";
     let ret = hfRxUsed().get(`${d.id}:${k}`);
     if (!ret && name) { ret = hfRetNew(d, k, name); log(`${name} : ${v} passe en Backline (sortie créée).`); }
     else if (ret && name && ret.mix === `HF ${v}`) ret.mix = name;
-    // Une source du master qui n'a que son nom n'existait que par cette case : elle part. Sinon on garde la ligne et on retire la provenance
     const gone = L.filter(lineBare), kept = L.filter((l) => !gone.includes(l));
     kept.forEach((l) => { l.prov = ""; log(`${l.source} : provenance ${v} retirée (Backline).`); });
     gone.forEach((l) => log(`${l.source} : retirée du master (${v} en Backline).`));
     if (gone.length) { const ids = new Set(gone.map((l) => l.id)); state.lignes = state.lignes.filter((x) => !ids.has(x.id)); ids.forEach((id) => selection.delete(id)); }
+    return { gone, kept, ret };
+  }
+  const blNote = (gone, kept) => `${gone.length ? ` ${gone.map((l) => `« ${esc(l.source)} »`).join(", ")} retirée${gone.length > 1 ? "s" : ""} du master.` : ""}${kept.length ? ` Provenance retirée de ${kept.map((l) => `« ${esc(l.source)} »`).join(", ")} (elle a d'autres infos au master, à supprimer à la main si besoin).` : ""}`;
+  function hfBlSet(d, k, on) {
+    hfBlFix(d, k, on);
+    const v = hfVoie(d, k);
+    if (!on) { log(`${v} : Backline décoché, la voie passe aussi par la console.`); commit(true); return; }
+    const { gone, kept, ret } = hfBlApply(d, k);
     commit(true);
-    notice(`${esc(v)} en Backline : ne passe pas par la console.${gone.length ? ` ${gone.map((l) => `« ${esc(l.source)} »`).join(", ")} retirée${gone.length > 1 ? "s" : ""} du master.` : ""}${kept.length ? ` Provenance retirée de ${kept.map((l) => `« ${esc(l.source)} »`).join(", ")} (elle a d'autres infos au master, à supprimer à la main si besoin).` : ""}${ret ? "" : " Choisis la liaison dans « ↪ plateau »."} Cmd/Ctrl+Z pour annuler.`);
+    notice(`${esc(v)} en Backline : ne passe pas par la console.${blNote(gone, kept)}${ret ? "" : " Choisis la liaison dans « ↪ plateau »."} Cmd/Ctrl+Z pour annuler.`);
   }
   function ctxHfVoie(el) {
     const d = hfDevById((el.closest("tr[data-hd]") || {}).dataset?.hd), inp = el.querySelector("input[data-hdv]"), k = inp && +inp.dataset.hdv; if (!d || d.kind !== "rx" || !k) return null;
@@ -2201,11 +2208,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (who && who !== o) { const [b, i] = val.split(":"); notice(`La liaison ${esc(boxAddr({ b, i: +i }))} est occupée par ${esc(label(who))}. Déplace d'abord cette ${isOut(who) ? "sortie" : "source"}.`, true); commit(true); return; }
     let x = o;
     // Le choix Backline est enregistré dès le premier renvoi : sans source au master, la voie ne passe pas par la console
-    if (!x) { const src = hfSlotWho(d, k, true); x = hfRetNew(d, k, src || `HF ${v}`); if (!(d.bl && d.bl[k] !== undefined)) hfBlFix(d, k, !src); }
+    // Un renvoi ne passe pas par la console : la voie quitte le master (sauf Backline décoché à la main)
+    let det = null;
+    if (!x) { const src = hfSlotWho(d, k, true); x = hfRetNew(d, k, src || `HF ${v}`); if (!(d.bl && d.bl[k] === "c")) det = hfBlApply(d, k); }
     const before = boxAddr(x.box) || (x.to ? toAddr(x).replace(/^→\s*/, "") : ""), [b, i] = val.split(":");
     x.box = { b, i: +i }; x.to = null;
     log(`${x.mix} : ${v} renvoyée au plateau ${before ? `(${before} déplacé vers ${boxAddr(x.box)})` : `sur ${boxAddr(x.box)}`}.`);
     commit(true);
+    if (det && (det.gone.length || det.kept.length)) notice(`${esc(v)} renvoyée au plateau (Backline, sans console).${blNote(det.gone, det.kept)} Cmd/Ctrl+Z pour annuler.`);
   }
   // Voies d'émetteur prises par les sorties (arrivée directe)
   function hfTxUsed() { const m = new Map(); (state.sorties || []).forEach((o) => { if (o.to && o.to.h && o.to.in) m.set(`${o.to.h}:${o.to.in}`, o); }); return m; }
@@ -2296,9 +2306,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         else if (name) { hfRetNew(d, k, name); log(`${name} : ${v} en Backline (sortie créée).`); }
         commit(true); return;
       }
-      // Voie qui passe par la console : le choix est figé (vider la case ne la fait pas passer en Backline),
-      // et un renvoi encore nommé d'après la voie prend le nom de la source
-      if (ret && !(d.bl && d.bl[k] !== undefined)) hfBlFix(d, k, false);
+      // Voie qui passe aussi par la console (Backline décoché) : un renvoi encore nommé d'après la voie prend le nom de la source
       if (ret && name && ret.mix === `HF ${v}`) ret.mix = name;
       const l = name && (state.lignes.find((x) => eqv(x.source, name) && !(x.prov || "").trim()) || state.lignes.find((x) => eqv(x.source, name)));
       state.lignes.forEach((x) => { if (eqv(x.prov, v) && x !== l) { x.prov = ""; log(`${x.source} : provenance ${v} retirée.`); } });
@@ -3565,9 +3573,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function provSuggestions() {
     const used = state.lignes.map((l) => (l.prov || "").trim()).filter(Boolean);
     // Les voies libres des récepteurs HF d'abord, dans l'ordre
-    const hfv = hfDevs().filter((d) => d.kind === "rx").flatMap((d) => Array.from({ length: d.n }, (_, k) => hfVoie(d, k + 1)));
+    // Une voie Backline (renvoi plateau) ne passe pas par la console : jamais proposée au master
+    const U = hfRxUsed(), hfAll = hfDevs().filter((d) => d.kind === "rx").flatMap((d) => Array.from({ length: d.n }, (_, k) => [d, k + 1]));
+    const hfv = hfAll.filter(([d, k]) => !hfBl(d, k, U)).map(([d, k]) => hfVoie(d, k));
     const taken = new Set(used.map((v) => v.toLowerCase()));
-    const isHfv = new Set(hfv.map((v) => v.toLowerCase()));
+    const isHfv = new Set(hfAll.map(([d, k]) => hfVoie(d, k).toLowerCase()));
     const rest = [...new Set([...used, "Ferrofish A32", "Base HF", "Séquence (playback)", "Talkback", "Ordre / intercom", "Click", "Ambiance"])].filter((v) => !isHfv.has(v.toLowerCase())).sort((a, b) => a.localeCompare(b, "fr"));
     return [...hfv.filter((v) => !taken.has(v.toLowerCase())), ...rest];
   }
@@ -3846,6 +3856,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       (s.hf || []).forEach((g) => { if (g.kind === "iem" || g.kind === "spx") g.rows.forEach((r) => { if (r.nom) r.nom = pick(r.nom); }); });
       if (Array.isArray(s.musiciens)) s.musiciens = uniqCi(s.musiciens.map(pick));
       hfMixFix();
+      // Renvois plateau faits avant la règle « rien au master » : la voie quitte le master (noté au journal)
+      (s.sorties || []).forEach((o) => { const d = o.rxv && Array.isArray(s.hfdev) && s.hfdev.find((x) => x.id === o.rxv.h); if (d && !(d.bl && d.bl[o.rxv.in] === "c") && (s.lignes || []).some((l) => eqv(l.prov, hfVoie(d, o.rxv.in)))) hfBlApply(d, +o.rxv.in); });
     } finally { state = prev; }
   }
 
@@ -4247,6 +4259,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         // Une sortie neuve renvoyée depuis un récepteur part vers le backline, pas vers un ear
         if (o.type === "Ear HF" && !o.tx) { o.type = OUT_RET; const p = o.pair && state.sorties.find((x) => x.id === o.pair); if (p) p.type = OUT_RET; }
         followOutPair(o, "rxv");
+        // Départ sur une voie de récepteur = renvoi plateau : la voie (et celle de la R d'une paire) quitte le master
+        const det = [o, o.pair && state.sorties.find((x) => x.id === o.pair)].filter((x) => x && x.rxv).map((x) => { const dv = hfDevById(x.rxv.h); return dv && !(dv.bl && dv.bl[x.rxv.in] === "c") ? hfBlApply(dv, +x.rxv.in) : null; }).filter(Boolean);
+        const gone = det.flatMap((r) => r.gone), kept = det.flatMap((r) => r.kept);
+        if (gone.length || kept.length) notice(`Renvoi plateau (Backline, sans console).${blNote(gone, kept)} Cmd/Ctrl+Z pour annuler.`);
       } else {
         const who = occupancy().out.get(t.value);
         const [r, c, i] = t.value.split(":");
