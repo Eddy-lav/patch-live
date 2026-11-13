@@ -663,6 +663,7 @@ nav.tabs.nomaster button[data-v="racks"] { order: -1; }
 .hdu select.hdret { max-width: 150px; font: inherit; font-size: var(--fs-xs); padding: 2px 4px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--ink); }
 .hdu select.hdret:hover { border-color: var(--line); } .hdu select.hdret:focus { border-color: var(--accent); background: var(--surface); }
 .hdu select.hdret.free { color: var(--muted); }
+.hdu .hdbl { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; padding: 0 5px; border-radius: var(--r-pill); background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
 #hfRxOut .hfdev, #hfTxOut .hfdev { border: 0; padding: 0; background: transparent; }
 .hdlk input { width: 44px !important; }
 .hdlk .hint { font-size: var(--fs-xs); white-space: nowrap; }
@@ -2121,6 +2122,38 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function hfRxUsed() { const m = new Map(); (state.sorties || []).forEach((o) => { if (o.rxv && o.rxv.h) m.set(`${o.rxv.h}:${o.rxv.in}`, o); }); return m; }
   // Voies de récepteur qui ne partent pas encore au plateau
   function hfRxFree() { const u = hfRxUsed(), r = []; hfDevs().filter((d) => d.kind === "rx").forEach((d) => { for (let k = 1; k <= d.n; k++) if (!u.has(`${d.id}:${k}`)) r.push({ d, k, src: hfSlotWho(d, k, true) }); }); return r; }
+  // Voie « Backline » : ne passe pas par la console, sa case nomme le renvoi plateau et rien n'arrive au master.
+  // Coché au clic droit (d.bl[voie]) ; sans choix enregistré, une voie renvoyée au plateau sans source au master l'est
+  function hfBl(d, k) {
+    const f = d.bl && d.bl[k]; if (f !== undefined) return !!f;
+    const v = hfVoie(d, k); return !!hfRxUsed().get(`${d.id}:${k}`) && !state.lignes.some((x) => eqv(x.prov, v));
+  }
+  function hfBlSet(d, k, on) {
+    d.bl = { ...(d.bl || {}), [k]: !!on };
+    const v = hfVoie(d, k), S = (state.sorties = state.sorties || []);
+    if (!on) { log(`${v} : Backline décoché, la voie repasse par la console.`); commit(true); return; }
+    const L = state.lignes.filter((x) => eqv(x.prov, v)), name = (L[0] && L[0].source) || "";
+    let ret = hfRxUsed().get(`${d.id}:${k}`);
+    if (!ret && name) { ret = newOut(name); ret.type = OUT_RET; ret.rxv = { h: d.id, in: String(k) }; S.push(ret); log(`${name} : ${v} passe en Backline (sortie créée).`); }
+    else if (ret && name && ret.mix === `HF ${v}`) ret.mix = name;
+    // Une source du master qui n'est patchée nulle part n'existait que par cette case : elle part. Sinon on retire seulement la provenance
+    const gone = L.filter((l) => !l.box && !Object.values(l.sr || {}).some(Boolean)), kept = L.filter((l) => !gone.includes(l));
+    kept.forEach((l) => { l.prov = ""; log(`${l.source} : provenance ${v} retirée (Backline).`); });
+    gone.forEach((l) => log(`${l.source} : retirée du master (${v} en Backline).`));
+    if (gone.length) { const ids = new Set(gone.map((l) => l.id)); state.lignes.forEach((x) => { if (x.pair && ids.has(x.pair) && !ids.has(x.id)) x.pair = null; }); state.lignes = state.lignes.filter((x) => !ids.has(x.id)); }
+    commit(true);
+    notice(`${esc(v)} en Backline : ne passe pas par la console.${gone.length ? ` ${gone.map((l) => `« ${esc(l.source)} »`).join(", ")} retirée${gone.length > 1 ? "s" : ""} du master.` : ""}${kept.length ? ` Provenance retirée de ${kept.map((l) => `« ${esc(l.source)} »`).join(", ")} (patchée au master, à supprimer à la main si besoin).` : ""}${ret ? "" : " Choisis la liaison dans « ↪ plateau »."} Cmd/Ctrl+Z pour annuler.`);
+  }
+  function ctxHfVoie(el) {
+    const d = hfDevById((el.closest("tr[data-hd]") || {}).dataset?.hd), inp = el.querySelector("input[data-hdv]"), k = inp && +inp.dataset.hdv; if (!d || d.kind !== "rx" || !k) return null;
+    const on = hfBl(d, k), ret = hfRxUsed().get(`${d.id}:${k}`);
+    return [`${hfVoie(d, k)}${inp.value ? " · " + inp.value : ""}`, [
+      { t: "Backline (ne passe pas par la console)", on, fn: () => hfBlSet(d, k, !on) },
+      "-",
+      ret && { t: "Voir le renvoi dans Sorties", fn: () => gotoRow("sorties", ret.id) },
+      ret && ret.box && { t: "Voir dans Boîtiers", fn: () => showInGrid(ret) },
+      ret && { t: "Retirer le renvoi plateau", fn: () => hfRetSet(d, k, "") }]];
+  }
   const rxvAddr = (a) => { const d = a && a.h && hfDevById(a.h); return d ? hfVoie(d, a.in) : ""; };
   // Départ d'une sortie : sortie de stage rack, ou voie de récepteur HF
   const outFrom = (o) => (o && o.rxv ? rxvAddr(o.rxv) : outAddr(o && o.out));
@@ -2134,7 +2167,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       for (let i = 1; i <= boxSize(b); i++) { const key = `${b.id}:${i}`, who = occ.box.get(key), mine = o && o.box && kBox(o.box) === key; if ((who || isHs(key)) && !mine) continue; oo += `<option value="${key}"${mine ? " selected" : ""}>↪ ${esc(boxName(b))} → ${i}</option>`; }
       if (oo) opts += `<optgroup label="${esc(boxTitle(b))}">${oo}</optgroup>`;
     });
-    if (o && !o.box) opts += `<option value="__keep" selected>↪ ${esc(outDest(o).replace(/^→\s*/, "") || "sans arrivée")}</option>`;
+    if (o && !o.box && o.to) opts += `<option value="__keep" selected>↪ ${esc(outDest(o).replace(/^→\s*/, "") || "sans arrivée")}</option>`;
     return `<select class="hdret${o ? "" : " free"}" data-hdret="${k}" aria-label="Renvoi au plateau de la voie ${k} de ${esc(d.nom)}" title="Renvoyer la voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : une sortie est créée dans Sorties">${opts}</select>`;
   }
   function hfRetSet(d, k, val) {
@@ -2145,7 +2178,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const who = occupancy().box.get(val);
     if (who && who !== o) { const [b, i] = val.split(":"); notice(`La liaison ${esc(boxAddr({ b, i: +i }))} est occupée par ${esc(label(who))}. Déplace d'abord cette ${isOut(who) ? "sortie" : "source"}.`, true); commit(true); return; }
     let x = o;
-    if (!x) { const src = hfSlotWho(d, k, true); x = newOut(src || `HF ${v}`); x.type = OUT_RET; x.rxv = { h: d.id, in: String(k) }; S.push(x); }
+    if (!x) { const src = hfSlotWho(d, k, true); x = newOut(src || `HF ${v}`); x.type = OUT_RET; x.rxv = { h: d.id, in: String(k) }; S.push(x); if (!src && !(d.bl && d.bl[k] !== undefined)) d.bl = { ...(d.bl || {}), [k]: true }; }
     const before = boxAddr(x.box) || (x.to ? toAddr(x).replace(/^→\s*/, "") : ""), [b, i] = val.split(":");
     x.box = { b, i: +i }; x.to = null;
     log(`${x.mix} : ${v} renvoyée au plateau ${before ? `(${before} déplacé vers ${boxAddr(x.box)})` : `sur ${boxAddr(x.box)}`}.`);
@@ -2164,11 +2197,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function hfDevHtml(kind) {
     const D = hfDevs().filter((d) => d.kind === kind), rx = kind === "rx";
     const opt = HFDEV_MODELS.map(([m, k, n, t], i) => (k === kind ? `<option value="${i}"${String(i) === hfDevPick ? " selected" : ""}>${esc(t)} · ${k === "tx" ? `${n / 2} liaison${n > 2 ? "s" : ""} stéréo` : `${n} voie${n > 1 ? "s" : ""}`}</option>` : "")).join("");
-    const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const m = hfSlotWho(d, j + 1, true), ret = !m && hfRxUsed().get(`${d.id}:${j + 1}`), w = m || (ret ? ret.mix || "" : "");
+    const use = (d) => Array.from({ length: hfSlots(d) }, (_, j) => { if (!rx) return hfTxLinkSel(d, j + 1); const bl = hfBl(d, j + 1), r0 = hfRxUsed().get(`${d.id}:${j + 1}`), ret = bl, w = bl ? (r0 ? r0.mix || "" : "") : hfSlotWho(d, j + 1, true);
       // Voie qui ne part qu'au plateau (sans console) : la case nomme la sortie du renvoi, rien n'est créé au master
-      return `<span class="hdu hdrx${w ? "" : " free"}${ret ? " ret" : ""}"><label><b>${j + 1}</b><input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="libre" autocomplete="off"${ret ? "" : ' data-suggest="dlSrc"'} aria-label="${ret ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${ret ? "Renvoi plateau sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1)}</span>`; }).join("");
+      return `<span class="hdu hdrx${w ? "" : " free"}${ret ? " ret" : ""}"><label><b>${j + 1}</b>${bl ? '<span class="hdbl" title="Backline : ne passe pas par la console (clic droit pour changer)">BL</span>' : ""}<input type="text" data-hdv="${j + 1}" value="${esc(w)}" placeholder="${bl ? "backline" : "libre"}" autocomplete="off"${ret ? "" : ' data-suggest="dlSrc"'} aria-label="${ret ? "Nom du renvoi plateau" : "Source"} sur la voie ${j + 1} de ${esc(d.nom)}" title="${ret ? "Backline, sans console : ce nom est celui de la sortie (Sorties, Boîtiers), pas une source du master. Clic droit pour changer" : "Tape le nom d'une source du master : sa provenance devient cette voie"}"></label>${hfRetSel(d, j + 1)}</span>`; }).join("");
     return `<div class="hfdev">
-      <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack. La liste « ↪ plateau » renvoie une voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : la sortie apparaît dans Sorties et dans Boîtiers." : "Émetteurs des ears, en liaisons stéréo L/R. Choisis le mix de chaque liaison dans la colonne « Mix des sorties » : une paire stéréo prend L et R. C'est la même chose que l'arrivée « P10T #1 · 2 L » dans Sorties, et l'appareil se range dans les plans de rack."}</p>
+      <p class="hint" style="margin:0 0 6px">${rx ? "Récepteurs des micros HF. Chaque voie devient une provenance au master (« EM 6000 #1 · 2 ») et l'appareil se range dans les plans de rack. La liste « ↪ plateau » renvoie une voie au plateau dans une liaison de boîtier (ampli guitare, pedalboard…) : la sortie apparaît dans Sorties et dans Boîtiers. Clic droit sur une voie › « Backline » : elle ne passe pas par la console, sa case nomme le renvoi et rien n'arrive au master." : "Émetteurs des ears, en liaisons stéréo L/R. Choisis le mix de chaque liaison dans la colonne « Mix des sorties » : une paire stéréo prend L et R. C'est la même chose que l'arrivée « P10T #1 · 2 L » dans Sorties, et l'appareil se range dans les plans de rack."}</p>
       <div class="hdadd"><label class="field"><span>Ajouter ${rx ? "un récepteur" : "un émetteur"}</span><select data-hdmodel>${opt}</select></label><label class="field"><span>Nombre</span><input type="number" data-hdn min="1" max="24" value="1" inputmode="numeric"></label><button class="btn primary" type="button" data-hdadd>+ Ajouter</button></div>
       ${D.length ? `<div class="hftw"><table class="hfdt"><thead><tr><th>Modèle</th><th>Nom</th><th>Plage</th><th>${rx ? "Voies" : "Liaisons"}</th><th>${rx ? "Sources" : "Mix des sorties"}</th><th>Notes</th><th></th></tr></thead><tbody>${D.map((d) => `<tr data-hd="${d.id}">
         <td data-l="Modèle" style="width:150px"><input type="text" data-hdf="model" value="${esc(d.model)}" aria-label="Modèle" data-suggest="dlHfDevModel_${kind}" autocomplete="off"></td>
@@ -2234,8 +2267,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Le renvoi plateau encore nommé d'après la voie prend le nom de la source
       const ret = hfRxUsed().get(`${d.id}:${k}`);
       // Renvoi plateau seul (ne passe pas par la console) : on renomme la sortie, le master n'est pas touché
-      if (ret && !state.lignes.some((x) => eqv(x.prov, v))) {
-        if (name && name !== ret.mix) { log(`${ret.mix} : renvoi plateau renommé ${name}.`); ret.mix = name; }
+      if (hfBl(d, k)) {
+        if (ret) { if (name && name !== ret.mix) { log(`${ret.mix} : renvoi plateau renommé ${name}.`); ret.mix = name; } }
+        // Backline coché avant le renvoi : le nom crée la sortie, la liaison se choisit ensuite dans « ↪ plateau »
+        else if (name) { const o = newOut(name); o.type = OUT_RET; o.rxv = { h: d.id, in: String(k) }; (state.sorties = state.sorties || []).push(o); log(`${name} : ${v} en Backline (sortie créée).`); }
         commit(true); return;
       }
       const l = name && (state.lignes.find((x) => eqv(x.source, name) && !(x.prov || "").trim()) || state.lignes.find((x) => eqv(x.source, name)));
@@ -12606,6 +12641,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     else if (t.closest("#v-plan .plan-stage")) m = ctxPlan(e, t);
     else if (t.closest("#synStage")) m = ctxSyn(e, t);
     else if ((g = t.closest("#gridOut li"))) m = ctxGrid(g);
+    else if ((g = t.closest("#hfRxOut .hdu.hdrx"))) m = ctxHfVoie(g);
     else if ((g = t.closest("#gridOut .box > h3"))) { const b = boxById(g.closest(".box").dataset.bid); m = b && ctxBoxHead(b); }
     else if ((g = t.closest("#rackOut details.rackd > summary"))) m = ctxRackHead(g.parentNode);
     else if ((g = t.closest("#hfOut .hfg > .hfhead")) && (t.closest("[data-hgfold]") || !t.closest("input, button, select, a, label"))) m = ctxHfHead(g.parentNode);
