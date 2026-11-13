@@ -595,7 +595,8 @@ td.tot { font-family: var(--font-mono); color: var(--muted); text-align: center;
 /* SD-Rack vu de l'arrière : cartes verticales de gauche à droite, voies 1 à 8 de haut en bas */
 .rack-occ > .occ-sd.big { grid-column: span 2; }
 @media (max-width: 760px) { .rack-occ > .occ-sd.big { grid-column: auto; } }
-.occ-rear { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: flex-start; }
+.occ-legend { display: flex; flex-wrap: wrap; gap: 0 14px; }
+.occ-card.out .lbl { color: #5f9fb3; }
 .occ-cards { display: flex; gap: 3px; margin-top: 6px; align-items: flex-start; }
 .occ-nums, .occ-card { display: flex; flex-direction: column; gap: 3px; align-items: center; }
 .occ-card { padding: 2px 2px 3px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); }
@@ -6777,10 +6778,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       return rows;
     };
     // SD-Rack vu de l'arrière : les cartes sont verticales, côte à côte de gauche à droite (entrées puis sorties), les 8 voies numérotées de haut en bas
-    const rear = (r, cellsAll, get, out) => {
+    const rear = (r, cellsAll, get, out, nums) => {
       const groups = new Map(); cellsAll.forEach((a) => { if (!groups.has(a.c)) groups.set(a.c, []); groups.get(a.c).push(a); });
       const max = Math.max(0, ...[...groups.values()].map((g) => g.length));
-      return `<div class="occ-nums" aria-hidden="true"><span></span>${Array.from({ length: max }, (_, k) => `<span>${k + 1}</span>`).join("")}</div>${[...groups].map(([c, cells]) => `<div class="occ-card" role="group" aria-label="Carte ${c}"><span class="lbl">${c}</span>${cells.map(({ i }) => { const x = get(c, i); return `<span role="img" class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`).join("")}`;
+      if (!groups.size) return "";
+      return `${nums ? `<div class="occ-nums" aria-hidden="true"><span></span>${Array.from({ length: max }, (_, k) => `<span>${k + 1}</span>`).join("")}</div>` : ""}${[...groups].map(([c, cells]) => `<div class="occ-card${out ? " out" : ""}" role="group" aria-label="Carte ${out ? "de sorties" : "d'entrées"} ${c}"><span class="lbl">${c}</span>${cells.map(({ i }) => { const x = get(c, i); return `<span role="img" class="occ-cell${out ? " out" : ""}${x ? " on" : ""}" data-tip="${esc(out ? tipOut(r, c, i, x) : tipIn(r, c, i, x))}" aria-label="${esc(rackShort(r, c, i))}${x ? " : " + esc(out ? x.mix : x.source) : " : libre"}"></span>`; }).join("")}</div>`).join("")}`;
     };
     $("#rackOcc").innerHTML = state.racks.length ? state.racks.map((r) => {
       const ins = rackInputs(r), outs = rackOutputs(r);
@@ -6788,8 +6790,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const uIn = ins.filter(({ c, i }) => gIn(c, i)).length, uOut = outs.filter(({ c, i }) => gOut(c, i)).length;
       if (rFmt(r) === "cartes") return `<div class="occ-sd${ins.length + outs.length > 48 ? " big" : ""}"><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)}</span></h3>
         <div class="occ-rear" title="Vu de l'arrière : cartes de gauche à droite, voies 1 à 8 de haut en bas">
-          ${ins.length ? `<div class="occ-grp"><div class="occ-sub">Entrées ${uIn}/${ins.length}</div><div class="occ-cards">${rear(r, ins, gIn, false)}</div></div>` : ""}
-          ${outs.length ? `<div class="occ-grp"><div class="occ-sub out">Sorties ${uOut}/${outs.length}</div><div class="occ-cards">${rear(r, outs, gOut, true)}</div></div>` : ""}
+          <div class="occ-legend">${ins.length ? `<span class="occ-sub">Entrées ${uIn}/${ins.length}</span>` : ""}${outs.length ? `<span class="occ-sub out">Sorties ${uOut}/${outs.length}</span>` : ""}</div>
+          <div class="occ-cards">${rear(r, ins, gIn, false, true)}${rear(r, outs, gOut, true, !ins.length)}</div>
         </div></div>`;
       return `<div><h3>${esc(rackTitle(r))} <span class="count">${esc(r.console)}</span></h3>
         ${ins.length ? `<div class="occ-sub">Entrées ${uIn}/${ins.length}</div><div class="occ${r.ports ? " wide" : ""}">${grid(r, ins, gIn, false)}</div>` : ""}
