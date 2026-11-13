@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "69bf2d6b52";</script>
+<script>window.PL_VER = "4f3cb66fc7";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -2133,6 +2133,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Voies de récepteur renvoyées au plateau : une sortie part directement de la voie (sans console) vers une liaison de boîtier
   // (ampli guitare, pedalboard…). Une voie ne part qu'une fois au plateau ; elle peut aussi arriver au master (sortie XLR + jack)
   function hfRxUsed() { const m = new Map(); (state.sorties || []).forEach((o) => { if (o.rxv && o.rxv.h) m.set(`${o.rxv.h}:${o.rxv.in}`, o); }); return m; }
+  // Voies de récepteur qui ne partent pas encore au plateau
+  function hfRxFree() { const u = hfRxUsed(), r = []; hfDevs().filter((d) => d.kind === "rx").forEach((d) => { for (let k = 1; k <= d.n; k++) if (!u.has(`${d.id}:${k}`)) r.push({ d, k, src: hfSlotWho(d, k, true) }); }); return r; }
   const rxvAddr = (a) => { const d = a && a.h && hfDevById(a.h); return d ? hfVoie(d, a.in) : ""; };
   // Départ d'une sortie : sortie de stage rack, ou voie de récepteur HF
   const outFrom = (o) => (o && o.rxv ? rxvAddr(o.rxv) : outAddr(o && o.out));
@@ -4228,6 +4230,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const q = t.value.trim(); if (!q) return;
     const [bid, i] = t.dataset.bk.split(":"), b = boxById(bid); if (!b) return;
     let x = boxPick.get(q.toLowerCase());
+    if (x && x.rxd) { hfRetSet(x.rxd, x.k, `${bid}:${i}`); return; }
     if (!x) { const lq = q.toLowerCase(), hits = [...state.lignes.filter((l) => l.source.toLowerCase() === lq), ...(state.sorties || []).filter((o) => (o.mix || "").toLowerCase() === lq)]; if (hits.length === 1) x = hits[0]; }
     let created = false;
     if (!x && /^\d+$/.test(q)) x = state.lignes[+q - 1];
@@ -4263,6 +4266,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const pick = [];
     state.lignes.forEach((l) => pick.push({ v: `${canal(l)} · ${l.source}`, x: l, lab: l.box ? `sur ${boxAddr(l.box)}` : l.micro || "source", free: !l.box }));
     (state.sorties || []).forEach((o, k) => pick.push({ v: `OUT ${k + 1} · ${o.mix}`, x: o, lab: o.box ? `sur ${boxAddr(o.box)}` : o.to ? `vers ${toAddr(o)}` : o.type || "sortie", free: !o.box && !o.to }));
+    // Voies de récepteur HF pas encore renvoyées au plateau (ampli guitare, pedalboard…)
+    hfRxFree().forEach(({ d, k, src }) => pick.push({ v: `↪ ${hfVoie(d, k)}${src ? " · " + src : ""}`, x: { rxd: d, k }, lab: "renvoi HF au plateau", free: true }));
     pick.sort((a, b) => b.free - a.free);
     pick.forEach((q) => boxPick.set(q.v.toLowerCase(), q.x));
     let dlb = document.getElementById("dlBoxPickWrap");
@@ -4283,7 +4288,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
           const hit = l && !isOut(l) && matches(l, query);
           li += l ? boxLi(l, i, b, hit, occ, cols)
             : isHs(`${b.id}:${i}`) ? `<li class="hs"><span class="n">${i}</span><span class="s">HS</span><button type="button" class="unhs" data-unhs="${b.id}:${i}" title="Entrée réparée : la remettre en service">réparée</button></li>`
-            : `<li class="free"><span class="n">${i}</span><input type="text" class="bquick" data-bk="${b.id}:${i}" placeholder="libre" data-suggest="dlBoxPick" autocomplete="off" aria-label="Patcher une source ou une sortie sur ${esc(boxName(b))} → ${i}" title="Tape un nom ou un N° : source ou sortie à mettre sur cette liaison"></li>`;
+            : `<li class="free"><span class="n">${i}</span><input type="text" class="bquick" data-bk="${b.id}:${i}" placeholder="libre" data-suggest="dlBoxPick" autocomplete="off" aria-label="Patcher une source ou une sortie sur ${esc(boxName(b))} → ${i}" title="Tape un nom ou un N° : source ou sortie à mettre sur cette liaison, ou « ↪ » pour y renvoyer une voie de récepteur HF"></li>`;
         }
         return `<div class="box" data-bid="${b.id}" style="--nsr:${boxShowSr ? cols.length : 0}"><h3><span>${esc(boxTitle(b))}</span><span class="used">${used}/${n}${used ? ` <button type="button" class="unb" data-unbox="${b.id}" aria-expanded="${unboxOpen === b.id}" title="Dépatcher des entrées de ce boîtier">Dépatcher…</button>` : ""}</span></h3>${unboxOpen === b.id ? `<form class="unbform" data-unbf="${b.id}">Entrées <input type="number" min="1" max="${n}" value="1" data-unf="from" aria-label="De l'entrée" inputmode="numeric"> à <input type="number" min="1" max="${n}" value="${n}" data-unf="to" aria-label="À l'entrée" inputmode="numeric"> <button class="btn small danger" type="submit">Dépatcher</button> <button class="btn small" type="button" data-unbcancel>Annuler</button></form>` : ""}<ol>${boxColsHead(cols)}${li}</ol></div>`;
       }).join("")}</div></div>`;
@@ -12333,9 +12338,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (hs) return [`${boxName(b)} → ${n} (HS)`, [{ t: "Entrée réparée : la remettre en service", fn: () => hs.click() }]];
     const ls = state.lignes.filter((l) => !l.box), os = state.sorties.filter((o) => !o.box && !o.to);
     const put = (x) => { x.box = { b: b.id, i: n }; log(`${label(x)} : patché sur ${boxAddr(x.box)}.`); commit(true); };
+    const rx = hfRxFree();
     return [`${boxName(b)} → ${n} (libre)`, [
       { t: "Mettre ici une source", off: !ls.length, sub: () => ls.map((l) => ({ t: `${canal(l)} · ${l.source}`, fn: () => put(l) })) },
-      { t: "Mettre ici une sortie", off: !os.length, sub: () => os.map((o) => ({ t: o.mix || "Sortie", fn: () => put(o) })) }]];
+      { t: "Mettre ici une sortie", off: !os.length, sub: () => os.map((o) => ({ t: o.mix || "Sortie", fn: () => put(o) })) },
+      { t: "Renvoyer ici une voie de récepteur HF", off: !rx.length, sub: () => rx.map(({ d, k, src }) => ({ t: `${hfVoie(d, k)}${src ? " · " + src : ""}`, fn: () => hfRetSet(d, k, `${b.id}:${n}`) })) }]];
   }
   function ctxBoxHead(b) {
     const n = boxSize(b);
