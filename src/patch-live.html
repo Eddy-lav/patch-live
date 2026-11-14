@@ -9970,7 +9970,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     },
     racks: () => { if (!state.racks.length) return ""; renderRacks(); return printTables($("#rackOut")); },
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
-    plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
+    plan: () => (planState().items.length ? planSvgMarkup(true) + (prLayNow === "aere" ? prRuns() : "") : ""),
     rackplan: (keep = () => true) => rpState().cases.filter((c) => keep(c.id)).map((c) => `<div class="blk rpblk">${prLayNow === "aere" ? `<h2 class="rpt">${esc(c.nom || "Rack")}<span>${rpCols(c) > 1 ? (rpCols(c) === 2 ? "double " : "triple ") : ""}${c.u} U${c.lieu ? " · " + esc(c.lieu) : ""}</span></h2>` : ""}<div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     local: () => freePrint("locaux"),
@@ -10028,7 +10028,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const m = new Map(); S.forEach((o) => { if (o.pair && S.some((z) => z.id === o.pair && S.indexOf(z) < S.indexOf(o))) return; const k = o.type || "Autre"; if (!m.has(k)) m.set(k, []); m.get(k).push(o); });
       out.push(`<div class="blk"><h2>Retours et sorties</h2><table><thead><tr><th>Type</th><th class="q">Mix</th><th>Mix (destinataire)</th></tr></thead><tbody>${[...m.entries()].map(([t, os]) => `<tr><td><b>${esc(t)}</b></td><td class="q">${os.length}</td><td>${esc(os.map((o) => (o.pair ? o.mix.replace(/\s+[LG]$/i, "") + " (stéréo)" : o.mix) + (o.dest ? " · " + o.dest : "")).join(", "))}</td></tr>`).join("")}</tbody></table></div>`);
     }
-    if (keep("horloge") && nodes.length > 1) {
+    if (keep("horloge") && nodes.length > 1 && !(prLayNow === "aere" && prPartsNow.includes("syn"))) { // en aéré, l'horloge est dans « Liaisons et horloge »
       const rows = synClockRows();
       out.push(`<div class="blk"><h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(String(v))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
     }
@@ -10040,7 +10040,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         L.some((l) => l.pair) ? "<li>Deux lignes liées par une accolade ou notées L / R = une paire stéréo.</li>" : "",
         "<li>Jardin = gauche vu de la salle, cour = droite vu de la salle.</li>"
       ].filter(Boolean);
-      const pages = prPartsNow.filter((k) => k !== "config").map((k) => `<li><b>${esc((PRINT_PARTS.find((x) => x[0] === k) || [, k])[1])}</b> : ${esc(PR_DESC[k] || "")}</li>`);
+      const pages = prPartsNow.filter((k) => k !== "config").map((k) => `<li><b>${esc((prLayNow === "aere" && AERE_TITLE[k]) || (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1])}</b> : ${esc(PR_DESC[k] || "")}</li>`);
       out.push(`<div class="blk"><h2>Comment lire ce dossier</h2><ul class="prbref">${ex.join("")}</ul>${pages.length ? `<h3>Dans ce dossier</h3><ol class="prbref">${pages.join("")}</ol>` : ""}</div>`);
     }
     return out.length ? `<div class="prconf">${out.join("")}</div>` : "";
@@ -10079,8 +10079,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       add("rack", `Flight rack ${["", "", "double ", "triple "][rpCols(c)]}${c.u} U`, 1, [c.nom, c.lieu].filter(Boolean).join(" · "));
       c.items.filter((it) => it.kind === "free").forEach((it) => add("rack", rpLabel(it) + (it.h > 1 ? ` ${it.h} U` : ""), 1, c.nom));
     });
-    (state.materiel || []).forEach((x) => add(PRESTA_MAN[x.cat] || ((banqueFiche(x.nom) || {}).cat === "Câblage" ? "cab" : "div"), x.nom, Number(x.qte) || 0, "", [PRESTA_MAN[x.cat] || !x.cat ? "" : x.cat, x.notes].filter(Boolean).join(" · ")));
-    return PRESTA_CATS.map(([k, t]) => ({ k, t, rows: [...cats.get(k).values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { numeric: true })) })).filter((c) => c.rows.length);
+    // Liste à la main : une catégorie à soi (« P8 - Multi Jar », « Tool Mic › Tiroir drums »…) devient un groupe, comme les malles d'un dossier de tournée
+    const own = [];
+    (state.materiel || []).forEach((x) => {
+      const cat = String(x.cat || "").trim(); let k = PRESTA_MAN[cat];
+      if (!k && cat && cat !== "Divers") { k = "m:" + cat.toLowerCase(); if (!cats.has(k)) { cats.set(k, new Map()); own.push([k, cat]); } }
+      add(k || ((banqueFiche(x.nom) || {}).cat === "Câblage" ? "cab" : "div"), x.nom, Number(x.qte) || 0, "", x.notes || "");
+    });
+    return [...PRESTA_CATS, ...own].map(([k, t]) => ({ k, t, own: k.startsWith("m:"), rows: [...cats.get(k).values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr", { numeric: true })) })).filter((c) => c.rows.length);
   }
   function prestaHtml(keep) {
     const list = prestaList().filter((c) => keep(c.k)); if (!list.length) return "";
@@ -10089,7 +10095,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const tot = list.reduce((n, c) => n + c.rows.reduce((m, x) => m + x.n, 0), 0);
     return `<div class="prkey">${key.map(([n, t]) => `<div><b>${n}</b><span>${t}</span></div>`).join("")}</div>
       <p class="prnote">Liste tirée du dossier : ${tot} pièce${tot > 1 ? "s" : ""} en ${list.length} catégorie${list.length > 1 ? "s" : ""}. Les quantités sont celles utilisées, <b>sans spare</b>. « Pour » dit où va chaque pièce ; le détail est dans les pages suivantes.</p>
-      <div class="prmat">${list.map((c) => `<div class="prcat"><h2>${esc(c.t)}<span>${c.rows.reduce((m, x) => m + x.n, 0)}</span></h2><table><thead><tr>${prep ? '<th class="ck">Prêt</th>' : ""}<th class="q">Qté</th><th>Désignation</th><th>Pour</th></tr></thead><tbody>${c.rows.map((x) => `<tr>${prep ? '<td class="ck">☐</td>' : ""}<td class="q">${x.n}</td><td><b>${esc(x.nom)}</b>${x.notes.length ? `<div class="muted">${esc([...new Set(x.notes)].join(" · "))}</div>` : ""}</td><td class="pour">${esc(prestaFor(x.pour))}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>`;
+      ${prLayNow === "aere" ? `<div class="prbul">${list.map((c) => `<div class="prbc"><h2>${esc(c.t)}<span>${c.rows.reduce((m, x) => m + x.n, 0)}</span></h2><ul>${c.rows.map((x) => `<li>${prep ? '<span class="ck">☐</span>' : ""}<b>${x.n} ×</b> ${esc(x.nom)}${x.pour.length ? `<span class="pour"> · ${esc(prestaFor(x.pour))}</span>` : ""}${x.notes.length ? `<span class="pour"> · ${esc([...new Set(x.notes)].join(" · "))}</span>` : ""}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
+      <div class="prmat"${prLayNow === "aere" ? " hidden" : ""}>${list.map((c) => `<div class="prcat"><h2>${esc(c.t)}<span>${c.rows.reduce((m, x) => m + x.n, 0)}</span></h2><table><thead><tr>${prep ? '<th class="ck">Prêt</th>' : ""}<th class="q">Qté</th><th>Désignation</th><th>Pour</th></tr></thead><tbody>${c.rows.map((x) => `<tr>${prep ? '<td class="ck">☐</td>' : ""}<td class="q">${x.n}</td><td><b>${esc(x.nom)}</b>${x.notes.length ? `<div class="muted">${esc([...new Set(x.notes)].join(" · "))}</div>` : ""}</td><td class="pour">${esc(prestaFor(x.pour))}</td></tr>`).join("")}</tbody></table></div>`).join("")}</div>`;
   }
   // Sous-parties à cocher, partie par partie (une catégorie de matériel, un groupe HF, un côté de boîtiers, un flight rack)
   const PRINT_SUBS = {
@@ -10126,6 +10133,20 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const all = $("#prAll"); if (all) all.checked = boxes.every((b) => b.checked);
     prSyncSubs();
   }
+  // Câbles entre les postes (comme « 3x 12N50 + 1x 32M50 + 2x RJ45 50m » sur le synoptique plateau) : les liaisons du synoptique
+  // regroupées par paire d'appareils, et les multis de chaque boîtier vers ses stage racks
+  function prRuns() {
+    const nodes = synNodes(), nm = (id) => (nodes.find((x) => x.id === id) || {}).title || "", runs = new Map();
+    const put = (a, b, what) => { const k = [a, b].sort().join("\u0000"); if (!runs.has(k)) runs.set(k, { a, b, w: new Map() }); const r = runs.get(k); r.w.set(what, (r.w.get(what) || 0) + 1); };
+    synState().links.forEach((l) => { const a = nm((l.a || {}).n), b = nm((l.b || {}).n); if (a && b) put(a, b, l.cable || `liaison ${synLinkProto(l, nodes) || "audio"}`); });
+    const occ = occupancy();
+    state.boites.forEach((b) => { const rs = new Set(); for (let i = 1; i <= boxSize(b); i++) { const l = occ.box.get(`${b.id}:${i}`); if (l && !isOut(l)) Object.values(l.sr || {}).forEach((a) => { const r = a && rackById(a.r); if (r) rs.add(rackTitle(r)); }); } rs.forEach((r) => put(boxTitle(b) + (b.cote ? ` (${b.cote.toLowerCase()})` : ""), r, `multi ${b.type}`)); });
+    if (!runs.size) return "";
+    return `<h2>Câbles entre les postes</h2><ul class="pruns">${[...runs.values()].map((r) => `<li><b>${esc(r.a)} ↔ ${esc(r.b)}</b> : ${esc([...r.w.entries()].map(([w, n]) => `${n} × ${w}`).join(" + "))}</li>`).join("")}</ul>`;
+  }
+  // En aéré, l'ordre du dossier de tournée : plateau, boîtiers, racks, liaisons, matériel, puis les tableaux complets
+  const AERE_ORDER = ["config", "plan", "boites", "rackplan", "syn", "presta", "hf", "sorties", "master", "racks", "liste", "local", "com", "net", "todo", "journal"];
+  const AERE_TITLE = { plan: "Synoptique plateau", boites: "Patch des boîtiers", rackplan: "Flight racks", syn: "Liaisons et horloge", presta: "Matériel et malles", hf: "HF et ears", master: "Patch complet" };
   // ---------- Présentation aérée (comme un dossier de tournée : une idée par page, grands titres, cartes par boîtier) ----------
   let prLayNow = "aere";
   const prInk = (hex) => { const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || ""); if (!m) return "#111"; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#111" : "#fff"; };
@@ -10150,7 +10171,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // à droite le nom, puis une fiche en un coup d'œil (régies, sources, boîtiers, HF, horloge), le sommaire et le contact
   function prCoverPage(parts) {
     const d = state.dossier, cov = coverCss(d.cover), today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    const toc = parts.map((k) => (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1]);
+    const toc = parts.map((k) => AERE_TITLE[k] || (PRINT_PARTS.find((x) => x[0] === k) || [, k])[1]);
     const ks = consoleKeys(), cons = ks.map((k) => { const md = ((synState().cons || {})[k] || {}).model; return `${consLabel(k)}${md ? " : " + md : ""}`; });
     const pairs = state.lignes.filter((l) => l.pair).length / 2, hfMic = hfState().filter((g) => g.kind === "tx" || g.kind === "spxm").reduce((n, g) => n + g.rows.length, 0), ears = hfState().filter((g) => g.kind === "iem" || g.kind === "spx").reduce((n, g) => n + g.rows.length, 0);
     const lps = loops().filter((lp) => state.racks.some((r) => rackLoop(r) === lp));
@@ -10181,7 +10202,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr.aere th { background: #eef0f2 !important; border: 0; border-bottom: 1.5px solid #555; font-size: 8.5pt; padding: 4px 7px; color: #333 !important; }
     .pr.aere td { border: 0; border-bottom: 1px solid #d5d8dc; padding: 3px 5px; font-size: 9pt; }
     .pr.aere .prconf td { font-size: 10pt; padding: 4px 6px; }
-    .pr.aere svg { max-height: 160mm; }
+    .pr.aere svg { max-height: 160mm; } .pr.aere .pruns { margin-top: 2mm; }
+    .pr.aere .part > svg:first-of-type { max-height: 118mm; display: block; margin: 0 auto; }
     .pr.aere .cols { gap: 8mm; } .pr.aere .cols.wide { grid-template-columns: repeat(auto-fill, minmax(118mm, 1fr)); }
     .pr.aere .prconf .blk { break-inside: avoid; margin-bottom: 5mm; }
     .pr.aere .prconf h2 { border-bottom: 0; margin-top: 4mm; }
@@ -10191,6 +10213,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr.aere .prcat h2 { background: none !important; color: #1e1f20; font-size: 13pt; padding: 0 0 2px; border-bottom: 2px solid #222; margin: 0 0 1mm; }
     .pr.aere .prcat td { padding: 4px 6px; font-size: 9.5pt; }
     .pr.aere h2.side { margin-top: 2mm; }
+    .pr.aere .prbul { columns: 3; column-gap: 9mm; column-fill: auto; }
+    .pr.aere .prbc { margin-bottom: 6mm; } .pr.aere .prbc h2 { break-after: avoid; } .pr.aere .prbc li { break-inside: avoid; }
+    .pr.aere .prbc h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 1.5mm; padding-bottom: 1mm; border-bottom: 2px solid #373737; font-size: 12.5pt; }
+    .pr.aere .prbc h2 span { font: 500 9pt Barlow, Arial, sans-serif; color: #666; }
+    .pr.aere .prbc ul { list-style: none; margin: 0; padding: 0; font-size: 9.5pt; }
+    .pr.aere .prbc li { padding: 1mm 0; border-bottom: 1px solid #e3e5e7; } .pr.aere .prbc li b { font-variant-numeric: tabular-nums; }
+    .pr.aere .prbc .ck { margin-right: 1.5mm; } .pr.aere .prbc .pour { color: #666; font-size: 8.5pt; }
+    .pr.aere .pruns { columns: 2; column-gap: 10mm; padding-left: 4mm; font-size: 10pt; } .pr.aere .pruns li { break-inside: avoid; margin-bottom: 1.5mm; }
     .pr.aere .boxcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84mm, 1fr)); gap: 6mm; align-items: start; margin-bottom: 4mm; }
     .pr.aere .boxcard { break-inside: avoid; } .pr.aere .boxcard table { margin: 0; border: 1px solid #444; }
     .pr.aere .boxcard th.bh { font-size: 10.5pt; text-align: center; padding: 5px; border-bottom: 1px solid #444; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -10198,7 +10228,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr.aere .boxcard td.n, .pr.aere .boxcard th.n { width: 7mm; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .pr.aere .boxcard td.in, .pr.aere .boxcard th.in { width: 19mm; white-space: nowrap; border-left: 1px solid #ddd; }
     .pr.aere .boxcard tr.free td { height: 13px; }
-    .pr.aere .rpblk { break-before: page; grid-template-columns: 1.2fr 1fr; gap: 10mm; } .pr.aere .part > .rpblk:first-of-type { break-before: auto; }
+    .pr.aere .rpblk { break-before: page; grid-template-columns: 1.2fr 1fr; gap: 10mm; } .pr.aere .part h1 + .rpblk { break-before: auto; }
     .pr.aere .rpblk h2.rpt { grid-column: 1 / -1; text-align: center; font-size: 20pt; margin: 0 0 2mm; } .pr.aere .rpblk h2.rpt span { display: block; font-size: 10pt; font-variant: normal; color: #666; }
     .pr.aere .prcov { display: grid; grid-template-columns: 42% 1fr; height: 182mm; overflow: hidden; break-after: page; font-family: Barlow, -apple-system, "Segoe UI", Arial, sans-serif; color: #1e1f20; }
     .pr.aere .covl { position: relative; background: #373737 center / cover no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -10220,9 +10250,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const head = `<div class="prhead"><b>${esc(d.nom)}</b><span>${esc([d.type, d.version, d.lieu].filter(Boolean).join(" · "))} · imprimé le ${today}</span></div>`;
     const cov = coverCss(d.cover);
     let first = true;
-    prPartsNow = parts; prLayNow = prOpts().lay;
+    prLayNow = prOpts().lay;
     const aere = prLayNow === "aere";
-    const body = (aere ? prCoverPage(parts) : "") + parts.map((k) => { const t = PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](prKeep(k)); if (!h) return ""; const band = first && cov && !aere ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}<h1>${esc(t)}</h1>${h}</div>`; }).join("");
+    if (aere) parts = [...parts].sort((a, b) => AERE_ORDER.indexOf(a) - AERE_ORDER.indexOf(b));
+    prPartsNow = parts;
+    const body = (aere ? prCoverPage(parts) : "") + parts.map((k) => { const t = (aere && AERE_TITLE[k]) || PRINT_PARTS.find((x) => x[0] === k)[1], h = PRINT_SRC[k](prKeep(k)); if (!h) return ""; const band = first && cov && !aere ? `<div class="prcover" style="background-image:${esc(cov)};background-position:center ${d.cover.pos != null ? d.cover.pos : 50}%"></div>` : ""; first = false; return `<div class="part">${band}${head}${aere && k === "rackplan" ? "" : `<h1>${esc(t)}</h1>`}${h}</div>`; }).join(""); // en aéré, chaque flight rack a sa page titrée par son nom
     render();
     const foot = aere ? JSON.stringify([d.nom, d.version, d.contact ? "Contact : " + d.contact : ""].filter(Boolean).join(" · ")).replace(/</g, "\\3C ") : "";
     const footCss = aere ? `@page { @bottom-left { content: ${foot}; font: italic 8pt -apple-system, "Segoe UI", Arial, sans-serif; color: #666; } }` : "";
