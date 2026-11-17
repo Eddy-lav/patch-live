@@ -1649,6 +1649,63 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .tdlinks { min-width: 0; }
   .tdbadge { height: 16px; }
 }
+/* ---------- Setlist et conduite plateau ---------- */
+#stNom { font-weight: 600; }
+#stQui { max-width: 200px; }
+#stWrap > .empty-state { margin: 4px 0; }
+#stTbl { width: 100%; }
+#stTbl td { vertical-align: top; }
+#stTbl td.stn { width: 40px; text-align: right; font-family: var(--font-mono); font-weight: 700; padding-top: 9px; }
+#stTbl td.sttitre { min-width: 13rem; }
+#stTbl td.sttype select { min-width: 8.6rem; }
+#stTbl td.sttitre input { font-weight: 600; }
+#stTbl td.stdur input, #stTbl td.stbpm input { width: 5.2em; font-family: var(--font-mono); }
+#stTbl td.ststart { padding-top: 9px; color: var(--muted); }
+#stTbl td.stj { min-width: 7rem; }
+#stTbl td.stj.stchg input { color: var(--warn); font-weight: 700; }
+#stTbl td.stcond { min-width: 20rem; }
+#stTbl td.stnotes { min-width: 11rem; }
+#stTbl tr:not(.st-titre) > td { background: var(--accent-soft); }
+#stTbl tr:not(.st-titre) td.sttitre input { font-style: italic; }
+#stTbl tr.st-rappel > td, #stTbl tr.st-entracte > td { border-top: 2px solid var(--ink); }
+#stTbl textarea { display: block; width: 100%; min-height: 0; margin: 0; resize: none; overflow: hidden; field-sizing: content; font: inherit; font-size: var(--fs-md); line-height: 1.35; padding: 4px; border: 1px solid var(--field-line, var(--line)); border-radius: var(--r-sm); background: transparent; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 761px) { #stTbl textarea { border-color: transparent; } #stTbl textarea:hover { border-color: var(--line); } }
+#stTbl textarea:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+.stacts { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.stact { display: grid; grid-template-columns: minmax(6rem, 9rem) 1fr auto; gap: 4px; width: 100%; align-items: start; }
+.stact .stqui { font-weight: 600; min-width: 0; }
+.stadel { border: 0; background: none; color: var(--muted); padding: 4px 6px; font-size: var(--fs-lg); line-height: 1; min-height: 0; }
+.stadel:hover { color: var(--danger); }
+.stcolsf .stcolsl { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.stcolsf .stcolsl li { display: flex; gap: 4px; align-items: center; }
+.stcolsf .stcolsl input { width: 11rem; }
+.stcolsf .field { flex: 1 1 260px; }
+.stcolsf .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.stcondl { list-style: none; margin: 0; padding: 4px 0; font-size: var(--fs-lg); }
+.stcondl > li { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+.stcondl > li:not(.has) { padding-top: 5px; padding-bottom: 5px; }
+.stcondl .stch { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.stcondl .stcn { min-width: 2ch; text-align: right; font-family: var(--font-mono); font-weight: 700; color: var(--muted); }
+.stcondl .stck { font-size: var(--fs-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.stcondl .stmeta { color: var(--muted); font-size: var(--fs-sm); }
+.stcondl ul { margin: 4px 0 2px calc(2ch + 10px); padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.stcondl ul li { padding: 3px 8px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent-soft) 55%, transparent); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.stcondl ul li.stjoue { border-left-color: var(--warn); background: transparent; }
+.stcondl ul li.stnote { border-left-color: var(--line); background: transparent; color: var(--muted); font-size: var(--fs-md); }
+.stcondl > li:not(.st-titre) { background: var(--accent-soft); }
+.stcondl > li.st-rappel, .stcondl > li.st-entracte { border-top: 2px solid var(--ink); }
+@media (max-width: 760px) {
+  #stTbl tr { grid-template-columns: 1fr 1fr 1fr; }
+  #stTbl td.stn { grid-column: 1; grid-row: 1; width: auto; text-align: left; padding-top: 0; }
+  #stTbl td.sttype { grid-column: 2; grid-row: 1; }
+  #stTbl td.x { grid-column: 3; grid-row: 1; justify-self: end; align-self: end; }
+  #stTbl td.sttitre { grid-column: 1 / -1; min-width: 0; }
+  #stTbl td.sttype select { min-width: 0; width: 100%; }
+  #stTbl td.stcond, #stTbl td.stnotes, #stTbl td.stlk { grid-column: 1 / -1; min-width: 0; }
+  #stTbl td.stj { min-width: 0; }
+  .stbar #stNom { flex: 1 1 140px; }
+  .stcondl { font-size: var(--fs-base); }
+}
 </style>
 
 <div id="cover" class="cover empty">
@@ -1719,6 +1776,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   </form>
 </dialog>
 <datalist id="dlTdQui"></datalist>
+<datalist id="dlStQui"></datalist>
 <dialog id="dbxDlg" class="dbxdlg" aria-labelledby="dbxTitle">
   <div class="dbxtop"><strong id="dbxTitle">Dropbox</strong><button class="btn small" type="button" data-dclose>Fermer</button></div>
   <div id="dbxCrumbs" class="dbxcrumbs"></div>
@@ -1783,6 +1841,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <button role="tab" data-v="com" aria-selected="false">Intercom</button>
   <button role="tab" data-v="net" aria-selected="false">Réseau</button>
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
+  <button role="tab" data-v="setlist" aria-selected="false">Setlist<span class="count" id="cSetlist"></span></button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="etiq" aria-selected="false">Étiquettes</button>
   <button role="tab" data-v="todo" aria-selected="false">To-do<span class="count" id="cTodo"></span></button>
@@ -1912,6 +1971,30 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <div id="rackTools"></div>
   <div id="rackOut"></div>
   <p class="hint">Le patch vu depuis chaque stage rack ou équipement I/O, un trait sépare les cartes ou les ports. Chaque ligne se modifie comme dans le master (micro, pied, musicien, boîtier, entrée…). Tape un nom dans une case libre pour y mettre une source : elle est créée, ou reprise si elle n'a pas encore d'entrée ; Entrée passe à la case libre suivante. Les sources ajoutées avec « + Source » attendent dans « Sources sans entrée » en bas. Sélection : clic sur le N°, Maj+clic pour une plage, Cmd ou Ctrl+clic pour ajouter une ligne.</p>
+</section>
+
+<section id="v-setlist" hidden>
+  <div class="toolbar stbar">
+    <select id="stVer" aria-label="Version de la setlist" hidden></select>
+    <input id="stNom" type="text" size="20" aria-label="Nom de la version" placeholder="Nom de la version" autocomplete="off">
+    <label class="inl" title="Date de cette version (facultatif)">Date <input id="stDate" type="date" aria-label="Date de la version"></label>
+    <label class="inl" title="Heure du début du show : l'appli calcule l'heure de chaque titre et de la fin">Début <input id="stDebut" type="time" aria-label="Heure du début du show"></label>
+    <button id="stVerBtn" class="btn" type="button" title="Nouvelle version, dupliquer (un soir, une date, un festival raccourci…), supprimer">Versions…</button>
+    <button id="stAdd" class="btn" type="button">+ Titre</button>
+    <button id="stAddChg" class="btn" type="button" title="Ligne de conduite entre deux titres : sortie de scène, mise en place, changement de plateau…">+ Changement</button>
+    <button id="stColsBtn" class="btn" type="button" title="Une colonne par musicien : l'instrument de chaque titre ; les changements sont repérés">Qui joue quoi…</button>
+    <span class="tdflt" role="group" aria-label="Affichage"><button type="button" data-stmode="tbl">Tableau</button><button type="button" data-stmode="cond">Conduite</button></span>
+    <select id="stQui" aria-label="Conduite de" hidden></select>
+    <span id="stSum" class="hint" role="status"></span>
+  </div>
+  <form id="stColsForm" class="newbox stcolsf" hidden onsubmit="return false">
+    <strong>Qui joue quoi : une colonne par musicien</strong>
+    <ul id="stColsList" class="stcolsl"></ul>
+    <label class="field"><span>Ajouter</span><input id="stColNew" type="text" placeholder="Nom, ex. Flo (plusieurs : séparés par des virgules)" autocomplete="off" data-suggest="dlMus"></label>
+    <div class="actions"><button id="stColAdd" class="btn primary" type="button">+ Colonne</button><button id="stColsAll" class="btn" type="button" title="Ajoute une colonne pour chaque musicien du dossier">Tous les musiciens</button><button id="stColsClose" class="btn" type="button">Fermer</button></div>
+  </form>
+  <div class="panel"><div class="tbl" id="stWrap"></div></div>
+  <p class="hint">Une version par soir, par date ou par format (festival raccourci…) : « Versions… » la duplique. Conduite plateau : sur chaque titre, « + Action » note qui amène, récupère ou change quoi ; la vue « Conduite » la montre comme sur papier, pour tout le monde ou pour une personne, avec les changements d'instrument. Clic droit sur une ligne : insérer, dupliquer, copier dans une autre version, ajouter une tâche liée. Entrée valide la case, Maj+Entrée passe à la ligne.</p>
 </section>
 
 <section id="v-todo" hidden>
@@ -9885,7 +9968,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["setlist", "Setlist", false], ["conduite", "Conduite plateau", false], ["todo", "To-do", false], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -9907,6 +9990,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     .pr ul { padding-left: 16px; } .pr li { margin-bottom: 3px; }
     .pr svg { max-width: 100%; height: auto; }
     .pr .muted { color: #666; }
+    .pr tr.stx td { background: #eef1f4 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pr .stcondl { list-style: none; padding: 0; margin: 0; font-size: 11pt; } .pr .stcondl > li { break-inside: avoid; padding: 3px 0; border-bottom: 1px solid #ddd; } .pr .stcondl .stch { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; } .pr .stcondl .stcn { min-width: 22px; font-weight: 700; } .pr .stcondl .stck { font-style: italic; color: #555; } .pr .stcondl .stmeta { color: #666; font-size: 9pt; } .pr .stcondl ul { margin: 2px 0 2px 30px; padding: 0; list-style: none; } .pr .stcondl ul li { background: none !important; padding: 1px 6px; } .pr .stcondl .stjoue, .pr .stcondl .stnote { color: #555; } .pr .stcondl > li.st-rappel, .pr .stcondl > li.st-entracte { border-top: 2px solid #111; margin-top: 4px; }
     .pr .pret { display: inline-block; padding: 0 4px; border: 1px solid #b8962e; border-radius: 6px; background: #fce694 !important; color: #111; font-size: 7.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }`;
   function printTables(root) {
     // Une copie sans boutons ni champs : chaque champ devient son texte
@@ -9948,6 +10033,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
     rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
+    setlist: () => stPrintTable(),
+    conduite: () => stPrintCond(),
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
     net: () => { const r = netExportRows(); return r.length ? `<table><thead><tr>${NET_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${r.map((x) => `<tr>${x.map((v) => `<td>${esc(v || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""; },
@@ -10752,6 +10839,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#cHf").textContent = hfState().reduce((n, g) => n + g.rows.length, 0) || "";
     $("#cHfRx").textContent = hfDevs().filter((d) => d.kind === "rx").length || ""; $("#cHfTx").textContent = hfDevs().filter((d) => d.kind === "tx").length || "";
     $("#cJournal").textContent = state.journal.length;
+    { const v = stCur(); $("#cSetlist").textContent = v ? stRows(v).filter((r) => r.type === "titre").length || "" : ""; }
     { const n = tds().filter((x) => !x.done).length, late = tds().filter(tdLate).length; $("#cTodo").textContent = n || ""; const sp = $("#cTodoS"); sp.hidden = !n; sp.textContent = n; sp.classList.toggle("late", !!late); sp.title = n ? `${n} tâche${n > 1 ? "s" : ""} à faire${late ? `, dont ${late} en retard` : ""}` : ""; }
     paintSave(); renderGuide();
   }
@@ -10818,6 +10906,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (view === "journal") renderJournal();
     if (view === "infos") renderInfos();
     if (view === "todo") renderTodo();
+    if (view === "setlist") renderSetlist();
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
     if (view === "rackplan") renderRackplan();
@@ -10892,7 +10981,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq"], dossier: ["todo", "infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan", "setlist"], mat: ["liste", "etiq"], dossier: ["todo", "infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   const densMap = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem("patch-live-density") || "{}") || {}; } catch (e) { /* ignore */ } try { if (!("master" in m) && localStorage.getItem("patch-live-dense") === "1") m.master = "serre"; } catch (e) { /* ignore */ } return m; })();
@@ -10922,7 +11011,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     densApply();
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "plan", "setlist", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     if (v === "hf") hfGrowAll($("#v-hf"));
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
@@ -11171,6 +11260,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       [30, 22, 18, 16, 16, 20, 34].forEach((w, i) => { ns.getColumn(i + 1).width = w; });
       page(ns, false);
     }
+    stSheets(wb, titre);
     tdSheet(wb, titre);
     const jr = wb.addWorksheet("Journal");
     styleHead(jr.addRow(["Date", "Salle", "Changement"]));
@@ -11229,6 +11319,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       next = JSON.parse(JSON.stringify(state));
       const report = reconcile(next, ws);
       tdReconcile(next, wb.getWorksheet("To-do"), report);
+      stReconcile(next, wb, report);
       report.problems.unshift("Ce fichier a perdu les données de l'appli (réenregistré par Numbers ou un autre tableur) : le dossier a été repris depuis cet appareil, avec les corrections du master patch. Les modifs faites dans les autres feuilles ne sont pas reprises.");
       next.sorties = next.sorties || []; learnDossier(next); next.exemple = false;
       return { next, report };
@@ -11241,6 +11332,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if ((Number(app.getCell(1, 4).value) || 0) > APP_FMT) { const e = new Error("trop-recent"); e.code = "trop-recent"; throw e; }
     const report = reconcile(next, wb.getWorksheet("Master patch"));
     tdReconcile(next, wb.getWorksheet("To-do"), report);
+    stReconcile(next, wb, report);
     next.sorties = next.sorties || [];
     learnDossier(next);
     delete next.bibliotheque; delete next.savedAt; next.exemple = false;
@@ -11699,7 +11791,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       commit(true);
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
-    planBind(); rackplanBind(); tdBind();
+    planBind(); rackplanBind(); tdBind(); stBind();
     synBind();
     hfBind(); kbBind(); spxPatchBind();
     ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
@@ -11839,7 +11931,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const J = (x) => JSON.stringify(x);
   const isObj = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
   const idList = (a) => Array.isArray(a) && a.length > 0 && a.every((x) => isObj(x) && x.id != null);
-  const itemName = (x) => (x && (x.source || x.nom || x.mix || x.txt || (x.type && x.num != null ? x.type + " #" + x.num : "") || x.num)) || "élément";
+  const itemName = (x) => (x && (x.source || x.nom || x.titre || x.mix || x.txt || x.quoi || (x.type && x.num != null ? x.type + " #" + x.num : "") || x.num)) || "élément";
   // Une adresse (boîtier + entrée, stage rack + carte + entrée, port, horloge…) est une seule valeur :
   // on ne prend jamais le boîtier de l'un et le numéro de l'autre
   const ADDR_KEYS = new Set(["b", "i", "r", "c", "h", "in", "n", "p", "from", "src"]);
@@ -11894,7 +11986,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const k = path[path.length - 1]; if (isObj(k)) return false;
     o[k] = v; return true;
   }
-  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens" };
+  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens", setlists: "Setlist", titres: "", cols: "colonnes", acts: "conduite", titre: "titre", duree: "durée", bpm: "BPM", lieu: "lieu", guest: "guest", joue: "qui joue quoi", quoi: "action", debut: "début" };
   const conflictWhere = (c) => c.labels.map((x) => (x in FIELD_FR ? FIELD_FR[x] : x)).filter(Boolean).join(" › ");
   const conflictVal = (v) => (v == null || v === "" ? "vide" : typeof v === "object" ? (v.b ? boxAddr(v) : v.r ? rackAddr(v) : "autre valeur") : v === true ? "oui" : v === false ? "non" : String(v));
   let lastConflicts = [];
@@ -12448,7 +12540,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // ---------- Menus clic droit ----------
   // Un seul menu pour toute l'appli : clic droit à la souris, appui long au doigt, touche Menu (ou Maj+F10) au clavier.
   // Chaque écran y met ses actions rapides ; Maj+clic droit garde le menu habituel du navigateur (copier, coller).
-  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel], [data-hddel], button[data-fxdel], button[data-netdel]";
+  const DEL_SEL = "button[data-del], button[data-delrack], button[data-delbox], button[data-delman], [data-hrdel], button[data-sldel], [data-hddel], button[data-fxdel], button[data-netdel], button[data-stdel]";
   const boxUsed = (b) => [...state.lignes, ...(state.sorties || [])].some((x) => x.box && x.box.b === b.id);
   const CTX = { items: [], stack: [], title: "", xy: [0, 0], opened: 0 };
   function ctxRender() {
@@ -12730,6 +12822,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     { t: "Descendre d'un rang", off: !canMove(arr, x, 1, same), fn: () => { if (moveAmong(arr, x, 1, same)) commit(true); } }];
   function ctxRow(tr, del) {
     if (tr.dataset.td) return ctxTodo(tr);
+    if (tr.dataset.st) return ctxSetlist(tr);
     const name = (tr.querySelector('input[data-f="source"], input[type="text"]') || {}).value || "";
     const rm = del && { t: "Supprimer…", danger: true, fn: () => { if (!del.isConnected) return; del.click(); if (del.isConnected && del.classList.contains("armed")) del.click(); } };
     const hr = tr.dataset.hr && tr.closest("[data-hg]");
@@ -12963,6 +13056,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     m: { k: "Matériel", all: () => (state.materiel || []).map((x) => ({ id: x.id, t: x.nom || "(matériel)", d: [x.qte ? "×" + x.qte : "", x.cat].filter(Boolean).join(" · ") })), go: (id) => { setView("liste"); tdFlashSel(`#manTbl tr[data-mid="${id}"]`); } },
     fx: { k: "Local / intercom", all: () => ["locaux", "com"].flatMap((k) => freeState(k).rows.filter(fxFilled).map((r) => ({ id: r.id, t: [r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", d: k === "com" ? "Intercom" : "Local console" }))), go: (id) => { setView(freeState("com").rows.some((r) => r.id === id) ? "com" : "local"); tdFlashSel(`tr[data-fr="${id}"]`); } },
     n: { k: "Réseau", all: () => netState().extra.map((x) => ({ id: x.id, t: x.nom || "Appareil", d: x.ip || "" })), go: (id) => { setView("net"); tdFlashSel(`#netTbl tr[data-nk="e:${CSS.escape(id)}"]`); } },
+    st: { k: "Setlist", all: () => sts().flatMap((v) => { const c = stCalc(v); return stRows(v).map((r) => ({ id: r.id, t: stRowName(r), d: [sts().length > 1 ? v.nom : "", c.nums.get(r.id) ? "n° " + c.nums.get(r.id) : "", r.duree].filter(Boolean).join(" · ") })); }), go: (id) => { const f = stFind(id); if (f) stPick(f.v.id); stMode = "tbl"; setView("setlist"); tdFlashSel(`#stTbl tr[data-st="${CSS.escape(id)}"]`); } },
     v: { k: "Page", all: tdViews, go: (id) => { setView(id); scrollTo({ top: 0 }); } }
   };
   const tdKey = (L) => L.k + ":" + L.id;
@@ -12992,6 +13086,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (tr.dataset.hr) return { k: "h", id: tr.dataset.hr };
     if (tr.dataset.hd) return { k: "hd", id: tr.dataset.hd };
     if (tr.dataset.mid) return { k: "m", id: tr.dataset.mid };
+    if (tr.dataset.st) return { k: "st", id: tr.dataset.st };
     if (tr.dataset.lk) return { k: "sl", id: tr.dataset.lk };
     if (tr.dataset.pk) return { k: "p", id: tr.dataset.pk };
     if (tr.dataset.fr) return { k: "fx", id: tr.dataset.fr };
@@ -13041,7 +13136,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function tdLinkOpen(x) { tdLinkTask = x; const d = $("#tdLinkDlg"); $("#tdLinkIn").value = ""; tdLinkPaint(); try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } $("#tdLinkIn").focus(); }
   function tdLinkPaint() {
     const words = $("#tdLinkIn").value.trim().toLowerCase().split(/\s+/).filter(Boolean), have = new Set((tdLinkTask && tdLinkTask.links || []).map(tdKey));
-    const all = tdAll().filter((x) => !have.has(x.k + ":" + x.id));
+    const all = tdAll().filter((x) => !have.has(x.k + ":" + x.id) && !(tdLinkTask && x.id === tdLinkTask.id));
     tdLinkList = (words.length ? all.filter((x) => { const h = (x.t + " " + x.d + " " + x.kn).toLowerCase(); return words.every((w) => h.includes(w)); }) : all).slice(0, 80);
     tdLinkIdx = 0;
     $("#tdLinkRes").innerHTML = tdLinkList.length ? tdLinkList.map((x, i) => `<li data-li="${i}"${i === 0 ? ' class="on"' : ""}><span class="gk">${esc(x.kn)}</span><b>${esc(x.t)}</b><span class="gd">${esc(x.d)}</span></li>`).join("") : `<li class="none">Rien trouvé</li>`;
@@ -13049,7 +13144,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function tdLinkPick(i) {
     const x = tdLinkList[i], t = tdLinkTask; if (!x || !t) return;
     $("#tdLinkDlg").close();
-    if (!tds().includes(t)) return;
+    if (!tds().includes(t) && !stAllRows().some((z) => z.r === t)) return;
     t.links = [...(t.links || []), { id: x.id, k: x.k, t: x.t }]; commit(true);
   }
 
@@ -13075,6 +13170,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       case "n": return q(`#netTbl tr[data-nk="e:${e}"] > td:first-child`);
       case "sn": return q(`#netTbl tr[data-nk="x:${e}"] > td:first-child`);
       case "rc": return q(`.rpcase[data-rpc="${e}"] > .rphead`);
+      case "st": return q(`#stTbl tr[data-st="${e}"] > td:first-child`);
       default: return [];
     }
   }
@@ -13282,6 +13378,303 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       next.todos = order.length || !L.length ? order : L;
     } finally { state = prev; }
   }
+  // ---------- Setlist et conduite plateau ----------
+  // Plusieurs versions par dossier (un soir, une date, un festival raccourci…), chacune avec ses titres.
+  // Version : { id, nom, date, debut ("21:00"), cols: [{ id, nom }] (qui joue quoi), titres: [ligne] }
+  // Ligne : { id, type, titre, duree ("4:30"), bpm, lieu, guest, joue: { idColonne: instrument }, acts: [{ id, qui, quoi }], notes, links: [{ id, k, t }] }
+  const ST_TYPES = [["titre", "Titre"], ["mep", "Mise en place"], ["intro", "Intro"], ["interlude", "Interlude"], ["talk", "Talk"], ["chg", "Changement"], ["entracte", "Entracte"], ["rappel", "Rappel"], ["outro", "Outro"]];
+  const stTypeName = (t) => (ST_TYPES.find((x) => x[0] === t) || ST_TYPES[0])[1];
+  const sts = () => (Array.isArray(state.setlists) ? state.setlists : []);
+  const stsW = () => { if (!Array.isArray(state.setlists)) state.setlists = []; return state.setlists; };
+  const stNewVer = (nom) => ({ id: nid(), nom: nom || "Setlist", date: "", debut: "", cols: [], titres: [] });
+  const stNewRow = (type) => ({ id: nid(), type: type || "titre", titre: "", duree: "", bpm: "", lieu: "", guest: "", joue: {}, acts: [], notes: "", links: [] });
+  const stRows = (v) => (v && Array.isArray(v.titres) ? v.titres : []);
+  const stCols = (v) => (v && Array.isArray(v.cols) ? v.cols : []);
+  const stActs = (r) => (Array.isArray(r.acts) ? r.acts : []);
+  let stCurId = "", stMode = "tbl", stQuiF = "", stArmed = null;
+  try { stCurId = localStorage.getItem("patch-live-setlist") || ""; stMode = localStorage.getItem("patch-live-setlistmode") === "cond" ? "cond" : "tbl"; } catch (e) { /* ignore */ }
+  const stCur = () => sts().find((v) => v.id === stCurId) || sts()[0] || null;
+  function stCurW() { let v = stCur(); if (!v) { v = stNewVer("Setlist"); stsW().push(v); } if (!Array.isArray(v.titres)) v.titres = []; if (!Array.isArray(v.cols)) v.cols = []; return v; }
+  function stPick(id) { stCurId = id; try { localStorage.setItem("patch-live-setlist", id); } catch (e) { /* ignore */ } }
+  const stAllRows = () => sts().flatMap((v) => stRows(v).map((r) => ({ v, r })));
+  const stRowName = (r) => (r.type === "titre" ? r.titre || "(titre sans nom)" : [stTypeName(r.type), r.titre].filter(Boolean).join(" · "));
+  // Durées : « 4:30 », « 1:02:00 », « 4 » (minutes)
+  function stSec(s) {
+    s = String(s || "").trim().replace(/[’']/g, ":").replace(/\s*(min|mn|m)\s*$/i, ""); if (!s) return null;
+    if (/^\d+([.,]\d+)?$/.test(s)) return Math.round(parseFloat(s.replace(",", ".")) * 60);
+    const p = s.split(/[:h]/).map((x) => x.trim()); if (p.some((x) => !/^\d+$/.test(x))) return null;
+    return p.length === 2 ? +p[0] * 60 + +p[1] : p.length === 3 ? +p[0] * 3600 + +p[1] * 60 + +p[2] : null;
+  }
+  const stDur = (s) => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60; return h ? `${h} h ${String(m).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`; };
+  const stClock = (s) => { s = ((s % 86400) + 86400) % 86400; return `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`; };
+  // Numéros (les titres seulement), heures de début si l'heure du show est donnée, total
+  function stCalc(v) {
+    const nums = new Map(), starts = new Map(); let n = 0, t = 0, miss = 0;
+    const d0 = /^(\d{1,2}):(\d\d)$/.exec(v && v.debut || ""), base = d0 ? +d0[1] * 3600 + +d0[2] * 60 : null;
+    stRows(v).forEach((r) => {
+      if (r.type === "titre") nums.set(r.id, ++n);
+      if (base !== null) starts.set(r.id, stClock(base + t));
+      const s = stSec(r.duree); if (s) t += s; else if (r.type === "titre") miss++;
+    });
+    return { nums, starts, n, total: t, miss, end: base !== null && t ? stClock(base + t) : "" };
+  }
+  // Qui joue quoi : ce qui change par rapport au titre d'avant
+  function stChanges(v) {
+    const out = new Map(), last = {};
+    stRows(v).forEach((r) => {
+      if (r.type !== "titre") return;
+      const ch = [];
+      stCols(v).forEach((c) => {
+        const cur = String((r.joue || {})[c.id] || "").trim(), prev = last[c.id];
+        if (prev !== undefined && cur && musKey(cur) !== musKey(prev)) ch.push({ c, from: prev, to: cur });
+        if (cur) last[c.id] = cur;
+      });
+      out.set(r.id, ch);
+    });
+    return out;
+  }
+  function stQuiList() {
+    const seen = new Set(), out = [];
+    [...stAllRows().flatMap(({ r }) => stActs(r).map((a) => a.qui)), ...personNames()].forEach((x) => { x = String(x || "").trim(); const k = x.toLowerCase(); if (x && !seen.has(k)) { seen.add(k); out.push(x); } });
+    $("#dlStQui").innerHTML = out.map((x) => `<option value="${esc(x)}">`).join("");
+    return out;
+  }
+  const stActTxt = (a) => (a.qui ? `${a.qui} : ${a.quoi || ""}` : a.quoi || "").trim();
+  const stLinksTxt = (r) => tdLinksText(r);
+
+  function renderSetlist() {
+    const v = stCur(), L = sts();
+    $("#stVer").innerHTML = L.length ? L.map((x) => `<option value="${x.id}"${v && x.id === v.id ? " selected" : ""}>${esc(x.nom || "Setlist")}${x.date ? " · " + esc(x.date.split("-").reverse().join("/")) : ""}</option>`).join("") : `<option value="">Setlist</option>`;
+    $("#stVer").hidden = L.length < 2;
+    $("#stNom").value = v ? v.nom || "" : "Setlist"; $("#stDate").value = v ? v.date || "" : ""; $("#stDebut").value = v ? v.debut || "" : "";
+    document.querySelectorAll("#v-setlist [data-stmode]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.stmode === stMode ? "true" : "false"));
+    const quis = stQuiList().filter((q) => v && stRows(v).some((r) => stActs(r).some((a) => musKey(a.qui) === musKey(q))));
+    if (stQuiF && !quis.some((q) => musKey(q) === musKey(stQuiF))) stQuiF = "";
+    $("#stQui").innerHTML = `<option value="">Tout le monde</option>${quis.map((q) => `<option value="${esc(q)}"${musKey(q) === musKey(stQuiF) ? " selected" : ""}>${esc(q)}</option>`).join("")}`;
+    $("#stQui").hidden = stMode !== "cond" || !quis.length;
+    const c = stCalc(v);
+    $("#stSum").textContent = c.n ? `${c.n} titre${c.n > 1 ? "s" : ""}${c.total ? ` · ${stDur(c.total)}${c.miss ? ` (${c.miss} sans durée)` : ""}` : ""}${c.end ? ` · fin vers ${c.end}` : ""}` : "";
+    renderStCols(v);
+    if (!v || !stRows(v).length) {
+      $("#stWrap").innerHTML = `<div class="empty-state">Pas encore de setlist. « + Titre » ajoute un titre ; « + Changement » une ligne de conduite entre deux titres (sortie de scène, mise en place…). Chaque ligne a sa conduite plateau : qui amène ou récupère quoi.</div>`;
+      return;
+    }
+    $("#stWrap").innerHTML = stMode === "cond" ? stCondHtml(v, stQuiF, false) : stTableHtml(v, c);
+    if (stMode === "tbl") requestAnimationFrame(() => document.querySelectorAll("#stTbl textarea").forEach(hfGrow));
+  }
+  function stTableHtml(v, c) {
+    const cols = stCols(v), ch = stChanges(v), hasStart = c.starts.size > 0;
+    const chip = (L2, i) => { const n = tdLinkName(L2); return `<span class="tdchip${n.gone ? " gone" : ""}"><button type="button" data-stgo="${i}" title="${n.gone ? "Élément supprimé du dossier" : `Aller à ${esc(n.kn.toLowerCase())} « ${esc(n.t)} »`}"><span class="tdk">${esc(n.kn)}</span> ${esc(n.t)}</button><button type="button" data-stunlink="${i}" aria-label="Retirer le lien vers ${esc(n.t)}" title="Retirer le lien">×</button></span>`; };
+    const inp = (r, f, ph, extra = "") => `<input type="text" data-sf="${f}" value="${esc(r[f] || "")}" aria-label="${ph}" placeholder="—" autocomplete="off"${extra}>`;
+    return `<table id="stTbl" class="cards"><thead><tr><th class="stn">N°</th><th>Type</th><th>Titre</th><th>Durée</th><th>BPM</th>${hasStart ? "<th>Début</th>" : ""}<th>Acte / lieu</th><th>Guest</th>${cols.map((k) => `<th class="stj">${esc(k.nom || "?")}</th>`).join("")}<th>Conduite plateau</th><th>Régie / notes</th><th>Lié à</th><th></th></tr></thead><tbody>${stRows(v).map((r) => {
+      const chg = new Map((ch.get(r.id) || []).map((x) => [x.c.id, x]));
+      return `<tr data-st="${r.id}" class="st-${esc(r.type || "titre")}">
+        <td class="stn" data-l="N°">${c.nums.get(r.id) || ""}</td>
+        <td class="sttype" data-l="Type"><select data-sf="type" aria-label="Type de ligne">${ST_TYPES.map(([k, t]) => `<option value="${k}"${k === (r.type || "titre") ? " selected" : ""}>${t}</option>`).join("")}</select></td>
+        <td class="sttitre" data-l="Titre">${inp(r, "titre", r.type === "titre" ? "Titre" : "Description", r.type === "titre" ? "" : ' placeholder="—"')}</td>
+        <td class="stdur" data-l="Durée">${inp(r, "duree", "Durée", ' inputmode="numeric" size="5" placeholder="4:30"')}</td>
+        <td class="stbpm" data-l="BPM">${inp(r, "bpm", "BPM", ' inputmode="numeric" size="4"')}</td>
+        ${hasStart ? `<td class="ststart mono" data-l="Début">${c.starts.get(r.id) || ""}</td>` : ""}
+        <td class="stlieu" data-l="Acte / lieu">${inp(r, "lieu", "Acte ou lieu")}</td>
+        <td class="stguest" data-l="Guest">${inp(r, "guest", "Guest")}</td>
+        ${cols.map((k) => { const x = chg.get(k.id); return `<td class="stj${x ? " stchg" : ""}" data-l="${esc(k.nom || "?")}"${x ? ` title="Avant : ${esc(x.from)}"` : ""}><input type="text" data-sj="${k.id}" value="${esc((r.joue || {})[k.id] || "")}" aria-label="${esc(k.nom || "")} : instrument" placeholder="—" autocomplete="off"></td>`; }).join("")}
+        <td class="stcond" data-l="Conduite plateau"><div class="stacts">${stActs(r).map((a) => `<div class="stact" data-sa="${a.id}"><input type="text" class="stqui" data-saf="qui" value="${esc(a.qui || "")}" aria-label="Qui" placeholder="Qui" autocomplete="off" data-suggest="dlStQui"><textarea data-saf="quoi" rows="1" aria-label="Ce qu'il faut faire" placeholder="Ce qu'il faut faire">${esc(a.quoi || "")}</textarea><button type="button" class="stadel" data-sadel="${a.id}" aria-label="Retirer l'action" title="Retirer l'action">×</button></div>`).join("")}<button type="button" class="tdlk-add" data-saadd title="Qui amène, récupère ou change quoi pendant ou après ce titre">+ Action</button></div></td>
+        <td class="stnotes" data-l="Régie / notes"><textarea data-sf="notes" rows="1" aria-label="Régie ou notes" placeholder="—">${esc(r.notes || "")}</textarea></td>
+        <td class="stlk" data-l="Lié à"><div class="tdlinks">${(r.links || []).map(chip).join("")}<button type="button" class="tdlk-add" data-stlink title="Lier à une source, une liaison HF, un porteur, une tâche…">+ Lier</button></div></td>
+        <td class="x"><button class="btn small danger xdel" type="button" data-stdel="${r.id}" title="Supprimer la ligne" aria-label="Supprimer la ligne">×</button></td>
+      </tr>`; }).join("")}</tbody></table>`;
+  }
+  // Vue conduite : comme la conduite plateau papier, titre puis ce qu'il y a à faire (filtrable par personne)
+  function stCondHtml(v, qui, print) {
+    const c = stCalc(v), ch = stChanges(v), k = musKey(qui);
+    return `<ol class="stcondl">${stRows(v).map((r) => {
+      const acts = stActs(r).filter((a) => (a.qui || a.quoi) && (!k || musKey(a.qui) === k));
+      const chg = k ? [] : ch.get(r.id) || [];
+      const meta = [r.duree, c.starts.get(r.id), r.lieu, r.guest && "guest " + r.guest, r.bpm && r.bpm + " BPM"].filter(Boolean).map(esc).join(" · ");
+      const head = r.type === "titre" ? `<span class="stcn">${c.nums.get(r.id)}</span><b>${esc(r.titre || "(titre sans nom)")}</b>` : `<span class="stck">${esc(stTypeName(r.type))}</span>${r.titre ? `<b>${esc(r.titre)}</b>` : ""}`;
+      const body = [...acts.map((a) => `<li>${a.qui ? `<b>${esc(a.qui)}</b> ` : ""}${esc(a.quoi || "").replace(/\n/g, "<br>")}</li>`), ...chg.map((x) => `<li class="stjoue">${esc(x.c.nom)} : ${esc(x.from)} → <b>${esc(x.to)}</b></li>`), !k && r.notes ? `<li class="stnote">${esc(r.notes).replace(/\n/g, "<br>")}</li>` : ""].filter(Boolean).join("");
+      return `<li class="st-${esc(r.type || "titre")}${acts.length || chg.length ? " has" : ""}"${print ? "" : ` data-stc="${r.id}"`}><div class="stch">${head}${meta ? `<span class="stmeta">${meta}</span>` : ""}</div>${body ? `<ul>${body}</ul>` : ""}</li>`;
+    }).join("")}</ol>`;
+  }
+  function renderStCols(v) {
+    const f = $("#stColsForm"); if (f.hidden) return;
+    $("#stColsList").innerHTML = stCols(v).length ? stCols(v).map((k, i, a) => `<li data-stcol="${k.id}"><input type="text" value="${esc(k.nom || "")}" data-stcn aria-label="Nom de la colonne" autocomplete="off" data-suggest="dlMus"><button type="button" class="btn small" data-stcmv="-1"${i ? "" : " disabled"} aria-label="Monter" title="Monter">↑</button><button type="button" class="btn small" data-stcmv="1"${i < a.length - 1 ? "" : " disabled"} aria-label="Descendre" title="Descendre">↓</button><button type="button" class="btn small danger" data-stcdel aria-label="Retirer la colonne" title="Retirer la colonne">×</button></li>`).join("") : `<li class="hint">Aucune colonne pour l'instant.</li>`;
+  }
+  function stFind(id) { for (const v of sts()) { const r = stRows(v).find((x) => x.id === id); if (r) return { v, r }; } return null; }
+  function stFocus(sel) { requestAnimationFrame(() => { const i = document.querySelector(sel); if (i) { i.scrollIntoView({ block: "center" }); i.focus(); } }); }
+  function stAddRow(type, at) {
+    const v = stCurW(), r = stNewRow(type); stPick(v.id);
+    if (at == null || at < 0) v.titres.push(r); else v.titres.splice(at, 0, r);
+    if (stMode !== "tbl") { stMode = "tbl"; try { localStorage.setItem("patch-live-setlistmode", stMode); } catch (e) { /* ignore */ } }
+    commit(true); stFocus(`#stTbl tr[data-st="${r.id}"] input[data-sf="titre"]`); return r;
+  }
+  function stAddAct(r) { const a = { id: nid(), qui: "", quoi: "" }; if (!Array.isArray(r.acts)) r.acts = []; r.acts.push(a); commit(true); stFocus(`#stTbl .stact[data-sa="${a.id}"] input`); }
+  function stVerItems() {
+    const v = stCur();
+    return [{ t: "Nouvelle version vide", fn: () => { const n = stNewVer(`Setlist ${sts().length + 1}`); stsW().push(n); stPick(n.id); commit(true); const i = $("#stNom"); i.focus(); i.select(); } },
+      v && { t: "Dupliquer cette version", fn: () => { const n = JSON.parse(JSON.stringify(v)); n.id = nid(); n.nom = `${v.nom || "Setlist"} (copie)`; const map = {}; n.cols.forEach((k) => { const o = k.id; k.id = nid(); map[o] = k.id; }); n.titres.forEach((r) => { r.id = nid(); const j = {}; Object.keys(r.joue || {}).forEach((o) => { if (map[o]) j[map[o]] = r.joue[o]; }); r.joue = j; stActs(r).forEach((a) => { a.id = nid(); }); }); stsW().splice(sts().indexOf(v) + 1, 0, n); stPick(n.id); commit(true); const i = $("#stNom"); i.focus(); i.select(); } },
+      v && sts().length > 1 && { t: "Monter la version", off: sts().indexOf(v) === 0, fn: () => { if (moveAmong(sts(), v, -1)) commit(true); } },
+      v && sts().length > 1 && { t: "Descendre la version", off: sts().indexOf(v) === sts().length - 1, fn: () => { if (moveAmong(sts(), v, 1)) commit(true); } },
+      v && "-", v && { t: `Supprimer la version « ${v.nom || "Setlist"} » (${stRows(v).length} ligne${stRows(v).length > 1 ? "s" : ""})`, danger: true, fn: () => { state.setlists = sts().filter((x) => x !== v); stPick((sts()[0] || {}).id || ""); commit(true); } }];
+  }
+  function stBind() {
+    const wrap = $("#stWrap"), row = (el) => { const tr = el.closest("tr[data-st]"); return tr && stFind(tr.dataset.st); };
+    $("#stAdd").addEventListener("click", () => stAddRow("titre"));
+    $("#stAddChg").addEventListener("click", () => { const r = stAddRow("chg"); r.acts = [{ id: nid(), qui: "", quoi: "" }]; commit(true); stFocus(`#stTbl tr[data-st="${r.id}"] input[data-sf="titre"]`); });
+    $("#stVer").addEventListener("change", (e) => { stPick(e.target.value); render(); });
+    $("#stVerBtn").addEventListener("click", (e) => { const r = e.currentTarget.getBoundingClientRect(); CTX.kb = false; ctxOpen(r.left, r.bottom + 2, "Versions de la setlist", stVerItems()); });
+    $("#stNom").addEventListener("change", (e) => { const v = stCurW(); v.nom = e.target.value.trim() || "Setlist"; stPick(v.id); commit(true); });
+    $("#stDate").addEventListener("change", (e) => { const v = stCurW(); v.date = e.target.value || ""; stPick(v.id); commit(true); });
+    $("#stDebut").addEventListener("change", (e) => { const v = stCurW(); v.debut = e.target.value || ""; stPick(v.id); commit(true); });
+    $("#stQui").addEventListener("change", (e) => { stQuiF = e.target.value; renderSetlist(); });
+    $("#v-setlist").addEventListener("click", (e) => { const m = e.target.closest("[data-stmode]"); if (!m) return; stMode = m.dataset.stmode; try { localStorage.setItem("patch-live-setlistmode", stMode); } catch (err) { /* ignore */ } renderSetlist(); });
+    // Colonnes « qui joue quoi »
+    $("#stColsBtn").addEventListener("click", () => { const f = $("#stColsForm"); f.hidden = !f.hidden; renderStCols(stCur()); if (!f.hidden) $("#stColNew").focus(); });
+    $("#stColsClose").addEventListener("click", () => { $("#stColsForm").hidden = true; });
+    const addCol = () => {
+      const i = $("#stColNew"), names = i.value.split(/\s*[,;]\s*/).map((x) => x.trim()).filter(Boolean); if (!names.length) { i.focus(); return; }
+      const v = stCurW(); stPick(v.id); names.forEach((n) => v.cols.push({ id: nid(), nom: canonMus(n) || n })); i.value = ""; commit(true); renderStCols(v); $("#stColNew").focus();
+    };
+    $("#stColAdd").addEventListener("click", addCol);
+    $("#stColNew").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addCol(); } });
+    $("#stColsAll").addEventListener("click", () => { const v = stCurW(), have = new Set(stCols(v).map((k) => musKey(k.nom))); personNames().filter((n) => !have.has(musKey(n))).forEach((n) => v.cols.push({ id: nid(), nom: n })); stPick(v.id); commit(true); renderStCols(v); });
+    $("#stColsList").addEventListener("change", (e) => { const li = e.target.closest("[data-stcol]"), v = stCur(), k = li && v && stCols(v).find((x) => x.id === li.dataset.stcol); if (!k || !e.target.matches("[data-stcn]")) return; k.nom = e.target.value.trim() || k.nom; commit(true); renderStCols(v); });
+    $("#stColsList").addEventListener("click", (e) => {
+      const li = e.target.closest("[data-stcol]"), v = stCur(), k = li && v && stCols(v).find((x) => x.id === li.dataset.stcol); if (!k) return; let b;
+      if ((b = e.target.closest("[data-stcmv]"))) { if (moveAmong(v.cols, k, +b.dataset.stcmv)) { commit(true); renderStCols(v); } return; }
+      if ((b = e.target.closest("[data-stcdel]"))) { const used = stRows(v).filter((r) => (r.joue || {})[k.id]).length; if (used && !b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmer"; b.title = `Retire aussi ce qu'elle contient (${used} titre${used > 1 ? "s" : ""})`; setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "×"; } }, 3000); return; } v.cols = v.cols.filter((x) => x !== k); stRows(v).forEach((r) => { if (r.joue) delete r.joue[k.id]; }); commit(true); renderStCols(v); }
+    });
+    // Cases du tableau
+    wrap.addEventListener("change", (e) => {
+      const t = e.target, f = row(t); if (!f) return; const r = f.r;
+      if (t.dataset.sf) { r[t.dataset.sf] = t.tagName === "SELECT" ? t.value : t.value.replace(/\s+$/, ""); commit(t.dataset.sf === "type" || t.dataset.sf === "duree"); return; }
+      if (t.dataset.sj) { if (!r.joue || typeof r.joue !== "object") r.joue = {}; const val = t.value.trim(); if (val) r.joue[t.dataset.sj] = val; else delete r.joue[t.dataset.sj]; commit(true); return; }
+      if (t.dataset.saf) { const a = stActs(r).find((x) => x.id === t.closest("[data-sa]").dataset.sa); if (!a) return; a[t.dataset.saf] = t.dataset.saf === "qui" ? canonMus(t.value) || t.value.trim() : t.value.replace(/\s+$/, ""); commit(false); }
+    });
+    wrap.addEventListener("input", (e) => { if (e.target.tagName === "TEXTAREA") hfGrow(e.target); });
+    wrap.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "TEXTAREA" && e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); e.target.blur(); }
+      // Entrée dans « Qui » passe à ce qu'il faut faire
+      if (e.target.matches("input.stqui") && e.key === "Enter" && !e.isComposing) { e.preventDefault(); const ta = e.target.parentNode.querySelector("textarea"); if (ta) ta.focus(); }
+    });
+    wrap.addEventListener("click", (e) => {
+      const f = row(e.target); if (!f) return; const r = f.r; let b;
+      if ((b = e.target.closest("[data-stgo]"))) { const L2 = (r.links || [])[+b.dataset.stgo]; if (L2) tdGo(L2); return; }
+      if ((b = e.target.closest("[data-stunlink]"))) { r.links = (r.links || []).filter((_, i) => i !== +b.dataset.stunlink); commit(true); return; }
+      if (e.target.closest("[data-stlink]")) { tdLinkOpen(r); return; }
+      if (e.target.closest("[data-saadd]")) { stAddAct(r); return; }
+      if ((b = e.target.closest("[data-sadel]"))) { r.acts = stActs(r).filter((a) => a.id !== b.dataset.sadel); commit(true); return; }
+      if ((b = e.target.closest("[data-stdel]"))) {
+        if (stArmed !== r.id || !b.classList.contains("armed")) { stArmed = r.id; b.classList.add("armed"); b.textContent = "Confirmer"; setTimeout(() => { if (b.isConnected) { b.classList.remove("armed"); b.textContent = "×"; } stArmed = null; }, 3000); return; }
+        stArmed = null; f.v.titres = stRows(f.v).filter((z) => z !== r); commit(true);
+      }
+    });
+    // Vue conduite : un clic sur un titre l'ouvre dans le tableau
+    wrap.addEventListener("dblclick", (e) => { const li = e.target.closest("li[data-stc]"); if (!li) return; stMode = "tbl"; renderSetlist(); tdFlashSel(`#stTbl tr[data-st="${li.dataset.stc}"]`); });
+  }
+  function ctxSetlist(tr) {
+    const f = stFind(tr.dataset.st); if (!f) return null;
+    const { v, r } = f, at = stRows(v).indexOf(r), ls = (r.links || []).filter((z) => tdFind(z.k, z.id));
+    return [stRowName(r), [
+      { t: "Ajouter une action de conduite", fn: () => stAddAct(r) },
+      { t: "Lier à un élément…", fn: () => tdLinkOpen(r) },
+      ls.length === 1 && { t: `Aller à « ${tdLinkName(ls[0]).t} »`, fn: () => tdGo(ls[0]) },
+      ls.length > 1 && { t: "Aller à", sub: () => ls.map((z) => { const n = tdLinkName(z); return { t: `${n.kn} · ${n.t}`, fn: () => tdGo(z) }; }) },
+      "-",
+      { t: "Insérer un titre au-dessus", fn: () => stAddRow("titre", at) },
+      { t: "Insérer un titre en dessous", fn: () => stAddRow("titre", at + 1) },
+      { t: "Insérer un changement en dessous", fn: () => { const n = stAddRow("chg", at + 1); n.acts = [{ id: nid(), qui: "", quoi: "" }]; commit(true); } },
+      { t: "Dupliquer", fn: () => { const n = JSON.parse(JSON.stringify(r)); n.id = nid(); stActs(n).forEach((a) => { a.id = nid(); }); v.titres.splice(at + 1, 0, n); commit(true); } },
+      sts().length > 1 && { t: "Copier dans la version", sub: () => sts().filter((x) => x !== v).map((x) => ({ t: x.nom || "Setlist", fn: () => { const n = JSON.parse(JSON.stringify(r)); n.id = nid(); n.joue = {}; stActs(n).forEach((a) => { a.id = nid(); }); if (!Array.isArray(x.titres)) x.titres = []; x.titres.push(n); commit(true); notice(`« ${esc(stRowName(r))} » copié à la fin de la version « ${esc(x.nom || "Setlist")} ».`); } })) },
+      ...mvItems(v.titres, r),
+      "-", { t: "Supprimer la ligne…", danger: true, fn: () => { v.titres = stRows(v).filter((z) => z !== r); commit(true); } }]];
+  }
+
+  // ---------- Setlist dans Excel : une feuille par version, lisible sans l'appli, corrections reprises à la réouverture ----------
+  const stSheetName = (wb, v, i) => { let n = `Setlist ${v.nom || i + 1}`.replace(/[\\/?*[\]:]/g, " ").slice(0, 31).trim(); let k = 2; while (wb.getWorksheet(n)) n = `${n.slice(0, 27)} (${k++})`; return n; };
+  function stSheets(wb, titre) {
+    sts().forEach((v, i) => {
+      if (!stRows(v).length) return;
+      const c = stCalc(v), cols = stCols(v), ch = stChanges(v);
+      const head = ["N°", "Type", "Titre", "Durée", "BPM", "Début", "Acte / lieu", "Guest", ...cols.map((k) => k.nom || "?"), "Conduite plateau", "Régie / notes", "Lié à", "ID appli"];
+      const ws = wb.addWorksheet(stSheetName(wb, v, i), { views: [{ state: "frozen", ySplit: 2, xSplit: 3 }] });
+      const t = ws.addRow([`Setlist · ${v.nom || "Setlist"}${v.date ? " · " + v.date.split("-").reverse().join("/") : ""}${v.debut ? " · début " + v.debut : ""} · ${titre}`]); t.font = { bold: true, size: 14 };
+      ws.getCell(1, head.length).value = "v:" + v.id;
+      styleHead(ws.addRow(head));
+      [6, 13, 32, 8, 7, 8, 16, 16, ...cols.map(() => 16), 48, 34, 28, 12].forEach((w, j) => { ws.getColumn(j + 1).width = w; });
+      stRows(v).forEach((r) => {
+        const row = ws.addRow([c.nums.get(r.id) || "", stTypeName(r.type), r.titre || "", r.duree || "", r.bpm || "", c.starts.get(r.id) || "", r.lieu || "", r.guest || "", ...cols.map((k) => (r.joue || {})[k.id] || ""), stActs(r).map(stActTxt).filter(Boolean).join("\n"), r.notes || "", stLinksTxt(r), r.id]);
+        row.eachCell({ includeEmpty: true }, (x) => { x.border = BORDER; x.alignment = { vertical: "top", wrapText: true }; });
+        if (r.type === "titre") row.getCell(3).font = { bold: true };
+        else row.eachCell({ includeEmpty: true }, (x) => { x.fill = { type: "pattern", pattern: "solid", fgColor: { argb: r.type === "rappel" || r.type === "entracte" ? "FFFCE694" : "FFEEF1F4" } }; x.font = { italic: x.col !== 3, bold: x.col === 3 }; });
+        const chg = new Set((ch.get(r.id) || []).map((x) => x.c.id));
+        cols.forEach((k, j) => { if (chg.has(k.id)) { const x = row.getCell(9 + j); x.font = { bold: true, color: { argb: "FFA3201A" } }; } });
+      });
+      ws.getColumn(head.length).hidden = true;
+      ws.addRow([]);
+      ws.addRow(["", "", `${c.n} titre${c.n > 1 ? "s" : ""}${c.total ? " · " + stDur(c.total) : ""}${c.end ? " · fin vers " + c.end : ""}`]).getCell(3).font = { bold: true };
+      ws.addRow(["", "", "Tu peux modifier la setlist ou ajouter des lignes en bas (laisse « ID appli » vide) : l'appli les reprend à la réouverture. Type : Titre, Changement, Mise en place, Intro, Interlude, Talk, Entracte, Rappel, Outro. Conduite plateau : une action par ligne, « Qui : ce qu'il faut faire ». En rouge : l'instrument change par rapport au titre d'avant."]).getCell(3).font = { italic: true, color: { argb: "FF6B7177" } };
+      page(ws, true); ws.pageSetup.printTitlesRow = "2:2";
+    });
+  }
+  function stReconcile(next, wb, rep) {
+    if (!wb || !Array.isArray(next.setlists)) return;
+    const prev = state; state = next;
+    try {
+      wb.worksheets.forEach((ws) => {
+        if (!/^Setlist/.test(ws.name)) return;
+        const head = ws.getRow(2).values.map((x) => (x == null ? "" : String(x))), col = (n) => head.indexOf(n);
+        const iId = col("ID appli"); if (iId < 1 || col("Titre") < 1) return;
+        const vid = cellText(ws.getRow(1).getCell(iId)).replace(/^v:/, ""), v = next.setlists.find((x) => x.id === vid); if (!v) return;
+        if (!Array.isArray(v.titres)) v.titres = [];
+        const order = []; let all = null;
+        for (let i = 3; i <= ws.rowCount; i++) {
+          const R = ws.getRow(i), get = (n) => { const j = col(n); return j > 0 ? cellText(R.getCell(j)) : null; };
+          const id = get("ID appli"), titre = get("Titre"), type = get("Type");
+          if (!id && !titre && !type) continue;
+          if (!id && (/^Tu peux modifier/.test(titre) || /^\d+ titres?\b/.test(titre))) continue;
+          let r = id ? v.titres.find((z) => z.id === id) : null;
+          if (!r) { r = stNewRow("titre"); v.titres.push(r); rep.added++; }
+          order.push(r);
+          let touched = false;
+          const set = (f, x) => { if (x !== null && x !== undefined && (r[f] || "") !== x) { r[f] = x; touched = true; } };
+          if (type !== null) { const tk = ST_TYPES.find(([, n]) => n.toLowerCase() === type.toLowerCase()); if (tk) set("type", tk[0]); else if (type) rep.problems.push(`Setlist « ${v.nom} », ligne ${i - 2} : type « ${type} » inconnu, ancien type gardé.`); }
+          set("titre", titre); set("duree", get("Durée")); set("bpm", get("BPM")); set("lieu", get("Acte / lieu")); set("guest", get("Guest")); set("notes", get("Régie / notes"));
+          stCols(v).forEach((k) => { const x = get(k.nom || "?"); if (x === null) return; if (!r.joue || typeof r.joue !== "object") r.joue = {}; if ((r.joue[k.id] || "") !== x) { if (x) r.joue[k.id] = x; else delete r.joue[k.id]; touched = true; } });
+          const cd = get("Conduite plateau");
+          if (cd !== null && cd !== stActs(r).map(stActTxt).filter(Boolean).join("\n")) {
+            const old = stActs(r);
+            r.acts = cd.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).map((s) => { const m = s.match(/^([^:]{1,40}?)\s+:\s*(.*)$/), qui = m ? m[1].trim() : "", quoi = m ? m[2] : s; const o = old.find((a) => (a.qui || "") === qui && (a.quoi || "") === quoi); return o || { id: nid(), qui, quoi }; });
+            touched = true;
+          }
+          const lk = get("Lié à");
+          if (lk !== null && lk !== stLinksTxt(r)) {
+            all = all || tdAll(); const links = [];
+            lk.split(/\s*;\s*/).map((s) => s.trim().replace(/\s*\(supprimé\)$/, "")).filter(Boolean).forEach((s) => {
+              const kept = (r.links || []).find((z) => `${tdLinkName(z).kn} : ${tdLinkName(z).t}`.toLowerCase() === s.toLowerCase()); if (kept) { links.push(kept); return; }
+              const m = s.match(/^(.+?)\s*:\s*(.+)$/), hit = (m && all.find((z) => z.kn.toLowerCase() === m[1].toLowerCase() && z.t.toLowerCase() === m[2].toLowerCase())) || all.find((z) => z.t.toLowerCase() === s.toLowerCase());
+              if (hit) links.push({ id: hit.id, k: hit.k, t: hit.t }); else rep.problems.push(`Setlist « ${v.nom} », ligne ${i - 2} : « ${s} » ne correspond à aucun élément du dossier, lien non repris.`);
+            });
+            if (J(links) !== J(r.links || [])) { r.links = links; touched = true; }
+          }
+          if (touched && id) rep.changed++;
+        }
+        const kept = new Set(order.map((x) => x.id)), gone = v.titres.filter((x) => !kept.has(x.id));
+        if (order.length && gone.length) rep.problems.push(`${gone.length} ligne${gone.length > 1 ? "s" : ""} absente${gone.length > 1 ? "s" : ""} de la feuille « ${ws.name} » supprimée${gone.length > 1 ? "s" : ""} : ${gone.map(stRowName).slice(0, 6).join(", ")}.`);
+        if (order.length) v.titres = order;
+      });
+    } finally { state = prev; }
+  }
+  // Impression : la setlist en tableau, la conduite plateau comme sur papier
+  function stPrintTable() {
+    const v = stCur(); if (!v || !stRows(v).length) return "";
+    const c = stCalc(v), cols = stCols(v), hasStart = c.starts.size > 0, ch = stChanges(v);
+    return `<h2>${esc(v.nom || "Setlist")}${v.date ? " · " + esc(v.date.split("-").reverse().join("/")) : ""}<span class="muted"> · ${c.n} titre${c.n > 1 ? "s" : ""}${c.total ? " · " + stDur(c.total) : ""}${c.end ? " · fin vers " + c.end : ""}</span></h2><table><thead><tr><th>N°</th><th>Titre</th><th>Durée</th><th>BPM</th>${hasStart ? "<th>Début</th>" : ""}<th>Acte / lieu</th><th>Guest</th>${cols.map((k) => `<th>${esc(k.nom)}</th>`).join("")}<th>Conduite plateau</th><th>Régie / notes</th></tr></thead><tbody>${stRows(v).map((r) => { const chg = new Set((ch.get(r.id) || []).map((x) => x.c.id)); return `<tr${r.type === "titre" ? "" : ' class="stx"'}><td>${c.nums.get(r.id) || ""}</td><td>${r.type === "titre" ? `<b>${esc(r.titre)}</b>` : `<i>${esc(stTypeName(r.type))}</i>${r.titre ? " · <b>" + esc(r.titre) + "</b>" : ""}`}</td><td>${esc(r.duree || "")}</td><td>${esc(r.bpm || "")}</td>${hasStart ? `<td>${c.starts.get(r.id) || ""}</td>` : ""}<td>${esc(r.lieu || "")}</td><td>${esc(r.guest || "")}</td>${cols.map((k) => `<td>${chg.has(k.id) ? "<b>" : ""}${esc((r.joue || {})[k.id] || "")}${chg.has(k.id) ? "</b>" : ""}</td>`).join("")}<td>${stActs(r).map((a) => esc(stActTxt(a))).filter(Boolean).join("<br>")}</td><td>${esc(r.notes || "").replace(/\n/g, "<br>")}</td></tr>`; }).join("")}</tbody></table>`;
+  }
+  function stPrintCond() {
+    const v = stCur(); if (!v || !stRows(v).length || !stRows(v).some((r) => stActs(r).some((a) => a.quoi || a.qui))) return "";
+    return `<h2>${esc(v.nom || "Setlist")}${stQuiF ? ` · <span class="muted">pour</span> ${esc(stQuiF)}` : ""}</h2>${stCondHtml(v, stQuiF, true)}`;
+  }
   // Recherche globale : Ctrl+K ou « / » depuis n'importe quel onglet
   function gsItems() {
     const out = [], cols = srCols();
@@ -13290,7 +13683,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     hfState().forEach((g) => g.rows.forEach((r) => out.push({ k: "HF", t: [r.nom, r.mix].filter(Boolean).join(" · ") || g.model, d: [g.model, r.plan, r.freq, r.mix].filter(Boolean).join(" · "), go: () => { setView("hf"); if (closedHf.has(g.id)) hfFold([g.id], true); const tr = document.querySelector(`tr[data-hr="${r.id}"]`); if (tr) { tr.scrollIntoView({ block: "center" }); flash(tr); } } })));
     state.racks.forEach((r) => out.push({ k: "Rack / I/O", t: rackTitle(r), d: `${rackInputs(r).length} in / ${rackOutputs(r).length} out`, go: () => { setView("racks"); const d = document.querySelector(`details[data-rd="${r.id}"]`); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } } }));
     tds().forEach((x) => out.push({ k: x.done ? "Tâche faite" : "Tâche", t: tdShort(x.txt, 80), d: [x.qui, x.pour, tdLinksText(x)].filter(Boolean).join(" · "), go: () => tdShow(x.id) }));
-    ["hd", "p", "rc", "ri", "pl", "sn", "sl", "m", "fx", "n"].forEach((k) => { try { TD_K[k].all().forEach((x) => out.push({ k: TD_K[k].k, t: x.t, d: x.d, go: () => TD_K[k].go(x.id) })); } catch (e) { /* ignore */ } });
+    ["hd", "p", "rc", "ri", "pl", "sn", "sl", "m", "fx", "n", "st"].forEach((k) => { try { TD_K[k].all().forEach((x) => out.push({ k: TD_K[k].k, t: x.t, d: x.d, go: () => TD_K[k].go(x.id) })); } catch (e) { /* ignore */ } });
     state.boites.forEach((b) => out.push({ k: "Boîtier", t: boxTitle(b), d: b.cote || "", go: () => { setView("boites"); const d = document.querySelector(`[data-bid="${b.id}"]`); if (d) { d.scrollIntoView({ block: "center" }); d.classList.remove("flashbox"); void d.offsetWidth; d.classList.add("flashbox"); } } }));
     return out;
   }
