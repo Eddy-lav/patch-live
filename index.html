@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "851fedebff";</script>
+<script>window.PL_VER = "03680570f2";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -555,6 +555,10 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .clktbl td.clkw span.ok { color: var(--ok); }
 .clktbl tr.warnrow td:first-child, .syntbl tr.warnrow td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
 .clktbl select { max-width: 220px; }
+.clkhide { margin: 6px 0; }
+.clkhide summary { color: var(--muted); font-size: var(--fs-sm); width: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clkhide[open] summary { white-space: normal; }
+.clkhide .table-wrap { opacity: .8; }
 .synsw { display: inline-block; width: 10px; height: 10px; border-radius: var(--r-sm); margin-right: 6px; vertical-align: -1px; }
 .syntbl td { white-space: nowrap; }
 .syntbl select { max-width: 190px; }
@@ -9225,6 +9229,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
     $("#synAuto").addEventListener("click", () => { synState().pos = {}; commit(true); });
     $("#synAddClk").addEventListener("click", () => { const x = { id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }; synState().nodes.push(x); synSel = x.id; commit(true); });
+    $("#synClock").addEventListener("toggle", (e) => { if (e.target.classList && e.target.classList.contains("clkhide")) clkHideOpen = e.target.open; }, true);
     $("#synClock").addEventListener("change", (e) => {
       const tr = e.target.closest("tr[data-ck]"), f = e.target.dataset.ckf; if (!tr || !f) return;
       const n = synNodes().map((q) => (q.loop = q.loop, q)).find((q) => q.id === tr.dataset.ck); if (!n) return;
@@ -9325,8 +9330,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     // AS 80 et DN9680 suivent l'horloge qui arrive par l'AES50 ou le snake ; l'intercom MS-702 est analogique
     const xm = n.kind === "extra" ? extraModel(n.ref) : "";
     if (xm) return { src: xm === "ms702" || EXTRA_MODELS[xm].clk === "none" ? "none" : "aes", from: "" };
-    return { src: isGen(n) ? "int" : n.loop ? "loop" : n.kind === "extra" && n.ref && (n.ref.type === "Réseau" || /switch/i.test(n.ref.nom || "")) ? "none" : "", from: "" };
+    return { src: isGen(n) ? "int" : n.loop ? "loop" : noClkDev(n) ? "none" : "", from: "" };
   }
+  // Appareils sans horloge numérique : analogiques, HF passif (antennes, combineurs, chargeurs), réseau, énergie…
+  // Reconnus par leur modèle, sinon par la catégorie de leur fiche dans la banque de matériel
+  const NOCLK_CATS = new Set(["Antennes et distribution HF", "Batteries et chargeurs", "Réseau", "Énergie", "Câblage", "Racks et malles", "Consommables", "Pieds et fixations", "Micros", "DI et talkback", "Accessoires micros", "Écouteurs"]);
+  function noClkDev(n) {
+    if (n.kind !== "extra" || !n.ref || isGen(n)) return false;
+    const xm = extraModel(n.ref);
+    if (xm) return xm === "ms702" || EXTRA_MODELS[xm].clk === "none";
+    if (n.ref.type === "Réseau" || /switch|antenne|combineur|chargeur|alimentation|booster|onduleur|\bups\b/i.test(`${n.ref.nom || ""} ${n.ref.type || ""}`)) return true;
+    const f = banqueFiche(n.ref.nom) || banqueFiche(n.ref.type); return !!f && NOCLK_CATS.has(f.cat);
+  }
+  // Un appareil du synoptique sur « Sans horloge » (d'office ou choisi) est rangé sous le tableau : lui choisir une autre source le remet dedans.
+  // Consoles, stage racks et générateurs restent toujours dans le tableau.
+  const clkHidden = (n) => n.kind === "extra" && !isGen(n) && clkOf(n).src === "none";
+  let clkHideOpen = false;
   function setClk(id, c) {
     const S = synState();
     if (id.startsWith("c:")) { const k = id.slice(2); S.cons[k] = { ...(S.cons[k] || {}), clk: c }; return; }
@@ -9377,14 +9396,17 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const { warn, masters } = synClock(nodes);
     const head = loops().filter((lp) => masters.has(lp.id)).map((lp) => { const m = masters.get(lp.id); return `<p class="clkm"><b>${esc(lp.nom)}</b> · maître d'horloge : <b>${esc(m.node.title)}</b> <span class="hint">(${esc(m.why)}) · ${lp.freq === "96" ? "96" : "48"} kHz</span></p>`; }).join("");
     const opts = (cur) => CLK_SRC.map(([k, t]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(t)}</option>`).join("");
-    const from = (n, cur) => `<option value="">—</option>` + nodes.filter((o) => o !== n).map((o) => `<option value="${esc(o.id)}"${cur === o.id ? " selected" : ""}>${esc(o.title)}</option>`).join("");
-    const rows = nodes.map((n) => { const c = clkOf(n), w = warn.get(n.id) || []; return `<tr data-ck="${esc(n.id)}"${w.length ? ' class="warnrow"' : ""}><td><b>${esc(n.title)}</b>${isGen(n) ? ` <span class="hint">${esc(n.ref.gen.freq || "48")} kHz</span>` : ""}</td><td><select data-ckf="src" aria-label="Source d'horloge">${opts(c.src)}</select></td><td>${c.src === "wc" ? `<select data-ckf="from" aria-label="Word clock depuis">${from(n, c.from)}</select>` : ""}</td><td class="clkw">${w.map((t) => `<span>⚠ ${esc(t)}</span>`).join("") || '<span class="ok">✓</span>'}</td></tr>`; }).join("");
-    $("#synClock").innerHTML = head + `<div class="table-wrap"><table class="master clktbl"><thead><tr><th>Appareil</th><th>Horloge</th><th>Depuis</th><th>Vérification</th></tr></thead><tbody>${rows}</tbody></table></div>
+    const from = (n, cur) => `<option value="">—</option>` + nodes.filter((o) => o !== n && (o.id === cur || !clkHidden(o))).map((o) => `<option value="${esc(o.id)}"${cur === o.id ? " selected" : ""}>${esc(o.title)}</option>`).join("");
+    const row = (n) => { const c = clkOf(n), w = warn.get(n.id) || []; return `<tr data-ck="${esc(n.id)}"${w.length ? ' class="warnrow"' : ""}><td><b>${esc(n.title)}</b>${isGen(n) ? ` <span class="hint">${esc(n.ref.gen.freq || "48")} kHz</span>` : ""}</td><td><select data-ckf="src" aria-label="Source d'horloge">${opts(c.src)}</select></td><td>${c.src === "wc" ? `<select data-ckf="from" aria-label="Word clock depuis">${from(n, c.from)}</select>` : ""}</td><td class="clkw">${w.map((t) => `<span>⚠ ${esc(t)}</span>`).join("") || '<span class="ok">✓</span>'}</td></tr>`; };
+    const hid = nodes.filter(clkHidden), rows = nodes.filter((n) => !clkHidden(n)).map(row).join("");
+    const thead = `<thead><tr><th>Appareil</th><th>Horloge</th><th>Depuis</th><th>Vérification</th></tr></thead>`;
+    $("#synClock").innerHTML = head + `<div class="table-wrap"><table class="master clktbl">${thead}<tbody>${rows || `<tr><td colspan="4" class="hint">Aucun appareil audio numérique dans le synoptique.</td></tr>`}</tbody></table></div>
+      ${hid.length ? `<details class="loophow clkhide"${clkHideOpen ? " open" : ""}><summary>${hid.length} appareil${hid.length > 1 ? "s" : ""} sans horloge numérique (analogique, HF passif, réseau…) : ${esc(hid.map((n) => n.title).join(", "))}</summary><p class="hint">Rangés ici car ils ne se calent sur aucune horloge. Choisis-leur une source pour les remettre dans le tableau.</p><div class="table-wrap"><table class="master clktbl">${thead}<tbody>${hid.map(row).join("")}</tbody></table></div></details>` : ""}
       <details class="hint loophow"><summary>Les règles appliquées</summary><p>Sur une loop Optocore, tous les appareils se calent sur la loop. Le maître est l'appareil d'ID le plus bas (en DiGiCo, la console d'ID 1, puis 2 si elle disparaît). Un word clock extérieur branché sur une console ou un rack de la loop devient le maître de toute la loop. La loop ne peut pas se caler sur du MADI ou de l'AES.</p><p>Hors loop, chaque appareil qui échange de l'audio numérique doit être calé sur la même horloge : word clock (BNC), le flux MADI ou AES qui arrive, ou le réseau Dante. Une base Spectera ne renvoie pas son horloge interne sur sa sortie word clock, seulement un word clock reçu.</p><p>Sources : <a href="https://digico.biz/wp-content/uploads/2020/02/TN300-SDoptocoreClockOps.pdf" target="_blank" rel="noopener">note DiGiCo TN300</a> · <a href="https://optocore.com/index.php/support/faq" target="_blank" rel="noopener">FAQ Optocore</a> · <a href="https://www.manualsdir.com/manuals/460233/digico-sd-rack.html?page=11" target="_blank" rel="noopener">SD Rack, sources de synchro</a> · <a href="https://docs.cloud.sennheiser.com/en-us/spectera/spectera/base-station-word-clock.html" target="_blank" rel="noopener">Spectera, word clock</a></p></details>`;
   }
   function synClockRows() {
     const nodes = synNodes(), { warn } = synClock(nodes), byId = new Map(nodes.map((n) => [n.id, n]));
-    return nodes.map((n) => { const c = clkOf(n), F = byId.get(c.from); return [n.title, (CLK_SRC.find((x) => x[0] === c.src) || CLK_SRC[0])[1].replace("…", ""), c.src === "wc" && F ? F.title : "", (warn.get(n.id) || []).join(" ")]; });
+    return nodes.filter((n) => !clkHidden(n)).map((n) => { const c = clkOf(n), F = byId.get(c.from); return [n.title, (CLK_SRC.find((x) => x[0] === c.src) || CLK_SRC[0])[1].replace("…", ""), c.src === "wc" && F ? F.title : "", (warn.get(n.id) || []).join(" ")]; });
   }
 
 
