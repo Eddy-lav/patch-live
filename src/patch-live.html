@@ -547,6 +547,11 @@ svg, svg text { letter-spacing: normal; word-spacing: normal; }
 .clkhide .table-wrap { opacity: .8; }
 .synsw { display: inline-block; width: 10px; height: 10px; border-radius: var(--r-sm); margin-right: 6px; vertical-align: -1px; }
 .syntbl td { white-space: nowrap; }
+.hcstage { margin: 8px 0 4px; }
+.hcstage svg { display: block; }
+#hcSvg g.hcc, #hcSvg g.hcab { cursor: pointer; }
+.hcnum { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 11px; color: #111827; font-weight: 700; font-size: var(--fs-xs, 12px); }
+.hctbl td { white-space: nowrap; }
 .syntbl select { max-width: 190px; }
 .syntbl input[data-sl="ap"], .syntbl input[data-sl="bp"] { width: 110px; }
 .syntbl input[data-sl="cable"] { width: 170px; }
@@ -1844,6 +1849,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <button role="tab" data-v="hf" aria-selected="false">Distribution HF<span class="count" id="cHf"></span></button>
   <button role="tab" data-v="hfrx" aria-selected="false">Récepteurs rack<span class="count" id="cHfRx"></span></button>
   <button role="tab" data-v="hftx" aria-selected="false">Émetteurs rack<span class="count" id="cHfTx"></span></button>
+  <button role="tab" data-v="hfcab" aria-selected="false">Câblage HF</button>
   <button role="tab" data-v="racks" aria-selected="false">Racks et I/O<span class="count" id="cRacks"></span></button>
   <button role="tab" data-v="syn" aria-selected="false">Synoptique</button>
   <button role="tab" data-v="materiel" aria-selected="false">Réglages racks</button>
@@ -1964,6 +1970,20 @@ tr.flash > td { animation: flash 1.6s ease-out; }
 </section>
 <section id="v-hfrx" hidden><div id="hfRxOut"></div></section>
 <section id="v-hftx" hidden><div id="hfTxOut"></div></section>
+
+<section id="v-hfcab" hidden>
+  <div class="toolbar planbar">
+    <button id="hcAuto" class="btn small primary" type="button" title="Relie les sorties A / B des splitters aux récepteurs et les émetteurs aux combineurs, sur les connecteurs libres">Câbler les antennes</button>
+    <select id="hcAddX" class="btn small" aria-label="Ajouter un splitter, un combineur…"><option value="">+ Splitter, combineur…</option></select>
+    <span class="zoom"><button id="hcZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="hcZoomVal" class="mono">100 %</span><button id="hcZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
+    <span class="hint">Les racks HF de Plans de rack, vus de dos. Touche un connecteur puis un autre pour tirer un câble ; touche un câble pour le voir, Suppr pour le retirer.</span>
+  </div>
+  <div class="rpstage hcstage" id="hfcStage"></div>
+  <h2 class="synh">Câbles</h2>
+  <div id="hcLinks"></div>
+  <h2 class="synh">Splitters, combineurs et autres appareils HF</h2>
+  <div id="hcExtras"></div>
+</section>
 
 <section id="v-boites" hidden>
   <div class="toolbar"><label class="inl"><input id="boxSr" type="checkbox" checked> Afficher les stage racks</label><span class="hint">Une colonne par boîtier, rangée par côté de scène. Le nom, le micro et l'entrée de stage rack se modifient sur place ; ↗ retrouve la ligne dans le master, × dépatche l'entrée. Tape un nom ou un N° dans une case libre pour y patcher une source ou une sortie. « Dépatcher… » libère une plage d'entrées d'un boîtier (les sources restent dans le master).</span></div>
@@ -2464,6 +2484,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     state.hfdev = hfDevs().filter((x) => x !== d);
     (state.sorties || []).forEach((o) => { if (o.to && o.to.h === id) { log(`${o.mix} : ${o.to.in ? hfVoie(d, o.to.in) : d.nom} supprimé.`); o.to = null; } if (o.rxv && o.rxv.h === id) { log(`${o.mix} : départ ${hfVoie(d, o.rxv.in)} supprimé.`); o.rxv = null; } });
     rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "hf" && i.ref === id)); });
+    const S = synState(); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id);
     commit(true);
   }
   // Modifier sur place qui est sur une voie de récepteur (provenance du master) ou une liaison d'émetteur (arrivée des sorties)
@@ -3198,8 +3219,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
           { id: nid(), a: { n: dd.id, p: "MADI 2" }, b: { n: "c:FOH", p: "MADI A" }, proto: "", cable: "Coax BNC 50 m" },
           { id: nid(), a: { n: spx.id, p: "DANTE" }, b: { n: sw.id, p: "Port 1" }, proto: "Dante", cable: "Cat6 · primaire" },
           { id: nid(), a: { n: sw.id, p: "Port 2" }, b: { n: "c:MON", p: "Dante" }, proto: "Dante", cable: "Cat6" },
-          { id: nid(), a: { n: dl.id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 1" }, proto: "AES", cable: "Cat5e blindé" },
-          { id: nid(), a: { n: racks[1].id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 2" }, proto: "AES", cable: "Cat5e blindé" }
+          { id: nid(), a: { n: dl.id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 1" }, proto: "AES50", cable: "Cat5e blindé" },
+          { id: nid(), a: { n: racks[1].id, p: "AES50 A" }, b: { n: "c:FOH", p: "AES50 2" }, proto: "AES50", cable: "Cat5e blindé" }
         ] };
       })(),
       loops: [{ id: "L1", nom: "Loop Optocore", freq: "96", max: 504 }],
@@ -8889,12 +8910,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const sub = (r.model === "spectera" ? `${rackOutputs(r).length} in (ears) / ${rackInputs(r).length} out (micros)` : r.ports ? `${rackInputs(r).length} in / ${rackOutputs(r).length} out` : ioDetail(r)) + (ks.length && r.console ? ` · ${r.console === "Partagé" ? "partagé" : consLabel(r.console)}` : "");
       out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
     });
-    S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || (extraModel(x) ? EXTRA_MODELS[extraModel(x)].type : ""), ports: [], sugg: extraModel(x) ? EXTRA_MODELS[extraModel(x)].ports.map((p) => p[0]) : [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
+    S.nodes.filter((x) => !isHfExtra(x)).forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || (extraModel(x) ? EXTRA_MODELS[extraModel(x)].type : ""), ports: [], sugg: extraModel(x) ? EXTRA_MODELS[extraModel(x)].ports.map((p) => p[0]) : [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
     // Les ports nommés dans les liaisons apparaissent sur l'appareil, pour y accrocher le câble
     S.links.forEach((l) => [l.a, l.b].forEach((e) => {
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
       n.ports.push({ nom: e.p.trim(), proto: l.proto || protoOfName(e.p) || "Autre", n: "", added: true });
     }));
+    // Une console sur une loop montre son port Optocore : sans lui, on ne voyait que ses autres ports (Dante, MADI…) alors que la loop y arrive
+    out.forEach((n) => { if (n.kind === "console" && n.loop && !n.ports.some((p) => p.proto === "Optocore")) n.ports.unshift({ nom: "Optocore (loop)", proto: "Optocore", n: "" }); });
     out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16))));
       // Façade de l'appareil en bandeau en haut, aux vraies proportions (40 px de haut au plus)
       const ph = n.kind === "rack" ? (rackById(n.id) || {}).photo : n.kind === "extra" ? n.ref.photo : (S.cons[n.cons] || {}).photo;
@@ -9062,7 +9085,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const protoOpts = (l) => `<option value="">Auto (${esc(synLinkProto({ ...l, proto: "" }, nodes))})</option>` + Object.keys(PROTOS).map((k) => `<option${l.proto === k ? " selected" : ""}>${esc(k)}</option>`).join("");
     const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${[...n.ports.filter((p) => !p.added).map((p) => p.nom), ...(n.sugg || []).filter((q) => !n.ports.some((p) => portKey(p.nom) === portKey(q)))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("");
     const dlFor = (id) => { const i = nodes.findIndex((n) => n.id === id); return i < 0 ? "" : ` data-suggest="dlSynP_${i}"`; };
-    $("#synLinks").innerHTML = dls + (S.links.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Sens</th><th>Câble / notes</th><th></th></tr></thead><tbody>${S.links.map((l) => {
+    // Les câbles HF (racks vus de dos) se gèrent dans Câblage HF
+    const hfIds = hfNodeIds(), LS = S.links.filter((l) => !isHfLink(l, hfIds));
+    $("#synLinks").innerHTML = dls + (LS.length ? `<div class="table-wrap"><table class="master syntbl"><thead><tr><th>De</th><th>Port</th><th>Vers</th><th>Port</th><th>Protocole</th><th>Sens</th><th>Câble / notes</th><th></th></tr></thead><tbody>${LS.map((l) => {
       const [an, ap] = synEnd(l.a), [bn, bp] = synEnd(l.b), pr = synLinkProto(l, nodes), P = PROTOS[pr] || PROTOS.Autre;
       return `<tr data-lk="${l.id}"${synSel && (an === synSel || bn === synSel) ? ' class="hit"' : ""}><td><select data-sl="an" aria-label="De">${opts(an)}</select></td><td><input type="text" data-sl="ap" value="${esc(ap)}" placeholder="port" autocomplete="off"${dlFor(an)}></td><td><select data-sl="bn" aria-label="Vers">${opts(bn)}</select></td><td><input type="text" data-sl="bp" value="${esc(bp)}" placeholder="port" autocomplete="off"${dlFor(bn)}></td><td><span class="synsw" style="background:${P.c}"></span><select data-sl="proto" aria-label="Protocole">${protoOpts(l)}</select></td><td><select data-sl="dir" aria-label="Sens">${SYN_DIRS.map(([k, t]) => `<option value="${k}"${(l.dir || "") === k ? " selected" : ""}>${t}</option>`).join("")}</select></td><td><input type="text" data-sl="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 30 m" autocomplete="off"></td><td><button class="btn small danger" type="button" data-sldel title="Supprimer la liaison">×</button></td></tr>`;
     }).join("")}</tbody></table></div>` : `<p class="hint">Pas encore de liaison. « + Liaison » relie deux appareils (MADI, Dante, AES, analogique…) : la loop Optocore, elle, se dessine toute seule.</p>`);
@@ -9297,7 +9322,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   function synLinkRows() {
     const nodes = synNodes(), name = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
-    return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), (SYN_DIRS.find((d) => d[0] === (l.dir || "")) || SYN_DIRS[0])[1], l.cable || ""]);
+    const hfIds = hfNodeIds();
+    return synState().links.filter((l) => !isHfLink(l, hfIds)).map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), (SYN_DIRS.find((d) => d[0] === (l.dir || "")) || SYN_DIRS[0])[1], l.cable || ""]);
   }
   const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Sens", "Câble / notes"];
   const CLK_HEAD = ["Appareil", "Horloge", "Word clock depuis", "Vérification"];
@@ -9395,6 +9421,286 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return nodes.filter((n) => !clkHidden(n)).map((n) => { const c = clkOf(n), F = byId.get(c.from); return [n.title, (CLK_SRC.find((x) => x[0] === c.src) || CLK_SRC[0])[1].replace("…", ""), c.src === "wc" && F ? F.title : "", (warn.get(n.id) || []).join(" ")]; });
   }
 
+
+  // ---------- Câblage HF : les racks HF vus de dos, avec leurs câbles ----------
+  // Récepteurs et émetteurs (onglets Récepteurs rack et Émetteurs rack), splitters, combineurs, boosters… tels qu'ils sont rangés
+  // dans les plans de rack, dessinés de dos (gauche et droite inversées). On câble en touchant un connecteur puis un autre :
+  // le câble est une liaison du dossier (state.syn.links), avec le nom des deux connecteurs.
+  const HF_EXTRA = new Set(["ad600", "ua845", "ac3000", "pa821", "ad8c", "csi16t", "rfamp", "axt600", "axt630", "axt900", "sbrc", "l6000", "ach862", "spl218", "spl2216", "ach642", "adh400", "mat288", "mfl"]);
+  function isHfExtra(x) {
+    if (!x || x.gen) return false;
+    const m = extraModel(x); if (m) return HF_EXTRA.has(m);
+    if (/antenn|combin|distribution d'antenne|splitter (hf|d'antenne)|booster|\bspl\s*\d|\bua\s*8\d\d/i.test(`${x.nom || ""} ${x.type || ""}`)) return true;
+    const f = banqueFiche(x.nom) || banqueFiche(x.type); return !!f && /Antennes et distribution HF|Récepteurs HF|Ears HF/.test(f.cat);
+  }
+  const hfNodeIds = () => new Set([...hfDevs().map((d) => d.id), ...synState().nodes.filter(isHfExtra).map((x) => x.id)]);
+  const isHfLink = (l, ids) => [(l.a || {}).n, (l.b || {}).n].some((n) => n && ids.has(n));
+  // Un connecteur : groupe (écrit au-dessus), repère court (dessous), nom du port (celui des liaisons), type (bnc, xlr, rj45, iec, fibre)
+  const HFC = (g, l, p, t) => ({ g, l, p, t });
+  const HF_DANTE = /dante|ad4[qd]|ulxd4q|adtq|ew\s*-?\s*dx\s*em\s*4/i;
+  function hfdevConns(d) {
+    const m = normModel(d.model), out = [];
+    if (d.kind === "tx") {
+      const L = hfSlots(d);
+      for (let k = 1; k <= L; k++) out.push(HFC("Antennes", String(k), `Antenne ${k}`, "bnc"));
+      for (let k = 1; k <= L; k++) out.push(HFC("Entrées", k + "L", `Entrée ${k}L`, "xlr"), HFC("Entrées", k + "R", `Entrée ${k}R`, "xlr"));
+    } else {
+      out.push(HFC("Antennes", "A", "Antenne A", "bnc"), HFC("Antennes", "B", "Antenne B", "bnc"));
+      if (!/^(EWDXEM2|EM3732)$/.test(m)) out.push(HFC("Cascade", "A", "Cascade A", "bnc"), HFC("Cascade", "B", "Cascade B", "bnc"));
+      for (let k = 1; k <= d.n; k++) out.push(HFC("Sorties", String(k), `Sortie ${k}`, "xlr"));
+      if (/^AD4[QD]$/.test(m)) { out.push(HFC("AES3", "1-2", "AES3 1-2", "xlr")); if (m === "AD4Q") out.push(HFC("AES3", "3-4", "AES3 3-4", "xlr")); }
+      if (/^EM(6000|9046)$/.test(m)) out.push(HFC("AES3", "AES", "AES3", "xlr"), HFC("Horloge", "WC", "Word clock", "bnc"));
+    }
+    if (HF_DANTE.test(d.model || "")) out.push(HFC("Dante", "P", "Dante primaire", "rj45"), HFC("Dante", "S", "Dante secondaire", "rj45"));
+    else out.push(HFC("Réseau", "LAN", "Réseau (contrôle)", "rj45"));
+    out.push(HFC("Secteur", "", "Secteur", "iec"));
+    return out;
+  }
+  // Repère court d'un port : « Sortie A 3 » → A3, « RF in 5 » → 5, « Antenne out » → OUT
+  function hfShort(p) {
+    const s = String(p).replace(/\(.*?\)/g, "").replace(/\b(entrée|entree|sortie|antenne|antennes|rf|in|fibre|réseau|contrôle|controle)\b/gi, "").replace(/\s+/g, "");
+    return (s || String(p).split(/\s/)[0]).slice(0, 5).toUpperCase();
+  }
+  function extraConns(x) {
+    const m = extraModel(x), out = [];
+    (m ? EXTRA_MODELS[m].ports : []).forEach(([p, pr]) => {
+      const t = /fibre|optical/i.test(p) ? "fibre" : pr === "Antenne" ? "bnc" : pr === "Réseau" || pr === "Dante" ? "rj45" : /AES|Analogique/.test(pr) ? "xlr" : "gen";
+      const g = /réseau|dante|\blan\b/i.test(p) ? "Réseau" : /fibre/i.test(p) ? "Fibre" : /sortie|\bout\b|cascade/i.test(p) ? "Sorties" : "Entrées";
+      // Une sortie « A/B » est deux BNC (A et B) : un câble chacun
+      if (/\(A\/B\)/.test(p)) { const b = p.replace(/\s*\(A\/B\)/, ""); ["A", "B"].forEach((s) => out.push(HFC(g, hfShort(b) + s, `${b} ${s}`, t))); }
+      else out.push(HFC(g, hfShort(p), p, t));
+    });
+    out.push(HFC("Secteur", "", "Secteur", "iec"));
+    return out;
+  }
+  const HFC_W = { bnc: 20, xlr: 24, rj45: 20, iec: 24, fibre: 20, gen: 18 };
+  const HFC_PROTO = (c) => (c.t === "bnc" ? (/word/i.test(c.p) ? "Word clock" : "Antenne") : c.t === "rj45" ? (/dante/i.test(c.p) ? "Dante" : "Réseau") : c.t === "xlr" ? (/aes/i.test(c.p) ? "AES" : "Analogique") : "Autre");
+  // Face arrière : groupes de connecteurs de gauche à droite (secteur à gauche), repères lisibles ; renvoie le dessin et la place de chaque connecteur
+  function hfRearArt(conns, w, h, name) {
+    const F = `font-family="Arial, Helvetica, sans-serif"`, x0 = w > 300 ? 26 : 8, x1 = w > 300 ? w - 26 : w - 8;
+    const groups = []; [...conns.filter((c) => c.g === "Secteur"), ...conns.filter((c) => c.g !== "Secteur")].forEach((c) => { let g = groups.find((q) => q.g === c.g); if (!g) groups.push((g = { g: c.g, cs: [] })); g.cs.push(c); });
+    const GAP = 12, tot = groups.reduce((t, g) => t + g.cs.reduce((a, c) => a + HFC_W[c.t], 0), 0) + GAP * Math.max(0, groups.length - 1);
+    const k = Math.min(1.25, (x1 - x0) / Math.max(1, tot)), cy = h / 2 + 3;
+    let s = `<rect x="${x0 - 6}" y="1" width="${x1 - x0 + 12}" height="${h - 2}" rx="2" fill="#41474e" stroke="#1d2125" stroke-width="1.2"/>`, x = x0 + Math.max(0, (x1 - x0 - tot * k) / 2);
+    const pos = [];
+    groups.forEach((g, gi) => {
+      const gw = g.cs.reduce((a, c) => a + HFC_W[c.t], 0) * k;
+      if (g.g !== "Secteur") s += `<text x="${(x + gw / 2).toFixed(1)}" y="10.5" text-anchor="middle" font-size="8.5" font-weight="700" fill="#e5e7eb" ${F}>${esc(g.g.toUpperCase())}</text>`;
+      if (g.cs.length > 1 && g.g !== "Secteur") s += `<line x1="${(x + 2).toFixed(1)}" y1="13" x2="${(x + gw - 2).toFixed(1)}" y2="13" stroke="#8a939b" stroke-width="0.8"/>`;
+      g.cs.forEach((c) => { const cw = HFC_W[c.t] * k, cx = x + cw / 2; pos.push({ c, x: cx, y: cy, r: Math.min(cw / 2, 9) }); if (c.l) s += `<text x="${cx.toFixed(1)}" y="${(h - 3).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="#ffffff" ${F}>${esc(c.l)}</text>`; x += cw; });
+      x += GAP * k; if (gi === groups.length - 1) return;
+    });
+    if (name) s += `<text x="${x1 - 2}" y="10" text-anchor="end" font-size="7" fill="#aab3bb" ${F}>${esc(name)}</text>`;
+    return { s, pos };
+  }
+  function hfConnSvg(t, x, y, r, ring) {
+    const X = x.toFixed(1), Y = y.toFixed(1), q = r / 8;
+    let s;
+    if (t === "bnc") s = `<circle cx="${X}" cy="${Y}" r="${(7 * q).toFixed(1)}" fill="#c9ccd0" stroke="#6b7280" stroke-width="0.8"/><circle cx="${X}" cy="${Y}" r="${(4 * q).toFixed(1)}" fill="#8a8f95"/><circle cx="${X}" cy="${Y}" r="${(1.6 * q).toFixed(1)}" fill="#1d2125"/>`;
+    else if (t === "xlr") s = `<circle cx="${X}" cy="${Y}" r="${(8.5 * q).toFixed(1)}" fill="#15181b" stroke="#aab3bb" stroke-width="0.9"/>` + [[-3, -2], [3, -2], [0, 3]].map(([a, b]) => `<circle cx="${(x + a * q).toFixed(1)}" cy="${(y + b * q).toFixed(1)}" r="${(1.3 * q).toFixed(1)}" fill="#d1d5db"/>`).join("");
+    else if (t === "rj45") s = `<rect x="${(x - 6 * q).toFixed(1)}" y="${(y - 5.5 * q).toFixed(1)}" width="${(12 * q).toFixed(1)}" height="${(11 * q).toFixed(1)}" rx="1" fill="#15181b" stroke="#aab3bb" stroke-width="0.9"/><rect x="${(x - 2.5 * q).toFixed(1)}" y="${(y + 3 * q).toFixed(1)}" width="${(5 * q).toFixed(1)}" height="${(2.5 * q).toFixed(1)}" fill="#41474e"/>`;
+    else if (t === "iec") s = `<rect x="${(x - 8 * q).toFixed(1)}" y="${(y - 6 * q).toFixed(1)}" width="${(16 * q).toFixed(1)}" height="${(12 * q).toFixed(1)}" rx="2" fill="#15181b" stroke="#aab3bb" stroke-width="0.9"/>` + [-4, 0, 4].map((a) => `<rect x="${(x + a * q - 0.7).toFixed(1)}" y="${(y - 2.5 * q).toFixed(1)}" width="1.4" height="${(5 * q).toFixed(1)}" fill="#aab3bb"/>`).join("");
+    else if (t === "fibre") s = `<rect x="${(x - 6.5 * q).toFixed(1)}" y="${(y - 6.5 * q).toFixed(1)}" width="${(13 * q).toFixed(1)}" height="${(13 * q).toFixed(1)}" rx="${(6.5 * q).toFixed(1)}" fill="#1e3a8a" stroke="#93c5fd" stroke-width="0.9"/>`;
+    else s = `<circle cx="${X}" cy="${Y}" r="${(6 * q).toFixed(1)}" fill="#6b7280"/>`;
+    return s + (ring ? `<circle cx="${X}" cy="${Y}" r="${(r + 2.5).toFixed(1)}" fill="none" stroke="${ring}" stroke-width="2.6"/>` : "");
+  }
+  // Ce que le patch fait passer par un connecteur : voie de récepteur posée au master ou renvoyée au plateau, sortie patchée sur un émetteur
+  function hfPatchMarks() {
+    const m = new Map(), put = (k, v) => m.set(k, [...(m.get(k) || []), v]);
+    hfDevs().forEach((d) => {
+      if (d.kind === "tx") return;
+      for (let k = 1; k <= d.n; k++) {
+        const v = hfVoie(d, k).toLowerCase(), key = `${d.id}|${portKey("Sortie " + k)}`;
+        state.lignes.forEach((l) => { if ((l.prov || "").trim().toLowerCase() !== v) return; const a = Object.values(l.sr || {}).find(Boolean); put(key, { rx: true, t: `${l.source || "Source"}${a ? " → " + rackAddr(a) : ""}` }); });
+      }
+    });
+    (state.sorties || []).forEach((o) => {
+      if (o.rxv && o.rxv.h) put(`${o.rxv.h}|${portKey("Sortie " + o.rxv.in)}`, { rx: true, t: `${o.mix || "Renvoi"} → ${hfRetDest(o) || "plateau"}` });
+      if (o.to && o.to.h && o.to.in) { const i = +o.to.in; put(`${o.to.h}|${portKey(`Entrée ${Math.ceil(i / 2)}${i % 2 ? "L" : "R"}`)}`, { rx: false, t: `${o.mix || "Sortie"}${o.out ? " ← " + rackAddr(o.out) : ""}` }); }
+    });
+    return m;
+  }
+  const HFCAB_COLS = ["#f59e0b", "#06b6d4", "#84cc16", "#ec4899", "#3b82f6", "#f97316", "#10b981", "#a855f7", "#eab308", "#ef4444"];
+  let hcPend = null, hcSel = null, hcZoom = (() => { try { const z = Number(localStorage.getItem("patch-live-hczoom")); return z > 0.2 && z < 3 ? z : 1; } catch (e) { return 1; } })();
+  // Tous les racks qui portent un appareil HF, puis les appareils HF pas encore rangés ; place de chaque appareil et de chaque connecteur
+  function hcLayout() {
+    const P = rpState(), S = synState(), ids = hfNodeIds(), placed = new Set();
+    const nodeOf = (it) => (it.kind === "hf" ? hfDevById(it.ref) && { id: it.ref, kind: "hf", ref: hfDevById(it.ref), title: hfDevById(it.ref).nom } : it.kind === "extra" && rpExtra(it.ref) && isHfExtra(rpExtra(it.ref)) ? { id: it.ref, kind: "extra", ref: rpExtra(it.ref), title: rpExtra(it.ref).nom || "Élément" } : null);
+    const cases = P.cases.filter((c) => c.items.some((it) => nodeOf(it))).map((c) => ({ c, n: rpCols(c), u: c.u, title: c.nom || "Rack", items: c.items.map((it) => { const nd = nodeOf(it); if (nd) placed.add(nd.id); return { it, nd, at: it.at, h: it.h, col: rpCol(it), half: it.half }; }) }));
+    const loose = [...hfDevs().map((d) => ({ id: d.id, kind: "hf", ref: d, title: d.nom })), ...S.nodes.filter(isHfExtra).map((x) => ({ id: x.id, kind: "extra", ref: x, title: x.nom || "Élément" }))].filter((nd) => !placed.has(nd.id));
+    if (loose.length) { let at = 1; const items = loose.map((nd) => { const h = rpDefaultU(nd.kind, nd.id), half = rpDefaultHalf(nd.kind, nd.id), r = { it: null, nd, at, h, col: 0, half }; at += h; return r; }); cases.push({ c: null, n: 1, u: at - 1, title: "Pas encore dans un plan de rack", items, loose: true }); }
+    const conns = new Map(), list = [], devs = [];
+    let ox = 0, Hmax = 0;
+    cases.forEach((K) => {
+      const CW = K.n * RP_CW + (K.n - 1) * RP_GAP; K.x = ox; K.y = 46; K.w = CW + (K.n === 1 ? RP_LW : 0); K.h = RP_TOP * 2 + K.u * RP_UH; K.cw = CW;
+      K.items.forEach((r) => {
+        const rc = K.n - 1 - Math.min(r.col, K.n - 1), w = r.half ? 241.5 : 483;
+        r.x = ox + rpX(rc) + RP_SIDE + (r.half === "l" ? 241.5 : 0); r.y = K.y + RP_TOP + (r.at - 1) * RP_UH; r.w = w; r.hh = r.h * RP_UH;
+        if (!r.nd) return;
+        const cs = r.nd.kind === "hf" ? hfdevConns(r.nd.ref) : extraConns(r.nd.ref), art = hfRearArt(cs, w, r.hh, K.n > 1 || (r.half && K.items.some((q) => q !== r && q.half && q.at === r.at && q.col === r.col)) ? r.nd.title : "");
+        r.art = art.s; devs.push(r);
+        art.pos.forEach((p) => { const key = `${r.nd.id}|${portKey(p.c.p)}`, o = { key, n: r.nd.id, title: r.nd.title, c: p.c, x: r.x + p.x, y: r.y + p.y, lx: p.x, ly: p.y, r: p.r, dev: r }; conns.set(key, o); list.push(o); });
+      });
+      ox += K.w + 70; Hmax = Math.max(Hmax, K.y + K.h);
+    });
+    return { cases, conns, list, devs, W: Math.max(ox - 70, 400), H: Hmax + 60 };
+  }
+  const hcCables = (L) => synState().links.filter((l) => L.conns.has(`${(l.a || {}).n}|${portKey((l.a || {}).p)}`) && L.conns.has(`${(l.b || {}).n}|${portKey((l.b || {}).p)}`));
+  function hcSvg(forExport) {
+    const L = hcLayout(); if (!L.cases.length) return "";
+    const F = `font-family="Arial, Helvetica, sans-serif"`, marks = hfPatchMarks(), cab = hcCables(L), on = new Map();
+    cab.forEach((l, i) => { [l.a, l.b].forEach((e) => on.set(`${e.n}|${portKey(e.p)}`, HFCAB_COLS[i % HFCAB_COLS.length])); });
+    let s = "";
+    L.cases.forEach((K) => {
+      const X = K.x, Y = K.y, IH = K.u * RP_UH;
+      s += `<text x="${X}" y="${Y - 16}" font-size="22" font-weight="700" fill="#111827" ${F}>${esc(K.title)}<tspan font-weight="400" fill="#6b7280">${K.loose ? " · à ranger dans Plans de rack" : ` · ${K.n > 1 ? (K.n === 2 ? "double " : "triple ") : ""}${K.u} U · vue de dos`}</tspan></text>`;
+      if (K.loose) s += `<rect x="${X}" y="${Y}" width="${K.cw}" height="${K.h}" rx="8" fill="#f3f4f6" stroke="#9aa3ab" stroke-width="1.5" stroke-dasharray="8 6"/>`;
+      else {
+        s += `<rect x="${X}" y="${Y}" width="${K.cw}" height="${K.h}" rx="8" fill="#3a3f45"/><rect x="${X + 4}" y="${Y + 4}" width="${K.cw - 8}" height="${K.h - 8}" rx="6" fill="#2b2f33"/>`;
+        for (let k = 0; k < K.n; k++) {
+          const cx = X + rpX(k);
+          s += `<rect x="${cx + RP_SIDE}" y="${Y + RP_TOP}" width="483" height="${IH}" fill="#0c0e10"/>`;
+          for (let u = 0; u < K.u; u++) s += `<text x="${cx + RP_SIDE + 483 + RP_SIDE / 2}" y="${Y + RP_TOP + u * RP_UH + RP_UH / 2 + 4.5}" text-anchor="middle" font-size="13" font-weight="700" fill="#aab3bb" ${F}>${u + 1}</text>`;
+          if (K.n > 1) s += `<text x="${cx + RP_CW / 2}" y="${Y + RP_TOP - 7}" text-anchor="middle" font-size="14" font-weight="700" fill="#aab3bb" ${F}>${RP_COLN[K.n][K.n - 1 - k].toUpperCase()}</text>`;
+        }
+      }
+      K.items.forEach((r) => {
+        const tag = r.nd ? ` data-hn="${esc(r.nd.id)}"` : "";
+        if (r.nd) s += `<g class="hcdev"${tag} transform="translate(${r.x.toFixed(1)} ${r.y.toFixed(1)})">${r.art}</g>`;
+        else s += `<g transform="translate(${r.x.toFixed(1)} ${r.y.toFixed(1)})"><rect x="20" y="1" width="${r.w - 40}" height="${r.hh - 2}" rx="2" fill="#2f3439" stroke="#1d2125"/><text x="${r.w / 2}" y="${r.hh / 2 + 5}" text-anchor="middle" font-size="13" fill="#9aa3ab" ${F}>${esc(rpLabel(r.it))}</text></g>`;
+        // Nom dans la marge, comme dans Plans de rack
+        if (K.n === 1 && r.nd && !(r.half === "r" && K.items.some((q) => q !== r && q.half && q.at === r.at))) {
+          const twin = r.half && K.items.find((q) => q !== r && q.half && q.at === r.at && q.nd), lab = twin ? `${r.nd.title} / ${twin.nd.title}` : r.nd.title, cy = r.y + r.hh / 2, lx = X + K.cw + 14;
+          s += `<line x1="${X + K.cw - 4}" y1="${cy}" x2="${lx - 4}" y2="${cy}" stroke="#9aa3ab" stroke-width="1.2" stroke-dasharray="3 3"/><text x="${lx}" y="${cy + 8}" font-size="22" font-weight="700" fill="#111827" ${F}>${K.loose ? "" : `<tspan fill="#6b7280" font-weight="400">U${r.at} </tspan>`}${esc(lab.slice(0, 30))}</text>`;
+        }
+      });
+    });
+    const racks = s; s = "";
+    // Connecteurs : anneau de la couleur du câble, vert / brun quand le patch y fait passer une voie, orange quand on vient de le toucher
+    L.list.forEach((o) => {
+      const mk = marks.get(o.key), pend = !forExport && hcPend && hcPend.key === o.key, ring = pend ? "#f59e0b" : on.get(o.key) || (mk ? (mk[0].rx ? "#16a34a" : "#b45309") : "");
+      const tip = `${o.title} · ${o.c.p}${mk ? " · " + mk.map((q) => q.t).join(" / ") : ""}`;
+      s += `<g class="hcc${pend ? " pend" : ""}" data-hc="${esc(o.key)}">${hfConnSvg(o.c.t, o.x, o.y, o.r, ring)}<circle cx="${o.x.toFixed(1)}" cy="${o.y.toFixed(1)}" r="${Math.max(10, o.r + 3).toFixed(1)}" fill="transparent"><title>${esc(tip)}</title></circle></g>`;
+    });
+    const conns = s; s = ""; let badges = "";
+    // Câbles : chacun sa couleur et son numéro (le même que dans le tableau), qui pendent un peu comme de vrais câbles ;
+    // ils passent sous les connecteurs (repères toujours lisibles), les numéros passent dessus
+    const sel = forExport ? null : hcSel;
+    cab.forEach((l, i) => {
+      const A = L.conns.get(`${l.a.n}|${portKey(l.a.p)}`), B = L.conns.get(`${l.b.n}|${portKey(l.b.p)}`), col = HFCAB_COLS[i % HFCAB_COLS.length];
+      const sag = 14 + Math.abs(B.x - A.x) * 0.08 + Math.abs(B.y - A.y) * 0.1, c1 = [A.x, A.y + sag], c2 = [B.x, B.y + sag];
+      const d = `M${A.x.toFixed(1)} ${A.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${B.x.toFixed(1)} ${B.y.toFixed(1)}`;
+      const mx = 0.125 * A.x + 0.375 * c1[0] + 0.375 * c2[0] + 0.125 * B.x, my = 0.125 * A.y + 0.375 * c1[1] + 0.375 * c2[1] + 0.125 * B.y, dim = sel && sel !== l.id;
+      s += `<g class="hcab${sel === l.id ? " on" : ""}" data-lk="${l.id}"${dim ? ' opacity="0.3"' : ""}><title>${esc(`${i + 1}. ${A.title} · ${A.c.p} → ${B.title} · ${B.c.p}${l.cable ? " · " + l.cable : ""}`)}</title><path d="${d}" stroke="#0b0d0f" stroke-width="${sel === l.id ? 8 : 6}" fill="none" stroke-linecap="round" opacity="0.55"/><path d="${d}" stroke="${col}" stroke-width="${sel === l.id ? 5 : 3.2}" fill="none" stroke-linecap="round"/><path d="${d}" stroke="transparent" stroke-width="14" fill="none"/></g>`;
+      badges += `<g class="hcab" data-lk="${l.id}"${dim ? ' opacity="0.3"' : ""}><circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="10" fill="${col}" stroke="#fff" stroke-width="1.5"/><text x="${mx.toFixed(1)}" y="${(my + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="#111827" ${F}>${i + 1}</text></g>`;
+    });
+    s = racks + s + conns + badges;
+    const W = L.W + 20, H = L.H, size = forExport ? `width="${W}" height="${H}"` : `width="${Math.round(W * hcZoom)}" height="${Math.round(H * hcZoom)}"`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 0 ${W} ${H}" ${size}><rect x="-10" y="0" width="${W}" height="${H}" fill="#fff"/>${s}</svg>`;
+  }
+  // Tableau des câbles (même numéro et même couleur que sur le dessin) et de l'audio qui vient du patch
+  function hcRows() {
+    const L = hcLayout(), cab = hcCables(L), nm = (e) => { const o = L.conns.get(`${e.n}|${portKey(e.p)}`); return o ? [o.title, o.c.p] : ["?", e.p]; };
+    return cab.map((l, i) => { const [an, ap] = nm(l.a), [bn, bp] = nm(l.b); return { l, i, col: HFCAB_COLS[i % HFCAB_COLS.length], cells: [String(i + 1), an, ap, bn, bp, synLinkProto(l, []) === "Autre" ? HFC_PROTO(L.conns.get(`${l.a.n}|${portKey(l.a.p)}`).c) : synLinkProto(l, []), l.cable || ""] }; });
+  }
+  const HC_HEAD = ["N°", "De", "Connecteur", "Vers", "Connecteur", "Type", "Câble / notes"];
+  function hcAudioRows() {
+    const L = hcLayout(), marks = hfPatchMarks(), out = [];
+    L.list.forEach((o) => (marks.get(o.key) || []).forEach((q) => out.push([o.title, o.c.p, q.t])));
+    return out;
+  }
+  function renderHfCab() {
+    const host = $("#hfcStage"), L = hcLayout();
+    $("#hcZoomVal").textContent = Math.round(hcZoom * 100) + " %";
+    if (!L.cases.length) { host.innerHTML = `<div class="empty-state">Aucun appareil HF pour l'instant. Ajoute tes récepteurs et émetteurs dans Récepteurs rack et Émetteurs rack, tes splitters et combineurs avec « + Splitter, combineur… », puis range-les dans Plans de rack.<div class="es-go"><button class="btn small primary" type="button" data-go="hfrx">Récepteurs rack</button></div></div>`; $("#hcLinks").innerHTML = ""; renderHcExtras(); return; }
+    host.innerHTML = hcSvg(false).replace("<svg ", `<svg id="hcSvg" role="img" aria-label="Câblage HF, racks vus de dos" `);
+    const rows = hcRows(), au = hcAudioRows();
+    $("#hcLinks").innerHTML = (rows.length ? `<div class="table-wrap"><table class="master hctbl"><thead><tr>${HC_HEAD.map((h) => `<th>${h}</th>`).join("")}<th></th></tr></thead><tbody>${rows.map(({ l, col, cells }) => `<tr data-lk="${l.id}"${hcSel === l.id ? ' class="hit"' : ""}><td><span class="hcnum" style="background:${col}">${cells[0]}</span></td><td>${esc(cells[1])}</td><td>${esc(cells[2])}</td><td>${esc(cells[3])}</td><td>${esc(cells[4])}</td><td>${esc(cells[5])}</td><td><input type="text" data-hcf="cable" value="${esc(l.cable || "")}" placeholder="ex. coax BNC 2 m" autocomplete="off" aria-label="Câble ou notes"></td><td class="x"><button type="button" data-hcdel="${l.id}" title="Retirer le câble" aria-label="Retirer le câble">×</button></td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="hint">Pas encore de câble. Touche un connecteur puis un autre pour les relier, ou « Câbler les antennes » pour relier d'un coup les sorties des splitters aux récepteurs et les émetteurs aux combineurs.</p>`)
+      + (au.length ? `<h2 class="synh">Audio depuis le patch</h2><p class="hint">Ce qui passe par les sorties des récepteurs et les entrées des émetteurs, d'après le master, les sorties et les renvois plateau. Anneau vert : micros, brun : ears.</p><div class="table-wrap"><table class="master"><thead><tr><th>Appareil</th><th>Connecteur</th><th>Patch</th></tr></thead><tbody>${au.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : "");
+    renderHcExtras();
+  }
+  // Splitters, combineurs et autres appareils HF qui ne sont pas des récepteurs ou des émetteurs : nom, modèle, suppression
+  function renderHcExtras() {
+    const xs = synState().nodes.filter(isHfExtra), models = [...HF_EXTRA].filter((k) => EXTRA_MODELS[k]);
+    $("#hcExtras").innerHTML = xs.length ? `<div class="table-wrap"><table class="master"><thead><tr><th>Nom</th><th>Modèle</th><th>Rack</th><th></th></tr></thead><tbody>${xs.map((x) => { const w = rpState().cases.find((c) => c.items.some((i) => i.kind === "extra" && i.ref === x.id)); return `<tr data-hx="${x.id}"><td><input type="text" data-hxf="nom" value="${esc(x.nom || "")}" aria-label="Nom" autocomplete="off"></td><td><select data-hxf="model" aria-label="Modèle"><option value="">Autre</option>${models.map((k) => `<option value="${k}"${extraModel(x) === k ? " selected" : ""}>${esc(EXTRA_MODELS[k].t)}</option>`).join("")}</select></td><td>${w ? esc(w.nom || "Rack") : `<span class="hint">à ranger</span>`}</td><td class="x"><button type="button" data-hxdel="${x.id}" title="Supprimer l'appareil" aria-label="Supprimer l'appareil">×</button></td></tr>`; }).join("")}</tbody></table></div>` : `<p class="hint">Aucun splitter ni combineur. « + Splitter, combineur… » en ajoute un.</p>`;
+  }
+  function hcLink(a, b) {
+    const S = synState(), pr = HFC_PROTO(a.c) === HFC_PROTO(b.c) ? HFC_PROTO(a.c) : "";
+    S.links.push({ id: nid(), a: { n: a.n, p: a.c.p }, b: { n: b.n, p: b.c.p }, proto: pr === "Antenne" || pr === "Dante" || pr === "Réseau" || pr === "AES" || pr === "Analogique" || pr === "Word clock" ? pr : "", cable: "", dir: "ab" });
+  }
+  // Câbler les antennes d'un coup, seulement sur les connecteurs libres : sorties A / B des splitters vers les entrées A / B des récepteurs,
+  // émetteurs vers les entrées des combineurs, dans l'ordre des racks (de haut en bas)
+  function hcAutoAnt() {
+    const L = hcLayout(), used = new Set(); hcCables(L).forEach((l) => [l.a, l.b].forEach((e) => used.add(`${e.n}|${portKey(e.p)}`)));
+    const free = (f) => L.list.filter((o) => !used.has(o.key) && o.c.t === "bnc" && f(o));
+    const isSpl = (o) => o.dev.nd.kind === "extra" && /distribution|splitter|matrice|booster/i.test(`${o.dev.nd.ref.type || ""} ${(EXTRA_MODELS[extraModel(o.dev.nd.ref)] || {}).type || ""}`) && o.c.g === "Sorties";
+    const isComb = (o) => o.dev.nd.kind === "extra" && /combin/i.test(`${o.dev.nd.ref.type || ""} ${(EXTRA_MODELS[extraModel(o.dev.nd.ref)] || {}).type || ""}`) && o.c.g === "Entrées" && !/^[AB] in$/i.test(o.c.p);
+    const side = (o, s) => new RegExp(`(^|\\s)${s}(\\s|\\d|$)`).test(o.c.p.replace(/^Sortie\s*/i, "").replace(/^(\d+)\s+/, "")) || new RegExp(`\\s${s}$`).test(o.c.p);
+    let n = 0;
+    ["A", "B"].forEach((s) => { const outs = free((o) => isSpl(o) && side(o, s)), ins = free((o) => o.dev.nd.kind === "hf" && o.dev.nd.ref.kind !== "tx" && o.c.p === "Antenne " + s); for (let k = 0; k < Math.min(outs.length, ins.length); k++) { hcLink(outs[k], ins[k]); n++; } });
+    const tx = free((o) => o.dev.nd.kind === "hf" && o.dev.nd.ref.kind === "tx" && o.c.g === "Antennes"), cin = free(isComb);
+    for (let k = 0; k < Math.min(tx.length, cin.length); k++) { hcLink(tx[k], cin[k]); n++; }
+    if (!n) { notice("Rien à câbler : il faut un splitter (ou un combineur) et des connecteurs d'antenne libres."); return; }
+    commit(true); notice(`${n} câble${n > 1 ? "s" : ""} d'antenne ajouté${n > 1 ? "s" : ""}. Ils se retirent un par un dans le tableau (×), ou tous avec ↶.`);
+  }
+  function hcSetZoom(d) { const Z = [0.4, 0.55, 0.7, 0.8, 1, 1.25, 1.5, 2]; hcZoom = Z[Math.max(0, Math.min(Z.length - 1, (Z.indexOf(hcZoom) < 0 ? 3 : Z.indexOf(hcZoom)) + d))]; try { localStorage.setItem("patch-live-hczoom", String(hcZoom)); } catch (e) { /* ignore */ } renderHfCab(); }
+  function hcDel(id) { const S = synState(); S.links = S.links.filter((l) => l.id !== id); if (hcSel === id) hcSel = null; commit(true); }
+  function hfCabBind() {
+    $("#hcAddX").insertAdjacentHTML("beforeend", [...HF_EXTRA].filter((k) => EXTRA_MODELS[k]).map((k) => `<option value="${k}">${esc(EXTRA_MODELS[k].t)}</option>`).join(""));
+    $("#hcAuto").addEventListener("click", hcAutoAnt);
+    $("#hcZoomIn").addEventListener("click", () => hcSetZoom(1));
+    $("#hcZoomOut").addEventListener("click", () => hcSetZoom(-1));
+    $("#hcAddX").addEventListener("change", (e) => { const k = e.target.value; e.target.value = ""; const m = EXTRA_MODELS[k]; if (!m) return; synState().nodes.push({ id: nid(), nom: m.nom, model: k, loopId: "" }); commit(true); notice(`${esc(m.nom)} ajouté. Range-le dans un rack avec Plans de rack (ou clic droit dessus).`); });
+    $("#hfcStage").addEventListener("click", (e) => {
+      const c = e.target.closest("g.hcc"), cb = e.target.closest("g.hcab");
+      if (c) {
+        const L = hcLayout(), o = L.conns.get(c.dataset.hc); if (!o) return;
+        if (hcPend && hcPend.key === o.key) { hcPend = null; renderHfCab(); return; }
+        if (hcPend) { if (hcPend.n === o.n && false) return; const a = L.conns.get(hcPend.key); hcPend = null; if (a) { hcLink(a, o); hcSel = synState().links[synState().links.length - 1].id; commit(true); } return; }
+        const has = hcCables(L).find((l) => [l.a, l.b].some((q) => `${q.n}|${portKey(q.p)}` === o.key));
+        if (has) { hcSel = has.id; renderHfCab(); return; }
+        hcPend = o; hcSel = null; renderHfCab(); notice(`${esc(o.title)} · ${esc(o.c.p)} : touche maintenant le connecteur d'arrivée (le même pour annuler).`); return;
+      }
+      if (cb) { hcSel = hcSel === cb.dataset.lk ? null : cb.dataset.lk; hcPend = null; renderHfCab(); return; }
+      if (hcPend || hcSel) { hcPend = null; hcSel = null; renderHfCab(); }
+    });
+    $("#hcLinks").addEventListener("click", (e) => { const b = e.target.closest("[data-hcdel]"); if (b) { hcDel(b.dataset.hcdel); return; } const tr = e.target.closest("tr[data-lk]"); if (tr && !e.target.closest("input")) { hcSel = tr.dataset.lk; renderHfCab(); } });
+    $("#hcLinks").addEventListener("change", (e) => { const tr = e.target.closest("tr[data-lk]"); if (!tr || e.target.dataset.hcf !== "cable") return; const l = synState().links.find((x) => x.id === tr.dataset.lk); if (l) { l.cable = e.target.value.trim(); commit(true); } });
+    $("#hcExtras").addEventListener("change", (e) => {
+      const tr = e.target.closest("tr[data-hx]"), f = e.target.dataset.hxf; if (!tr || !f) return; const x = synState().nodes.find((q) => q.id === tr.dataset.hx); if (!x) return;
+      if (f === "nom") x.nom = e.target.value.trim();
+      else { const old = EXTRA_MODELS[extraModel(x)], m = EXTRA_MODELS[e.target.value]; x.model = e.target.value || "none"; if (m && (!x.nom || (old && x.nom === old.nom))) x.nom = m.nom; }
+      commit(true);
+    });
+    $("#hcExtras").addEventListener("click", (e) => { const b = e.target.closest("[data-hxdel]"); if (!b) return; const id = b.dataset.hxdel, S = synState(); S.nodes = S.nodes.filter((x) => x.id !== id); rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "extra" && i.ref === id)); }); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; commit(true); });
+    document.addEventListener("keydown", (e) => {
+      if (view !== "hfcab" || /INPUT|SELECT|TEXTAREA/.test((document.activeElement && document.activeElement.tagName) || "")) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && hcSel) { e.preventDefault(); hcDel(hcSel); }
+      if (e.key === "Escape" && (hcSel || hcPend)) { hcSel = null; hcPend = null; renderHfCab(); }
+    });
+  }
+  function ctxHfc(e, t) {
+    const cb = t.closest("#hcSvg g.hcab"), dv = t.closest("#hcSvg g.hcdev");
+    if (cb) { hcSel = cb.dataset.lk; renderHfCab(); return ["Câble", [{ t: "Retirer le câble", danger: true, fn: () => hcDel(cb.dataset.lk) }]]; }
+    if (dv) {
+      const id = dv.dataset.hn, d = hfDevById(id), x = !d && synState().nodes.find((q) => q.id === id); if (!d && !x) return null;
+      return [d ? d.nom : x.nom || "Élément", [
+        d && { t: "Voir dans l'onglet HF", fn: () => { setView(d.kind === "tx" ? "hftx" : "hfrx"); tdFlashSel(`tr[data-hd="${id}"]`); } },
+        rpPutItem(d ? "hf" : "extra", id),
+        { t: "Câbler les antennes", fn: hcAutoAnt }]];
+    }
+    return null;
+  }
+  function hcPng() {
+    return new Promise((resolve) => {
+      const svg = hcSvg(true); if (!svg) return resolve(null);
+      const img = new Image();
+      img.onload = () => { try { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; c.getContext("2d").drawImage(img, 0, 0); resolve({ data: c.toDataURL("image/png"), w: img.width, h: img.height }); } catch (err) { resolve(null); } };
+      img.onerror = () => resolve(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
 
   // ---------- Micros et pieds ----------
   // Racks et I/O regroupés par nom et configuration, boîtiers par type de multi
@@ -10956,7 +11262,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["charge", "Plan de chargement", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["hfcab", "Câblage HF", true], ["rackplan", "Plans de rack", true], ["charge", "Plan de chargement", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -11020,6 +11326,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
     rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
+    hfcab: () => { const svg = hcSvg(true); if (!svg) return ""; const rows = hcRows(), au = hcAudioRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Câbles</h2><table><thead><tr>${HC_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.cells.map((v, k) => `<td>${k ? esc(v) : `<b style="color:${r.col}">●</b> ${esc(v)}`}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}${au.length ? `<h2>Audio depuis le patch</h2><table><thead><tr><th>Appareil</th><th>Connecteur</th><th>Patch</th></tr></thead><tbody>${au.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}`; },
     charge: () => chPrint(),
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -11895,6 +12202,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (view === "todo") renderTodo();
     if (view === "plan") renderPlan();
     if (view === "syn") renderSyn();
+    if (view === "hfcab") renderHfCab();
     if (view === "rackplan") renderRackplan();
     if (view === "local") renderFree("locaux");
     if (view === "com") renderFree("com");
@@ -11967,7 +12275,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq", "charge"], dossier: ["todo", "infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx", "hfcab"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq", "charge"], dossier: ["todo", "infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   const densMap = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem("patch-live-density") || "{}") || {}; } catch (e) { /* ignore */ } try { if (!("master" in m) && localStorage.getItem("patch-live-dense") === "1") m.master = "serre"; } catch (e) { /* ignore */ } return m; })();
@@ -11997,7 +12305,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     densApply();
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "charge", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "hfcab", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "charge", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     if (v === "hf") hfGrowAll($("#v-hf"));
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
@@ -12235,6 +12543,18 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const id = wb.addImage({ base64: sp.data, extension: "png" }), scale = Math.min(1, 1100 / sp.w);
       sy.addImage(id, { tl: { col: 0, row: sy.rowCount + 1 }, ext: { width: sp.w * scale, height: sp.h * scale } });
       page(sy, true);
+    }
+    const hp = await hcPng();
+    if (hp) {
+      const hs = wb.addWorksheet("Câblage HF");
+      hs.addRow([`Câblage HF · ${titre} · racks vus de dos`]).font = { bold: true, size: 14 };
+      const rows = hcRows(), au = hcAudioRows();
+      if (rows.length) { styleHead(hs.addRow(HC_HEAD)); rows.forEach((r) => hs.addRow(r.cells)); }
+      if (au.length) { hs.addRow([]); hs.addRow(["Audio depuis le patch"]).font = { bold: true }; styleHead(hs.addRow(["Appareil", "Connecteur", "Patch"])); au.forEach((r) => hs.addRow(r)); }
+      [8, 24, 18, 24, 18, 14, 30].forEach((w, i) => { hs.getColumn(i + 1).width = w; });
+      const id = wb.addImage({ base64: hp.data, extension: "png" }), scale = Math.min(1, 1100 / hp.w);
+      hs.addImage(id, { tl: { col: 0, row: hs.rowCount + 1 }, ext: { width: hp.w * scale, height: hp.h * scale } });
+      page(hs, true);
     }
     await chSheet(wb, titre);
     freeSheet(wb, "locaux", titre);
@@ -12777,6 +13097,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
     planBind(); rackplanBind(); tdBind(); chBind();
     synBind();
+    hfCabBind();
     hfBind(); kbBind(); spxPatchBind();
     ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
     $("#sortRacks").addEventListener("click", () => { state.racks.sort(byRackId); commit(true); notice("Stage racks et I/O triés par ID."); });
@@ -13717,7 +14038,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         "-",
         it.kind === "rack" && { t: "Voir dans Racks et I/O", fn: () => showRack(it.ref) },
         it.kind === "rack" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${it.ref}"]`); } },
-        it.kind === "extra" && { t: "Voir dans le synoptique", fn: () => { synSel = it.ref; setView("syn"); } },
+        it.kind === "extra" && (isHfExtra(rpExtra(it.ref)) ? { t: "Voir dans le câblage HF", fn: () => setView("hfcab") } : { t: "Voir dans le synoptique", fn: () => { synSel = it.ref; setView("syn"); } }),
         "-", { t: "Retirer du rack", fn: () => { c.items = c.items.filter((i) => i !== it); rpSel = null; commit(true); } }]];
     }
     const p = rpPoint(svg, e), col = Math.max(0, Math.min(n - 1, Math.floor(p.x / (RP_CW + RP_GAP)))), at = Math.max(1, Math.min(c.u, Math.floor((p.y - RP_TOP) / RP_UH) + 1));
@@ -13871,7 +14192,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         kind === "r" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${id}"]`); } },
         kind === "r" && rpPutItem("rack", id),
         kind === "h" && hfDevById(id) && { t: "Voir dans l'onglet HF", fn: () => { setView(hfDevById(id).kind === "tx" ? "hftx" : "hfrx"); showSetupRow(`tr[data-hd="${id}"] input`); } },
-        kind === "x" && { t: "Voir dans le synoptique", fn: () => { synSel = id; setView("syn"); } },
+        kind === "x" && (isHfExtra(rpExtra(id)) ? { t: "Voir dans le câblage HF", fn: () => setView("hfcab") } : { t: "Voir dans le synoptique", fn: () => { synSel = id; setView("syn"); } }),
         x && { t: "Dupliquer", fn: () => { N.extra.splice(N.extra.indexOf(x) + 1, 0, { ...x, id: nid(), ip: "" }); commit(true); } },
         "-", rm]];
     }
@@ -13946,6 +14267,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     else if (t.closest("#v-plan .plan-stage")) m = ctxPlan(e, t);
     else if (t.closest("#v-charge") && t.closest("g.chit[data-chc], .chchip[data-chc], [data-chrow]") && !t.closest("textarea")) m = ctxCharge(e, t);
     else if (t.closest("#synStage")) m = ctxSyn(e, t);
+    else if (t.closest("#hfcStage")) m = ctxHfc(e, t);
     else if ((g = t.closest("#gridOut li"))) m = ctxGrid(g);
     else if ((g = t.closest("#hfRxOut .hdu.hdrx"))) m = ctxHfVoie(g);
     else if ((g = t.closest("#gridOut .box > h3"))) { const b = boxById(g.closest(".box").dataset.bid); m = b && ctxBoxHead(b); }
