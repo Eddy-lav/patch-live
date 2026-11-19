@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "eee5ff1c77";</script>
+<script>window.PL_VER = "950931809f";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7491,7 +7491,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const chRangN = (t, rid) => t.rangs.findIndex((r) => r.id === rid) + 1;
   const chRangName = (t, rid) => { const n = chRangN(t, rid); return n ? `Rang ${n}` : "À charger"; };
   const chIn = (t, rid) => t.cases.filter((c) => c.rang === rid);
-  const chDepth = (t, rid) => Math.max(0, ...chIn(t, rid).map((c) => c.d || 0));
+  // c.z : recul de la case dans son rang, en cm depuis le fond (côté cabine). Une case moins profonde que son rang
+  // peut ainsi se caler devant une autre (ex. une tool dans l'angle d'une console profonde et d'un rack).
+  const chZ = (c) => Number(c.z) || 0;
+  const chZov = (a, b) => chZ(a) < chZ(b) + b.d - 0.5 && chZ(a) + a.d > chZ(b) + 0.5;
+  const chDepth = (t, rid) => Math.max(0, ...chIn(t, rid).map((c) => chZ(c) + (c.d || 0)));
+  // Profondeur du rang sans cette case : en reculant, une case ne rend jamais son rang plus profond
+  const chRoom = (t, rid, c) => Math.max(c.d, ...chIn(t, rid).filter((o) => o !== c).map((o) => chZ(o) + o.d));
   const chKg = (list) => list.reduce((n, c) => n + (Number(c.kg) || 0), 0);
   const chM = (cm) => (cm / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " m";
   const chKgTxt = (kg) => Math.round(kg).toLocaleString("fr-FR") + " kg";
@@ -7509,23 +7515,23 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Ce qui est dessous : la case se pose sur la plus haute case qu'elle chevauche, sous le point où on la lâche
   function chSupport(t, rid, c, x, hint) {
     let y = 0;
-    chIn(t, rid).forEach((o) => { if (o === c || o.x >= x + c.w || o.x + o.w <= x) return; const top = o.y + o.h; if (top <= hint + 20 && top > y) y = top; });
+    chIn(t, rid).forEach((o) => { if (o === c || o.x >= x + c.w || o.x + o.w <= x || !chZov(o, c)) return; const top = o.y + o.h; if (top <= hint + 20 && top > y) y = top; });
     return y;
   }
-  const chHit = (a, b) => a.x < b.x + b.w - 0.5 && a.x + a.w > b.x + 0.5 && a.y < b.y + b.h - 0.5 && a.y + a.h > b.y + 0.5;
+  const chHit = (a, b) => a.x < b.x + b.w - 0.5 && a.x + a.w > b.x + 0.5 && a.y < b.y + b.h - 0.5 && a.y + a.h > b.y + 0.5 && chZov(a, b);
   function chBad(t, c) {
     if (!c.rang) return "";
     if (c.x < 0 || c.x + c.w > t.l + 0.5) return "dépasse en largeur";
     if (c.y + c.h > t.h + 0.5) return "dépasse en hauteur";
     if (chIn(t, c.rang).some((o) => o !== c && chHit(o, c))) return "chevauche une autre case";
-    if (c.y > 0 && chIn(t, c.rang).some((o) => o !== c && o.nogerb && Math.abs(o.y + o.h - c.y) < 1 && o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5)) return "posée sur une case non gerbable";
+    if (c.y > 0 && chIn(t, c.rang).some((o) => o !== c && o.nogerb && Math.abs(o.y + o.h - c.y) < 1 && o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5 && chZov(o, c))) return "posée sur une case non gerbable";
     return "";
   }
   // Première place libre : le plus bas possible, puis le plus à gauche
   function chAutoPlace(t, rid, c) {
-    let best = null;
+    let best = null; delete c.z;
     for (let x = 0; x + c.w <= t.l + 0.5; x += 5) {
-      const under = chIn(t, rid).filter((o) => o !== c && o.x < x + c.w && o.x + o.w > x), y = under.reduce((m, o) => Math.max(m, o.y + o.h), 0);
+      const under = chIn(t, rid).filter((o) => o !== c && o.x < x + c.w && o.x + o.w > x && chZov(o, c)), y = under.reduce((m, o) => Math.max(m, o.y + o.h), 0);
       if (y + c.h > t.h + 0.5 || under.some((o) => o.nogerb && o.y + o.h === y)) continue;
       if (!best || y < best.y) best = { x, y };
     }
@@ -7536,7 +7542,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function chSettle(t) {
     t.rangs.forEach((r) => {
       const L = chIn(t, r.id).sort((a, b) => a.y - b.y || a.x - b.x), done = [];
-      L.forEach((c) => { c.y = done.filter((o) => o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5 && o.y + o.h <= c.y + 0.5).reduce((m, o) => Math.max(m, o.y + o.h), 0); done.push(c); });
+      L.forEach((c) => { if (chZ(c)) { const z = Math.max(0, Math.min(chZ(c), chRoom(t, r.id, c) - c.d)); if (z) c.z = z; else delete c.z; } });
+      L.forEach((c) => { c.y = done.filter((o) => o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5 && o.y + o.h <= c.y + 0.5 && chZov(o, c)).reduce((m, o) => Math.max(m, o.y + o.h), 0); done.push(c); });
     });
   }
   function chCommit() { chState().camions.forEach(chSettle); commit(true); }
@@ -7586,13 +7593,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       ${forExport ? `<text x="${CH_M.l}" y="18" font-size="15" font-weight="700" fill="#111827">Rang ${n}<tspan font-weight="400" fill="#4b5563" font-size="11">  ${d ? "profondeur " + d + " cm · " : ""}${chKgTxt(chKg(chIn(t, r.id)))}</tspan></text>` : ""}
       <g transform="translate(${CH_M.l} ${top})"><rect class="chfloor" width="${t.l}" height="${t.h}" fill="#f7f8f6" stroke="#373737" stroke-width="1.5"/>${grid}
       <text x="${t.l / 2}" y="${t.h + 16}" font-size="10" text-anchor="middle" fill="#4b5563">${chM(t.l)} · Jardin à gauche, vu depuis les portes</text>
-      <g class="chcases">${chIn(t, r.id).map((c) => chCaseSvg(t, c, forExport)).join("")}</g></g></svg>`;
+      <g class="chcases">${chIn(t, r.id).slice().sort((a, b) => chZ(a) - chZ(b)).map((c) => chCaseSvg(t, c, forExport)).join("")}</g></g></svg>`;
   }
   // Contenu d'un rang en texte, comme sur les plans écrits : « 4× K3, X12 »
   function chRowText(t, rid) {
     const L = chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x), groups = [];
-    L.forEach((c) => { const nm = chLabel(c), g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.ng === !!c.nogerb); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, ng: !!c.nogerb }); });
-    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? " (dessus)" : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
+    L.forEach((c) => { const nm = chLabel(c), g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.ng === !!c.nogerb && x.z === chZ(c)); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, ng: !!c.nogerb, z: chZ(c) }); });
+    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? " (dessus)" : ""}${g.z ? ` (devant, à ${g.z} cm du fond)` : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
   }
   function chTotals(t) {
     const used = t.rangs.reduce((n, r) => n + chDepth(t, r.id), 0), placed = t.cases.filter((c) => c.rang);
@@ -7633,6 +7640,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <div class="row3"><label>Largeur<input type="number" min="5" max="1400" step="1" inputmode="numeric" data-chf="w" value="${c.w}"></label><label>Profondeur<input type="number" min="5" max="1400" step="1" inputmode="numeric" data-chf="d" value="${c.d}"></label><label>Hauteur<input type="number" min="5" max="400" step="1" inputmode="numeric" data-chf="h" value="${c.h}"></label></div>
         <p class="hint" style="margin:-4px 0 8px">En cm, vue depuis les portes. Les corrections sont retenues pour tes prochains dossiers.</p>
         <div class="row2"><label>Poids (kg)<input type="number" min="0" step="1" inputmode="numeric" data-chf="kg" value="${c.kg || ""}"></label><label>Rang<select data-chf="rang"><option value="">À charger</option>${t.rangs.map((r, i) => `<option value="${r.id}"${c.rang === r.id ? " selected" : ""}>Rang ${i + 1}</option>`).join("")}</select></label></div>
+        ${c.rang && chRoom(t, c.rang, c) > c.d ? `<label>Recul dans le rang (cm depuis le fond, 0 à ${chRoom(t, c.rang, c) - c.d})<input type="number" min="0" max="${chRoom(t, c.rang, c) - c.d}" step="1" inputmode="numeric" data-chf="z" value="${chZ(c)}"></label>` : ""}
         <label class="inl chgerb"><input type="checkbox" data-chf="nogerb"${c.nogerb ? " checked" : ""}> Non gerbable : rien ne se pose dessus</label>
         <div class="actions chturn"><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (hamburger)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button></div>
         <label>Notes<textarea rows="2" data-chf="notes">${esc(c.notes || "")}</textarea></label>
@@ -7669,7 +7677,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (M.join() === CH_ID.join()) delete c.m; else c.m = M.join(",");
   }
   function chMoveRow(t, rid, dir) { const i = t.rangs.findIndex((r) => r.id === rid), j = i + dir; if (i < 0 || j < 0 || j >= t.rangs.length) return; const [r] = t.rangs.splice(i, 1); t.rangs.splice(j, 0, r); chCommit(); }
-  function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
+  function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; delete c.z; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
   function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
   function chBind() {
     const host = $("#v-charge");
@@ -7690,7 +7698,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (b.dataset.chrot && c) { chRot(c, b.dataset.chrot); if (c.rang && chBad(t, c)) { const r = c.rang; if (!chAutoPlace(t, r, c)) c.rang = r; } chLearn(c); chCommit(); return; }
       if ("chdup" in b.dataset && c) { chDupCase(t, c); return; }
       if ("chgerb" in b.dataset && c) { if (c.nogerb) delete c.nogerb; else c.nogerb = true; chLearn(c); chCommit(); return; }
-      if ("chout" in b.dataset && c) { c.rang = ""; c.x = 0; c.y = 0; chCommit(); return; }
+      if ("chout" in b.dataset && c) { c.rang = ""; c.x = 0; c.y = 0; delete c.z; chCommit(); return; }
       if ("chdel" in b.dataset && c) { t.cases = t.cases.filter((x) => x !== c); chSel = null; chCommit(); return; }
       if ("chtdup" in b.dataset) { const map = {}, n = JSON.parse(JSON.stringify(t)); n.id = nid(); n.nom = (t.nom || "Camion") + " (copie)"; n.rangs.forEach((r) => { map[r.id] = r.id = nid(); }); n.cases.forEach((c) => { c.id = nid(); c.rang = c.rang ? map[c.rang] : ""; delete c.ref; }); S.camions.push(n); chSetCur(n.id); chCommit(); return; }
       if ("chtdel" in b.dataset) {
@@ -7716,10 +7724,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (f === "nom" || f === "notes") c[f] = el.value.trim();
       else if (f === "nogerb") { if (el.checked) c.nogerb = true; else delete c.nogerb; }
       else if (f === "cat") c.cat = el.value;
-      else if (f === "rang") { if (!el.value) { c.rang = ""; c.x = 0; c.y = 0; } else if (!chAutoPlace(t, el.value, c)) { c.rang = el.value; c.x = 0; c.y = chSupport(t, el.value, c, 0, 9999); notice("Plus de place libre dans ce rang : la case est posée à gauche, à vérifier."); } }
+      else if (f === "rang") { if (!el.value) { c.rang = ""; c.x = 0; c.y = 0; delete c.z; } else if (!chAutoPlace(t, el.value, c)) { c.rang = el.value; c.x = 0; c.y = chSupport(t, el.value, c, 0, 9999); notice("Plus de place libre dans ce rang : la case est posée à gauche, à vérifier."); } }
+      else if (f === "z") { const z = Math.max(0, Math.round(Number(String(el.value).replace(",", ".")) || 0)); if (z) c.z = z; else delete c.z; }
       else if (f === "kg") c.kg = Math.max(0, Math.round(Number(String(el.value).replace(",", ".")) || 0));
       else c[f] = Math.max(5, Math.min(f === "h" ? 400 : 1400, Math.round(Number(String(el.value).replace(",", ".")) || c[f])));
-      if (f !== "notes" && f !== "rang" && f !== "nogerb") chLearn(c);
+      if (f !== "notes" && f !== "rang" && f !== "nogerb" && f !== "z") chLearn(c);
       chCommit();
     });
     // Glisser : une case d'un rang (ou de « À charger ») se pose sur n'importe quel rang, et tombe sur ce qui est dessous
@@ -7764,7 +7773,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (!d.moved) { ch3.drag = null; chSel = d.c.id; renderCharge(); return; }
       if (d.in3 || d.over3) { ch3DragEnd(d); return; }
       if (!d.to) { renderCharge(); return; }
-      Object.assign(d.c, { rang: d.to.rid, x: d.to.x, y: d.to.y }); chSel = d.c.id; chRowTo = d.to.rid; chCommit();
+      if (d.c.rang !== d.to.rid) delete d.c.z; Object.assign(d.c, { rang: d.to.rid, x: d.to.x, y: d.to.y }); chSel = d.c.id; chRowTo = d.to.rid; chCommit();
     };
     document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
     // Au doigt : une case se déplace, le fond fait défiler la page
@@ -7794,7 +7803,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         { t: c.nogerb ? "Rendre gerbable" : "Non gerbable (rien dessus)", fn: () => { if (c.nogerb) delete c.nogerb; else c.nogerb = true; chLearn(c); chCommit(); } },
         { t: "Mettre dans le rang", sub: () => t.rangs.map((r, i) => ({ t: `Rang ${i + 1}`, on: c.rang === r.id, fn: () => { if (!chAutoPlace(t, r.id, c)) { notice(`Plus de place libre dans le rang ${i + 1}.`); return; } chCommit(); } })) },
         { t: "Dupliquer", fn: () => chDupCase(t, c) },
-        c.rang && { t: "Sortir du rang (à charger)", fn: () => { c.rang = ""; c.x = 0; c.y = 0; chCommit(); } },
+        c.rang && { t: "Sortir du rang (à charger)", fn: () => { c.rang = ""; c.x = 0; c.y = 0; delete c.z; chCommit(); } },
         "-", { t: "Supprimer la case", danger: true, fn: () => { t.cases = t.cases.filter((x) => x !== c); chSel = null; chCommit(); } }]];
     }
     const row = t0.closest("[data-chrow]"); if (!row) return null;
@@ -7930,7 +7939,20 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const n = chNative(c), m = chMat(c), outer = new THREE.Group(), pivot = new THREE.Group(), inner = ch3Case({ ...c, w: n[0], h: n[1], d: n[2] }, bad, on);
     inner.position.set(-n[0] / 2, -n[1] / 2, -n[2] / 2); pivot.add(inner);
     pivot.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1));
-    pivot.position.set(c.w / 2, c.h / 2, c.d / 2); outer.add(pivot); return outer;
+    pivot.position.set(c.w / 2, c.h / 2, c.d / 2); outer.add(pivot);
+    // Étiquette toujours lisible : posée au-dessus de la case, tournée vers la caméra, jamais cachée par les autres
+    const tag = ch3Tag(chLabel(c), bad); tag.position.set(c.w / 2, c.h + 9, c.d / 2); outer.add(tag);
+    return outer;
+  }
+  function ch3Tag(txt, bad) {
+    const cv = document.createElement("canvas"), x = cv.getContext("2d"), fs = 44, pad = 16; x.font = `700 ${fs}px ${PLAN_FONT}`;
+    const tw = Math.min(900, Math.ceil(x.measureText(txt).width)); cv.width = tw + pad * 2; cv.height = fs + 22;
+    x.font = `700 ${fs}px ${PLAN_FONT}`; x.fillStyle = bad ? "rgba(211,47,47,0.92)" : "rgba(55,55,55,0.86)";
+    const r = 14, W = cv.width, H = cv.height; x.beginPath(); x.moveTo(r, 0); x.arcTo(W, 0, W, H, r); x.arcTo(W, H, 0, H, r); x.arcTo(0, H, 0, 0, r); x.arcTo(0, 0, W, 0, r); x.fill();
+    x.fillStyle = "#ffffff"; x.textBaseline = "middle"; x.fillText(txt, pad, H / 2 + 2, tw);
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
+    const h = 15; sp.scale.set(h * (W / H), h, 1); sp.renderOrder = 20; sp.userData.tag = true; return sp;
   }
   function ch3Text(txt, size, color) {
     const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = 256; cv.height = 128;
@@ -7951,7 +7973,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     ch3Box(root, t.l + 20, t.h * 0.8, 170, -10, 30, -190, ch3Mat("#dfe3e5")); ch3Box(root, t.l + 6, t.h * 0.3, 2, -3, t.h * 0.42, -21, ch3Mat("#7a8a91", { metalness: 0.3, roughness: 0.2 }));
     const door = ch3Text("Portes", 46, "#5b6569"); door.position.set(t.l / 2, 0.6, Lr + 50); root.add(door);
     ch3.meshes = new Map();
-    rows.forEach((o) => { if (o.i >= upTo) return; chIn(t, o.r.id).forEach((c) => { const g = ch3Placed(c, !forShot && chBad(t, c), !forShot && chSel === c.id); g.position.set(c.x, c.y, o.z0); root.add(g); ch3.meshes.set(c.id, g); }); });
+    rows.forEach((o) => { if (o.i >= upTo) return; chIn(t, o.r.id).forEach((c) => { const g = ch3Placed(c, !forShot && chBad(t, c), !forShot && chSel === c.id); g.position.set(c.x, c.y, o.z0 + chZ(c)); root.add(g); ch3.meshes.set(c.id, g); }); });
     return root;
   }
   // Cadrage sur la partie chargée (plus 3 m), pas sur tout le camion vide
@@ -8021,14 +8043,26 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return o ? o.userData.cid : null;
   }
   // Où irait la case sous le pointeur : rang (ou nouveau rang après le dernier), x, y
-  function ch3Target(t, c, e, offX) {
+  function ch3Target(t, c, e, offX, offZ) {
     const p = ch3Floor(e); if (!p) return null;
     const all = ch3.upTo >= t.rangs.length, rows = ch3Rows(t).slice(0, ch3.upTo), last = rows[rows.length - 1], end = last ? last.z0 + last.d : 0;
-    const x = Math.max(0, Math.min(t.l - c.w, chSnap(p.x - offX)));
+    let x = Math.max(0, Math.min(t.l - c.w, chSnap(p.x - offX)));
     // Au-delà du dernier rang (s'il n'est pas vide) : un nouveau rang
     if (all && (!last || (p.z > end + 15 && chIn(t, last.r.id).some((o) => o !== c)))) return { newRow: true, x, y: 0, z0: end };
     const o = rows.find((q) => p.z >= q.z0 && p.z < q.z0 + q.d) || (p.z < 0 ? rows[0] : last);
-    return { rid: o.r.id, x, y: chSupport(t, o.r.id, c, x, 9999), z0: o.z0 };
+    // Aimant en largeur : contre les parois et les flancs des cases du rang
+    const xs = [0, t.l - c.w]; chIn(t, o.r.id).forEach((q) => { if (q !== c) xs.push(q.x + q.w, q.x - c.w); });
+    const nx = xs.filter((v) => v >= 0 && v <= t.l - c.w).reduce((b, v) => (Math.abs(v - x) < Math.abs(b - x) ? v : b), x); if (Math.abs(nx - x) <= 10) x = nx;
+    // Recul dans le rang : libre entre le fond et l'avant du rang, aimanté contre l'avant des cases voisines
+    const room = chRoom(t, o.r.id, c) - c.d; let z = 0;
+    if (room > 0) {
+      z = Math.max(0, Math.min(room, chSnap(p.z - o.z0 - (offZ || 0))));
+      const stops = [0, room, ...chIn(t, o.r.id).filter((q) => q !== c && q.x < x + c.w && q.x + q.w > x).map((q) => chZ(q) + q.d).filter((v) => v <= room)];
+      const near = stops.reduce((b, v) => (Math.abs(v - z) < Math.abs(b - z) ? v : b), stops[0]); if (Math.abs(near - z) <= 15) z = near;
+    }
+    const keep = c.z; if (z) c.z = z; else delete c.z;
+    const y = chSupport(t, o.r.id, c, x, 9999); if (keep) c.z = keep; else delete c.z;
+    return { rid: o.r.id, x, y, z, z0: o.z0 };
   }
   function ch3Bind() {
     const cv = $("#ch3Canvas");
@@ -8037,9 +8071,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       ch3.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
       if (ch3.ptrs.size === 2) { ch3.orbit = null; if (chDrag) { chDrag = null; ch3.drag = null; ch3Rebuild(); } const [a, b] = [...ch3.ptrs.values()]; ch3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ch3.zoom }; return; }
-      const t = chTruck(), id = ch3Pick(e), c = id && t.cases.find((x) => x.id === id);
-      if (c) { const p = ch3Floor(e); chDrag = { c, in3: true, offX: p ? p.x - c.x : c.w / 2, moved: false, x0: e.clientX, y0: e.clientY }; ch3.drag = {}; }
-      else ch3.orbit = { x: e.clientX, y: e.clientY, th: ch3.theta, ph: ch3.phi, moved: false };
+      // Clic molette (ou droit maintenu ailleurs) : on tourne la vue, on n'attrape jamais une case
+      const t = chTruck(), id = e.button === 0 ? ch3Pick(e) : null, c = id && t.cases.find((x) => x.id === id);
+      if (c) { const p = ch3Floor(e), r0 = ch3Rows(t).find((q) => q.r.id === c.rang); chDrag = { c, in3: true, offX: p ? p.x - c.x : c.w / 2, offZ: p && r0 ? Math.max(0, Math.min(c.d, p.z - r0.z0 - chZ(c))) : c.d / 2, moved: false, x0: e.clientX, y0: e.clientY }; ch3.drag = {}; }
+      else ch3.orbit = { x: e.clientX, y: e.clientY, th: ch3.theta, ph: ch3.phi, moved: false, btn: e.button };
       e.preventDefault();
     });
     cv.addEventListener("pointermove", (e) => {
@@ -8052,9 +8087,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const up = (e) => {
       ch3.ptrs.delete(e.pointerId); if (ch3.ptrs.size < 2) ch3.pinch = null;
       const o = ch3.orbit; ch3.orbit = null;
-      if (o && !o.moved && chSel) { chSel = null; renderCharge(); }
+      if (o && !o.moved && !o.btn && chSel) { chSel = null; renderCharge(); }
     };
     cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+    cv.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); }); cv.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
     cv.addEventListener("wheel", (e) => { e.preventDefault(); ch3.zoom = Math.max(0.2, Math.min(4, ch3.zoom * (e.deltaY > 0 ? 1.1 : 0.91))); ch3Draw(); }, { passive: false });
     $("#ch3Wrap").addEventListener("click", (e) => {
       const b = e.target.closest("[data-ch3v]"); if (!b) return;
@@ -8065,19 +8101,20 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   // Glisser en 3D (une case du camion, ou une case de « À charger » lâchée sur la 3D)
   function ch3DragMove(d, e) {
-    const t = chTruck(), c = d.c, g0 = ch3Target(t, c, e, d.in3 ? d.offX : c.w / 2); d.to3 = g0;
+    const t = chTruck(), c = d.c, g0 = ch3Target(t, c, e, d.in3 ? d.offX : c.w / 2, d.in3 ? d.offZ : c.d / 2); d.to3 = g0;
     if (!g0) return;
     let g = ch3.meshes.get(c.id);
     if (!g) { g = ch3Placed(c, false, true); ch3.root.add(g); ch3.meshes.set(c.id, g); }
     const wasNew = !!ch3.drag.newRow; ch3.drag.newRow = !!g0.newRow;
     if (wasNew !== ch3.drag.newRow) { const keep = g; ch3.root.remove(keep); ch3Rebuild(); if (!ch3.meshes.get(c.id)) { ch3.root.add(keep); ch3.meshes.set(c.id, keep); } g = ch3.meshes.get(c.id); }
-    g.position.set(g0.x, g0.y, g0.z0); ch3Draw();
+    g.position.set(g0.x, g0.y, g0.z0 + (g0.z || 0)); ch3Draw();
   }
   function ch3DragEnd(d) {
     const t = chTruck(), g0 = d.to3; ch3.drag = null;
     if (!g0) { renderCharge(); return; }
     let rid = g0.rid;
     if (g0.newRow) { const r = { id: nid() }; t.rangs.push(r); rid = r.id; ch3.upAll = true; }
+    if (g0.z) d.c.z = g0.z; else delete d.c.z;
     Object.assign(d.c, { rang: rid, x: g0.x, y: chSupport(t, rid, d.c, g0.x, 9999) }); chSel = d.c.id; chRowTo = rid; chCommit();
   }
   // Image 3D (Excel, PDF) : vue en perspective depuis les portes, tous les rangs
