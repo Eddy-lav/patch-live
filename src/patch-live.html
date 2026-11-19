@@ -7593,13 +7593,17 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Roulettes vues des portes : elles suivent la case quand on la couche ou la met sur le côté (comme en 3D)
   function chWheelsSvg(c) {
     const n = chNative(c); if (!(n[1] >= 45 && n[0] >= 40 && n[2] >= 40)) return "";
-    const m = chMat(c), v = [-m[1], -m[4], -m[7]], r = 4.5, k = 9, w = c.w, h = c.h;
-    const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#1b1b1b" stroke="#c3c9cc" stroke-width="1"/>`;
-    if (v[1] < -0.5) return dot(k, h - r) + dot(w - k, h - r);           // debout : en bas
-    if (v[1] > 0.5) return dot(k, r) + dot(w - k, r);                    // à l'envers : en haut
-    if (v[0] < -0.5) return dot(r, k) + dot(r, h - k);                   // vers le jardin
-    if (v[0] > 0.5) return dot(w - r, k) + dot(w - r, h - k);            // vers le cour
-    if (v[2] > 0.5) return dot(k, k) + dot(w - k, k) + dot(k, h - k) + dot(w - k, h - k); // face aux portes
+    const m = chMat(c), v = [-m[1], -m[4], -m[7]], k = 9, w = c.w, h = c.h;
+    // Roulette pivotante vue de profil : platine vissée sous la case, chape, roue avec bandage et moyeu.
+    // Dessinée « vers le bas » puis tournée : (x, y) est le point où la roue touche le bord extérieur de la case.
+    const cast = (x, y, a) => `<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-5" y="-11.5" width="10" height="1.6" rx="0.4" fill="#9aa3a8" stroke="#4b5563" stroke-width="0.4"/><path d="M-3.2 -9.9 L3.2 -9.9 L2.4 -4.6 L-2.4 -4.6 Z" fill="#b8c0c4" stroke="#4b5563" stroke-width="0.4"/><circle cx="0" cy="-4.6" r="4.5" fill="#1b1b1b"/><circle cx="0" cy="-4.6" r="2.6" fill="#3a3d40"/><circle cx="0" cy="-4.6" r="1.2" fill="#d1d6d9" stroke="#4b5563" stroke-width="0.3"/></g>`;
+    // Face aux portes : on voit la platine et la bande de roulement
+    const face = (x, y) => `<g transform="translate(${x} ${y})"><rect x="-5" y="-5" width="10" height="10" rx="1" fill="#9aa3a8" stroke="#4b5563" stroke-width="0.4"/><rect x="-1.8" y="-4.2" width="3.6" height="8.4" rx="1.6" fill="#1b1b1b"/><circle cx="0" cy="0" r="0.9" fill="#d1d6d9"/></g>`;
+    if (v[1] < -0.5) return cast(k, h, 0) + cast(w - k, h, 0);           // debout : en bas
+    if (v[1] > 0.5) return cast(k, 0, 180) + cast(w - k, 0, 180);        // à l'envers : en haut
+    if (v[0] < -0.5) return cast(0, k, 90) + cast(0, h - k, 90);         // vers le jardin
+    if (v[0] > 0.5) return cast(w, k, -90) + cast(w, h - k, -90);        // vers le cour
+    if (v[2] > 0.5) return face(k, k) + face(w - k, k) + face(k, h - k) + face(w - k, h - k); // face aux portes
     return "";                                                           // vers la cabine : cachées
   }
   function chCaseSvg(t, c, forExport, plain) {
