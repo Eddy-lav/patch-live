@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "aa1da64da7";</script>
+<script>window.PL_VER = "e9e503881b";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -2116,6 +2116,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="chAddTruck" class="btn small" type="button">+ Camion</button>
     <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
+    <button id="chFiche" class="btn small" type="button" title="Une page par camion, rang par rang, à imprimer ou à enregistrer en PDF pour le chargement">Fiche une page</button>
     <button id="chImport" class="btn small" type="button" title="Reprendre les camions d'un autre fichier Excel de l'appli (par exemple un plan fait sur une version de test)">Importer un plan…</button><input id="chImportIn" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     <span id="chMode" class="tdflt" role="group" aria-label="Affichage"><button type="button" data-chmode="3d">3D</button><button type="button" data-chmode="rangs">Rangs</button></span>
   </div>
@@ -7716,6 +7717,94 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function chMoveRow(t, rid, dir) { const i = t.rangs.findIndex((r) => r.id === rid), j = i + dir; if (i < 0 || j < 0 || j >= t.rangs.length) return; const [r] = t.rangs.splice(i, 1); t.rangs.splice(j, 0, r); chCommit(); }
   function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; delete c.z; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
   function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
+  // ---------- Fiche de chargement : une page par camion, lisible à bout de bras dans le camion ----------
+  // Bandeau du camion (cabine → portes, rangs à l'échelle) puis une case par rang, dans l'ordre de chargement :
+  // gros numéro, ce qui va au sol de jardin à cour, puis ce qui se pose dessus. La taille du texte s'adapte pour tenir sur la page.
+  const CHF_CSS = `@page { size: A4 landscape; margin: 8mm; }
+  @media print { html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; } }
+  .chf { font-family: "Barlow", ${PLAN_FONT}; color: #1d1d1d; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .chf .pg { width: 281mm; height: 193mm; display: flex; flex-direction: column; gap: 3mm; overflow: hidden; page-break-after: always; break-after: page; }
+  .chf .pg:last-child { page-break-after: auto; break-after: auto; }
+  .chf .top { display: flex; align-items: baseline; gap: 5mm; }
+  .chf .top h1 { font: 700 7.5mm/1 "Barlow Semi Condensed", ${PLAN_FONT}; margin: 0; }
+  .chf .top .k { font-size: 3.6mm; color: #373737; }
+  .chf .top .k b { font-weight: 700; color: #1d1d1d; }
+  .chf .top .who { margin-left: auto; font-size: 3.2mm; color: #5b6569; text-align: right; }
+  .chf .lane { display: flex; align-items: stretch; height: 9mm; border: 0.5mm solid #373737; border-radius: 1.5mm; overflow: hidden; font: 700 4.6mm/9mm "Barlow Semi Condensed", ${PLAN_FONT}; }
+  .chf .lane .end { flex: none; padding: 0 2.5mm; background: #373737; color: #fff; font-size: 3.4mm; font-weight: 600; }
+  .chf .lane .r { text-align: center; border-right: 0.3mm solid rgb(55 55 55 / 0.35); min-width: 0; overflow: hidden; }
+  .chf .lane .free { background: repeating-linear-gradient(90deg, #fff 0 4mm, #f1f3f4 4mm 8mm); }
+  .chf .top .over { color: #b71c1c; font-weight: 700; }
+  .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; }
+  .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; break-inside: avoid; }
+  .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.4mm 2mm 0.2mm; border-bottom: 0.35mm solid #373737; }
+  .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
+  .chf .num small { font-size: 3.2mm; color: #373737; margin-left: auto; white-space: nowrap; }
+  .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
+  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: 0; max-height: var(--sv); }
+  .chf .fv.off { display: none; }
+  .chf .fv svg { display: block; width: 100%; height: 100%; max-width: none; }
+  .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
+  .chf .it .q { font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; }
+  .chf .it .q:empty { display: none; }
+  .chf .it .nm { font: 600 1em "Barlow Semi Condensed", ${PLAN_FONT}; min-width: 0; }
+  .chf .it .tg { font-size: 0.62em; font-weight: 600; border-radius: 0.8mm; padding: 0.1em 0.45em; white-space: nowrap; align-self: center; }
+  .chf .it.up .tg { background: #fce694; }
+  .chf .it .ng { background: #c62828; color: #fff; }
+  .chf .it .fr { background: #c1dbe3; }
+  .chf .sep { border-top: 0.3mm dashed #8d969a; margin: 0.8mm 0 0.5mm; }
+  .chf .note { font-size: 0.7em; color: #373737; font-style: italic; margin-top: 0.6mm; }
+  .chf .foot { display: flex; gap: 6mm; font-size: 3.2mm; color: #373737; }
+  .chf .foot b { color: #1d1d1d; }`;
+  function chFicheGroups(t, rid) {
+    const L = chIn(t, rid), floor = L.filter((c) => c.y <= 0).sort((a, b) => a.x - b.x || chZ(a) - chZ(b)), up = L.filter((c) => c.y > 0).sort((a, b) => a.y - b.y || a.x - b.x);
+    const pack = (list, top) => { const out = []; list.forEach((c) => { const k = [chLabel(c), !!c.nogerb, !!chZ(c)].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr: !!chZ(c), up: top }); }); return out; };
+    return { floor: pack(floor, false), up: pack(up, true) };
+  }
+  function chFicheHtml() {
+    const S = chState(), d = state.dossier || {}, today = new Date().toLocaleDateString("fr-FR");
+    const list = S.camions.filter((t) => t.cases.some((c) => c.rang)); if (!list.length) return "";
+    const pages = list.map((t) => {
+      const rows = t.rangs.filter((r) => chIn(t, r.id).length), tot = chTotals(t), n = rows.length || 1;
+      const g = rows.map((r) => chFicheGroups(t, r.id)), lines = Math.max(1, ...g.map((x) => x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0)));
+      // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
+      const cols = n <= 3 ? n : n <= 8 ? 4 : n <= 10 ? 5 : n <= 15 ? 5 : 6, lns = Math.ceil(n / cols), cellH = (193 - 9 - 9 - 6 - 3 * 3 - (lns - 1) * 2.2) / lns;
+      const f = Math.max(2.6, Math.min(8, (cellH - 14) / (lines * 1.2 + 0.4))), num = Math.max(8, Math.min(14, cellH * 0.18)), sv = cellH >= 55 ? Math.min(42, cellH * 0.4) : 0;
+      const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.up ? '<span class="tg">dessus</span>' : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
+      const cells = rows.map((r, k) => { const i = chRangN(t, r.id), gg = g[k], dd = chDepth(t, r.id);
+        return `<div class="row"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body">${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}${sv ? `<div class="fv">${chRowSvg(t, r, false)}</div>` : ""}</div></div>`; }).join("");
+      const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
+      return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm">
+        <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chM(tot.used)}</b> sur ${chM(t.L)}, <b>${chKgTxt(tot.kg)}</b>${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><span class="who">${esc(d.nom || "")}${d.lieu ? `<br>${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
+        <div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div>
+        <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns},minmax(0,1fr))">${cells}</div>
+        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus.${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
+      </section>`;
+    }).join("");
+    return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
+  }
+  // Ajuste la taille du texte page par page : la plus grande qui tient dans toutes les cases, sans couper un mot
+  function chFicheFit(root) {
+    const keep = root.style.cssText; root.style.cssText = "display:block;position:absolute;left:-10000px;top:0;visibility:hidden";
+    root.querySelectorAll(".pg").forEach((pg) => {
+      const fits = () => [...pg.querySelectorAll(".body")].every((b) => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1);
+      // Le texte passe avant le croquis : le croquis prend la place qui reste dans sa case, et disparaît s'il n'en reste pas assez
+      let f = parseFloat(pg.style.getPropertyValue("--f")) || 5;
+      const set = () => pg.style.setProperty("--f", f + "mm");
+      for (let up = 0; up < 20 && fits() && f < 9; up++) { f += 0.25; set(); }
+      while (!fits() && f > 2.2) { f -= 0.25; set(); }
+      pg.querySelectorAll(".fv").forEach((v) => { if (v.getBoundingClientRect().height < 60) v.classList.add("off"); });
+    });
+    root.style.cssText = keep;
+  }
+  function chFichePrint() {
+    const html = chFicheHtml(); if (!html) { notice("Aucune case chargée : range d'abord des cases dans un rang.", true); return; }
+    let root = document.getElementById("printRoot");
+    if (!root) { root = document.createElement("div"); root.id = "printRoot"; document.body.appendChild(root); }
+    root.innerHTML = html; chFicheFit(root);
+    try { window.print(); } catch (err) { notice("L'impression n'est pas disponible dans cette vue.", true); }
+  }
   // Reprend les camions d'un autre fichier Excel de l'appli (ex. un plan fait sur la version de test) dans ce dossier
   async function chImportFile(file) {
     let src;
@@ -7746,6 +7835,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const tr = e.target.closest("#chList tr[data-chc]");
       if (tr) { chSel = chSel === tr.dataset.chc ? null : tr.dataset.chc; renderCharge(); return; }
       const S = chState(), t = chTruck(), b = e.target.closest("button"); if (!b) return;
+      if (b.id === "chFiche") { chFichePrint(); return; }
       if (b.id === "chImport") { $("#chImportIn").value = ""; $("#chImportIn").click(); return; }
       if (b.dataset.chtruck) { chSetCur(b.dataset.chtruck); renderCharge(); return; }
       if (b.dataset.chmode) { chMode = b.dataset.chmode; try { localStorage.setItem("patch-live-chmode", chMode); } catch (err) { /* ignore */ } renderCharge(); return; }
