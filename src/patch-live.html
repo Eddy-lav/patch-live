@@ -7456,7 +7456,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const chKey = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
   function chLearn(c) {
     if (!c || !c.nom || c.ref) return;
-    chLib[chKey(c.nom)] = { nom: c.nom, cat: c.cat, w: c.w, d: c.d, h: c.h, kg: c.kg || 0, ...(c.nogerb ? { nogerb: true } : {}) };
+    const n = chNative(c); chLib[chKey(c.nom)] = { nom: c.nom, cat: c.cat, w: n[0], h: n[1], d: n[2], kg: c.kg || 0, ...(c.nogerb ? { nogerb: true } : {}) };
     try { localStorage.setItem(CH_LIB_KEY, JSON.stringify(chLib)); } catch (e) { /* ignore */ }
   }
   function chState() {
@@ -7640,7 +7640,20 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return { x: q.x - CH_M.l, y: t.h - (q.y - CH_M.t) };
   }
   const chSnap = (v) => Math.round(v / 5) * 5;
-  function chRot(c, k) { const [a, b] = k.split(""); const v = c[a]; c[a] = c[b]; c[b] = v; }
+  // Orientation : matrice de rotation (quarts de tour) entre la case « debout » et sa position dans le camion,
+  // gardée en texte (c.m) ; les dimensions w/h/d restent celles vues dans le camion
+  const CH_ID = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+  const CH_R = { wd: [0, 0, 1, 0, 1, 0, -1, 0, 0], hd: [1, 0, 0, 0, 0, -1, 0, 1, 0], wh: [0, -1, 0, 1, 0, 0, 0, 0, 1] };
+  const chMat = (c) => { const m = String(c.m || "").split(",").map(Number); return m.length === 9 && m.every((v) => v === 0 || v === 1 || v === -1) ? m : CH_ID; };
+  // Dimensions de la case debout (largeur, hauteur, profondeur d'origine)
+  function chNative(c) { const m = chMat(c), W = [c.w, c.h, c.d]; return [0, 1, 2].map((j) => [0, 1, 2].reduce((n, i) => n + Math.abs(m[i * 3 + j]) * W[i], 0)); }
+  function chRot(c, k) {
+    const n = chNative(c), m = chMat(c), R = CH_R[k], M = [];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) M[i * 3 + j] = R[i * 3] * m[j] + R[i * 3 + 1] * m[3 + j] + R[i * 3 + 2] * m[6 + j];
+    const W = [0, 1, 2].map((i) => [0, 1, 2].reduce((t, j) => t + Math.abs(M[i * 3 + j]) * n[j], 0));
+    c.w = W[0]; c.h = W[1]; c.d = W[2];
+    if (M.join() === CH_ID.join()) delete c.m; else c.m = M.join(",");
+  }
   function chMoveRow(t, rid, dir) { const i = t.rangs.findIndex((r) => r.id === rid), j = i + dir; if (i < 0 || j < 0 || j >= t.rangs.length) return; const [r] = t.rangs.splice(i, 1); t.rangs.splice(j, 0, r); chCommit(); }
   function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
   function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
@@ -7898,6 +7911,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     g.userData.cid = c.id;
     return g;
   }
+  // La case est dessinée debout puis tournée : roues, capots et nom suivent quand on la couche
+  function ch3Placed(c, bad, on) {
+    const n = chNative(c), m = chMat(c), outer = new THREE.Group(), pivot = new THREE.Group(), inner = ch3Case({ ...c, w: n[0], h: n[1], d: n[2] }, bad, on);
+    inner.position.set(-n[0] / 2, -n[1] / 2, -n[2] / 2); pivot.add(inner);
+    pivot.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1));
+    pivot.position.set(c.w / 2, c.h / 2, c.d / 2); outer.add(pivot); return outer;
+  }
   function ch3Text(txt, size, color) {
     const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = 256; cv.height = 128;
     x.font = `800 96px ${PLAN_FONT}`; x.fillStyle = color; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, 128, 68);
@@ -7917,7 +7937,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     ch3Box(root, t.l + 20, t.h * 0.8, 170, -10, 30, -190, ch3Mat("#dfe3e5")); ch3Box(root, t.l + 6, t.h * 0.3, 2, -3, t.h * 0.42, -21, ch3Mat("#7a8a91", { metalness: 0.3, roughness: 0.2 }));
     const door = ch3Text("Portes", 46, "#5b6569"); door.position.set(t.l / 2, 0.6, Lr + 50); root.add(door);
     ch3.meshes = new Map();
-    rows.forEach((o) => { if (o.i >= upTo) return; chIn(t, o.r.id).forEach((c) => { const g = ch3Case(c, !forShot && chBad(t, c), !forShot && chSel === c.id); g.position.set(c.x, c.y, o.z0); root.add(g); ch3.meshes.set(c.id, g); }); });
+    rows.forEach((o) => { if (o.i >= upTo) return; chIn(t, o.r.id).forEach((c) => { const g = ch3Placed(c, !forShot && chBad(t, c), !forShot && chSel === c.id); g.position.set(c.x, c.y, o.z0); root.add(g); ch3.meshes.set(c.id, g); }); });
     return root;
   }
   // Cadrage sur la partie chargée (plus 3 m), pas sur tout le camion vide
@@ -8034,7 +8054,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const t = chTruck(), c = d.c, g0 = ch3Target(t, c, e, d.in3 ? d.offX : c.w / 2); d.to3 = g0;
     if (!g0) return;
     let g = ch3.meshes.get(c.id);
-    if (!g) { g = ch3Case(c, false, true); ch3.root.add(g); ch3.meshes.set(c.id, g); }
+    if (!g) { g = ch3Placed(c, false, true); ch3.root.add(g); ch3.meshes.set(c.id, g); }
     const wasNew = !!ch3.drag.newRow; ch3.drag.newRow = !!g0.newRow;
     if (wasNew !== ch3.drag.newRow) { const keep = g; ch3.root.remove(keep); ch3Rebuild(); if (!ch3.meshes.get(c.id)) { ch3.root.add(keep); ch3.meshes.set(c.id, keep); } g = ch3.meshes.get(c.id); }
     g.position.set(g0.x, g0.y, g0.z0); ch3Draw();
