@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "507f71797a";</script>
+<script>window.PL_VER = "94d185e017";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7594,12 +7594,26 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   const CH_M = { l: 34, r: 6, t: 6, b: 26 };
   const chFs = 11;
+  // Sens d'entrée dans le camion, vu des portes : « hamburger » = le grand côté face aux portes, « hot dog » = en long dans le camion
+  const chSens = (c) => (c.w - c.d >= 10 ? "hamburger" : c.d - c.w >= 10 ? "hot dog" : "");
+  // Roulettes vues des portes : elles suivent la case quand on la couche ou la met sur le côté (comme en 3D)
+  function chWheelsSvg(c) {
+    const n = chNative(c); if (!(n[1] >= 45 && n[0] >= 40 && n[2] >= 40)) return "";
+    const m = chMat(c), v = [-m[1], -m[4], -m[7]], r = 4.5, k = 9, w = c.w, h = c.h;
+    const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#1b1b1b" stroke="#c3c9cc" stroke-width="1"/>`;
+    if (v[1] < -0.5) return dot(k, h - r) + dot(w - k, h - r);           // debout : en bas
+    if (v[1] > 0.5) return dot(k, r) + dot(w - k, r);                    // à l'envers : en haut
+    if (v[0] < -0.5) return dot(r, k) + dot(r, h - k);                   // vers le jardin
+    if (v[0] > 0.5) return dot(w - r, k) + dot(w - r, h - k);            // vers le cour
+    if (v[2] > 0.5) return dot(k, k) + dot(w - k, k) + dot(k, h - k) + dot(w - k, h - k); // face aux portes
+    return "";                                                           // vers la cabine : cachées
+  }
   function chCaseSvg(t, c, forExport) {
     const K = CH_CATS[c.cat] || CH_CATS.autre, y = t.h - c.y - c.h, bad = !forExport && chBad(t, c), on = !forExport && chSel === c.id;
     const nm = chLabel(c), max = Math.max(2, Math.floor((c.w - 6) / (chFs * 0.56))), txt = nm.length > max ? nm.slice(0, max - 1) + "…" : nm;
     const dims = `${c.w}×${c.d}×${c.h}`, showDims = c.h >= chFs * 2.6 && c.w >= dims.length * chFs * 0.42;
     const ty = showDims ? c.h / 2 - chFs * 0.35 : c.h / 2;
-    return `<g class="chit${on ? " on" : ""}${bad ? " bad" : ""}" data-chc="${c.id}" transform="translate(${c.x} ${y})"><rect width="${c.w}" height="${c.h}" rx="2" fill="${K[1]}" stroke="${bad ? "#b91c1c" : "#373737"}" stroke-width="${on ? 3 : 1.2}"${bad ? ' stroke-dasharray="6 4"' : ""}/>${c.nogerb ? `<path d="M3 3H${c.w - 3}" stroke="#b91c1c" stroke-width="4" stroke-dasharray="8 5"><title>Non gerbable</title></path>` : ""}${c.h >= chFs + 2 ? `<text x="${c.w / 2}" y="${ty}" font-size="${chFs}" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1f2937">${esc(txt)}</text>` : ""}${showDims ? `<text x="${c.w / 2}" y="${ty + chFs * 1.15}" font-size="${chFs * 0.78}" text-anchor="middle" dominant-baseline="central" fill="#4b5563">${dims}</text>` : ""}${bad ? `<title>${esc(bad)}</title>` : ""}</g>`;
+    return `<g class="chit${on ? " on" : ""}${bad ? " bad" : ""}" data-chc="${c.id}" transform="translate(${c.x} ${y})"><rect width="${c.w}" height="${c.h}" rx="2" fill="${K[1]}" stroke="${bad ? "#b91c1c" : "#373737"}" stroke-width="${on ? 3 : 1.2}"${bad ? ' stroke-dasharray="6 4"' : ""}/>${chWheelsSvg(c)}${c.nogerb ? `<path d="M3 3H${c.w - 3}" stroke="#b91c1c" stroke-width="4" stroke-dasharray="8 5"><title>Non gerbable</title></path>` : ""}${c.h >= chFs + 2 ? `<text x="${c.w / 2}" y="${ty}" font-size="${chFs}" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#1f2937">${esc(txt)}</text>` : ""}${showDims ? `<text x="${c.w / 2}" y="${ty + chFs * 1.15}" font-size="${chFs * 0.78}" text-anchor="middle" dominant-baseline="central" fill="#4b5563">${dims}</text>` : ""}${bad ? `<title>${esc(bad)}</title>` : ""}</g>`;
   }
   // Une rangée vue de face. En export, un titre au-dessus.
   function chRowSvg(t, r, forExport) {
@@ -7615,8 +7629,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Contenu d'un rang en texte, comme sur les plans écrits : « 4× K3, X12 »
   function chRowText(t, rid) {
     const L = chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x), groups = [];
-    L.forEach((c) => { const nm = chLabel(c), g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.ng === !!c.nogerb && x.z === chZ(c)); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, ng: !!c.nogerb, z: chZ(c) }); });
-    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? " (dessus)" : ""}${g.z ? ` (devant, à ${g.z} cm du fond)` : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
+    L.forEach((c) => { const nm = chLabel(c), g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.ng === !!c.nogerb && x.z === chZ(c) && x.s === chSens(c)); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, ng: !!c.nogerb, z: chZ(c), s: chSens(c) }); });
+    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? " (dessus)" : ""}${g.s ? ` (${g.s})` : ""}${g.z ? ` (devant, à ${g.z} cm du fond)` : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
   }
   function chTotals(t) {
     const used = t.rangs.reduce((n, r) => n + chDepth(t, r.id), 0), placed = t.cases.filter((c) => c.rang);
@@ -7648,7 +7662,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     renderCharge3d();
   }
   // Liste de tout ce qui est chargé (rang par rang, de bas en haut), puis ce qui reste à charger
-  function chPos(c) { return [c.y > 0 ? `dessus (${c.y} cm)` : "au sol", chZ(c) ? `devant (+${chZ(c)} cm)` : "", c.m ? "tournée" : "", c.nogerb ? "non gerbable" : ""].filter(Boolean).join(", "); }
+  function chPos(c) { return [c.y > 0 ? `dessus (${c.y} cm)` : "au sol", chSens(c), chZ(c) ? `devant (+${chZ(c)} cm)` : "", c.m ? "tournée" : "", c.nogerb ? "non gerbable" : ""].filter(Boolean).join(", "); }
   function chListHtml(t, forPrint) {
     const rows = [], tot = { n: 0, kg: 0 };
     [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || chZ(a) - chZ(b) || a.x - b.x).forEach((c) => {
@@ -7680,7 +7694,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         ${c.rang ? `<label>Depuis la paroi jardin (cm, 0 à ${t.l - c.w})<input type="number" min="0" max="${t.l - c.w}" step="1" inputmode="numeric" data-chf="x" value="${c.x}"></label>` : ""}
         ${c.rang && chFront(t, c.rang, c) > 0 ? `<label>Recul dans le rang (cm depuis le fond, 0 à ${chFront(t, c.rang, c)})<input type="number" min="0" max="${chFront(t, c.rang, c)}" step="1" inputmode="numeric" data-chf="z" value="${chZ(c)}"></label>` : ""}
         <label class="inl chgerb"><input type="checkbox" data-chf="nogerb"${c.nogerb ? " checked" : ""}> Non gerbable : rien ne se pose dessus</label>
-        <div class="actions chturn"><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (hamburger)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button></div>
+        <div class="actions chturn"><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur : passe de hamburger à hot dog">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (hamburger)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button></div>
         <label>Notes<textarea rows="2" data-chf="notes">${esc(c.notes || "")}</textarea></label>
         <div class="actions" style="margin-top:6px"><button class="btn small" type="button" data-chdup>Dupliquer</button>${c.rang ? '<button class="btn small" type="button" data-chout>Sortir du rang</button>' : ""}<button class="btn small danger" type="button" data-chdel>Supprimer</button></div>`;
       return;
@@ -7749,16 +7763,17 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .it .q:empty { display: none; }
   .chf .it .nm { font: 600 1em "Barlow Semi Condensed", ${PLAN_FONT}; min-width: 0; }
   .chf .it .tg { font-size: 0.62em; font-weight: 600; border-radius: 0.8mm; padding: 0.1em 0.45em; white-space: nowrap; align-self: center; }
-  .chf .it.up .tg { background: #fce694; }
+  .chf .it .dz { background: #fce694; }
   .chf .it .ng { background: #c62828; color: #fff; }
   .chf .it .fr { background: #c1dbe3; }
+  .chf .it .sn { background: none; border: 0.25mm solid #373737; }
   .chf .sep { border-top: 0.3mm dashed #8d969a; margin: 0.8mm 0 0.5mm; }
   .chf .note { font-size: 0.7em; color: #373737; font-style: italic; margin-top: 0.6mm; }
   .chf .foot { display: flex; gap: 6mm; font-size: 3.2mm; color: #373737; }
   .chf .foot b { color: #1d1d1d; }`;
   function chFicheGroups(t, rid) {
     const L = chIn(t, rid), floor = L.filter((c) => c.y <= 0).sort((a, b) => a.x - b.x || chZ(a) - chZ(b)), up = L.filter((c) => c.y > 0).sort((a, b) => a.y - b.y || a.x - b.x);
-    const pack = (list, top) => { const out = []; list.forEach((c) => { const k = [chLabel(c), !!c.nogerb, !!chZ(c)].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr: !!chZ(c), up: top }); }); return out; };
+    const pack = (list, top) => { const out = []; list.forEach((c) => { const k = [chLabel(c), !!c.nogerb, !!chZ(c), chSens(c)].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr: !!chZ(c), up: top, s: chSens(c) }); }); return out; };
     return { floor: pack(floor, false), up: pack(up, true) };
   }
   function chFicheHtml() {
@@ -7771,7 +7786,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const cols = n <= 3 ? n : n <= 8 ? 4 : n <= 10 ? 5 : n <= 15 ? 5 : 6, lns = Math.ceil(n / cols), cellH = (193 - 9 - 9 - 6 - 3 * 3 - (lns - 1) * 2.2) / lns;
       const f = Math.max(2.6, Math.min(8, (cellH - 14) / (lines * 1.2 + 0.4))), num = Math.max(8, Math.min(14, cellH * 0.18)), sv = cellH >= 55 ? Math.min(42, cellH * 0.4) : 0;
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
-      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.up ? '<span class="tg">dessus</span>' : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? '<span class="tg dz">dessus</span>' : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), gg = g[k], dd = chDepth(t, r.id);
         return `<div class="row"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body">${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}${sv ? `<div class="fv">${chRowSvg(t, r, false)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
@@ -8187,7 +8202,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     }
     $("#ch3Msg").hidden = true;
     { const f = chSel && chFind(chSel), c = f && f.t === t && f.c, tb = $("#ch3Tools"); tb.hidden = !c;
-      if (c) tb.innerHTML = `<b>${esc(chLabel(c))}</b><span class="hint">${c.w}×${c.d}×${c.h}</span><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur (R)">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (Maj+R)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button><button class="btn small" type="button" data-chgerb aria-pressed="${c.nogerb ? "true" : "false"}" title="Rien ne se pose dessus">Non gerbable</button>${c.rang ? '<button class="btn small" type="button" data-chout>À charger</button>' : ""}`; }
+      if (c) tb.innerHTML = `<b>${esc(chLabel(c))}</b><span class="hint">${c.w}×${c.d}×${c.h}${chSens(c) ? `, en ${chSens(c)}` : ""}</span><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur (R) : passe de hamburger à hot dog">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (Maj+R)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button><button class="btn small" type="button" data-chgerb aria-pressed="${c.nogerb ? "true" : "false"}" title="Rien ne se pose dessus">Non gerbable</button>${c.rang ? '<button class="btn small" type="button" data-chout>À charger</button>' : ""}`; }
     if (!ch3Init()) { $("#ch3Msg").hidden = false; $("#ch3Msg").textContent = "Cet appareil n'affiche pas la 3D. Le plan reste modifiable en mode Rangs."; return; }
     ch3Rebuild();
   }
