@@ -2159,6 +2159,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="synAddZone" class="btn small" type="button" title="Encadrer une partie du schéma : FOH, Monitor, Stage…">+ Zone</button>
     <button id="synAddClk" class="btn small" type="button" title="Rosendahl Nanoclocks, Nanosyncs HD ou autre générateur de word clock">+ Horloge</button>
     <button id="synAuto" class="btn small" type="button">Disposition auto</button>
+    <button id="synHf" class="btn small" type="button" aria-pressed="true" title="Récepteurs des micros HF et émetteurs des ears (onglets Récepteurs rack et Émetteurs rack)">Appareils HF</button>
     <span class="zoom"><button id="synZoomOut" class="btn small" type="button" aria-label="Dézoomer">−</button><span id="synZoomVal" class="mono">100 %</span><button id="synZoomIn" class="btn small" type="button" aria-label="Zoomer">+</button></span>
   </div>
   <div class="plan-wrap">
@@ -2464,6 +2465,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     state.hfdev = hfDevs().filter((x) => x !== d);
     (state.sorties || []).forEach((o) => { if (o.to && o.to.h === id) { log(`${o.mix} : ${o.to.in ? hfVoie(d, o.to.in) : d.nom} supprimé.`); o.to = null; } if (o.rxv && o.rxv.h === id) { log(`${o.mix} : départ ${hfVoie(d, o.rxv.in)} supprimé.`); o.rxv = null; } });
     rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "hf" && i.ref === id)); });
+    const S = synState(); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id];
     commit(true);
   }
   // Modifier sur place qui est sur une voie de récepteur (provenance du master) ou une liaison d'émetteur (arrivée des sorties)
@@ -8880,6 +8882,34 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     while (t.length > 1 && synTextW(t + "…", size, weight) > max) t = t.slice(0, -1);
     return t + "…";
   }
+  // Appareils HF dans le synoptique : affichés d'office, masquables (réglage de chaque poste, pas du dossier)
+  let synShowHf = (() => { try { return localStorage.getItem("patch-live-synhf") !== "0"; } catch (e) { return true; } })();
+  // Ports proposés dans les liaisons : antennes (vers le splitter ou depuis le combineur), audio, réseau
+  const HF_DANTE = /dante|ad4[qd]|ulxd4|adtq|ew\s*-?\s*dx\s*em\s*4/i;
+  function synHfPorts(d) {
+    const dante = HF_DANTE.test(d.model || "") ? ["Dante primaire", "Dante secondaire"] : [];
+    return d.kind === "tx" ? ["Antenne (RF out)", "Entrées audio (XLR)", ...dante, "Réseau (contrôle)"] : ["Antenne A", "Antenne B", "Sorties audio (XLR)", ...dante, "Réseau (contrôle)"];
+  }
+  // Liaisons qui viennent du patch, sans rien dessiner : voies d'un récepteur posées au master sur un stage rack (récepteur → rack),
+  // sorties patchées sur un émetteur depuis un rack (rack → émetteur). Une liaison tirée à la main entre les deux appareils les remplace.
+  function synAutoLinks(nodes) {
+    const have = new Set(nodes.map((n) => n.id)), m = new Map(), S = synState();
+    const drawn = (a, b) => S.links.some((l) => ((l.a || {}).n === a && (l.b || {}).n === b) || ((l.a || {}).n === b && (l.b || {}).n === a));
+    const add = (a, b, what) => { if (!have.has(a) || !have.has(b) || a === b) return; const k = a + ">" + b, e = m.get(k) || { id: "auto:" + k, a, b, n: 0, what }; e.n++; m.set(k, e); };
+    const cons = nodes.filter((n) => n.kind === "console");
+    hfDevs().forEach((d) => {
+      if (!have.has(d.id)) return;
+      if (d.kind === "rx") {
+        for (let k = 1; k <= d.n; k++) {
+          const v = hfVoie(d, k).toLowerCase(), rs = new Set();
+          state.lignes.forEach((l) => { if ((l.prov || "").trim().toLowerCase() === v) Object.values(l.sr || {}).forEach((a) => { if (a && a.r) rs.add(a.r); }); });
+          rs.forEach((r) => add(d.id, r, "voie"));
+        }
+      } else (state.sorties || []).forEach((o) => { if (!o.to || o.to.h !== d.id) return; if (o.out && o.out.r) add(o.out.r, d.id, "sortie"); else if (cons.length === 1) add(cons[0].id, d.id, "sortie"); });
+    });
+    return [...m.values()].filter((e) => !drawn(e.a, e.b));
+  }
+  const synAutoTxt = (e) => `${e.n} ${e.what}${e.n > 1 ? "s" : ""}`;
   function synNodes() {
     const S = synState(), out = [];
     const ks = consoleKeys();
@@ -8890,6 +8920,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       out.push({ id: r.id, kind: "rack", title: rackTitle(r), sub, ports, loop: rackLoop(r) });
     });
     S.nodes.forEach((x) => out.push({ id: x.id, kind: "extra", title: x.nom || "Élément", sub: x.gen ? `${(CLK_GENS.find((g) => g[0] === x.gen.model) || CLK_GENS[2])[1]} · ${x.gen.freq || "48"} kHz · ${x.gen.outs || "?"} sorties WC` : x.type || (extraModel(x) ? EXTRA_MODELS[extraModel(x)].type : ""), ports: [], sugg: extraModel(x) ? EXTRA_MODELS[extraModel(x)].ports.map((p) => p[0]) : [], loop: x.loopId ? loopById(x.loopId) : null, ref: x }));
+    // Récepteurs des micros HF et émetteurs des ears (onglets Récepteurs rack et Émetteurs rack) : ils viennent tout seuls, comme les stage racks
+    if (synShowHf) [...hfDevs()].sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "rx" ? -1 : 1)).forEach((d) => out.push({ id: d.id, kind: "hf", title: d.nom || d.model || "Appareil HF", sub: [d.model && !String(d.nom || "").includes(d.model) ? d.model : "", HFDEV_KIND[d.kind] || "HF", hfVoiesTxt(d)].filter(Boolean).join(" · "), ports: [], sugg: synHfPorts(d), loop: d.loopId ? loopById(d.loopId) : null, ref: d }));
     // Les ports nommés dans les liaisons apparaissent sur l'appareil, pour y accrocher le câble
     S.links.forEach((l) => [l.a, l.b].forEach((e) => {
       if (!e || !e.p) return; const n = out.find((x) => x.id === e.n); if (!n || n.ports.some((p) => portKey(p.nom) === portKey(e.p))) return;
@@ -8897,7 +8929,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     }));
     out.forEach((n) => { n.w = Math.max(SYN_W, Math.min(340, Math.ceil(SYN_IX + Math.max(synTextW(n.title, 14, 700) + (n.loop ? 82 : 66), synTextW(n.sub, 11) + 16))));
       // Façade de l'appareil en bandeau en haut, aux vraies proportions (40 px de haut au plus)
-      const ph = n.kind === "rack" ? (rackById(n.id) || {}).photo : n.kind === "extra" ? n.ref.photo : (S.cons[n.cons] || {}).photo;
+      const ph = n.kind === "rack" ? (rackById(n.id) || {}).photo : n.kind === "extra" || n.kind === "hf" ? n.ref.photo : (S.cons[n.cons] || {}).photo;
       n.ih = ph ? 40 : Math.min(40, Math.round(((n.w - 20) * (DEV_H[devType(n)] || 44.45)) / (DEV_W[devType(n)] || 483))); n.dy = n.ih + 8;
       n.h = n.dy + (n.ports.length ? SYN_TOP + n.ports.length * SYN_ROW + 6 : 52); });
     return out;
@@ -8994,8 +9026,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (lab) synLabel([0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82].map(bz), lab, P.c, l.id);
       return `<g class="ln${hot ? " hot" : ""}" data-lk="${l.id}"><path d="M${pa.x.toFixed(1)} ${pa.y.toFixed(1)} C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" ${synStroke(pr, hot ? 2 : 0)}${arrow}/></g>`;
     }).join("");
+    const auto = synAutoLinks(nodes).map((e) => {
+      const A = byId.get(e.a), B = byId.get(e.b), pa = synAnchor(A, "", B), pb = synAnchor(B, "", A), P = PROTOS.Analogique, hot = sel && (sel === A.id || sel === B.id);
+      synLabel([0.5, 0.4, 0.6, 0.3, 0.7].map((t) => [pa.x + (pb.x - pa.x) * t, pa.y + (pb.y - pa.y) * t]), `Analogique · ${synAutoTxt(e)}`, P.c);
+      return `<g class="ln auto${hot ? " hot" : ""}"><title>Vient du patch : ${esc(A.title)} → ${esc(B.title)}, ${esc(synAutoTxt(e))}</title><line x1="${pa.x.toFixed(1)}" y1="${pa.y.toFixed(1)}" x2="${pb.x.toFixed(1)}" y2="${pb.y.toFixed(1)}" ${synStroke("Analogique", hot ? 1.5 : 0)} marker-end="url(#ar${synMk(P.c)})"/></g>`;
+    }).join("");
     const wc = synClock(nodes).edges.map(({ from, to }) => { const [tx, ty] = synCenter(to), [fx, fy] = synCenter(from), p = synClip(from, tx, ty), q = synClip(to, fx, fy); return `<g class="wc"><line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" ${synStroke("Word clock")} marker-end="url(#wcArrow)"/>${synLabel([0.5, 0.4, 0.6, 0.3, 0.7].map((t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]), "WC", "#0f172a")}</g>`; }).join("");
-    return ring + links + wc + labels;
+    return ring + links + auto + wc + labels;
   }
   function synNodeMarkup(n, forExport) {
     const con = n.kind === "console", on = !forExport && (synSel === n.id || synMulti.has(n.id));
@@ -9031,6 +9068,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (loops().some((lp) => nodes.filter((n) => n.loop === lp).length > 1)) used.add("Optocore");
     synState().links.forEach((l) => used.add(synLinkProto(l, nodes)));
     if (synClock(nodes).edges.length) used.add("Word clock");
+    if (synAutoLinks(nodes).length) used.add("Analogique");
     const leg = Object.keys(PROTOS).filter((k) => used.has(k));
     const ly = Math.min(...boxes.map((n) => n.y)) - 40, top = ly - 18;
     let lx = x0 + pad;
@@ -9052,12 +9090,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function synSetSel(ids) { synMulti.clear(); if (ids.length === 1) synSel = ids[0]; else { synSel = null; ids.forEach((i) => synMulti.add(i)); } }
   let synSel = null, synDrag = null, synZoom = 1;
   const synEnd = (e) => [(e && e.n) || "", (e && e.p) || ""];
+  const synGoHf = (id) => { const d = hfDevById(id); if (!d) return; setView(d.kind === "tx" ? "hftx" : "hfrx"); tdFlashSel(`tr[data-hd="${id}"]`); };
   function renderSyn() {
     const S = synState(), stage = $("#synStage"), nodes = synPlace(synNodes());
     if (synMulti.size) { const have = new Set(nodes.map((q) => q.id)); [...synMulti].forEach((id) => { if (!have.has(id)) synMulti.delete(id); }); if (synMulti.size < 2) synSetSel([...synMulti]); }
     if (!nodes.length) { stage.innerHTML = `<div class="empty-state">Le synoptique se dessine tout seul à partir de tes stage racks et I/O.<div class="es-go"><button class="btn small primary" type="button" data-go="materiel">Créer les stage racks</button></div></div>`; $("#synSide").innerHTML = ""; $("#synLinks").innerHTML = ""; return; }
     stage.innerHTML = synSvg(false).replace("<svg ", `<svg id="synSvg" role="img" aria-label="Synoptique" `);
     $("#synZoomVal").textContent = Math.round(synZoom * 100) + " %";
+    const hb = $("#synHf"); if (hb) { hb.setAttribute("aria-pressed", String(synShowHf)); hb.textContent = synShowHf ? "Masquer les HF" : "Montrer les HF"; hb.hidden = !hfDevs().length; }
     const opts = (cur) => `<option value="">—</option>` + nodes.map((n) => `<option value="${esc(n.id)}"${n.id === cur ? " selected" : ""}>${esc(n.title)}</option>`).join("");
     const protoOpts = (l) => `<option value="">Auto (${esc(synLinkProto({ ...l, proto: "" }, nodes))})</option>` + Object.keys(PROTOS).map((k) => `<option${l.proto === k ? " selected" : ""}>${esc(k)}</option>`).join("");
     const dls = nodes.map((n, i) => `<datalist id="dlSynP_${i}">${[...n.ports.filter((p) => !p.added).map((p) => p.nom), ...(n.sugg || []).filter((q) => !n.ports.some((p) => portKey(p.nom) === portKey(q)))].map((v) => `<option value="${esc(v)}">`).join("")}</datalist>`).join("");
@@ -9092,10 +9132,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       ${n.kind === "extra" ? `<label>Nom<input type="text" data-sp="nom" value="${esc(n.ref.nom || "")}" autocomplete="off" data-suggest="dlBqSyn"></label>${n.ref.gen ? `<label>Modèle<select data-sp="gmodel">${CLK_GENS.map(([k, t]) => `<option value="${k}"${n.ref.gen.model === k ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label><div class="row2"><label>Fréquence<select data-sp="gfreq">${["44.1", "48", "88.2", "96"].map((f) => `<option${String(n.ref.gen.freq) === f ? " selected" : ""}>${f}</option>`).join("")}</select></label><label>Sorties WC<input type="number" min="1" max="64" data-sp="gouts" value="${n.ref.gen.outs || ""}"></label></div><p class="hint" style="margin:0 0 8px">${n.wcUsed || 0} départ${(n.wcUsed || 0) > 1 ? "s" : ""} word clock utilisé${(n.wcUsed || 0) > 1 ? "s" : ""}. Choisis « Word clock depuis ${esc(n.title)} » dans le tableau Horloge pour chaque appareil branché dessus.</p>` : `<label>Modèle<select data-sp="xmodel"><option value="">Autre (façade selon le type)</option>${Object.entries(EXTRA_MODELS).map(([k, m]) => `<option value="${k}"${extraModel(n.ref) === k ? " selected" : ""}>${esc(m.t)}</option>`).join("")}</select></label><label>Type<input type="text" data-sp="type" value="${esc(n.ref.type || "")}" placeholder="${esc(extraModel(n.ref) ? EXTRA_MODELS[extraModel(n.ref)].type : "Switch, ordinateur record…")}"></label>${extraModel(n.ref) ? `<p class="hint" style="margin:0 0 8px">Ports proposés dans les liaisons : ${EXTRA_MODELS[extraModel(n.ref)].ports.map((p) => esc(p[0])).join(", ")}.</p>` : ""}${loopSel(n.loop)}`}` : ""}
       ${n.kind === "console" ? `<label>Modèle<input type="text" data-sp="cmodel" value="${esc((S.cons[n.cons] || {}).model || "")}" placeholder="ex. DiGiCo SD7" data-suggest="dlConsModelSyn" autocomplete="off"></label><datalist id="dlConsModelSyn">${consSugg().map(optFiche).join("")}</datalist>` + loopSel(n.loop) : ""}
       ${n.kind === "rack" ? `<p class="hint" style="margin:0 0 8px">${n.loop ? "Sur " + esc(n.loop.nom) : "Hors loop"}. Ports, loop et format se règlent dans « Réglages racks ».</p>` : ""}
+      ${n.kind === "hf" ? `<p class="hint" style="margin:0 0 8px">Appareil de l'onglet ${n.ref.kind === "tx" ? "Émetteurs rack" : "Récepteurs rack"} : nom, modèle et voies s'y règlent. Les flèches grises viennent du patch (${n.ref.kind === "tx" ? "sorties patchées sur ses liaisons" : "voies posées au master sur un stage rack"}). Tire une liaison Antenne ${n.ref.kind === "tx" ? "vers le combineur" : "depuis le splitter"} avec « + Liaison depuis ici ».</p>` : ""}
       ${n.ports.length ? `<p class="hint" style="margin:0">Ports</p><ul>${n.ports.map((p) => `<li><span class="synsw" style="background:${(PROTOS[p.proto] || PROTOS.Autre).c}"></span>${esc(p.nom)} <span class="hint">${esc([p.proto, p.n].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>` : ""}
       ${(() => { const { warn } = synClock(all), c = clkOf(n), F = all.find((q) => q.id === c.from); return `<p class="hint" style="margin:8px 0 0">Horloge : <b>${esc((CLK_SRC.find((q) => q[0] === c.src) || CLK_SRC[0])[1].replace("…", ""))}${c.src === "wc" && F ? " " + esc(F.title) : ""}</b></p>${(warn.get(n.id) || []).map((t) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(t)}</p>`).join("")}${synLinkWarn(all).filter((w) => w.node === n.id).map((w) => `<p class="hint warn" style="margin:2px 0">⚠ ${esc(w.t)}</p>`).join("")}`; })()}
+      ${(() => { const au = synAutoLinks(all).filter((e) => e.a === n.id || e.b === n.id); return au.length ? `<p class="hint" style="margin:8px 0 0">Depuis le patch (${au.length})</p><ul>${au.map((e) => `<li>${e.a === n.id ? "→" : "←"} ${esc(name(e.a === n.id ? e.b : e.a))} <span class="hint">Analogique · ${esc(synAutoTxt(e))}</span></li>`).join("")}</ul>` : ""; })()}
       <p class="hint" style="margin:8px 0 0">Liaisons (${ls.length})</p>${ls.length ? `<ul>${ls.map((l) => { const o = (l.a || {}).n === n.id ? l.b || {} : l.a || {}, me = (l.a || {}).n === n.id ? l.a : l.b; const ar = !l.dir ? "⇄" : synRecv(l, n.id) ? "←" : "→"; return `<li>${esc(me.p || "—")} ${ar} ${esc(name(o.n))}${o.p ? " · " + esc(o.p) : ""} <span class="hint">${esc(synLinkProto(l, all))}</span></li>`; }).join("")}</ul>` : ""}
-      <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
+      <div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-splink>+ Liaison depuis ici</button>${S.pos[n.id] ? ` <button class="btn small" type="button" data-spauto>Remettre en place</button>` : ""}${n.kind === "hf" ? ` <button class="btn small" type="button" data-sphf>Voir dans l'onglet HF</button>` : ""}${n.kind === "extra" ? ` <button class="btn small danger" type="button" data-spdel>Supprimer</button>` : ""}</div>`;
   }
   function synPoint(e) {
     const svg = $("#synSvg"), pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
@@ -9214,6 +9256,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     });
     $("#synAddNode").addEventListener("click", () => { const x = { id: nid(), nom: "Switch Dante", type: "Réseau", loopId: "" }; synState().nodes.push(x); synSel = x.id; commit(true); const i = $('#synSide [data-sp="nom"]'); if (i) { i.focus(); i.select(); } });
     $("#synAuto").addEventListener("click", () => { synState().pos = {}; commit(true); });
+    $("#synHf").addEventListener("click", () => { synShowHf = !synShowHf; try { localStorage.setItem("patch-live-synhf", synShowHf ? "1" : "0"); } catch (e) {} if (!synShowHf && synSel && hfDevById(synSel)) synSel = null; renderSyn(); });
     $("#synAddClk").addEventListener("click", () => { const x = { id: nid(), nom: "Nanoclocks", type: "Horloge", loopId: "", gen: { model: "nanoclocks", outs: 12, freq: loops()[0].freq || "48" }, clk: { src: "int", from: "" } }; synState().nodes.push(x); synSel = x.id; commit(true); });
     $("#synClock").addEventListener("toggle", (e) => { if (e.target.classList && e.target.classList.contains("clkhide")) clkHideOpen = e.target.open; }, true);
     $("#synClock").addEventListener("change", (e) => {
@@ -9267,6 +9310,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const zp = e.target.closest("[data-zpre]"), zd = e.target.closest("[data-zdel]");
       if (zp || zd) { const z = (S.zones || []).find((q) => "z:" + q.id === synSel); if (!z) return; if (zp) z.nom = zp.dataset.zpre; else { S.zones = S.zones.filter((q) => q !== z); synSel = null; } commit(true); return; }
       if (e.target.closest("[data-spauto]")) { delete S.pos[synSel]; commit(true); }
+      if (e.target.closest("[data-sphf]")) { synGoHf(synSel); return; }
       if (e.target.closest("[data-spdel]")) { const id = synSel; S.nodes = S.nodes.filter((x) => x.id !== id); rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "extra" && i.ref === id)); }); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); }
     });
   }
@@ -9297,7 +9341,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   function synLinkRows() {
     const nodes = synNodes(), name = (id) => (nodes.find((x) => x.id === id) || {}).title || "";
-    return synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), (SYN_DIRS.find((d) => d[0] === (l.dir || "")) || SYN_DIRS[0])[1], l.cable || ""]);
+    return [...synState().links.map((l) => [name((l.a || {}).n), (l.a || {}).p || "", name((l.b || {}).n), (l.b || {}).p || "", synLinkProto(l, nodes), (SYN_DIRS.find((d) => d[0] === (l.dir || "")) || SYN_DIRS[0])[1], l.cable || ""]),
+      ...synAutoLinks(nodes).map((e) => [name(e.a), "", name(e.b), "", "Analogique", SYN_DIRS[1][1], `Depuis le patch · ${synAutoTxt(e)}`])];
   }
   const SYN_HEAD = ["De", "Port", "Vers", "Port", "Protocole", "Sens", "Câble / notes"];
   const CLK_HEAD = ["Appareil", "Horloge", "Word clock depuis", "Vérification"];
@@ -9313,6 +9358,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const S = synState();
     const c = n.kind === "rack" ? (rackById(n.id) || {}).clk : n.kind === "console" ? (S.cons[n.cons] || {}).clk : n.ref && n.ref.clk;
     if (c && c.src !== undefined) return c;
+    // Récepteurs et émetteurs HF : sorties et entrées analogiques d'office ; « Réseau Dante » se choisit s'ils passent en Dante
+    if (n.kind === "hf") return { src: "none", from: "" };
     // AS 80 et DN9680 suivent l'horloge qui arrive par l'AES50 ou le snake ; l'intercom MS-702 est analogique
     const xm = n.kind === "extra" ? extraModel(n.ref) : "";
     if (xm) return { src: xm === "ms702" || EXTRA_MODELS[xm].clk === "none" ? "none" : "aes", from: "" };
@@ -9330,13 +9377,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   // Un appareil du synoptique sur « Sans horloge » (d'office ou choisi) est rangé sous le tableau : lui choisir une autre source le remet dedans.
   // Consoles, stage racks et générateurs restent toujours dans le tableau.
-  const clkHidden = (n) => n.kind === "extra" && !isGen(n) && clkOf(n).src === "none";
+  const clkHidden = (n) => (n.kind === "extra" || n.kind === "hf") && !isGen(n) && clkOf(n).src === "none";
   let clkHideOpen = false;
   function setClk(id, c) {
     const S = synState();
     if (id.startsWith("c:")) { const k = id.slice(2); S.cons[k] = { ...(S.cons[k] || {}), clk: c }; return; }
     const r = rackById(id); if (r) { r.clk = c; return; }
-    const x = S.nodes.find((q) => q.id === id); if (x) x.clk = c;
+    const x = S.nodes.find((q) => q.id === id); if (x) { x.clk = c; return; }
+    const d = hfDevById(id); if (d) d.clk = c;
   }
   const nodeFreq = (n) => (isGen(n) ? String(n.ref.gen.freq || "48") : n.loop ? String(n.loop.freq || "48") : n.kind === "rack" && rackById(n.id) ? (is96(rackById(n.id)) ? "96" : "48") : String(loops()[0].freq || "48"));
   function synClock(nodes) {
@@ -11019,7 +11067,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     liste: () => { renderListe(); return `<div class="cols">${[...$("#v-liste").querySelectorAll(".two .panel")].map((p) => `<div class="blk">${printTables(p)}</div>`).join("")}</div>${(state.materiel || []).length ? printTables($("#manTbl").closest(".panel")) : ""}`; },
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
     rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
-    syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
+    syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2 && !(synShowHf && hfDevs().length))) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
     charge: () => chPrint(),
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -12224,7 +12272,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       }
       page(rs, false);
     }
-    const sp = state.racks.length > 1 || synState().links.length ? await synPng() : null;
+    const sp = state.racks.length > 1 || synState().links.length || (synShowHf && hfDevs().length) ? await synPng() : null;
     if (sp) {
       const sy = wb.addWorksheet("Synoptique");
       sy.addRow([`Synoptique · ${titre}`]).font = { bold: true, size: 14 };
@@ -13778,6 +13826,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         n.kind === "rack" && { t: "Voir dans Racks et I/O", fn: () => showRack(id) },
         n.kind === "rack" && { t: "Réglages de l'appareil", fn: () => { setView("materiel"); showSetupRow(`button[data-delrack="${id}"]`); } },
         n.kind === "rack" && rpPutItem("rack", id),
+        n.kind === "hf" && { t: "Voir dans l'onglet HF", fn: () => synGoHf(id) },
+        n.kind === "hf" && rpPutItem("hf", id),
         x && rpPutItem("extra", id),
         x && "-",
         x && { t: "Supprimer l'élément…", danger: true, fn: () => { S.nodes = S.nodes.filter((q) => q.id !== id); rpState().cases.forEach((c) => { c.items = c.items.filter((i) => !(i.kind === "extra" && i.ref === id)); }); S.links = S.links.filter((l) => (l.a || {}).n !== id && (l.b || {}).n !== id); delete S.pos[id]; synSel = null; commit(true); } }]];
@@ -14035,7 +14085,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     rc: { k: "Flight rack", all: () => rpState().cases.map((c) => ({ id: c.id, t: c.nom || "Rack", d: [c.u + " U", c.lieu].filter(Boolean).join(" · ") })), go: (id) => { setView("rackplan"); tdFlashBox(document.querySelector(`.rpcase[data-rpc="${id}"]`)); } },
     ri: { k: "Plan de rack", all: () => rpState().cases.flatMap((c) => c.items.map((it) => ({ id: it.id, t: rpLabel(it), d: `${c.nom || "Rack"} · U${it.at}` }))), go: (id) => { const f = rpFind(id); rpSel = id; setView("rackplan"); if (f) { const el = document.querySelector(`.rpcase[data-rpc="${f.c.id}"]`); if (el) el.scrollIntoView({ block: "center" }); } } },
     pl: { k: "Plan de scène", all: () => planState().items.map((it) => ({ id: it.id, t: planItemLabel(it), d: "" })), go: (id) => { planMulti.clear(); planSel = id; setView("plan"); } },
-    sn: { k: "Synoptique", all: () => synNodes().filter((n) => n.kind !== "rack").map((n) => ({ id: n.id, t: n.title, d: n.sub || "" })), go: (id) => { synMulti.clear(); synSel = id; setView("syn"); } },
+    sn: { k: "Synoptique", all: () => synNodes().filter((n) => n.kind !== "rack" && n.kind !== "hf").map((n) => ({ id: n.id, t: n.title, d: n.sub || "" })), go: (id) => { synMulti.clear(); synSel = id; setView("syn"); } },
     sl: { k: "Liaison", all: () => synState().links.map((l, i) => ({ id: l.id, t: `Liaison ${i + 1}`, d: [l.cable, l.notes].filter(Boolean).join(" · ") })), go: (id) => { setView("syn"); tdFlashSel(`#synLinks tr[data-lk="${id}"]`); } },
     m: { k: "Matériel", all: () => (state.materiel || []).map((x) => ({ id: x.id, t: x.nom || "(matériel)", d: [x.qte ? "×" + x.qte : "", x.cat].filter(Boolean).join(" · ") })), go: (id) => { setView("liste"); tdFlashSel(`#manTbl tr[data-mid="${id}"]`); } },
     fx: { k: "Local / intercom", all: () => ["locaux", "com"].flatMap((k) => freeState(k).rows.filter(fxFilled).map((r) => ({ id: r.id, t: [r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", d: k === "com" ? "Intercom" : "Local console" }))), go: (id) => { setView(freeState("com").rows.some((r) => r.id === id) ? "com" : "local"); tdFlashSel(`tr[data-fr="${id}"]`); } },
