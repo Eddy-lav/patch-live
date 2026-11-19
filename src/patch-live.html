@@ -7784,12 +7784,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     });
     root.style.cssText = keep;
   }
+  async function chFicheFile(inner) {
+    let fonts = "";
+    for (const sh of document.styleSheets) { try { for (const r of sh.cssRules) if (r.type === 5 && /Barlow/.test(r.cssText)) fonts += r.cssText + "\n"; } catch (e) { /* feuille externe */ } }
+    const d = state.dossier || {}, name = `${(d.nom || "Dossier").replace(/[\\/:*?"<>|]+/g, " ").trim()} fiche de chargement.html`;
+    const doc = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(d.nom || "Dossier")} : fiche de chargement</title><style>${fonts}body{margin:0;background:#fff}@media screen{.chf .pg{margin:8mm auto;box-shadow:0 0 0 1px #d6dde0}}</style></head><body>${inner}<script>addEventListener("load",()=>setTimeout(()=>print(),400))<\/script></body></html>`;
+    try { await saveBlob(name, new Blob([doc], { type: "text/html" })); notice(`Fiche « ${esc(name)} » enregistrée. Ouvre-la : l'impression se lance toute seule (choisis « Enregistrer en PDF » pour la garder sur ton téléphone).`); }
+    catch (err) { if (!err || err.code !== "declined") notice("L'enregistrement de la fiche n'a pas abouti.", true); }
+  }
   function chFichePrint() {
     const html = chFicheHtml(); if (!html) { notice("Aucune case chargée : range d'abord des cases dans un rang.", true); return; }
     let root = document.getElementById("printRoot");
     if (!root) { root = document.createElement("div"); root.id = "printRoot"; document.body.appendChild(root); }
     root.innerHTML = html; chFicheFit(root);
-    try { window.print(); } catch (err) { notice("L'impression n'est pas disponible dans cette vue.", true); }
+    // Dans claude.ai, la page est dans un cadre qui bloque l'impression : on enregistre la fiche, qui s'imprime à l'ouverture
+    if (window.claude && window.claude.use) { chFicheFile(root.innerHTML); return; }
+    try { window.print(); } catch (err) { chFicheFile(root.innerHTML); }
   }
   // Reprend les camions d'un autre fichier Excel de l'appli (ex. un plan fait sur la version de test) dans ce dossier
   async function chImportFile(file) {
