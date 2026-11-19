@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "1523552e39";</script>
+<script>window.PL_VER = "06e198020f";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7796,21 +7796,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf { font-family: "Barlow", ${PLAN_FONT}; color: #1d1d1d; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .chf .pg { width: 281mm; height: 193mm; display: flex; flex-direction: column; gap: 3mm; overflow: hidden; page-break-after: always; break-after: page; }
   .chf .pg:last-child { page-break-after: auto; break-after: auto; }
-  .chf .top { display: flex; align-items: baseline; gap: 5mm; }
-  .chf .top h1 { font: 700 7.5mm/1 "Barlow Semi Condensed", ${PLAN_FONT}; margin: 0; }
-  .chf .top .k { font-size: 3.6mm; color: #373737; }
+  .chf .top { display: flex; align-items: center; gap: 3mm; height: 8mm; }
+  .chf .top h1 { font: 700 6mm/1 "Barlow Semi Condensed", ${PLAN_FONT}; margin: 0; white-space: nowrap; flex: none; }
+  .chf .top .k { font-size: 3.2mm; color: #373737; line-height: 1.1; flex: none; }
+  .chf .top .lane { flex: 1 1 0; min-width: 0; }
   .chf .top .k b { font-weight: 700; color: #1d1d1d; }
-  .chf .top .who { margin-left: auto; font-size: 3.2mm; color: #5b6569; text-align: right; }
-  .chf .lane { display: flex; align-items: stretch; height: 9mm; border: 0.5mm solid #373737; border-radius: 1.5mm; overflow: hidden; font: 700 4.6mm/9mm "Barlow Semi Condensed", ${PLAN_FONT}; }
+  .chf .top .who { flex: none; font-size: 2.8mm; line-height: 1.15; color: #5b6569; text-align: right; }
+  .chf .lane { display: flex; align-items: stretch; height: 7.5mm; border: 0.5mm solid #373737; border-radius: 1.5mm; overflow: hidden; font: 700 4.2mm/7.5mm "Barlow Semi Condensed", ${PLAN_FONT}; }
   .chf .lane .end { flex: none; padding: 0 2.5mm; background: #373737; color: #fff; font-size: 3.4mm; font-weight: 600; }
   .chf .lane .r { text-align: center; border-right: 0.3mm solid rgb(55 55 55 / 0.35); min-width: 0; overflow: hidden; }
   .chf .lane .free { background: repeating-linear-gradient(90deg, #fff 0 4mm, #f1f3f4 4mm 8mm); }
   .chf .top .over { color: #b71c1c; font-weight: 700; }
   .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; }
   .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; break-inside: avoid; }
-  .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.4mm 2mm 0.2mm; border-bottom: 0.35mm solid #373737; }
+  .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.2mm 2mm 0; border-bottom: 0.35mm solid #373737; }
   .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
-  .chf .num small { font-size: 3.2mm; color: #373737; margin-left: auto; white-space: nowrap; }
+  .chf .num small { font-size: 3mm; color: #373737; margin-left: auto; white-space: nowrap; }
   .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
   .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: var(--svmin, 0); max-height: var(--sv); }
   .chf .fv.off { display: none; }
@@ -7854,8 +7855,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Un rang très chargé prend deux colonnes : son texte à gauche, son croquis à droite
       const wide = lc.map((x) => n > 1 && x >= 8), slots = n + wide.filter(Boolean).length;
       // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
-      lnsWant = slots <= 4 ? 1 : slots <= 12 ? 2 : 3, cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.ceil(slots / cols), cellH = (193 - 9 - 9 - 6 - 3 * 3 - (lns - 1) * 2.2) / lns;
-      const f = Math.max(2.6, Math.min(8, (cellH - 14) / (lines * 1.2 + 0.4))), num = Math.max(8, Math.min(14, cellH * 0.18)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
+      lnsWant = slots <= 4 ? 1 : slots <= 12 ? 2 : 3, cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.ceil(slots / cols), cellH = (193 - 8 - 6 - 2 * 3 - (lns - 1) * 2.2) / lns;
+      const f = Math.max(2.6, Math.min(8, (cellH - 9) / (lines * 1.2 + 0.4))), num = Math.max(5.5, Math.min(7.5, cellH * 0.09)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
       const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
@@ -7863,8 +7864,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         return `<div class="row${wide[k] ? " wide" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
       return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
-        <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chM(tot.used)}</b> sur ${chM(t.L)}, <b>${chKgTxt(tot.kg)}</b>${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><span class="who">${esc(d.nom || "")}${d.lieu ? `<br>${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
-        <div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div>
+        <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
         <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns},minmax(0,1fr))">${cells}</div>
         <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus.${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
       </section>`;
