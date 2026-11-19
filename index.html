@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "7960fed1f0";</script>
+<script>window.PL_VER = "a5497ff943";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7595,6 +7595,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   const CH_M = { l: 34, r: 6, t: 6, b: 26 };
   const chFs = 11;
+  // Ce sur quoi une case est posée (les cases dont le dessus touche son dessous)
+  function chOnNames(t, c) {
+    if (!c.rang || c.y <= 0) return [];
+    const L = chIn(t, c.rang).filter((o) => o !== c && Math.abs(o.y + o.h - c.y) < 1 && o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5 && chZov(o, c)).sort((a, b) => a.x - b.x);
+    return [...new Set(L.map(chLabel))];
+  }
+  const chOnTxt = (t, c) => { const n = chOnNames(t, c); return n.length ? "sur " + (n.length > 1 ? n.slice(0, -1).join(", ") + " et " + n[n.length - 1] : n[0]) : "dessus"; };
   // Sens d'entrée dans le camion, vu des portes : « hamburger » = le grand côté face aux portes, « hot dog » = en long dans le camion
   const chSens = (c) => (c.w - c.d >= 10 ? "hamburger" : c.d - c.w >= 10 ? "hot dog" : "");
   // Roulettes vues des portes : elles suivent la case quand on la couche ou la met sur le côté (comme en 3D)
@@ -7650,8 +7657,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Contenu d'un rang en texte, comme sur les plans écrits : « 4× K3, X12 »
   function chRowText(t, rid) {
     const L = chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x), groups = [];
-    L.forEach((c) => { const nm = chLabel(c), g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.ng === !!c.nogerb && x.z === chZ(c) && x.s === chSens(c)); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, ng: !!c.nogerb, z: chZ(c), s: chSens(c) }); });
-    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? " (dessus)" : ""}${g.s ? ` (${g.s})` : ""}${g.z ? ` (devant, à ${g.z} cm du fond)` : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
+    L.forEach((c) => { const nm = chLabel(c), on = c.y > 0 ? chOnTxt(t, c) : "", g = groups.find((x) => x.nm === nm && x.tip === (c.y > 0) && x.on === on && x.ng === !!c.nogerb && x.z === chZ(c) && x.s === chSens(c)); if (g) g.n++; else groups.push({ nm, n: 1, tip: c.y > 0, on, ng: !!c.nogerb, z: chZ(c), s: chSens(c) }); });
+    return groups.map((g) => `${g.n > 1 ? g.n + "× " : ""}${g.nm}${g.tip ? ` (${g.on})` : ""}${g.s ? ` (${g.s})` : ""}${g.z ? ` (devant, à ${g.z} cm du fond)` : ""}${g.ng ? " (non gerbable)" : ""}`).join(", ");
   }
   function chTotals(t) {
     const used = t.rangs.reduce((n, r) => n + chDepth(t, r.id), 0), placed = t.cases.filter((c) => c.rang);
@@ -7683,12 +7690,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     renderCharge3d();
   }
   // Liste de tout ce qui est chargé (rang par rang, de bas en haut), puis ce qui reste à charger
-  function chPos(c) { return [c.y > 0 ? `dessus (${c.y} cm)` : "au sol", chSens(c), chZ(c) ? `devant (+${chZ(c)} cm)` : "", c.m ? "tournée" : "", c.nogerb ? "non gerbable" : ""].filter(Boolean).join(", "); }
+  function chPos(c, t) { return [c.y > 0 ? `${t ? chOnTxt(t, c) : "dessus"} (à ${c.y} cm)` : "au sol", chSens(c), chZ(c) ? `devant (+${chZ(c)} cm)` : "", c.m ? "tournée" : "", c.nogerb ? "non gerbable" : ""].filter(Boolean).join(", "); }
   function chListHtml(t, forPrint) {
     const rows = [], tot = { n: 0, kg: 0 };
     [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || chZ(a) - chZ(b) || a.x - b.x).forEach((c) => {
       if (rid) { tot.n++; tot.kg += Number(c.kg) || 0; }
-      rows.push(`<tr${forPrint ? "" : ` data-chc="${c.id}"${chSel === c.id ? ' class="on"' : ""}`}><td>${esc(chRangName(t, rid))}</td><td>${forPrint ? "" : `<span class="sw" style="background:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}"></span>`}${esc(chLabel(c))}</td><td>${esc((CH_CATS[c.cat] || CH_CATS.autre)[0])}</td><td class="n">${c.w} × ${c.d} × ${c.h}</td><td class="n">${c.kg ? chKgTxt(c.kg) : ""}</td><td>${rid ? esc(chPos(c)) : ""}</td><td>${esc(c.notes || "")}</td></tr>`);
+      rows.push(`<tr${forPrint ? "" : ` data-chc="${c.id}"${chSel === c.id ? ' class="on"' : ""}`}><td>${esc(chRangName(t, rid))}</td><td>${forPrint ? "" : `<span class="sw" style="background:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}"></span>`}${esc(chLabel(c))}</td><td>${esc((CH_CATS[c.cat] || CH_CATS.autre)[0])}</td><td class="n">${c.w} × ${c.d} × ${c.h}</td><td class="n">${c.kg ? chKgTxt(c.kg) : ""}</td><td>${rid ? esc(chPos(c, t)) : ""}</td><td>${esc(c.notes || "")}</td></tr>`);
     }));
     return `<table><thead><tr><th>Rang</th><th>Case</th><th>Catégorie</th><th class="n">L × P × H (cm)</th><th class="n">Poids</th><th>Position</th><th>Notes</th></tr></thead><tbody>${rows.join("")}</tbody>
       <tfoot><tr><td></td><td>${tot.n} case${tot.n > 1 ? "s" : ""} chargée${tot.n > 1 ? "s" : ""}</td><td></td><td></td><td class="n">${chKgTxt(tot.kg)}</td><td colspan="2"></td></tr></tfoot></table>`;
@@ -7776,9 +7783,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
   .chf .num small { font-size: 3.2mm; color: #373737; margin-left: auto; white-space: nowrap; }
   .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
-  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: 0; max-height: var(--sv); }
+  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: var(--svmin, 0); max-height: var(--sv); }
   .chf .fv.off { display: none; }
   .chf .fv { display: flex; gap: 1.5mm; }
+  .chf .row.wide { grid-column: span 2; }
+  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; }
+  .chf .row.wide .fv { margin: 0; padding: 0; max-height: none; min-height: 0; height: 100%; }
   .chf .fv svg { flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; }
   .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
   .chf .it .q { font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; }
@@ -7798,7 +7808,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .foot b { color: #1d1d1d; }`;
   function chFicheGroups(t, rid, lz) {
     const L = chIn(t, rid).filter((c) => lz == null || chZ(c) === lz), floor = L.filter((c) => c.y <= 0).sort((a, b) => (chZ(a) > 0) - (chZ(b) > 0) || a.x - b.x || chZ(a) - chZ(b)), up = L.filter((c) => c.y > 0).sort((a, b) => a.y - b.y || a.x - b.x);
-    const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), k = [chLabel(c), !!c.nogerb, fr, chSens(c)].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, s: chSens(c) }); }); return out; };
+    const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), on = top ? chOnTxt(t, c) : "", k = [chLabel(c), !!c.nogerb, fr, chSens(c), on].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, on, s: chSens(c) }); }); return out; };
     return { floor: pack(floor, false), up: pack(up, true) };
   }
   function chFicheHtml() {
@@ -7808,17 +7818,19 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const rows = t.rangs.filter((r) => chIn(t, r.id).length), tot = chTotals(t), n = rows.length || 1;
       // Un rang à sous-rangs (2A au fond, 2B devant) : une section par sous-rang
       const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
-      const lines = Math.max(1, ...g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)));
+      const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
+      // Un rang très chargé prend deux colonnes : son texte à gauche, son croquis à droite
+      const wide = lc.map((x) => n > 1 && x >= 8), slots = n + wide.filter(Boolean).length;
       // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
-      const cols = n <= 3 ? n : n <= 8 ? 4 : n <= 10 ? 5 : n <= 15 ? 5 : 6, lns = Math.ceil(n / cols), cellH = (193 - 9 - 9 - 6 - 3 * 3 - (lns - 1) * 2.2) / lns;
+      lnsWant = slots <= 4 ? 1 : slots <= 12 ? 2 : 3, cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.ceil(slots / cols), cellH = (193 - 9 - 9 - 6 - 3 * 3 - (lns - 1) * 2.2) / lns;
       const f = Math.max(2.6, Math.min(8, (cellH - 14) / (lines * 1.2 + 0.4))), num = Math.max(8, Math.min(14, cellH * 0.18)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
-      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? '<span class="tg dz">dessus</span>' : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}${sv ? `<div class="fv">${chRowStages(t, r, true).map((x) => x.svg.replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, "")).join("")}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${wide[k] ? " wide" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chRowStages(t, r, true).map((x) => x.svg.replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, "")).join("")}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
-      return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm">
+      return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chM(tot.used)}</b> sur ${chM(t.L)}, <b>${chKgTxt(tot.kg)}</b>${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><span class="who">${esc(d.nom || "")}${d.lieu ? `<br>${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
         <div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div>
         <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns},minmax(0,1fr))">${cells}</div>
@@ -7830,14 +7842,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Ajuste la taille du texte page par page : la plus grande qui tient dans toutes les cases, sans couper un mot
   function chFicheFit(root) {
     const keep = root.style.cssText; root.style.cssText = "display:block;position:absolute;left:-10000px;top:0;visibility:hidden";
-    root.querySelectorAll(".pg").forEach((pg) => {
-      const fits = () => [...pg.querySelectorAll(".body")].every((b) => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1);
-      // Le texte passe avant le croquis : le croquis prend la place qui reste dans sa case, et disparaît s'il n'en reste pas assez
-      let f = parseFloat(pg.style.getPropertyValue("--f")) || 5;
-      const set = () => pg.style.setProperty("--f", f + "mm");
-      for (let up = 0; up < 20 && fits() && f < 9; up++) { f += 0.25; set(); }
-      while (!fits() && f > 2.2) { f -= 0.25; set(); }
-      pg.querySelectorAll(".fv").forEach((v) => { if (v.getBoundingClientRect().height < 60) v.classList.add("off"); });
+    // Chaque case de rang a sa propre taille de texte : un rang chargé ne fait pas rétrécir les autres.
+    // Le croquis garde sa place tant que le texte reste à 4,5 mm ou plus ; sinon il rétrécit, puis disparaît.
+    root.querySelectorAll(".pg .row").forEach((row) => {
+      const b = row.querySelector(".body"), fv = row.querySelector(".fv");
+      const fits = () => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1;
+      const fit = () => { let f = 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
+      if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
+      if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
     });
     root.style.cssText = keep;
   }
