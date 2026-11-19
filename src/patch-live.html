@@ -7644,6 +7644,31 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (zs[0] == null) return [{ cap: "", svg: chRowSvg(t, r, forExport) }];
     return zs.map((lz) => ({ cap: `${n}${chLayerTag(zs, lz)} · ${chLayerTxt(lz)}`, svg: chRowSvg(t, r, forExport, lz) }));
   }
+  // Croquis de la fiche une page : seulement la hauteur utilisée, sans graduations ni légende,
+  // et le nom de chaque case en gros, sur plusieurs lignes si besoin, pour rester lisible une fois imprimé en A4
+  function chFicheLabel(nm, w, h) {
+    const words = String(nm).split(/\s+/).filter(Boolean), cw = 0.54;
+    for (let fs = 34; fs >= 12; fs -= 1) {
+      const maxCh = Math.floor((w - 6) / (fs * cw)); if (maxCh < 1 || words.some((x) => x.length > maxCh)) continue;
+      const lines = []; words.forEach((x) => { const l = lines[lines.length - 1]; if (l != null && (l + " " + x).length <= maxCh) lines[lines.length - 1] = l + " " + x; else lines.push(x); });
+      if (lines.length * fs * 1.05 <= h - 4) return { fs, lines };
+    }
+    const fs = Math.max(8, Math.min(12, h * 0.7)), maxCh = Math.max(2, Math.floor((w - 4) / (fs * cw))), s = String(nm);
+    return { fs, lines: [s.length > maxCh ? s.slice(0, maxCh - 1) + "…" : s] };
+  }
+  function chFicheSvg(t, r, lz) {
+    const lay = lz != null, zs = lay ? chLayers(t, r.id) : null, all = chIn(t, r.id);
+    const mine = lay ? all.filter((c) => chZ(c) === lz) : all, ghosts = lay ? all.filter((c) => chZ(c) < lz && chZ(c) + c.d > lz) : [];
+    const topH = Math.min(t.h, Math.max(60, ...mine.concat(ghosts).map((c) => c.y + c.h)) + 6), m = 3, W = t.l + 2 * m, H = topH + m + 2, oy = m + topH;
+    const ff = `font-family='"Barlow Semi Condensed", ${PLAN_FONT}'`;
+    const box = (c, ghost) => { const K = CH_CATS[c.cat] || CH_CATS.autre, y = oy - c.y - c.h, nm = chLabel(c) + (ghost ? ` (${chLayerTag(zs, chZ(c))})` : ""), L = chFicheLabel(nm, c.w, c.h), y0 = c.h / 2 - ((L.lines.length - 1) * L.fs * 1.05) / 2;
+      return `<g transform="translate(${m + c.x} ${y})"><rect width="${c.w}" height="${c.h}" rx="2" fill="${ghost ? "#eceff1" : K[1]}" stroke="${ghost ? "#9aa3ad" : "#373737"}" stroke-width="${ghost ? 1 : 1.6}"${ghost ? ' stroke-dasharray="5 4"' : ""}/>${ghost ? "" : chWheelsSvg(c)}${c.nogerb && !ghost ? `<path d="M3 3H${c.w - 3}" stroke="#b91c1c" stroke-width="4" stroke-dasharray="8 5"/>` : ""}<text x="${c.w / 2}" font-size="${L.fs}" font-weight="700" text-anchor="middle" fill="${ghost ? "#6b7280" : "#111827"}">${L.lines.map((l, i) => `<tspan x="${c.w / 2}" y="${(y0 + i * L.fs * 1.05).toFixed(1)}" dominant-baseline="central">${esc(l)}</tspan>`).join("")}</text></g>`; };
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax meet" ${ff}><rect x="${m}" y="${m}" width="${t.l}" height="${topH}" fill="#f7f8f6"/><path d="M${m} ${m}V${oy}H${m + t.l}V${m}" fill="none" stroke="#373737" stroke-width="2"/>${ghosts.map((c) => box(c, true)).join("")}${mine.slice().sort((a, b) => chZ(a) - chZ(b)).map((c) => box(c, false)).join("")}</svg>`;
+  }
+  function chFicheSketches(t, r) {
+    const zs = chLayers(t, r.id), n = chRangN(t, r.id);
+    return zs.map((lz) => `<figure>${lz != null ? `<figcaption><b>${n}${chLayerTag(zs, lz)}</b> ${chLayerTxt(lz)}</figcaption>` : ""}${chFicheSvg(t, r, lz)}</figure>`).join("");
+  }
   // Contenu d'un rang en texte, comme sur les plans écrits : « 4× K3, X12 »
   function chRowText(t, rid) {
     const L = chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x), groups = [];
@@ -7775,11 +7800,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
   .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: var(--svmin, 0); max-height: var(--sv); }
   .chf .fv.off { display: none; }
-  .chf .fv { display: flex; gap: 1.5mm; }
+  .chf .fv { display: grid; gap: 1.5mm 2mm; grid-template-rows: minmax(0, 1fr); }
+  .chf .fv figure { margin: 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .chf .fv figcaption { font-size: 3mm; line-height: 1.15; color: #373737; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chf .fv figcaption b { font: 700 1.3em "Barlow Semi Condensed", ${PLAN_FONT}; color: #1d1d1d; }
   .chf .row.wide { grid-column: span 2; }
   .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; }
   .chf .row.wide .fv { margin: 0; padding: 0; max-height: none; min-height: 0; height: 100%; }
-  .chf .fv svg { flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; }
+  .chf .fv svg { flex: 1 1 0; min-width: 0; min-height: 0; width: 100%; height: 100%; max-width: none; display: block; }
   .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
   .chf .it .q { font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; }
   .chf .it .q:empty { display: none; }
@@ -7818,7 +7846,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row${wide[k] ? " wide" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chRowStages(t, r, true).map((x) => x.svg.replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, "")).join("")}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${wide[k] ? " wide" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
       return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chM(tot.used)}</b> sur ${chM(t.L)}, <b>${chKgTxt(tot.kg)}</b>${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><span class="who">${esc(d.nom || "")}${d.lieu ? `<br>${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
@@ -7830,6 +7858,16 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
   }
   // Ajuste la taille du texte page par page : la plus grande qui tient dans toutes les cases, sans couper un mot
+  // Plusieurs croquis (2A, 2B…) : la grille (colonnes × lignes) qui les dessine le plus grand
+  function chFicheArrange(fv) {
+    const figs = [...fv.children], k = figs.length; if (k < 2) return;
+    const R = fv.getBoundingClientRect(), gx = 7.5, gy = 5.7, cap = figs[0].querySelector("figcaption") ? 15 : 0;
+    const vb = figs.map((f) => f.querySelector("svg").viewBox.baseVal);
+    let best = 1, bs = 0;
+    for (let c = 1; c <= k; c++) { const rws = Math.ceil(k / c), cw = (R.width - (c - 1) * gx) / c, ch = (R.height - (rws - 1) * gy) / rws - cap;
+      const sc = Math.min(...vb.map((v) => Math.min(cw / v.width, ch / v.height))); if (sc > bs + 1e-6) { bs = sc; best = c; } }
+    fv.style.gridTemplateColumns = `repeat(${best}, minmax(0, 1fr))`; fv.style.gridTemplateRows = `repeat(${Math.ceil(k / best)}, minmax(0, 1fr))`;
+  }
   function chFicheFit(root) {
     const keep = root.style.cssText; root.style.cssText = "display:block;position:absolute;left:-10000px;top:0;visibility:hidden";
     // Chaque case de rang a sa propre taille de texte : un rang chargé ne fait pas rétrécir les autres.
@@ -7840,6 +7878,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const fit = () => { let f = 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
       if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
       if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
+      if (fv && !fv.classList.contains("off")) chFicheArrange(fv);
     });
     root.style.cssText = keep;
   }
@@ -7851,10 +7890,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     try { await saveBlob(name, new Blob([doc], { type: "text/html" })); notice(`Fiche « ${esc(name)} » enregistrée. Ouvre-la : l'impression se lance toute seule (choisis « Enregistrer en PDF » pour la garder sur ton téléphone).`); }
     catch (err) { if (!err || err.code !== "declined") notice("L'enregistrement de la fiche n'a pas abouti.", true); }
   }
-  function chFichePrint() {
+  async function chFichePrint() {
     const html = chFicheHtml(); if (!html) { notice("Aucune case chargée : range d'abord des cases dans un rang.", true); return; }
     let root = document.getElementById("printRoot");
     if (!root) { root = document.createElement("div"); root.id = "printRoot"; document.body.appendChild(root); }
+    // Le texte est mesuré avec les vraies polices : on attend qu'elles soient chargées
+    try { await Promise.all(["600", "700"].map((w) => document.fonts.load(`${w} 20px "Barlow Semi Condensed"`)).concat(document.fonts.load('400 20px "Barlow"'))); } catch (e) { /* police système */ }
     root.innerHTML = html; chFicheFit(root);
     // Dans claude.ai, la page est dans un cadre qui bloque l'impression : on enregistre la fiche, qui s'imprime à l'ouverture
     if (window.claude && window.claude.use) { chFicheFile(root.innerHTML); return; }
