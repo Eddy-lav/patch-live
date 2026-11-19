@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "5abb03db43";</script>
+<script>window.PL_VER = "851fedebff";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -4836,7 +4836,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const EXTRA_MODELS = {
     as80: { nom: "AS 80", type: "Convertisseur HMAC redondant", t: "Midas AS 80 · HMAC vers double HMAC redondant", re: /\bas\s*-?\s*80\b/i, ports: [["Port A (HMAC)", "HyperMAC"], ["Port X (HMAC)", "HyperMAC"], ["Port Y (HMAC)", "HyperMAC"], ["Réseau (contrôle)", "Réseau"]] },
     dn9680: { nom: "DN9680", type: "Extender AES50 · 8 ports", t: "Klark Teknik DN9680 · 8 ports AES50 sur un snake", re: /dn\s*-?\s*9680/i, ports: [["Snake (HMAC)", "HyperMAC"], ...Array.from({ length: 8 }, (_, i) => [`AES50 ${i + 1}`, "AES50"]), ["Réseau (contrôle)", "Réseau"]] },
-    dn9650: { nom: "DN9650", type: "Pont réseau AES50 · 3 ports", t: "Klark Teknik DN9650 · 3 ports AES50 (72 canaux) vers un module réseau (Dante, MADI, CobraNet, EtherSound, A-Net)", re: /dn\s*-?\s*9650/i, ports: [["AES50 A", "AES50"], ["AES50 B", "AES50"], ["AES50 C", "AES50"], ["Module réseau (Dante, MADI…)", "Autre"], ["Contrôle (Ethernet)", "Réseau"], ["Word clock in", "Word clock"], ["Word clock out", "Word clock"], ["Vidéo (black burst)", "Word clock"]] },
+    dn9650: { nom: "DN9650", type: "Pont réseau AES50 · 3 ports", t: "Klark Teknik DN9650 · 3 ports AES50 (72 canaux) vers un module réseau (Dante, MADI, CobraNet, EtherSound, A-Net)", re: /dn\s*-?\s*9650/i, ports: [["AES50 A", "AES50"], ["AES50 B", "AES50"], ["AES50 C", "AES50"], ["Module Dante (primaire)", "Dante"], ["Module Dante (secondaire)", "Dante"], ["Module MADI (BNC)", "MADI"], ["Module MADI (optique)", "MADI"], ["Module CobraNet / EtherSound / A-Net", "Réseau"], ["Contrôle (Ethernet)", "Réseau"], ["Word clock in", "Word clock"], ["Word clock out", "Word clock"], ["Vidéo (black burst)", "Word clock"]] },
     ad600: { nom: "AD600", type: "Analyseur de spectre HF", t: "Shure AD600 · analyseur de spectre (Axient Digital)", re: /\bad\s*-?\s*600\b/i, clk: "none", ports: [["Antenne A", "Antenne"], ["Antenne B", "Antenne"], ["Réseau", "Réseau"]] },
     ua845: { nom: "UA845", type: "Distribution d'antennes", t: "Shure UA845 · distribution d'antennes", re: /\bua\s*-?\s*845/i, clk: "none", ports: [["Antenne A in", "Antenne"], ["Antenne B in", "Antenne"], ...Array.from({ length: 5 }, (_, i) => [`Sortie ${i + 1} (A/B)`, "Antenne"]), ["Cascade A/B", "Antenne"]] },
     ac3000: { nom: "AC 3000", type: "Combineur actif d'émetteurs", t: "Sennheiser AC 3000 · combineur actif 8 émetteurs", re: /\bac\s*-?\s*3000\b/i, clk: "none", ports: [...Array.from({ length: 8 }, (_, i) => [`RF in ${i + 1}`, "Antenne"]), ["Antenne out", "Antenne"]] },
