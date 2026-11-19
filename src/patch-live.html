@@ -7484,6 +7484,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const chDepth = (t, rid) => Math.max(0, ...chIn(t, rid).map((c) => chZ(c) + (c.d || 0)));
   // Profondeur du rang sans cette case : en reculant, une case ne rend jamais son rang plus profond
   const chRoom = (t, rid, c) => Math.max(c.d, ...chIn(t, rid).filter((o) => o !== c).map((o) => chZ(o) + o.d));
+  // Avant du rang sans cette case : une case peut reculer jusque-là et dépasser du rang (le rang suivant recule d'autant),
+  // pour boucher un trou moins profond qu'elle
+  const chFront = (t, rid, c) => Math.max(0, ...chIn(t, rid).filter((o) => o !== c).map((o) => chZ(o) + o.d));
   const chKg = (list) => list.reduce((n, c) => n + (Number(c.kg) || 0), 0);
   const chM = (cm) => (cm / 100).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " m";
   const chKgTxt = (kg) => Math.round(kg).toLocaleString("fr-FR") + " kg";
@@ -7528,7 +7531,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function chSettle(t) {
     t.rangs.forEach((r) => {
       const L = chIn(t, r.id).sort((a, b) => a.y - b.y || a.x - b.x), done = [];
-      L.forEach((c) => { if (chZ(c)) { const z = Math.max(0, Math.min(chZ(c), chRoom(t, r.id, c) - c.d)); if (z) c.z = z; else delete c.z; } });
+      L.forEach((c) => { if (chZ(c)) { const z = Math.max(0, Math.min(chZ(c), chFront(t, r.id, c))); if (z) c.z = z; else delete c.z; } });
       L.forEach((c) => { c.y = done.filter((o) => o.x < c.x + c.w - 0.5 && o.x + o.w > c.x + 0.5 && o.y + o.h <= c.y + 0.5 && chZov(o, c)).reduce((m, o) => Math.max(m, o.y + o.h), 0); done.push(c); });
     });
   }
@@ -7626,7 +7629,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <div class="row3"><label>Largeur<input type="number" min="5" max="1400" step="1" inputmode="numeric" data-chf="w" value="${c.w}"></label><label>Profondeur<input type="number" min="5" max="1400" step="1" inputmode="numeric" data-chf="d" value="${c.d}"></label><label>Hauteur<input type="number" min="5" max="400" step="1" inputmode="numeric" data-chf="h" value="${c.h}"></label></div>
         <p class="hint" style="margin:-4px 0 8px">En cm, vue depuis les portes. Les corrections sont retenues pour tes prochains dossiers.</p>
         <div class="row2"><label>Poids (kg)<input type="number" min="0" step="1" inputmode="numeric" data-chf="kg" value="${c.kg || ""}"></label><label>Rang<select data-chf="rang"><option value="">À charger</option>${t.rangs.map((r, i) => `<option value="${r.id}"${c.rang === r.id ? " selected" : ""}>Rang ${i + 1}</option>`).join("")}</select></label></div>
-        ${c.rang && chRoom(t, c.rang, c) > c.d ? `<label>Recul dans le rang (cm depuis le fond, 0 à ${chRoom(t, c.rang, c) - c.d})<input type="number" min="0" max="${chRoom(t, c.rang, c) - c.d}" step="1" inputmode="numeric" data-chf="z" value="${chZ(c)}"></label>` : ""}
+        ${c.rang ? `<label>Depuis la paroi jardin (cm, 0 à ${t.l - c.w})<input type="number" min="0" max="${t.l - c.w}" step="1" inputmode="numeric" data-chf="x" value="${c.x}"></label>` : ""}
+        ${c.rang && chFront(t, c.rang, c) > 0 ? `<label>Recul dans le rang (cm depuis le fond, 0 à ${chFront(t, c.rang, c)})<input type="number" min="0" max="${chFront(t, c.rang, c)}" step="1" inputmode="numeric" data-chf="z" value="${chZ(c)}"></label>` : ""}
         <label class="inl chgerb"><input type="checkbox" data-chf="nogerb"${c.nogerb ? " checked" : ""}> Non gerbable : rien ne se pose dessus</label>
         <div class="actions chturn"><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (hamburger)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button></div>
         <label>Notes<textarea rows="2" data-chf="notes">${esc(c.notes || "")}</textarea></label>
@@ -7711,10 +7715,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       else if (f === "nogerb") { if (el.checked) c.nogerb = true; else delete c.nogerb; }
       else if (f === "cat") c.cat = el.value;
       else if (f === "rang") { if (!el.value) { c.rang = ""; c.x = 0; c.y = 0; delete c.z; } else if (!chAutoPlace(t, el.value, c)) { c.rang = el.value; c.x = 0; c.y = chSupport(t, el.value, c, 0, 9999); notice("Plus de place libre dans ce rang : la case est posée à gauche, à vérifier."); } }
-      else if (f === "z") { const z = Math.max(0, Math.round(Number(String(el.value).replace(",", ".")) || 0)); if (z) c.z = z; else delete c.z; }
+      else if (f === "x") { c.x = Math.max(0, Math.min(t.l - c.w, Math.round(Number(String(el.value).replace(",", ".")) || 0))); c.y = chSupport(t, c.rang, c, c.x, 9999); }
+      else if (f === "z") { const z = Math.max(0, Math.round(Number(String(el.value).replace(",", ".")) || 0)); if (z) c.z = z; else delete c.z; if (c.rang) c.y = chSupport(t, c.rang, c, c.x, 9999); }
       else if (f === "kg") c.kg = Math.max(0, Math.round(Number(String(el.value).replace(",", ".")) || 0));
       else c[f] = Math.max(5, Math.min(f === "h" ? 400 : 1400, Math.round(Number(String(el.value).replace(",", ".")) || c[f])));
-      if (f !== "notes" && f !== "rang" && f !== "nogerb" && f !== "z") chLearn(c);
+      if (f !== "notes" && f !== "rang" && f !== "nogerb" && f !== "z" && f !== "x") chLearn(c);
       chCommit();
     });
     // Glisser : une case d'un rang (ou de « À charger ») se pose sur n'importe quel rang, et tombe sur ce qui est dessous
@@ -7773,7 +7778,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); t.cases = t.cases.filter((x) => x !== c); chSel = null; chCommit(); return; }
       if (!c.rang) return;
       const st = e.shiftKey ? 50 : 5, dx = { ArrowLeft: -st, ArrowRight: st }[e.key];
-      if (dx) { e.preventDefault(); c.x = Math.max(0, Math.min(t.l - c.w, c.x + dx)); c.y = chSupport(t, c.rang, c, c.x, c.y); chCommit(); }
+      if (dx) { e.preventDefault(); c.x = Math.max(0, Math.min(t.l - c.w, c.x + dx)); c.y = chSupport(t, c.rang, c, c.x, c.y); chCommit(); return; }
+      // Haut / bas : avancer vers la cabine ou reculer vers les portes dans le rang
+      const dz = { ArrowUp: -st, ArrowDown: st }[e.key];
+      if (dz) { e.preventDefault(); const z = Math.max(0, Math.min(chFront(t, c.rang, c), chZ(c) + dz)); if (z) c.z = z; else delete c.z; c.y = chSupport(t, c.rang, c, c.x, c.y); chCommit(); }
     });
   }
   function ctxCharge(e, t0) {
@@ -7877,7 +7885,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const ch3Len = (t) => ch3Rows(t).reduce((n, x) => n + x.d, 0);
   function ch3Mat(color, opt) { const T = THREE, k = color + JSON.stringify(opt || {}); ch3.mats = ch3.mats || new Map(); if (!ch3.mats.has(k)) ch3.mats.set(k, new T.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, ...(opt || {}) })); return ch3.mats.get(k); }
   function ch3Box(g, w, h, d, x, y, z, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x + w / 2, y + h / 2, z + d / 2); g.add(m); return m; }
-  function ch3Label(c, w, h) {
+  function ch3Label(c, w, h, mat) {
+    if (mat) { const pw = Math.min(w * 0.86, 110), ph = Math.min(pw * (160 / 512), h * 0.5); return new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), mat); }
     const cv = document.createElement("canvas"), W = 512, H = 160, x = cv.getContext("2d"); cv.width = W; cv.height = H;
     x.fillStyle = "rgba(255,255,255,0.92)"; x.fillRect(0, 0, W, H); x.strokeStyle = "#373737"; x.lineWidth = 6; x.strokeRect(3, 3, W - 6, H - 6);
     const nm = chLabel(c); let fs = 74; x.font = `700 ${fs}px ${PLAN_FONT}`; while (fs > 26 && x.measureText(nm).width > W - 30) { fs -= 4; x.font = `700 ${fs}px ${PLAN_FONT}`; }
@@ -7914,7 +7923,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       else if (bh > 40) ch3Box(g, w + 0.8, 1.2, d + 0.8, -0.4, y0 + bh * 0.82, -0.4, dark); // couvercle
       if (wheels) casters(y0);
     }
-    const lab = ch3Label(c, w, h); lab.position.set(w / 2, Math.max(wheels + 4, h * 0.6), d + 1.2); g.add(lab);
+    // Étiquette blanche sur chaque face (sauf dessous) : le nom se lit de partout, et suit la case quand on la couche
+    const ly = Math.max(wheels + 4, h * 0.6), lab = ch3Label(c, w, h); lab.position.set(w / 2, ly, d + 1.2); g.add(lab);
+    const more = (fw, fh, x, y, z, rx, ry) => { const m = ch3Label(c, fw, fh, lab.material); m.position.set(x, y, z); m.rotation.set(rx, ry, 0, "YXZ"); g.add(m); };
+    more(w, h, w / 2, ly, -1.2, 0, Math.PI); more(d, h, w + 1.2, ly, d / 2, 0, Math.PI / 2); more(d, h, -1.2, ly, d / 2, 0, -Math.PI / 2);
+    more(w, d * 1.6, w / 2, h + 1.2, d / 2, -Math.PI / 2, 0);
     if (c.nogerb) { const red = ch3Mat("#c62828"); for (let k = 0; k < 2; k++) { const bar = ch3Box(g, Math.hypot(w, d) * 0.7, 1.2, 5, 0, h + 0.2, 0, red); bar.position.set(w / 2, h + 0.8, d / 2); bar.rotation.y = (k ? 1 : -1) * Math.atan2(d, w); } }
     if (bad || on) { const o = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(w + 3, h + 3, d + 3)), new T.LineBasicMaterial({ color: bad ? "#d32f2f" : "#e0a800" })); o.position.set(w / 2, h / 2, d / 2); g.add(o); }
     g.userData.cid = c.id;
@@ -7926,19 +7939,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     inner.position.set(-n[0] / 2, -n[1] / 2, -n[2] / 2); pivot.add(inner);
     pivot.quaternion.setFromRotationMatrix(new THREE.Matrix4().set(m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, 0, 0, 0, 1));
     pivot.position.set(c.w / 2, c.h / 2, c.d / 2); outer.add(pivot);
-    // Étiquette toujours lisible : posée au-dessus de la case, tournée vers la caméra, jamais cachée par les autres
-    const tag = ch3Tag(chLabel(c), bad); tag.position.set(c.w / 2, c.h + 9, c.d / 2); outer.add(tag);
     return outer;
-  }
-  function ch3Tag(txt, bad) {
-    const cv = document.createElement("canvas"), x = cv.getContext("2d"), fs = 44, pad = 16; x.font = `700 ${fs}px ${PLAN_FONT}`;
-    const tw = Math.min(900, Math.ceil(x.measureText(txt).width)); cv.width = tw + pad * 2; cv.height = fs + 22;
-    x.font = `700 ${fs}px ${PLAN_FONT}`; x.fillStyle = bad ? "rgba(211,47,47,0.92)" : "rgba(55,55,55,0.86)";
-    const r = 14, W = cv.width, H = cv.height; x.beginPath(); x.moveTo(r, 0); x.arcTo(W, 0, W, H, r); x.arcTo(W, H, 0, H, r); x.arcTo(0, H, 0, 0, r); x.arcTo(0, 0, W, 0, r); x.fill();
-    x.fillStyle = "#ffffff"; x.textBaseline = "middle"; x.fillText(txt, pad, H / 2 + 2, tw);
-    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
-    const h = 15; sp.scale.set(h * (W / H), h, 1); sp.renderOrder = 20; sp.userData.tag = true; return sp;
   }
   function ch3Text(txt, size, color) {
     const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = 256; cv.height = 128;
@@ -8040,10 +8041,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const xs = [0, t.l - c.w]; chIn(t, o.r.id).forEach((q) => { if (q !== c) xs.push(q.x + q.w, q.x - c.w); });
     const nx = xs.filter((v) => v >= 0 && v <= t.l - c.w).reduce((b, v) => (Math.abs(v - x) < Math.abs(b - x) ? v : b), x); if (Math.abs(nx - x) <= 10) x = nx;
     // Recul dans le rang : libre entre le fond et l'avant du rang, aimanté contre l'avant des cases voisines
-    const room = chRoom(t, o.r.id, c) - c.d; let z = 0;
-    if (room > 0) {
-      z = Math.max(0, Math.min(room, chSnap(p.z - o.z0 - (offZ || 0))));
-      const stops = [0, room, ...chIn(t, o.r.id).filter((q) => q !== c && q.x < x + c.w && q.x + q.w > x).map((q) => chZ(q) + q.d).filter((v) => v <= room)];
+    const room = chRoom(t, o.r.id, c) - c.d, front = chFront(t, o.r.id, c); let z = 0;
+    if (front > 0) {
+      z = Math.max(0, Math.min(front, chSnap(p.z - o.z0 - (offZ || 0))));
+      const stops = [0, ...(room > 0 ? [room] : []), ...chIn(t, o.r.id).filter((q) => q !== c && q.x < x + c.w && q.x + q.w > x).map((q) => chZ(q) + q.d).filter((v) => v <= front)];
       const near = stops.reduce((b, v) => (Math.abs(v - z) < Math.abs(b - z) ? v : b), stops[0]); if (Math.abs(near - z) <= 15) z = near;
     }
     const keep = c.z; if (z) c.z = z; else delete c.z;
