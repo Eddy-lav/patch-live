@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "5e0edd481e";</script>
+<script>window.PL_VER = "34ea446d93";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -1627,6 +1627,16 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
 .chsvg g.chit.drag, .chsvg g.ghost { pointer-events: none; opacity: 0.8; }
 .chtxt { margin: 6px 0 0; font-size: var(--fs-sm); line-height: 1.35; }
 .chrow textarea { width: 100%; margin-top: 6px; resize: vertical; }
+.ch3wrap { padding: 10px; margin-bottom: 12px; }
+.ch3bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 8px; }
+.ch3views { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.ch3step { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-sm); color: var(--muted); flex: 1 1 220px; }
+.ch3step input { flex: 1 1 auto; min-width: 100px; }
+.ch3stage { position: relative; height: min(68vh, 640px); min-height: 320px; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: #eef2f3; }
+.ch3stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.ch3stage .hint { position: absolute; inset: auto 0 0 0; margin: 0; padding: 10px; background: var(--surface); }
+@media (max-width: 760px) { .ch3stage { height: 58vh; } }
+#chMode button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .plan-side .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .chturn { flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 :root[data-theme="regie"] .chstage { filter: brightness(0.6); }
@@ -2090,11 +2100,19 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="chAddTruck" class="btn small" type="button">+ Camion</button>
     <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
+    <span id="chMode" class="tdflt" role="group" aria-label="Affichage"><button type="button" data-chmode="3d">3D</button><button type="button" data-chmode="rangs">Rangs</button></span>
   </div>
   <datalist id="dlCh"></datalist>
   <div id="chBar"></div>
   <div class="plan-wrap">
-    <div><div id="chPool"></div><div id="chRows" class="chrows"></div></div>
+    <div><div id="chPool"></div>
+      <div id="ch3Wrap" class="panel ch3wrap" hidden>
+        <div class="ch3bar"><span class="ch3views" role="group" aria-label="Point de vue"><button type="button" class="btn small" data-ch3v="portes">Portes</button><button type="button" class="btn small" data-ch3v="cote">Côté</button><button type="button" class="btn small" data-ch3v="dessus">Dessus</button><button type="button" class="btn small" data-ch3v="cabine">Cabine</button></span>
+          <label class="ch3step"><span id="ch3StepTxt"></span><input id="ch3Step" type="range" min="0" max="1" step="1" aria-label="Rangs affichés, dans l'ordre de chargement"></label></div>
+        <div id="ch3Stage" class="ch3stage"><canvas id="ch3Canvas" aria-label="Camion en 3D : glisse une case pour la ranger"></canvas><p id="ch3Msg" class="hint" hidden></p></div>
+        <p class="hint" style="margin:6px 0 0">Glisse une case au sol pour la ranger : elle rejoint le rang sous le doigt (un nouveau rang après le dernier) et se pose sur ce qui est dessous. Fond : tourner autour du camion ; molette ou deux doigts : zoom. R : tourner la case, Maj+R : la coucher.</p>
+      </div>
+      <div id="chRows" class="chrows"></div></div>
     <aside class="panel plan-side" id="chSide"></aside>
   </div>
   <p class="hint">Rang 1 contre la cabine, chargé en premier. Chaque rang est vu depuis les portes, jardin à gauche. Fais glisser une case pour la déplacer, dans son rang ou vers un autre : elle se pose sur ce qui est dessous. « 4x K2 » ajoute quatre cases d'un coup. Clic droit (ou appui long) sur une case ou un rang pour plus d'actions.</p>
@@ -7581,7 +7599,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (!t) {
       $("#chBar").innerHTML = ""; $("#chPool").innerHTML = "";
       $("#chRows").innerHTML = `<div class="empty-state"><h3>Aucun camion</h3><p class="hint">Crée un camion, puis ajoute ses cases rang par rang, de la cabine vers les portes. Les flight racks des plans de rack sont proposés avec leurs dimensions.</p><div class="es-go">${CH_TRUCKS.slice(0, 6).map((T) => `<button type="button" class="btn small" data-chnew="${T[0]}">${esc(T[1])}</button>`).join("")}</div></div>`;
-      $("#chSide").innerHTML = ""; $("#chSide").hidden = true; return;
+      $("#chSide").innerHTML = ""; $("#chSide").hidden = true; $("#chRows").hidden = false; renderCharge3d(); return;
     }
     $("#chSide").hidden = false;
     if (chSel && !t.cases.some((c) => c.id === chSel)) chSel = null;
@@ -7590,10 +7608,12 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       <p class="chsum${over ? " warn" : ""}" role="status"><b>${chM(tot.used)}</b> utilisés sur ${chM(t.L)}${over ? " : ça ne rentre pas" : ` · reste ${chM(t.L - tot.used)}`} · ${chKgTxt(tot.kg)} chargés${tot.pool ? ` · ${tot.pool} à charger` : ""}${tot.bad ? ` · <span class="warn">${tot.bad} case${tot.bad > 1 ? "s" : ""} mal placée${tot.bad > 1 ? "s" : ""}</span>` : ""}</p>`;
     const pool = chIn(t, "");
     $("#chPool").innerHTML = pool.length ? `<div class="panel chpoolp"><h3>À charger <span class="hint">${pool.length} · glisse une case sur un rang</span></h3><div class="chpool">${pool.map((c) => `<button type="button" class="chchip${chSel === c.id ? " on" : ""}" data-chc="${c.id}" style="--chc:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}">${esc(chLabel(c))}<small>${c.w}×${c.d}×${c.h}</small></button>`).join("")}</div></div>` : "";
+    $("#chRows").hidden = chMode === "3d" && !ch3.fail;
     $("#chRows").innerHTML = t.rangs.map((r, i) => { const L = chIn(t, r.id), d = chDepth(t, r.id), txt = chRowText(t, r.id);
       return `<div class="panel chrow${chRowTo === r.id ? " to" : ""}" data-chrow="${r.id}"><div class="chrowh"><h3>Rang ${i + 1}</h3><span class="hint">${d ? `prof. ${d} cm · ` : ""}${chKgTxt(chKg(L))}</span><span class="chrowbtn"><button type="button" class="btn small" data-chmv="-1" ${i ? "" : "disabled"} title="Plus près de la cabine" aria-label="Plus près de la cabine">↑</button><button type="button" class="btn small" data-chmv="1" ${i < t.rangs.length - 1 ? "" : "disabled"} title="Plus près des portes" aria-label="Plus près des portes">↓</button><button type="button" class="btn small" data-chto title="Les cases ajoutées vont dans ce rang">Ajouter ici</button></span></div>
         <div class="chstage">${chRowSvg(t, r, false)}</div><p class="chtxt">${txt ? esc(txt) : '<span class="hint">Vide : ajoute une case ou glisses-en une ici.</span>'}</p>${r.notes != null ? `<textarea rows="1" data-chrnote placeholder="Note du rang (ex. sangler, cales)">${esc(r.notes || "")}</textarea>` : ""}</div>`; }).join("");
     renderChargeSide();
+    renderCharge3d();
   }
   function renderChargeSide() {
     const t = chTruck(), side = $("#chSide"); if (!t) { side.innerHTML = ""; return; }
@@ -7635,6 +7655,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     host.addEventListener("click", (e) => {
       const S = chState(), t = chTruck(), b = e.target.closest("button"); if (!b) return;
       if (b.dataset.chtruck) { chSetCur(b.dataset.chtruck); renderCharge(); return; }
+      if (b.dataset.chmode) { chMode = b.dataset.chmode; try { localStorage.setItem("patch-live-chmode", chMode); } catch (err) { /* ignore */ } renderCharge(); return; }
       if (b.dataset.chnew) { chNewTruck(b.dataset.chnew); chCommit(); return; }
       if (b.id === "chAddTruck") { chNewTruck(t ? t.type : "semi"); chCommit(); const i = $('#chSide [data-cht="nom"]'); if (i) { i.focus(); i.select(); } return; }
       if (!t) return;
@@ -7695,6 +7716,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 4) return;
       if (!d.moved && d.g) d.g.classList.add("drag");
       d.moved = true;
+      if (d.in3) { ch3DragMove(d, e); return; }
+      { const u = document.elementFromPoint(e.clientX, e.clientY);
+        if (u && u.id === "ch3Canvas" && ch3.root) { d.over3 = true; ch3.drag = ch3.drag || {}; ch3DragMove(d, e); return; }
+        if (d.over3) { d.over3 = false; d.to3 = null; ch3.drag = null; ch3Rebuild(); } }
       // Près du haut ou du bas de l'écran, la page défile pour atteindre les autres rangs
       d.ev = { clientX: e.clientX, clientY: e.clientY };
       const edge = e.clientY > innerHeight - 70 ? 1 : e.clientY < 90 ? -1 : 0;
@@ -7713,7 +7738,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const end = () => {
       const d = chDrag; if (!d) return; chDrag = null; clearInterval(d.auto);
       document.querySelectorAll(".chrow.drop").forEach((x) => x.classList.remove("drop"));
-      if (!d.moved) { chSel = d.c.id; renderCharge(); return; }
+      if (!d.moved) { ch3.drag = null; chSel = d.c.id; renderCharge(); return; }
+      if (d.in3 || d.over3) { ch3DragEnd(d); return; }
       if (!d.to) { renderCharge(); return; }
       Object.assign(d.c, { rang: d.to.rid, x: d.to.x, y: d.to.y }); chSel = d.c.id; chRowTo = d.to.rid; chCommit();
     };
@@ -7725,6 +7751,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (/INPUT|SELECT|TEXTAREA/.test((document.activeElement && document.activeElement.tagName) || "")) return;
       const t = chTruck(), c = t && t.cases.find((x) => x.id === chSel); if (!c) return;
       if (e.key === "Escape") { chSel = null; renderCharge(); return; }
+      if (e.key.toLowerCase() === "r" && !e.metaKey && !e.ctrlKey) { e.preventDefault(); chRot(c, e.shiftKey ? "hd" : "wd"); chLearn(c); chCommit(); return; }
       if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); t.cases = t.cases.filter((x) => x !== c); chSel = null; chCommit(); return; }
       if (!c.rang) return;
       const st = e.shiftKey ? 50 : 5, dx = { ArrowLeft: -st, ArrowRight: st }[e.key];
@@ -7782,6 +7809,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   async function chSheet(wb, titre) {
     const S = chState(); if (!S.camions.some((t) => t.cases.length)) return;
+    try { await Promise.race([ch3Load(), new Promise((res, rej) => setTimeout(rej, 4000))]); } catch (e) { /* sans 3D */ }
     const ws = wb.addWorksheet("Chargement");
     ws.addRow([`Plan de chargement · ${titre}`]).font = { bold: true, size: 14 };
     [10, 30, 14, 12, 14, 12, 11, 18, 13, 34].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
@@ -7795,6 +7823,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       t.rangs.forEach((r, i) => ws.addRow([`Rang ${i + 1}`, chRowText(t, r.id), "", "", "", "", chKg(chIn(t, r.id)) || "", chDepth(t, r.id) || "", "", r.notes || ""]));
       ws.addRow([]);
       styleHead(ws.addRow(CH_HEAD)); chRows(t).forEach((r) => ws.addRow(r));
+      const shot = ch3Shot(t, 1600, 820);
+      if (shot) { ws.addRow([]); const r0 = ws.rowCount, id = wb.addImage({ base64: shot, extension: "png" }); ws.addImage(id, { tl: { col: 0, row: r0 }, ext: { width: 1000, height: 512 } }); for (let i = 0; i < 27; i++) ws.addRow([]); }
       const png = await chPng(t);
       if (png) { ws.addRow([]); const r0 = ws.rowCount, k = Math.min(1, 1100 / png.w), id = wb.addImage({ base64: png.data, extension: "png" }); ws.addImage(id, { tl: { col: 0, row: r0 }, ext: { width: png.w * k, height: png.h * k } }); const need = Math.ceil((png.h * k) / 20) + 1; for (let i = 0; i < need; i++) ws.addRow([]); }
     }
@@ -7805,7 +7835,230 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return list.map((t, n) => { const tot = chTotals(t);
       return `<div class="${n ? "chpr brk" : "chpr"}"><h2>${esc(t.nom || "Camion")} <span class="muted">· ${esc((CH_TRUCKS.find((T) => T[0] === t.type) || CH_TRUCKS[6])[1])} · ${t.L} × ${t.l} × ${t.h} cm · ${chM(tot.used)} utilisés sur ${chM(t.L)} · ${chKgTxt(tot.kg)}</span></h2>${t.notes ? `<p>${esc(t.notes)}</p>` : ""}
         <table><thead><tr><th>Rang</th><th>Contenu (de bas en haut)</th><th>Profondeur</th><th>Poids</th><th>Note</th></tr></thead><tbody>${t.rangs.map((r, i) => `<tr><td><b>Rang ${i + 1}</b></td><td>${esc(chRowText(t, r.id))}</td><td>${chDepth(t, r.id) ? chDepth(t, r.id) + " cm" : ""}</td><td>${chKg(chIn(t, r.id)) ? chKgTxt(chKg(chIn(t, r.id))) : ""}</td><td>${esc(r.notes || "")}</td></tr>`).join("")}${tot.pool ? `<tr><td><b>À charger</b></td><td colspan="4">${esc(chRowText(t, ""))}</td></tr>` : ""}</tbody></table>
+        ${(() => { const u = ch3Shot(t, 1600, 820); return u ? `<div class="blk"><img src="${u}" alt="" style="width:100%;max-height:115mm;object-fit:contain"></div>` : ""; })()}
         <div class="chgrid">${t.rangs.filter((r) => chIn(t, r.id).length).map((r) => `<div class="blk">${chRowSvg(t, r, true).replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, ' style="width:100%;height:auto"')}</div>`).join("")}</div></div>`; }).join("");
+  }
+
+  // ---------- Chargement en 3D : on fait le plan directement dans le camion ----------
+  // Repère en cm : x = largeur (jardin à gauche vu des portes), y = hauteur, z = longueur depuis la cabine.
+  // Chaque case reste rangée dans un rang : en la glissant au sol, elle rejoint le rang sous le doigt (ou un nouveau rang
+  // après le dernier) et tombe sur ce qui est dessous. Les rangs papier (vue de face, Excel, PDF) en découlent.
+  const CH3_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+  let chMode = "3d";
+  try { if (localStorage.getItem("patch-live-chmode") === "rangs") chMode = "rangs"; } catch (e) { /* ignore */ }
+  const ch3 = { ok: false, loading: null, fail: false, theta: -0.55, phi: 1.05, zoom: 1, tgt: null, upTo: 0, upTruck: null, meshes: new Map(), drag: null, ptrs: new Map(), dirty: true };
+  function ch3Load() {
+    if (window.THREE) return Promise.resolve();
+    if (ch3.loading) return ch3.loading;
+    ch3.loading = new Promise((res, rej) => { const s = document.createElement("script"); s.src = CH3_URL; s.onload = () => res(); s.onerror = () => { ch3.loading = null; rej(new Error("three")); }; document.head.appendChild(s); });
+    return ch3.loading;
+  }
+  // Rangs le long du camion : début (depuis la cabine) et profondeur ; un rang vide compte 60 cm pour qu'on puisse y poser
+  function ch3Rows(t) { let z = 0; return t.rangs.map((r, i) => { const d = chDepth(t, r.id) || 60, o = { r, i, z0: z, d }; z += d; return o; }); }
+  const ch3Len = (t) => ch3Rows(t).reduce((n, x) => n + x.d, 0);
+  function ch3Mat(color, opt) { const T = THREE, k = color + JSON.stringify(opt || {}); ch3.mats = ch3.mats || new Map(); if (!ch3.mats.has(k)) ch3.mats.set(k, new T.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0.05, ...(opt || {}) })); return ch3.mats.get(k); }
+  function ch3Box(g, w, h, d, x, y, z, mat) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x + w / 2, y + h / 2, z + d / 2); g.add(m); return m; }
+  function ch3Label(c, w, h) {
+    const cv = document.createElement("canvas"), W = 512, H = 160, x = cv.getContext("2d"); cv.width = W; cv.height = H;
+    x.fillStyle = "rgba(255,255,255,0.92)"; x.fillRect(0, 0, W, H); x.strokeStyle = "#373737"; x.lineWidth = 6; x.strokeRect(3, 3, W - 6, H - 6);
+    const nm = chLabel(c); let fs = 74; x.font = `700 ${fs}px ${PLAN_FONT}`; while (fs > 26 && x.measureText(nm).width > W - 30) { fs -= 4; x.font = `700 ${fs}px ${PLAN_FONT}`; }
+    x.fillStyle = "#1f2937"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(nm, W / 2, H * 0.42, W - 24);
+    x.font = `400 34px ${PLAN_FONT}`; x.fillStyle = "#4b5563"; x.fillText(`${c.w}×${c.d}×${c.h}`, W / 2, H * 0.8);
+    const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+    const pw = Math.min(w * 0.86, 110), ph = Math.min(pw * (H / W), h * 0.5);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+    return m;
+  }
+  // Une case dessinée selon son type. Origine : coin bas, jardin, côté cabine.
+  function ch3Case(c, bad, on) {
+    const T = THREE, g = new T.Group(), w = c.w, h = c.h, d = c.d, col = (CH_CATS[c.cat] || CH_CATS.autre)[1];
+    const alu = ch3Mat("#c3c9cc", { metalness: 0.6, roughness: 0.35 }), dark = ch3Mat("#2a2c2e"), rubber = ch3Mat("#1b1b1b", { roughness: 0.9 });
+    const speaker = c.cat === "diff", sub = speaker && /sub|ks|sb/i.test(chLabel(c)), wheels = h >= 45 && w >= 40 && d >= 40 ? (speaker && !sub ? 12 : 11) : 0;
+    const casters = (y0) => { const r = 4.5, inset = 9; [[inset, inset], [w - inset, inset], [inset, d - inset], [w - inset, d - inset]].forEach(([px, pz]) => { const wh = new T.Mesh(new T.CylinderGeometry(r, r, 3.5, 14), rubber); wh.rotation.z = Math.PI / 2; wh.position.set(px, r, pz); g.add(wh); ch3Box(g, 7, y0 - 2 * r + 1, 7, px - 3.5, 2 * r - 1, pz - 3.5, alu); }); };
+    if (speaker && !sub) {
+      // Chariot : plateau à roulettes et enceintes empilées (grille sombre en façade)
+      ch3Box(g, w, 6, d, 0, wheels - 6, 0, ch3Mat("#4a4d50")); casters(wheels - 6);
+      const n = Math.max(1, Math.min(8, Math.round((h - wheels) / 36))), eh = (h - wheels) / n;
+      for (let k = 0; k < n; k++) { const y = wheels + k * eh; ch3Box(g, w - 2, eh - 1.2, d - 6, 1, y, 3, dark); ch3Box(g, w - 8, eh - 6, 0.6, 4, y + 2.4, d - 2.9, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w - 2, 1.4, d - 6, 1, y + eh - 2.6, 3, ch3Mat(col)); }
+    } else if (sub) {
+      ch3Box(g, w, h - wheels, d, 0, wheels, 0, dark); ch3Box(g, w - 10, h - wheels - 10, 0.6, 5, wheels + 5, d + 0.1, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w, 2, d, 0, h - 2, 0, ch3Mat(col)); if (wheels) casters(wheels);
+    } else {
+      // Flight case : caisse de la couleur de sa catégorie, cornières alu, coins boules, poignées papillon, roulettes
+      const y0 = wheels, bh = h - y0, body = ch3Box(g, w, bh, d, 0, y0, 0, ch3Mat(col));
+      const e = new T.LineSegments(new T.EdgesGeometry(body.geometry), new T.LineBasicMaterial({ color: "#8d969a" })); e.position.copy(body.position); g.add(e);
+      const k = Math.min(7, w / 6, bh / 6, d / 6);
+      [-0.3, w - k - 0.3].forEach((x) => [y0 - 0.3, h - k - 0.3].forEach((y) => [-0.3, d - k - 0.3].forEach((z) => ch3Box(g, k + 0.6, k + 0.6, k + 0.6, x, y, z, alu))));
+      if (bh > 30) [-0.9, w - 1.4].forEach((x) => ch3Box(g, 2.3, 5, Math.min(16, d * 0.4), x, y0 + bh * 0.62, d / 2 - Math.min(8, d * 0.2), dark));
+      const band = (z) => ch3Box(g, w + 0.8, bh + 0.8, 1.2, -0.4, y0 - 0.4, z, dark);
+      if (c.cat === "rack" || c.cat === "ampli") { if (d > 40) { band(9); band(d - 10.2); } }
+      else if (c.cat === "console") { ch3Box(g, w + 0.8, 1.2, d + 0.8, -0.4, y0 + bh * 0.58, -0.4, dark); }
+      else if (bh > 40) ch3Box(g, w + 0.8, 1.2, d + 0.8, -0.4, y0 + bh * 0.82, -0.4, dark); // couvercle
+      if (wheels) casters(y0);
+    }
+    const lab = ch3Label(c, w, h); lab.position.set(w / 2, Math.max(wheels + 4, h * 0.6), d + 1.2); g.add(lab);
+    if (bad || on) { const o = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(w + 3, h + 3, d + 3)), new T.LineBasicMaterial({ color: bad ? "#d32f2f" : "#e0a800" })); o.position.set(w / 2, h / 2, d / 2); g.add(o); }
+    g.userData.cid = c.id;
+    return g;
+  }
+  function ch3Text(txt, size, color) {
+    const cv = document.createElement("canvas"), x = cv.getContext("2d"); cv.width = 256; cv.height = 128;
+    x.font = `800 96px ${PLAN_FONT}`; x.fillStyle = color; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(txt, 128, 68);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size * 2, size), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; return m;
+  }
+  function ch3Dispose(o) { o.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.material && m.material.map) { m.material.map.dispose(); m.material.dispose(); } else if (m.material && m.material.type === "LineBasicMaterial") m.material.dispose(); }); }
+  function ch3Scene(t, upTo, forShot) {
+    const T = THREE, root = new T.Group(), rows = ch3Rows(t), Lr = Math.max(t.L, ch3Len(t));
+    // Plancher (une bande par rang, numérotée côté jardin), parois et cabine
+    ch3Box(root, t.l, 2, t.L, 0, -2, 0, ch3Mat("#b9bfc2"));
+    rows.forEach((o) => { if (o.i >= upTo) return; const s = ch3Box(root, t.l, 0.4, o.d, 0, 0, o.z0, ch3Mat(o.i % 2 ? "#cfd8dc" : "#dfe6e8")); s.userData.row = o.r.id; const n = ch3Text(String(o.i + 1), Math.min(30, o.d * 0.6), "#5b6569"); n.position.set(-24, 0.6, o.z0 + o.d / 2); root.add(n); });
+    if (!forShot && chDrag && ch3.drag && ch3.drag.newRow) { const z0 = ch3Len(t); ch3Box(root, t.l, 0.5, 60, 0, 0, z0, ch3Mat("#fce694", { transparent: true, opacity: 0.6 })); }
+    const shell = new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(t.l, t.h, Lr)), new T.LineBasicMaterial({ color: Lr > t.L ? "#d32f2f" : "#373737" })); shell.position.set(t.l / 2, t.h / 2, Lr / 2); root.add(shell);
+    const wall = (w, h, x, y, z, ry) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), ch3Mat("#8fa3ab", { transparent: true, opacity: 0.12, side: T.DoubleSide, depthWrite: false })); m.position.set(x, y, z); m.rotation.y = ry; root.add(m); };
+    wall(t.L, t.h, 0, t.h / 2, t.L / 2, Math.PI / 2); wall(t.L, t.h, t.l, t.h / 2, t.L / 2, Math.PI / 2); wall(t.l, t.h, t.l / 2, t.h / 2, 0, 0);
+    ch3Box(root, t.l + 20, t.h * 0.8, 170, -10, 30, -190, ch3Mat("#dfe3e5")); ch3Box(root, t.l + 6, t.h * 0.3, 2, -3, t.h * 0.42, -21, ch3Mat("#7a8a91", { metalness: 0.3, roughness: 0.2 }));
+    const door = ch3Text("Portes", 46, "#5b6569"); door.position.set(t.l / 2, 0.6, Lr + 50); root.add(door);
+    ch3.meshes = new Map();
+    rows.forEach((o) => { if (o.i >= upTo) return; chIn(t, o.r.id).forEach((c) => { const g = ch3Case(c, !forShot && chBad(t, c), !forShot && chSel === c.id); g.position.set(c.x, c.y, o.z0); root.add(g); ch3.meshes.set(c.id, g); }); });
+    return root;
+  }
+  // Cadrage sur la partie chargée (plus 3 m), pas sur tout le camion vide
+  const ch3Span = (t) => Math.min(Math.max(t.L, ch3Len(t)), ch3Len(t) + 300);
+  const ch3Dist0 = (t) => Math.max(t.l, ch3Span(t), t.h) * 1.35 + 150;
+  function ch3Camera(cam, t, theta, phi, dist) {
+    const tgt = new THREE.Vector3(t.l / 2, t.h * 0.35, ch3Span(t) / 2);
+    cam.position.set(tgt.x + dist * Math.sin(phi) * Math.sin(theta), tgt.y + dist * Math.cos(phi), tgt.z + dist * Math.sin(phi) * Math.cos(theta));
+    cam.lookAt(tgt);
+  }
+  function ch3Lights(scene) { scene.add(new THREE.HemisphereLight("#ffffff", "#8a8f91", 0.95)); const s = new THREE.DirectionalLight("#ffffff", 0.75); s.position.set(-300, 900, 1400); scene.add(s); const b = new THREE.DirectionalLight("#ffffff", 0.25); b.position.set(500, 300, -600); scene.add(b); }
+  function ch3Init() {
+    if (ch3.renderer) return true;
+    try {
+      const cv = $("#ch3Canvas"), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+      r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); ch3.renderer = r;
+      ch3.scene = new THREE.Scene(); ch3.scene.background = new THREE.Color("#eef2f3"); ch3Lights(ch3.scene);
+      ch3.cam = new THREE.PerspectiveCamera(38, 1, 5, 20000);
+      new ResizeObserver(() => ch3Draw()).observe($("#ch3Stage"));
+      ch3Bind(); return true;
+    } catch (e) { ch3.fail = true; return false; }
+  }
+  function ch3Draw() {
+    const t = chTruck(); if (!ch3.renderer || !t || chMode !== "3d" || view !== "charge") return;
+    const st = $("#ch3Stage"), w = st.clientWidth, h = st.clientHeight; if (!w || !h) return;
+    const sz = ch3.renderer.getSize(new THREE.Vector2()); if (sz.x !== w || sz.y !== h) ch3.renderer.setSize(w, h, false);
+    ch3.cam.aspect = w / h; ch3.cam.updateProjectionMatrix();
+    ch3Camera(ch3.cam, t, ch3.theta, ch3.phi, ch3Dist0(t) * ch3.zoom);
+    ch3.renderer.render(ch3.scene, ch3.cam);
+  }
+  function ch3Rebuild() {
+    const t = chTruck(); if (!ch3.renderer || !t) return;
+    if (ch3.root) { ch3.scene.remove(ch3.root); ch3Dispose(ch3.root); }
+    if (ch3.upTruck !== t.id || ch3.upTo > t.rangs.length || ch3.upAll) { ch3.upTo = t.rangs.length; ch3.upTruck = t.id; }
+    ch3.upAll = ch3.upTo >= t.rangs.length;
+    ch3.root = ch3Scene(t, ch3.upTo, false); ch3.scene.add(ch3.root);
+    const sl = $("#ch3Step"); sl.max = t.rangs.length; sl.value = ch3.upTo; $("#ch3StepTxt").textContent = ch3.upTo >= t.rangs.length ? `Tous les rangs (${t.rangs.length})` : ch3.upTo ? `Rangs 1 à ${ch3.upTo}` : "Camion vide";
+    ch3Draw();
+  }
+  function renderCharge3d() {
+    const wrap = $("#ch3Wrap"), t = chTruck();
+    wrap.hidden = !(t && chMode === "3d");
+    document.querySelectorAll("#chMode button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.chmode === chMode ? "true" : "false"));
+    if (wrap.hidden) return;
+    if (!window.THREE) {
+      $("#ch3Msg").hidden = false; $("#ch3Msg").textContent = ch3.fail ? "La 3D n'a pas pu se charger (hors ligne ?). Le plan reste modifiable en mode Rangs." : "Chargement de la 3D…";
+      ch3Load().then(() => { if (chMode === "3d") renderCharge(); }).catch(() => { ch3.fail = true; $("#ch3Msg").textContent = "La 3D n'a pas pu se charger (hors ligne ?). Le plan reste modifiable en mode Rangs."; });
+      return;
+    }
+    $("#ch3Msg").hidden = true;
+    if (!ch3Init()) { $("#ch3Msg").hidden = false; $("#ch3Msg").textContent = "Cet appareil n'affiche pas la 3D. Le plan reste modifiable en mode Rangs."; return; }
+    ch3Rebuild();
+  }
+  // Pointeur → point du plancher (y = 0), en cm
+  function ch3Floor(e) {
+    const cv = $("#ch3Canvas"), r = cv.getBoundingClientRect(), v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const rc = new THREE.Raycaster(); rc.setFromCamera(v, ch3.cam);
+    const p = new THREE.Vector3(); return rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), p) ? p : null;
+  }
+  function ch3Pick(e) {
+    const cv = $("#ch3Canvas"), r = cv.getBoundingClientRect(), v = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const rc = new THREE.Raycaster(); rc.setFromCamera(v, ch3.cam);
+    const hit = rc.intersectObjects([...ch3.meshes.values()], true).find((h) => h.object.type === "Mesh");
+    let o = hit && hit.object; while (o && !o.userData.cid) o = o.parent;
+    return o ? o.userData.cid : null;
+  }
+  // Où irait la case sous le pointeur : rang (ou nouveau rang après le dernier), x, y
+  function ch3Target(t, c, e, offX) {
+    const p = ch3Floor(e); if (!p) return null;
+    const all = ch3.upTo >= t.rangs.length, rows = ch3Rows(t).slice(0, ch3.upTo), last = rows[rows.length - 1], end = last ? last.z0 + last.d : 0;
+    const x = Math.max(0, Math.min(t.l - c.w, chSnap(p.x - offX)));
+    // Au-delà du dernier rang (s'il n'est pas vide) : un nouveau rang
+    if (all && (!last || (p.z > end + 15 && chIn(t, last.r.id).some((o) => o !== c)))) return { newRow: true, x, y: 0, z0: end };
+    const o = rows.find((q) => p.z >= q.z0 && p.z < q.z0 + q.d) || (p.z < 0 ? rows[0] : last);
+    return { rid: o.r.id, x, y: chSupport(t, o.r.id, c, x, 9999), z0: o.z0 };
+  }
+  function ch3Bind() {
+    const cv = $("#ch3Canvas");
+    cv.addEventListener("pointerdown", (e) => {
+      if (e.button === 2) return;
+      ch3.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
+      if (ch3.ptrs.size === 2) { ch3.orbit = null; if (chDrag) { chDrag = null; ch3.drag = null; ch3Rebuild(); } const [a, b] = [...ch3.ptrs.values()]; ch3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ch3.zoom }; return; }
+      const t = chTruck(), id = ch3Pick(e), c = id && t.cases.find((x) => x.id === id);
+      if (c) { const p = ch3Floor(e); chDrag = { c, in3: true, offX: p ? p.x - c.x : c.w / 2, moved: false, x0: e.clientX, y0: e.clientY }; ch3.drag = {}; }
+      else ch3.orbit = { x: e.clientX, y: e.clientY, th: ch3.theta, ph: ch3.phi, moved: false };
+      e.preventDefault();
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (ch3.ptrs.has(e.pointerId)) ch3.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ch3.pinch && ch3.ptrs.size === 2) { const [a, b] = [...ch3.ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); ch3.zoom = Math.max(0.2, Math.min(4, ch3.pinch.z * (ch3.pinch.d / Math.max(1, d)))); ch3Draw(); return; }
+      const o = ch3.orbit; if (!o) return;
+      if (Math.hypot(e.clientX - o.x, e.clientY - o.y) > 3) o.moved = true;
+      ch3.theta = o.th - (e.clientX - o.x) * 0.008; ch3.phi = Math.max(0.12, Math.min(1.52, o.ph - (e.clientY - o.y) * 0.006)); ch3Draw();
+    });
+    const up = (e) => {
+      ch3.ptrs.delete(e.pointerId); if (ch3.ptrs.size < 2) ch3.pinch = null;
+      const o = ch3.orbit; ch3.orbit = null;
+      if (o && !o.moved && chSel) { chSel = null; renderCharge(); }
+    };
+    cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+    cv.addEventListener("wheel", (e) => { e.preventDefault(); ch3.zoom = Math.max(0.2, Math.min(4, ch3.zoom * (e.deltaY > 0 ? 1.1 : 0.91))); ch3Draw(); }, { passive: false });
+    $("#ch3Wrap").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ch3v]"); if (!b) return;
+      const v = { portes: [-0.35, 1.0], cote: [-Math.PI / 2, 1.1], dessus: [0, 0.14], cabine: [Math.PI - 0.5, 1.0] }[b.dataset.ch3v];
+      ch3.theta = v[0]; ch3.phi = v[1]; ch3.zoom = 1; ch3Draw();
+    });
+    $("#ch3Step").addEventListener("input", (e) => { ch3.upTo = Number(e.target.value) || 0; ch3.upAll = false; ch3Rebuild(); });
+  }
+  // Glisser en 3D (une case du camion, ou une case de « À charger » lâchée sur la 3D)
+  function ch3DragMove(d, e) {
+    const t = chTruck(), c = d.c, g0 = ch3Target(t, c, e, d.in3 ? d.offX : c.w / 2); d.to3 = g0;
+    if (!g0) return;
+    let g = ch3.meshes.get(c.id);
+    if (!g) { g = ch3Case(c, false, true); ch3.root.add(g); ch3.meshes.set(c.id, g); }
+    const wasNew = !!ch3.drag.newRow; ch3.drag.newRow = !!g0.newRow;
+    if (wasNew !== ch3.drag.newRow) { const keep = g; ch3.root.remove(keep); ch3Rebuild(); if (!ch3.meshes.get(c.id)) { ch3.root.add(keep); ch3.meshes.set(c.id, keep); } g = ch3.meshes.get(c.id); }
+    g.position.set(g0.x, g0.y, g0.z0); ch3Draw();
+  }
+  function ch3DragEnd(d) {
+    const t = chTruck(), g0 = d.to3; ch3.drag = null;
+    if (!g0) { renderCharge(); return; }
+    let rid = g0.rid;
+    if (g0.newRow) { const r = { id: nid() }; t.rangs.push(r); rid = r.id; ch3.upAll = true; }
+    Object.assign(d.c, { rang: rid, x: g0.x, y: chSupport(t, rid, d.c, g0.x, 9999) }); chSel = d.c.id; chRowTo = rid; chCommit();
+  }
+  // Image 3D (Excel, PDF) : vue en perspective depuis les portes, tous les rangs
+  function ch3Shot(t, w, h) {
+    if (!window.THREE || !t || !t.cases.some((c) => c.rang)) return null;
+    let r;
+    try {
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true }); r.setSize(w, h, false);
+      const sc = new THREE.Scene(); sc.background = new THREE.Color("#ffffff"); ch3Lights(sc);
+      const keepSel = chSel, keepM = ch3.meshes; chSel = null;
+      const root = ch3Scene(t, t.rangs.length, true); sc.add(root); ch3.meshes = keepM; chSel = keepSel;
+      const cam = new THREE.PerspectiveCamera(34, w / h, 5, 20000); ch3Camera(cam, t, -0.55, 1.0, ch3Dist0(t));
+      r.render(sc, cam); const url = cv.toDataURL("image/png"); ch3Dispose(root); return url;
+    } catch (e) { return null; } finally { if (r) { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); } }
   }
 
   // ---------- Plans de rack ----------
