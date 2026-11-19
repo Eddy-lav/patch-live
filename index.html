@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "efe3e17831";</script>
+<script>window.PL_VER = "aa1da64da7";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -1614,6 +1614,17 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
 .chchip { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0; border: 1px solid #373737; border-left: 6px solid var(--chc); background: var(--surface); color: var(--ink); border-radius: var(--r-sm); padding: 4px 8px; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
 .chchip small { font-weight: 400; color: var(--muted); font-size: var(--fs-xs); }
 .chchip.on { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chlist { margin-top: 12px; padding: 10px 12px; }
+@media (max-width: 860px) { #v-charge .plan-wrap { grid-template-columns: minmax(0, 1fr); } }
+.chlist > summary { cursor: pointer; font-weight: 700; font-size: var(--fs-md); }
+.chlist .tblw { overflow-x: auto; margin-top: 8px; }
+.chlist table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.chlist th, .chlist td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.chlist td.n, .chlist th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.chlist tr[data-chc] { cursor: pointer; } .chlist tr[data-chc]:hover td { background: var(--hover, rgb(0 0 0 / 0.04)); }
+.chlist tr.on td { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.chlist .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; border: 1px solid rgb(0 0 0 / 0.25); }
+.chlist tfoot td { font-weight: 700; border-bottom: 0; }
 .chrows { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; align-items: start; }
 .chrow { padding: 10px; margin: 0; }
 .chrow.to { box-shadow: inset 0 3px 0 var(--accent); }
@@ -2105,6 +2116,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="chAddTruck" class="btn small" type="button">+ Camion</button>
     <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
+    <button id="chImport" class="btn small" type="button" title="Reprendre les camions d'un autre fichier Excel de l'appli (par exemple un plan fait sur une version de test)">Importer un plan…</button><input id="chImportIn" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     <span id="chMode" class="tdflt" role="group" aria-label="Affichage"><button type="button" data-chmode="3d">3D</button><button type="button" data-chmode="rangs">Rangs</button></span>
   </div>
   <datalist id="dlCh"></datalist>
@@ -2117,7 +2129,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <div id="ch3Stage" class="ch3stage"><canvas id="ch3Canvas" aria-label="Camion en 3D : glisse une case pour la ranger"></canvas><div id="ch3Tools" class="ch3tools" hidden></div><p id="ch3Msg" class="hint" hidden></p></div>
         <p class="hint" style="margin:6px 0 0">Glisse une case au sol pour la ranger : elle rejoint le rang sous le doigt (un nouveau rang après le dernier) et se pose sur ce qui est dessous. Fond : tourner autour du camion ; molette ou deux doigts : zoom. R : tourner la case, Maj+R : la coucher.</p>
       </div>
-      <div id="chRows" class="chrows"></div></div>
+      <div id="chRows" class="chrows"></div>
+      <details id="chList" class="panel chlist" open></details></div>
     <aside class="panel plan-side" id="chSide"></aside>
   </div>
   <p class="hint">Rang 1 contre la cabine, chargé en premier. Chaque rang est vu depuis les portes, jardin à gauche. Fais glisser une case pour la déplacer, dans son rang ou vers un autre : elle se pose sur ce qui est dessous. « 4x K2 » ajoute quatre cases d'un coup. Clic droit (ou appui long) sur une case ou un rang pour plus d'actions.</p>
@@ -7629,8 +7642,28 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#chRows").innerHTML = t.rangs.map((r, i) => { const L = chIn(t, r.id), d = chDepth(t, r.id), txt = chRowText(t, r.id);
       return `<div class="panel chrow${chRowTo === r.id ? " to" : ""}" data-chrow="${r.id}"><div class="chrowh"><h3>Rang ${i + 1}</h3><span class="hint">${d ? `prof. ${d} cm · ` : ""}${chKgTxt(chKg(L))}</span><span class="chrowbtn"><button type="button" class="btn small" data-chmv="-1" ${i ? "" : "disabled"} title="Plus près de la cabine" aria-label="Plus près de la cabine">↑</button><button type="button" class="btn small" data-chmv="1" ${i < t.rangs.length - 1 ? "" : "disabled"} title="Plus près des portes" aria-label="Plus près des portes">↓</button><button type="button" class="btn small" data-chto title="Les cases ajoutées vont dans ce rang">Ajouter ici</button></span></div>
         <div class="chstage">${chRowSvg(t, r, false)}</div><p class="chtxt">${txt ? esc(txt) : '<span class="hint">Vide : ajoute une case ou glisses-en une ici.</span>'}</p>${r.notes != null ? `<textarea rows="1" data-chrnote placeholder="Note du rang (ex. sangler, cales)">${esc(r.notes || "")}</textarea>` : ""}</div>`; }).join("");
+    renderChList(t);
     renderChargeSide();
     renderCharge3d();
+  }
+  // Liste de tout ce qui est chargé (rang par rang, de bas en haut), puis ce qui reste à charger
+  function chPos(c) { return [c.y > 0 ? `dessus (${c.y} cm)` : "au sol", chZ(c) ? `devant (+${chZ(c)} cm)` : "", c.m ? "tournée" : "", c.nogerb ? "non gerbable" : ""].filter(Boolean).join(", "); }
+  function chListHtml(t, forPrint) {
+    const rows = [], tot = { n: 0, kg: 0 };
+    [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || chZ(a) - chZ(b) || a.x - b.x).forEach((c) => {
+      if (rid) { tot.n++; tot.kg += Number(c.kg) || 0; }
+      rows.push(`<tr${forPrint ? "" : ` data-chc="${c.id}"${chSel === c.id ? ' class="on"' : ""}`}><td>${esc(chRangName(t, rid))}</td><td>${forPrint ? "" : `<span class="sw" style="background:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}"></span>`}${esc(chLabel(c))}</td><td>${esc((CH_CATS[c.cat] || CH_CATS.autre)[0])}</td><td class="n">${c.w} × ${c.d} × ${c.h}</td><td class="n">${c.kg ? chKgTxt(c.kg) : ""}</td><td>${rid ? esc(chPos(c)) : ""}</td><td>${esc(c.notes || "")}</td></tr>`);
+    }));
+    return `<table><thead><tr><th>Rang</th><th>Case</th><th>Catégorie</th><th class="n">L × P × H (cm)</th><th class="n">Poids</th><th>Position</th><th>Notes</th></tr></thead><tbody>${rows.join("")}</tbody>
+      <tfoot><tr><td></td><td>${tot.n} case${tot.n > 1 ? "s" : ""} chargée${tot.n > 1 ? "s" : ""}</td><td></td><td></td><td class="n">${chKgTxt(tot.kg)}</td><td colspan="2"></td></tr></tfoot></table>`;
+  }
+  function renderChList(t) {
+    const el = $("#chList"); if (!el) return;
+    if (!t || !t.cases.length) { el.hidden = true; el.innerHTML = ""; return; }
+    const n = t.cases.filter((c) => c.rang).length, open = el.hasAttribute("open") || !el.innerHTML;
+    el.hidden = false;
+    el.innerHTML = `<summary>Liste du chargement <span class="hint">${n} chargée${n > 1 ? "s" : ""}${t.cases.length > n ? ` · ${t.cases.length - n} à charger` : ""}</span></summary><div class="tblw">${chListHtml(t, false)}</div>`;
+    if (open) el.setAttribute("open", "");
   }
   function renderChargeSide() {
     const t = chTruck(), side = $("#chSide"); if (!t) { side.innerHTML = ""; return; }
@@ -7683,10 +7716,37 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function chMoveRow(t, rid, dir) { const i = t.rangs.findIndex((r) => r.id === rid), j = i + dir; if (i < 0 || j < 0 || j >= t.rangs.length) return; const [r] = t.rangs.splice(i, 1); t.rangs.splice(j, 0, r); chCommit(); }
   function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; delete c.z; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
   function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
+  // Reprend les camions d'un autre fichier Excel de l'appli (ex. un plan fait sur la version de test) dans ce dossier
+  async function chImportFile(file) {
+    let src;
+    try { const buf = await file.arrayBuffer(), wb = new ExcelJS.Workbook(); await wb.xlsx.load(buf);
+      const app = wb.getWorksheet("_appli"); if (!app) throw new Error("pas-appli");
+      const raw = (c) => { const v = c.value; return typeof v === "string" ? v : v && v.richText ? v.richText.map((x) => x.text).join("") : ""; };
+      let json = ""; for (let r = 2; r <= app.rowCount; r++) json += raw(app.getCell(r, 1));
+      src = JSON.parse(json); }
+    catch (e) { notice("Ce fichier n'est pas un dossier enregistré par l'appli : aucun plan de chargement à reprendre."); return; }
+    const list = (src && src.chargement && src.chargement.camions || []).filter((t) => t.cases && t.cases.length);
+    if (!list.length) { notice("Ce fichier n'a pas de plan de chargement."); return; }
+    const S = chState(), racks = rpState().cases, srcRacks = (src.rackplan && src.rackplan.cases) || [];
+    list.forEach((t0) => {
+      const t = JSON.parse(JSON.stringify(t0)), map = {}; t.id = nid();
+      if (S.camions.some((x) => (x.nom || "") === (t.nom || ""))) t.nom = (t.nom || "Camion") + " (importé)";
+      t.rangs.forEach((r) => { map[r.id] = r.id = nid(); });
+      t.cases.forEach((c) => { c.id = nid(); c.rang = c.rang ? map[c.rang] || "" : "";
+        // Flight rack de l'autre dossier : on le relie au rack du même nom ici, sinon il devient une case simple
+        if (c.ref) { const r0 = srcRacks.find((x) => x.id === c.ref), nm = (r0 && r0.nom) || c.nom || "Rack", here = racks.find((x) => chKey(x.nom || "Rack") === chKey(nm)); if (here) c.ref = here.id; else { delete c.ref; c.nom = nm; } } });
+      S.camions.push(t); chSetCur(t.id);
+    });
+    chCommit(); notice(`${list.length > 1 ? list.length + " camions importés" : "Camion importé"} : ${list.map((t) => t.nom || "Camion").join(", ")}.`);
+  }
   function chBind() {
     const host = $("#v-charge");
+    $("#chImportIn").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) chImportFile(f); });
     host.addEventListener("click", (e) => {
+      const tr = e.target.closest("#chList tr[data-chc]");
+      if (tr) { chSel = chSel === tr.dataset.chc ? null : tr.dataset.chc; renderCharge(); return; }
       const S = chState(), t = chTruck(), b = e.target.closest("button"); if (!b) return;
+      if (b.id === "chImport") { $("#chImportIn").value = ""; $("#chImportIn").click(); return; }
       if (b.dataset.chtruck) { chSetCur(b.dataset.chtruck); renderCharge(); return; }
       if (b.dataset.chmode) { chMode = b.dataset.chmode; try { localStorage.setItem("patch-live-chmode", chMode); } catch (err) { /* ignore */ } renderCharge(); return; }
       if (b.dataset.chnew) { chNewTruck(b.dataset.chnew); chCommit(); return; }
@@ -7842,10 +7902,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     });
   }
-  const CH_HEAD = ["Rang", "Case", "Catégorie", "Largeur (cm)", "Profondeur (cm)", "Hauteur (cm)", "Poids (kg)", "Depuis la gauche (cm)", "Posée à (cm)", "Notes"];
+  const CH_HEAD = ["Rang", "Case", "Catégorie", "Largeur (cm)", "Profondeur (cm)", "Hauteur (cm)", "Poids (kg)", "Depuis la gauche (cm)", "Posée à (cm)", "Recul dans le rang (cm)", "Notes"];
   function chRows(t) {
     const out = [];
-    [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach((c) => out.push([chRangName(t, rid), chLabel(c), (CH_CATS[c.cat] || CH_CATS.autre)[0], c.w, c.d, c.h, c.kg || "", rid ? c.x : "", rid ? c.y : "", c.notes || ""])));
+    [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach((c) => out.push([chRangName(t, rid), chLabel(c), (CH_CATS[c.cat] || CH_CATS.autre)[0], c.w, c.d, c.h, c.kg || "", rid ? c.x : "", rid ? c.y : "", rid && chZ(c) ? chZ(c) : "", c.notes || ""])));
     return out;
   }
   async function chSheet(wb, titre) {
@@ -7853,15 +7913,15 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     try { await Promise.race([ch3Load(), new Promise((res, rej) => setTimeout(rej, 4000))]); } catch (e) { /* sans 3D */ }
     const ws = wb.addWorksheet("Chargement");
     ws.addRow([`Plan de chargement · ${titre}`]).font = { bold: true, size: 14 };
-    [10, 30, 14, 12, 14, 12, 11, 18, 13, 34].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    [10, 30, 14, 12, 14, 12, 11, 18, 13, 16, 34].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
     for (const t of S.camions) {
       if (!t.cases.length) continue;
       const tot = chTotals(t);
       ws.addRow([]);
       ws.addRow([`${t.nom || "Camion"} · ${(CH_TRUCKS.find((T) => T[0] === t.type) || CH_TRUCKS[6])[1]} · ${t.L} × ${t.l} × ${t.h} cm utiles · ${chM(tot.used)} utilisés · ${chKgTxt(tot.kg)}`]).font = { bold: true, size: 12 };
       if (t.notes) ws.addRow([t.notes]);
-      styleHead(ws.addRow(["Rang", "Contenu", "", "", "", "", "Poids (kg)", "Profondeur (cm)", "", "Note du rang"]));
-      t.rangs.forEach((r, i) => ws.addRow([`Rang ${i + 1}`, chRowText(t, r.id), "", "", "", "", chKg(chIn(t, r.id)) || "", chDepth(t, r.id) || "", "", r.notes || ""]));
+      styleHead(ws.addRow(["Rang", "Contenu", "", "", "", "", "Poids (kg)", "Profondeur (cm)", "", "", "Note du rang"]));
+      t.rangs.forEach((r, i) => ws.addRow([`Rang ${i + 1}`, chRowText(t, r.id), "", "", "", "", chKg(chIn(t, r.id)) || "", chDepth(t, r.id) || "", "", "", r.notes || ""]));
       ws.addRow([]);
       styleHead(ws.addRow(CH_HEAD)); chRows(t).forEach((r) => ws.addRow(r));
       const shot = ch3Shot(t, 1600, 820);
@@ -7876,6 +7936,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return list.map((t, n) => { const tot = chTotals(t);
       return `<div class="${n ? "chpr brk" : "chpr"}"><h2>${esc(t.nom || "Camion")} <span class="muted">· ${esc((CH_TRUCKS.find((T) => T[0] === t.type) || CH_TRUCKS[6])[1])} · ${t.L} × ${t.l} × ${t.h} cm · ${chM(tot.used)} utilisés sur ${chM(t.L)} · ${chKgTxt(tot.kg)}</span></h2>${t.notes ? `<p>${esc(t.notes)}</p>` : ""}
         <table><thead><tr><th>Rang</th><th>Contenu (de bas en haut)</th><th>Profondeur</th><th>Poids</th><th>Note</th></tr></thead><tbody>${t.rangs.map((r, i) => `<tr><td><b>Rang ${i + 1}</b></td><td>${esc(chRowText(t, r.id))}</td><td>${chDepth(t, r.id) ? chDepth(t, r.id) + " cm" : ""}</td><td>${chKg(chIn(t, r.id)) ? chKgTxt(chKg(chIn(t, r.id))) : ""}</td><td>${esc(r.notes || "")}</td></tr>`).join("")}${tot.pool ? `<tr><td><b>À charger</b></td><td colspan="4">${esc(chRowText(t, ""))}</td></tr>` : ""}</tbody></table>
+        <h3>Liste du chargement</h3>${chListHtml(t, true)}
         ${(() => { const u = ch3Shot(t, 1600, 820); return u ? `<div class="blk"><img src="${u}" alt="" style="width:100%;max-height:115mm;object-fit:contain"></div>` : ""; })()}
         <div class="chgrid">${t.rangs.filter((r) => chIn(t, r.id).length).map((r) => `<div class="blk">${chRowSvg(t, r, true).replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, ' style="width:100%;height:auto"')}</div>`).join("")}</div></div>`; }).join("");
   }
@@ -7921,9 +7982,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Chariot : plateau à roulettes et enceintes empilées (grille sombre en façade)
       ch3Box(g, w, 6, d, 0, wheels - 6, 0, ch3Mat("#4a4d50")); casters(wheels - 6);
       const n = Math.max(1, Math.min(8, Math.round((h - wheels) / 36))), eh = (h - wheels) / n;
-      for (let k = 0; k < n; k++) { const y = wheels + k * eh; ch3Box(g, w - 2, eh - 1.2, d - 6, 1, y, 3, dark); ch3Box(g, w - 8, eh - 6, 0.6, 4, y + 2.4, d - 2.9, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w - 2, 1.4, d - 6, 1, y + eh - 2.6, 3, ch3Mat(col)); }
+      for (let k = 0; k < n; k++) { const y = wheels + k * eh; ch3Box(g, w - 2, eh - 1.2, d - 6, 1, y, 3, dark); ch3Box(g, w - 8, eh - 6, 0.6, 4, y + 2.4, d - 2.9, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w - 1.4, 1.8, d - 5.4, 0.7, y + eh - 2.6, 2.7, ch3Mat(col)); }
     } else if (sub) {
-      ch3Box(g, w, h - wheels, d, 0, wheels, 0, dark); ch3Box(g, w - 10, h - wheels - 10, 0.6, 5, wheels + 5, d + 0.1, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w, 2, d, 0, h - 2, 0, ch3Mat(col)); if (wheels) casters(wheels);
+      ch3Box(g, w, h - wheels, d, 0, wheels, 0, dark); ch3Box(g, w - 10, h - wheels - 10, 0.6, 5, wheels + 5, d + 0.1, ch3Mat("#45494c", { roughness: 0.95 })); ch3Box(g, w + 0.4, 2.4, d + 0.4, -0.2, h - 2.2, -0.2, ch3Mat(col)); if (wheels) casters(wheels);
     } else {
       // Flight case : caisse de la couleur de sa catégorie, cornières alu, coins boules, poignées papillon, roulettes
       const y0 = wheels, bh = h - y0, body = ch3Box(g, w, bh, d, 0, y0, 0, ch3Mat(col));
@@ -7989,10 +8050,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function ch3Init() {
     if (ch3.renderer) return true;
     try {
-      const cv = $("#ch3Canvas"), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+      const cv = $("#ch3Canvas"), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true, logarithmicDepthBuffer: true });
       r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); ch3.renderer = r;
       ch3.scene = new THREE.Scene(); ch3.scene.background = new THREE.Color("#eef2f3"); ch3Lights(ch3.scene);
-      ch3.cam = new THREE.PerspectiveCamera(38, 1, 5, 20000);
+      ch3.cam = new THREE.PerspectiveCamera(38, 1, 10, 20000);
       new ResizeObserver(() => ch3Draw()).observe($("#ch3Stage"));
       ch3Bind(); return true;
     } catch (e) { ch3.fail = true; return false; }
@@ -8124,11 +8185,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     let r;
     try {
       const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-      r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true }); r.setSize(w, h, false);
+      r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true, logarithmicDepthBuffer: true }); r.setSize(w, h, false);
       const sc = new THREE.Scene(); sc.background = new THREE.Color("#ffffff"); ch3Lights(sc);
       const keepSel = chSel, keepM = ch3.meshes; chSel = null;
       const root = ch3Scene(t, t.rangs.length, true); sc.add(root); ch3.meshes = keepM; chSel = keepSel;
-      const cam = new THREE.PerspectiveCamera(34, w / h, 5, 20000); ch3Camera(cam, t, -0.55, 1.0, ch3Dist0(t));
+      const cam = new THREE.PerspectiveCamera(34, w / h, 10, 20000); ch3Camera(cam, t, -0.55, 1.0, ch3Dist0(t));
       r.render(sc, cam); const url = cv.toDataURL("image/png"); ch3Dispose(root); return url;
     } catch (e) { return null; } finally { if (r) { r.dispose(); if (r.forceContextLoss) r.forceContextLoss(); } }
   }
