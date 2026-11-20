@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "e1ab5839a0";</script>
+<script>window.PL_VER = "5d9442d0e4";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7866,10 +7866,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .it .q:empty { display: none; }
   .chf .it .nm { font: 600 1em "Barlow Semi Condensed", ${PLAN_FONT}; min-width: 0; }
   .chf .it .tg { font-size: 0.62em; font-weight: 600; border-radius: 0.8mm; padding: 0.1em 0.45em; white-space: nowrap; align-self: center; }
-  .chf .it .dz { background: #fce694; }
+  .chf .it .dz { background: #fce694; white-space: normal; max-width: 100%; }
   .chf .it .ng { background: #c62828; color: #fff; }
   .chf .it .fr { background: #c1dbe3; }
-  .chf .it .sn { background: none; border: 0.25mm solid #373737; }
+  .chf .it .sn { background: none; padding: 0; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.7em; }
+  .chf .it .sn .si { width: 1.25em; height: 1.25em; fill: #373737; stroke: #373737; }
+  .chf .it .sn .sw { display: none; }
+  .chf .row.solo .it .sn .sw { display: inline; }
+  .chf .foot .si { width: 1.1em; height: 1.1em; fill: #373737; stroke: #373737; vertical-align: -0.2em; }
   .chf .lay { font-size: 0.72em; margin: 0.8mm 0 0.3mm; padding-top: 0.6mm; border-top: 0.35mm solid #373737; }
   .chf .lay:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
   .chf .lay b { font: 700 1.25em "Barlow Semi Condensed", ${PLAN_FONT}; }
@@ -7882,6 +7886,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), on = top ? chOnTxt(t, c) : "", k = [chLabel(c), !!c.nogerb, fr, chSens(c), on].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, on, s: chSens(c) }); }); return out; };
     return { floor: pack(floor, false), up: pack(up, true) };
   }
+  // Sens d'entrée en pictogramme (vu de dessus, portes en bas) : la case large = hamburger, la case en long = hot dog
+  const chSensIco = (s) => `<svg class="si" viewBox="0 0 20 20" aria-hidden="true">${s === "hamburger" ? '<rect x="1.5" y="6" width="17" height="8" rx="1.2"/>' : '<rect x="6" y="1.5" width="8" height="17" rx="1.2"/>'}<path d="M1 19.2H19" stroke-width="1.4" stroke-dasharray="2 1.6"/></svg>`;
   function chFicheHtml() {
     const S = chState(), d = state.dossier || {}, today = new Date().toLocaleDateString("fr-FR");
     const list = S.camions.filter((t) => t.cases.some((c) => c.rang)); if (!list.length) return "";
@@ -7899,7 +7905,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.max(big.some(Boolean) ? 2 : 1, Math.ceil(slots / cols)), cellH = hOf(lns);
       const f = Math.max(2.6, Math.min(8, (cellH - 9) / (lines * 1.2 + 0.4))), num = Math.max(5.5, Math.min(7.5, cellH * 0.09)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
-      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn" title="${x.s}">${chSensIco(x.s)}<span class="sw">${x.s}</span></span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis
       const same = g.map((secs) => secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
@@ -7909,7 +7915,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
         <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns},minmax(0,1fr))">${cells}</div>
-        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus.${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
+        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas).${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
       </section>`;
     }).join("");
     return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
@@ -7917,12 +7923,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Ajuste la taille du texte page par page : la plus grande qui tient dans toutes les cases, sans couper un mot
   // Plusieurs croquis (2A, 2B…) : la grille (colonnes × lignes) qui les dessine le plus grand
   function chFicheArrange(fv) {
-    const figs = [...fv.children], k = figs.length; if (k < 2) return;
+    const figs = [...fv.children], k = figs.length; if (!k) return;
     const R = fv.getBoundingClientRect(), gx = 7.5, gy = 5.7, cap = figs[0].querySelector("figcaption") ? 15 : 0;
     const vb = figs.map((f) => f.querySelector("svg").viewBox.baseVal);
     let best = 1, bs = 0;
     for (let c = 1; c <= k; c++) { const rws = Math.ceil(k / c), cw = (R.width - (c - 1) * gx) / c, ch = (R.height - (rws - 1) * gy) / rws - cap;
       const sc = Math.min(...vb.map((v) => Math.min(cw / v.width, ch / v.height))); if (sc > bs + 1e-6) { bs = sc; best = c; } }
+    // Un croquis où une case de 60 cm ferait moins de 7 mm n'est plus lisible : on le retire
+    if (bs * 60 < 26) { fv.classList.add("off"); return; }
     fv.style.gridTemplateColumns = `repeat(${best}, minmax(0, 1fr))`; fv.style.gridTemplateRows = `repeat(${Math.ceil(k / best)}, minmax(0, 1fr))`;
   }
   function chFicheFit(root) {
@@ -7939,7 +7947,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       if (!fits() && fv) { fv.classList.add("off"); b.style.gridTemplateColumns = "minmax(0, 1fr)"; fit(); }
       if (!fits()) { b.classList.add("cols2"); fit(); }
       if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
-      if (fv && !fv.classList.contains("off")) chFicheArrange(fv);
+      if (fv && !fv.classList.contains("off")) { chFicheArrange(fv); if (fv.classList.contains("off")) { b.style.gridTemplateColumns = "minmax(0, 1fr)"; b.classList.remove("cols2"); fit(); if (!fits()) { b.classList.add("cols2"); fit(); } } }
     });
     root.style.cssText = keep;
   }
