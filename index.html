@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "04cffd6ede";</script>
+<script>window.PL_VER = "e1ab5839a0";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7854,6 +7854,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .fv figcaption b { font: 700 1.3em "Barlow Semi Condensed", ${PLAN_FONT}; color: #1d1d1d; }
   .chf .row.wide { grid-column: span 2; }
   .chf .row.big { grid-row: span 2; }
+  .chf .row.solo .body { justify-content: center; text-align: center; }
+  .chf .row.solo .it { justify-content: center; }
   .chf .body.cols2 .tx { column-count: 2; column-gap: 3mm; }
   .chf .body.cols2 .it, .chf .body.cols2 .lay { break-inside: avoid; }
   .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; grid-template-rows: minmax(0, 1fr); }
@@ -7899,8 +7901,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
       const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
+      // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis
+      const same = g.map((secs) => secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row${wide[k] ? " wide" : ""}${big[k] ? " big" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${wide[k] ? " wide" : ""}${big[k] ? " big" : ""}${same[k] ? " solo" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${!same[k] && (sv || wide[k]) ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
       return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
@@ -7928,7 +7932,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     root.querySelectorAll(".pg .row").forEach((row) => {
       const b = row.querySelector(".body"), fv = row.querySelector(".fv");
       const fits = () => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1;
-      const fit = () => { let f = 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
+      const fit = () => { let f = row.classList.contains("solo") ? 11 : 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
       if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
       // La liste ne tient toujours pas : plus de largeur pour le texte, puis sans croquis et sur deux colonnes
       if (!fits() && row.classList.contains("wide")) { b.style.gridTemplateColumns = "minmax(0, 1.6fr) minmax(0, 1fr)"; fit(); }
