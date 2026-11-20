@@ -955,6 +955,58 @@ table.bq .bq-in { color: var(--muted); font-size: var(--fs-xs); margin-right: 6p
 .printform .prchecks { display: flex; flex-wrap: wrap; gap: 6px 16px; width: 100%; }
 .printform .prchecks label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-md); }
 #printRoot { display: none; }
+/* Mode chargement : la fiche en plein écran, écran allumé, verrou « poche » (touchers ignorés) */
+#chLive { position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column; background: #373737; color: #fff; font-family: var(--font-ui); }
+#chLive[hidden], #chLock[hidden] { display: none; }
+html.chlive-on, html.chlive-on body { overflow: hidden; }
+#chLive .chlbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 6px calc(10px + env(safe-area-inset-left)); }
+#chLive .chlt { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+#chLive .chlname { font: 700 19px/1.1 "Barlow Semi Condensed", var(--font-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chLive .chlt { order: 1; flex-basis: calc(100% - 56px); }
+#chLive #chLiveClose { order: 2; width: 40px; padding: 0; justify-content: center; }
+#chLive .chlwake { order: 3; flex: 1 1 auto; font-size: 12px; line-height: 1.2; color: #c7dfc5; white-space: nowrap; }
+#chLive .chlwake.no { color: #fce694; white-space: normal; }
+#chLive #chLiveLay { order: 4; } #chLive #chLiveLock { order: 5; }
+@media (min-width: 760px) { #chLive .chlbar { flex-wrap: nowrap; } #chLive .chlt { flex-basis: auto; } #chLive #chLiveClose { order: 6; } #chLive .chlwake { flex: none; } }
+#chLive button { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 600 15px/1 var(--font-ui); min-height: 40px; padding: 0 14px; border-radius: var(--r-pill); border: 1px solid rgb(255 255 255 / 0.3); background: transparent; color: #fff; cursor: pointer; }
+#chLive button[aria-pressed="true"] { background: #c1dbe3; color: #373737; border-color: #c1dbe3; }
+#chLive button.chllk { background: #fce694; color: #373737; border-color: #fce694; }
+#chLive button:focus-visible, #chLock button:focus-visible { outline: 3px solid #f6feaa; outline-offset: 2px; }
+#chLive button svg { width: 18px; height: 18px; }
+#chLive .chlscroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; background: #dfe7ea; }
+#chLive .chlscroll.page { overflow: hidden; display: grid; place-items: center; }
+#chLive .chlpaper { background: #fff; color: #1d1d1d; }
+#chLive .chlscroll.liste .chlpaper { max-width: 980px; margin: 0 auto; padding: 12px 12px calc(110px + env(safe-area-inset-bottom)); min-height: 100%; box-sizing: border-box; }
+#chLive .chlscroll.page .chlpaper { overflow: hidden; box-shadow: 0 2px 14px rgb(0 0 0 / 0.35); }
+#chLive .chlscroll.page .chf { transform-origin: 0 0; }
+#chLive .chlempty { color: #373737; padding: 24px 16px; font-size: 17px; }
+/* Rang par rang : la fiche en une seule colonne, texte grand, croquis sur toute la largeur */
+#chLive .chf.live .pg { width: auto; height: auto; overflow: visible; --f: 5.6mm; gap: 3mm; }
+#chLive .chf.live .top { flex-wrap: wrap; height: auto; row-gap: 2mm; }
+#chLive .chf.live .top h1 { display: none; }
+#chLive .chf.live .top .lane { order: 5; flex: 1 1 100%; height: 9mm; line-height: 9mm; }
+#chLive .chf.live .top .who { margin-left: auto; }
+#chLive .chf.live .rows { flex-direction: column; gap: 3mm; }
+#chLive .chf.live .row { flex: none; }
+#chLive .chf.live .row.solo { grid-template-columns: 16mm minmax(0, 1fr); }
+#chLive .chf.live .num b { font-size: 8mm; }
+#chLive .chf.live .num small { font-size: 3.6mm; }
+#chLive .chf.live .body, #chLive .chf.live .row.wide .body { display: flex; flex-direction: column; overflow: visible; padding: 1.8mm 2.6mm; }
+#chLive .chf.live .fv { flex: none; height: auto; margin: 0; padding-top: 2mm; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); grid-template-rows: none; }
+#chLive .chf.live .fv figure { display: block; }
+#chLive .chf.live .fv svg { flex: none; height: auto; max-height: 62vh; }
+#chLive .chf.live .fv figcaption { font-size: 3.8mm; }
+#chLive .chf.live .foot { flex-wrap: wrap; gap: 2mm 6mm; font-size: 3.8mm; }
+/* Verrou « poche » : une vitre sur tout l'écran, on ne la retire qu'en faisant glisser le curseur */
+#chLock { position: fixed; inset: 0; z-index: 901; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: calc(10px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); box-shadow: inset 0 0 0 4px #fce694; font-family: var(--font-ui); }
+#chLock .chlkst { display: inline-flex; align-items: center; gap: 8px; background: #fce694; color: #373737; font: 600 14px/1.2 var(--font-ui); padding: 8px 14px; border-radius: var(--r-pill); box-shadow: 0 2px 10px rgb(0 0 0 / 0.25); }
+#chLock .chlkst svg { width: 16px; height: 16px; flex: none; }
+#chLock .chlktr { position: relative; width: min(340px, 100%); height: 64px; border-radius: 32px; background: rgb(55 55 55 / 0.94); box-shadow: 0 4px 18px rgb(0 0 0 / 0.35); color: #fff; }
+#chLock .chlktr span { position: absolute; inset: 0 18px 0 76px; display: flex; align-items: center; justify-content: center; font: 600 15px/1.2 var(--font-ui); color: rgb(255 255 255 / 0.82); text-align: center; pointer-events: none; }
+#chLock .chlkk { position: absolute; left: 6px; top: 6px; width: 52px; height: 52px; border-radius: 50%; border: 0; padding: 0; background: #fce694; color: #373737; display: grid; place-items: center; touch-action: none; cursor: grab; }
+#chLock .chlkk svg { width: 24px; height: 24px; }
+#chLock .chlkk.back { transition: transform 0.22s ease-out; }
+@media (prefers-reduced-motion: reduce) { #chLock .chlkk.back { transition: none; } }
 @media print {
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block; }
@@ -2112,6 +2164,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
     <button id="chFiche" class="btn small" type="button" title="Une page par camion, rang par rang, à imprimer ou à enregistrer en PDF pour le chargement">Fiche une page</button>
+    <button id="chLiveBtn" class="btn small" type="button" title="La fiche en plein écran sur le téléphone : l'écran reste allumé et un verrou « poche » ignore les touchers">Mode chargement</button>
     <button id="chImport" class="btn small" type="button" title="Reprendre les camions d'un autre fichier Excel de l'appli (par exemple un plan fait sur une version de test)">Importer un plan…</button><input id="chImportIn" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     <span id="chMode" class="tdflt" role="group" aria-label="Affichage"><button type="button" data-chmode="3d">3D</button><button type="button" data-chmode="rangs">Rangs</button></span>
   </div>
@@ -7713,6 +7766,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return { used, kg: chKg(placed), all: chKg(t.cases), pool: t.cases.length - placed.length, bad: placed.filter((c) => chBad(t, c)).length };
   }
   function renderCharge() {
+    if (chLiveOn() && !chLiveLocked()) chLiveRender();
     const S = chState(), t = chTruck();
     $("#chTrucks").innerHTML = S.camions.map((x) => `<button type="button" class="chtab" data-chtruck="${x.id}" aria-pressed="${x === t ? "true" : "false"}">${esc(x.nom || "Camion")}</button>`).join("");
     $("#chAddRow").disabled = !t; $("#chAddIn").disabled = !t;
@@ -7826,34 +7880,41 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .lane .r { text-align: center; border-right: 0.3mm solid rgb(55 55 55 / 0.35); min-width: 0; overflow: hidden; }
   .chf .lane .free { background: repeating-linear-gradient(90deg, #fff 0 4mm, #f1f3f4 4mm 8mm); }
   .chf .top .over { color: #b71c1c; font-weight: 700; }
-  .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; grid-auto-flow: row dense; }
-  .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; break-inside: avoid; }
+  .chf .rows { flex: 1; display: flex; gap: 2.2mm; min-height: 0; }
+  .chf .col { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 2.2mm; }
+  .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; flex: 1 1 0; }
   .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.2mm 2mm 0; border-bottom: 0.35mm solid #373737; }
-  .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
+  .chf .num b { font: 700 6.5mm/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
   .chf .num small { font-size: 3mm; color: #373737; margin-left: auto; white-space: nowrap; }
   .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
-  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: var(--svmin, 0); max-height: var(--sv); }
+  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: 0; display: grid; gap: 1.5mm 2mm; grid-template-rows: minmax(0, 1fr); }
   .chf .fv.off { display: none; }
-  .chf .fv { display: grid; gap: 1.5mm 2mm; grid-template-rows: minmax(0, 1fr); }
   .chf .fv figure { margin: 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   .chf .fv figcaption { font-size: 3mm; line-height: 1.15; color: #373737; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chf .fv figcaption b { font: 700 1.3em "Barlow Semi Condensed", ${PLAN_FONT}; color: #1d1d1d; }
-  .chf .row.wide { grid-column: span 2; }
-  .chf .row.big { grid-row: span 2; }
+  /* Rang d'un seul type de case : une bande d'une ligne, le numéro à gauche */
+  .chf .row.solo { grid-template-rows: none; grid-template-columns: 13mm minmax(0, 1fr); flex: 0 0 auto; }
+  .chf .row.solo .num { flex-direction: column; align-items: center; justify-content: center; gap: 0.3mm; padding: 0.8mm 0; border-bottom: 0; border-right: 0.35mm solid #373737; }
+  .chf .row.solo .num small { margin: 0; font-size: 2.6mm; }
+  .chf .row.solo .body { justify-content: center; padding: 0.8mm 2.5mm; }
+  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 3mm; }
+  .chf .row.wide .fv { margin: 0; padding: 0; min-height: 0; height: 100%; }
   .chf .body.cols2 .tx { column-count: 2; column-gap: 3mm; }
   .chf .body.cols2 .it, .chf .body.cols2 .lay { break-inside: avoid; }
-  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; grid-template-rows: minmax(0, 1fr); }
-  .chf .row.wide .fv { margin: 0; padding: 0; max-height: none; min-height: 0; height: 100%; }
   .chf .fv svg { flex: 1 1 0; min-width: 0; min-height: 0; width: 100%; height: 100%; max-width: none; display: block; }
   .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
   .chf .it .q { font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; }
   .chf .it .q:empty { display: none; }
   .chf .it .nm { font: 600 1em "Barlow Semi Condensed", ${PLAN_FONT}; min-width: 0; }
   .chf .it .tg { font-size: 0.62em; font-weight: 600; border-radius: 0.8mm; padding: 0.1em 0.45em; white-space: nowrap; align-self: center; }
-  .chf .it .dz { background: #fce694; }
+  .chf .it .dz { background: #fce694; white-space: normal; max-width: 100%; }
   .chf .it .ng { background: #c62828; color: #fff; }
   .chf .it .fr { background: #c1dbe3; }
-  .chf .it .sn { background: none; border: 0.25mm solid #373737; }
+  .chf .it .sn { background: none; padding: 0; display: inline-flex; align-items: center; gap: 0.3em; font-size: 0.7em; }
+  .chf .it .sn .si { width: 1.25em; height: 1.25em; fill: #373737; stroke: #373737; }
+  .chf .it .sn .sw { display: none; }
+  .chf .row.solo .it .sn .sw { display: inline; }
+  .chf .foot .si { width: 1.1em; height: 1.1em; fill: #373737; stroke: #373737; vertical-align: -0.2em; }
   .chf .lay { font-size: 0.72em; margin: 0.8mm 0 0.3mm; padding-top: 0.6mm; border-top: 0.35mm solid #373737; }
   .chf .lay:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
   .chf .lay b { font: 700 1.25em "Barlow Semi Condensed", ${PLAN_FONT}; }
@@ -7866,6 +7927,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), on = top ? chOnTxt(t, c) : "", k = [chLabel(c), !!c.nogerb, fr, chSens(c), on].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, on, s: chSens(c) }); }); return out; };
     return { floor: pack(floor, false), up: pack(up, true) };
   }
+  // Sens d'entrée en pictogramme (vu de dessus, portes en bas) : la case large = hamburger, la case en long = hot dog
+  const chSensIco = (s) => `<svg class="si" viewBox="0 0 20 20" aria-hidden="true">${s === "hamburger" ? '<rect x="1.5" y="6" width="17" height="8" rx="1.2"/>' : '<rect x="6" y="1.5" width="8" height="17" rx="1.2"/>'}<path d="M1 19.2H19" stroke-width="1.4" stroke-dasharray="2 1.6"/></svg>`;
   function chFicheHtml() {
     const S = chState(), d = state.dossier || {}, today = new Date().toLocaleDateString("fr-FR");
     const list = S.camions.filter((t) => t.cases.some((c) => c.rang)); if (!list.length) return "";
@@ -7874,24 +7937,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Un rang à sous-rangs (2A au fond, 2B devant) : une section par sous-rang
       const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
       const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
-      // Un rang très chargé prend deux colonnes : son texte à gauche, son croquis à droite
-      const wide = lc.map((x) => n > 1 && x >= 8), slots0 = n + wide.filter(Boolean).length;
-      // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
-      const hOf = (l) => (193 - 8 - 6 - 2 * 3 - (l - 1) * 2.2) / l, lnsWant = slots0 <= 4 ? 1 : slots0 <= 12 ? 2 : 3;
-      // Sur trois lignes, un rang très chargé dont la liste ne tiendrait pas en 3 mm prend aussi deux lignes de haut
-      const big = lc.map((x, k) => lnsWant >= 3 && wide[k] && x * 1.2 * 3 + 12 > hOf(lnsWant)), slots = slots0 + 2 * big.filter(Boolean).length;
-      const cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.max(big.some(Boolean) ? 2 : 1, Math.ceil(slots / cols)), cellH = hOf(lns);
-      const f = Math.max(2.6, Math.min(8, (cellH - 9) / (lines * 1.2 + 0.4))), num = Math.max(5.5, Math.min(7.5, cellH * 0.09)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
+      // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis, sur une bande d'une ligne
+      const same = g.map((secs) => secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
+      // Place voulue par rang (mm à 4,5 mm de texte) : sert à répartir les rangs en colonnes, dans l'ordre de chargement
+      // Un rang très chargé (8 lignes et plus) : texte à gauche, croquis à droite, dans une colonne deux fois plus large
+      const dem = lc.map((x, k) => (same[k] ? 15 : n > 1 && x >= 8 ? (9 + x * 1.2 * 4.5) / 2 + 4 : 9 + x * 1.2 * 4.5 + 32));
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
-      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn" title="${x.s}">${chSensIco(x.s)}<span class="sw">${x.s}</span></span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
+      // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row${wide[k] ? " wide" : ""}${big[k] ? " big" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${same[k] ? " solo" : ""}${!same[k] && n > 1 && lc[k] >= 8 ? " wide" : ""}" data-dem="${dem[k].toFixed(1)}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${!same[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
-      return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
+      return `<section class="pg" data-t="${t.id}" style="--f:4.5mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
-        <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns},minmax(0,1fr))">${cells}</div>
-        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus.${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
+        <div class="rows">${cells}</div>
+        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas). Croquis vu des portes, jardin à gauche.</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
       </section>`;
     }).join("");
     return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
@@ -7899,29 +7960,66 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Ajuste la taille du texte page par page : la plus grande qui tient dans toutes les cases, sans couper un mot
   // Plusieurs croquis (2A, 2B…) : la grille (colonnes × lignes) qui les dessine le plus grand
   function chFicheArrange(fv) {
-    const figs = [...fv.children], k = figs.length; if (k < 2) return;
+    const figs = [...fv.children], k = figs.length; if (!k) return;
     const R = fv.getBoundingClientRect(), gx = 7.5, gy = 5.7, cap = figs[0].querySelector("figcaption") ? 15 : 0;
     const vb = figs.map((f) => f.querySelector("svg").viewBox.baseVal);
     let best = 1, bs = 0;
     for (let c = 1; c <= k; c++) { const rws = Math.ceil(k / c), cw = (R.width - (c - 1) * gx) / c, ch = (R.height - (rws - 1) * gy) / rws - cap;
       const sc = Math.min(...vb.map((v) => Math.min(cw / v.width, ch / v.height))); if (sc > bs + 1e-6) { bs = sc; best = c; } }
+    // Un croquis où une case de 60 cm ferait moins de 7 mm n'est plus lisible : on le retire
+    if (bs * 60 < 26) { fv.classList.add("off"); return; }
     fv.style.gridTemplateColumns = `repeat(${best}, minmax(0, 1fr))`; fv.style.gridTemplateRows = `repeat(${Math.ceil(k / best)}, minmax(0, 1fr))`;
+  }
+  // Mise en page en colonnes : les rangs coulent dans l'ordre de chargement (de haut en bas, puis colonne suivante).
+  // Dans une colonne, tous les rangs ont la même taille de texte, la plus grande qui tient ; un croquis garde au moins
+  // CHF_SK mm et prend la place qui reste. Un rang d'un seul type de case n'est qu'une bande d'une ligne.
+  const CHF_SK = 30;
+  const chfSolo = (r) => r.classList.contains("solo");
+  const chfFv = (r) => { const fv = r.querySelector(".fv"); return fv && !fv.classList.contains("off") ? fv : null; };
+  function chFicheColFit(col) {
+    const rows = [...col.children];
+    const setF = (F) => rows.forEach((r) => r.style.setProperty("--f", (chfSolo(r) ? Math.min(8, F * 1.3) : F).toFixed(2) + "mm"));
+    const prep = () => rows.forEach((r) => { r.style.flex = "0 0 auto"; const b = r.querySelector(".body"), fv = chfFv(r);
+      b.style.gridTemplateColumns = r.classList.contains("wide") && fv ? "" : "minmax(0, 1fr)";
+      if (fv && !r.classList.contains("wide")) { fv.style.flex = "none"; fv.style.height = CHF_SK + "mm"; fv.style.minHeight = ""; } });
+    const ok = () => col.scrollHeight <= col.clientHeight + 1 && rows.every((r) => { const b = r.querySelector(".body"); return b.scrollWidth <= b.clientWidth + 1 && b.scrollHeight <= b.clientHeight + 1; });
+    const search = () => { let lo = 2.4, hi = 6.5; setF(hi); if (ok()) return hi; for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; setF(m); if (ok()) lo = m; else hi = m; } setF(lo); return lo; };
+    prep(); let F = search();
+    // Trop serré : on retire les croquis, en commençant par le rang le plus chargé
+    while (F < 3.4) { const r = rows.filter(chfFv).sort((a, b) => b.querySelector(".tx").offsetHeight - a.querySelector(".tx").offsetHeight)[0]; if (!r) break; chfFv(r).classList.add("off"); prep(); F = search(); }
+    // La place qui reste va aux croquis (ou, sans croquis, aux rangs eux-mêmes)
+    const grow = rows.filter((r) => chfFv(r));
+    grow.forEach((r) => { r.style.flex = "1 1 auto"; const fv = chfFv(r); if (!r.classList.contains("wide")) { fv.style.height = ""; fv.style.flex = "1 1 0"; fv.style.minHeight = CHF_SK + "mm"; } });
+    if (!grow.length) rows.filter((r) => !chfSolo(r)).forEach((r) => (r.style.flex = "1 1 auto"));
+    rows.forEach((r) => { const fv = chfFv(r); if (fv) { chFicheArrange(fv); if (fv.classList.contains("off")) r.querySelector(".body").style.gridTemplateColumns = "minmax(0, 1fr)"; } });
+    return { F, sk: rows.filter(chfFv).length, can: rows.filter((r) => r.querySelector(".fv")).length };
+  }
+  function chFicheCols(box, k, dem) {
+    const rows = [...box.querySelectorAll(".row")], n = rows.length;
+    // Découpage en k colonnes consécutives qui équilibre la hauteur voulue (programmation dynamique)
+    const pre = [0]; dem.forEach((d) => pre.push(pre[pre.length - 1] + d));
+    const best = Array.from({ length: k + 1 }, () => Array(n + 1).fill(Infinity)), cut = Array.from({ length: k + 1 }, () => Array(n + 1).fill(0)); best[0][0] = 0;
+    for (let c = 1; c <= k; c++) for (let i = 1; i <= n; i++) for (let j = c - 1; j < i; j++) { const v = Math.max(best[c - 1][j], pre[i] - pre[j]); if (v < best[c][i]) { best[c][i] = v; cut[c][i] = j; } }
+    const bounds = []; for (let c = k, i = n; c > 0; c--) { const j = cut[c][i]; bounds.unshift([j, i]); i = j; }
+    box.innerHTML = ""; return bounds.map(([a, b]) => { const col = document.createElement("div"); col.className = "col"; rows.slice(a, b).forEach((r) => col.appendChild(r)); if (col.querySelector(".wide")) col.style.flexGrow = "2"; box.appendChild(col); return col; });
   }
   function chFicheFit(root) {
     const keep = root.style.cssText; root.style.cssText = "display:block;position:absolute;left:-10000px;top:0;visibility:hidden";
-    // Chaque case de rang a sa propre taille de texte : un rang chargé ne fait pas rétrécir les autres.
-    // Le croquis garde sa place tant que le texte reste à 4,5 mm ou plus ; sinon il rétrécit, puis disparaît.
-    root.querySelectorAll(".pg .row").forEach((row) => {
-      const b = row.querySelector(".body"), fv = row.querySelector(".fv");
-      const fits = () => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1;
-      const fit = () => { let f = 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
-      if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
-      // La liste ne tient toujours pas : plus de largeur pour le texte, puis sans croquis et sur deux colonnes
-      if (!fits() && row.classList.contains("wide")) { b.style.gridTemplateColumns = "minmax(0, 1.6fr) minmax(0, 1fr)"; fit(); }
-      if (!fits() && fv) { fv.classList.add("off"); b.style.gridTemplateColumns = "minmax(0, 1fr)"; fit(); }
-      if (!fits()) { b.classList.add("cols2"); fit(); }
-      if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
-      if (fv && !fv.classList.contains("off")) chFicheArrange(fv);
+    root.querySelectorAll(".pg .rows").forEach((box) => {
+      const orig = box.innerHTML, n = box.querySelectorAll(".row").length; let pick = null;
+      const run = (k) => {
+        box.innerHTML = orig;
+        // Hauteur voulue de chaque rang à 4,5 mm de texte, dans une colonne de la bonne largeur
+        const probe = document.createElement("div"); probe.className = "col"; probe.style.cssText = `flex:none;width:${(box.clientWidth / k).toFixed(0)}px;height:auto`;
+        [...box.querySelectorAll(".row")].forEach((r) => probe.appendChild(r)); box.innerHTML = ""; box.appendChild(probe);
+        [...probe.children].forEach((r) => { r.style.flex = "0 0 auto"; r.style.setProperty("--f", chfSolo(r) ? "6mm" : "4.5mm"); const fv = r.querySelector(".fv"); if (fv && !r.classList.contains("wide")) { fv.style.flex = "none"; fv.style.height = CHF_SK + "mm"; } });
+        const dem = [...probe.children].map((r) => r.offsetHeight / (r.classList.contains("wide") ? 1.6 : 1));
+        box.innerHTML = orig; const cols = chFicheCols(box, k, dem);
+        const res = cols.map(chFicheColFit), F = Math.min(...res.map((x) => x.F)), sk = res.reduce((a, x) => a + x.sk, 0), can = res.reduce((a, x) => a + x.can, 0);
+        return F + 0.25 * res.reduce((a, x) => a + x.F, 0) / res.length + 1.2 * (can ? sk / can : 0);
+      };
+      for (let k = Math.min(2, n); k <= Math.min(6, n); k++) { const sc = run(k); if (!pick || sc > pick.sc) pick = { k, sc }; }
+      run(pick.k);
     });
     root.style.cssText = keep;
   }
@@ -7967,7 +8065,108 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     });
     chCommit(); notice(`${list.length > 1 ? list.length + " camions importés" : "Camion importé"} : ${list.map((t) => t.nom || "Camion").join(", ")}.`);
   }
+  // ---------- Mode chargement : la fiche plein écran sur le téléphone, écran allumé, verrou « poche » ----------
+  // Deux affichages : « Rang par rang » (une colonne, texte grand, se fait défiler) et « Page entière » (la fiche A4 réduite à l'écran).
+  // Verrou poche : une vitre capte tous les touchers (rien ne défile, rien ne s'ouvre) ; on la retire en faisant glisser le curseur jusqu'au bout.
+  const CHL_ICO = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="1.6" fill="currentColor"/><path d="M6.8 9V6.4a3.2 3.2 0 0 1 6.4 0V9" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>';
+  let chLiveT = null, chLiveWake = false, chLiveSkip = false, chLiveSeq = 0;
+  const chLiveOn = () => { const el = document.getElementById("chLive"); return !!el && !el.hidden; };
+  const chLiveLocked = () => { const el = document.getElementById("chLock"); return !!el && !el.hidden; };
+  function chLiveLay() { let v = ""; try { v = localStorage.getItem("patch-live-chlive") || ""; } catch (e) { /* ignore */ } return v || (innerWidth >= 760 && innerWidth > innerHeight ? "page" : "liste"); }
+  async function chLiveRender() {
+    if (!chLiveOn()) return;
+    const seq = ++chLiveSeq, S = chState(), list = S.camions.filter((t) => t.cases.some((c) => c.rang)), box = $("#chLiveScroll"), bar = $("#chLiveTrucks"), lay = chLiveLay();
+    $("#chLiveLay").setAttribute("aria-pressed", lay === "page" ? "true" : "false");
+    if (!list.length) { bar.innerHTML = '<span class="chlname">Chargement</span>'; box.className = "chlscroll liste"; box.innerHTML = '<div class="chlpaper"><p class="chlempty">Aucune case chargée : range d\'abord des cases dans un rang.</p></div>'; return; }
+    const cur = chTruck(); if (!list.some((t) => t.id === chLiveT)) chLiveT = (cur && list.includes(cur) ? cur : list[0]).id;
+    bar.innerHTML = list.length > 1 ? list.map((t) => `<button type="button" data-chlt="${t.id}" aria-pressed="${t.id === chLiveT ? "true" : "false"}">${esc(t.nom || "Camion")}</button>`).join("") : `<span class="chlname">${esc(list[0].nom || "Camion")}</span>`;
+    try { await Promise.all(["600", "700"].map((w) => document.fonts.load(`${w} 20px "Barlow Semi Condensed"`)).concat(document.fonts.load('400 20px "Barlow"'))); } catch (e) { /* police système */ }
+    if (seq !== chLiveSeq || !chLiveOn()) return;
+    const keep = box.scrollTop; box.className = "chlscroll " + lay;
+    box.innerHTML = `<div class="chlpaper">${chFicheHtml()}</div>`;
+    const paper = box.firstElementChild, chf = paper.querySelector(".chf");
+    paper.querySelectorAll(".pg").forEach((p) => { if (p.dataset.t !== chLiveT) p.remove(); });
+    if (lay === "liste") { chf.classList.add("live"); box.scrollTop = keep; return; }
+    chFicheFit(paper);
+    const pg = paper.querySelector(".pg"), w = pg.offsetWidth, h = pg.offsetHeight, sc = Math.min((box.clientWidth - 12) / w, (box.clientHeight - 12) / h);
+    paper.style.width = Math.floor(w * sc) + "px"; paper.style.height = Math.floor(h * sc) + "px"; chf.style.transform = `scale(${sc})`;
+  }
+  function chLiveWakeTxt(ok) {
+    const el = $("#chLiveWake"); el.classList.toggle("no", !ok);
+    el.textContent = ok ? "Écran allumé" : "La veille n'est pas bloquée par ce navigateur";
+  }
+  async function chLiveShow(on) {
+    const el = $("#chLive");
+    if (on) {
+      if (chLiveOn()) return;
+      el.hidden = false; document.documentElement.classList.add("chlive-on"); chLiveT = null;
+      // Plein écran (Android) : demandé tout de suite, pendant le toucher ; l'iPhone ne le permet pas, sans gravité
+      // (toute la page, pas seulement la fiche : sinon la vitre du verrou passerait dessous)
+      const de = document.documentElement; if (matchMedia("(pointer: coarse)").matches && de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      try { history.pushState({ v: view, chLive: 1 }, ""); } catch (e) { /* ignore */ }
+      chLiveRender();
+      // Écran allumé le temps du mode chargement, sans toucher au choix enregistré du bouton « Écran toujours allumé »
+      chLiveWake = !wake.on; if (chLiveWake) { wake.on = true; wakeShow(); }
+      chLiveWakeTxt(await wakeGrab());
+      $("#chLiveLock").focus();
+      return;
+    }
+    if (!chLiveOn()) return;
+    chLiveLock(false); el.hidden = true; document.documentElement.classList.remove("chlive-on"); $("#chLiveScroll").innerHTML = "";
+    if (chLiveWake) { wake.on = false; wakeShow(); wakeDrop(); chLiveWake = false; }
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (history.state && history.state.chLive) { chLiveSkip = true; history.back(); }
+    const b = $("#chLiveBtn"); if (b) b.focus();
+  }
+  function chLiveLock(on) {
+    const L = $("#chLock"); if (!L) return;
+    L.hidden = !on; const k = L.querySelector(".chlkk"); k.classList.remove("back"); k.style.transform = "";
+    if (on) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); k.focus({ preventScroll: true }); }
+    else if (chLiveOn()) $("#chLiveLock").focus({ preventScroll: true });
+  }
+  // « Précédent » (bouton ou geste du téléphone) : ferme le mode chargement, sauf s'il est verrouillé
+  function chLivePop() {
+    if (chLiveSkip) { chLiveSkip = false; return true; }
+    if (!chLiveOn()) return false;
+    if (chLiveLocked()) { try { history.pushState({ v: view, chLive: 1 }, ""); } catch (e) { /* ignore */ } return true; }
+    chLiveShow(false); return true;
+  }
+  function chLiveBind() {
+    const el = document.createElement("div"); el.id = "chLive"; el.hidden = true; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Mode chargement");
+    el.innerHTML = `<div class="chlbar"><div class="chlt" id="chLiveTrucks"></div><span class="chlwake" id="chLiveWake" aria-live="polite"></span><button type="button" id="chLiveLay" aria-pressed="false" title="Toute la fiche réduite à l'écran (mieux en paysage) ; recliquer pour revenir rang par rang">Page entière</button><button type="button" id="chLiveLock" class="chllk" title="Mettre le téléphone dans la poche : l'écran ignore les touchers">${CHL_ICO}Verrouiller</button><button type="button" id="chLiveClose" aria-label="Fermer le mode chargement" title="Fermer (Échap)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div><div class="chlscroll liste" id="chLiveScroll"></div>`;
+    const L = document.createElement("div"); L.id = "chLock"; L.hidden = true;
+    L.innerHTML = `<div class="chlkst" role="status">${CHL_ICO}Verrouillé : les touchers sont ignorés</div><div class="chlktr"><button type="button" class="chlkk" aria-label="Déverrouiller">${CHL_ICO}</button><span>Glisser pour déverrouiller</span></div>`;
+    document.body.append(el, L);
+    $("#chLiveBtn").addEventListener("click", () => chLiveShow(true));
+    el.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "chLiveClose") chLiveShow(false);
+      else if (b.id === "chLiveLock") chLiveLock(true);
+      else if (b.id === "chLiveLay") { try { localStorage.setItem("patch-live-chlive", chLiveLay() === "page" ? "liste" : "page"); } catch (err) { /* ignore */ } $("#chLiveScroll").scrollTop = 0; chLiveRender(); }
+      else if (b.dataset.chlt) { chLiveT = b.dataset.chlt; $("#chLiveScroll").scrollTop = 0; chLiveRender(); }
+    });
+    // La vitre avale tout : pas de défilement, pas de zoom, pas de clic dessous
+    ["touchstart", "touchmove", "touchend", "gesturestart", "gesturechange", "wheel", "contextmenu", "dblclick", "selectstart"].forEach((t) => L.addEventListener(t, (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false }));
+    L.addEventListener("click", (e) => { e.stopPropagation(); if (!e.target.closest(".chlkk")) e.preventDefault(); });
+    // Curseur : il faut le faire glisser presque jusqu'au bout (un tissu qui appuie ne le fait pas)
+    const k = L.querySelector(".chlkk"); let drag = null;
+    const max = () => k.parentElement.clientWidth - k.offsetWidth - 12;
+    k.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { x: e.clientX, id: e.pointerId, dx: 0 }; k.classList.remove("back"); try { k.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } });
+    k.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; drag.dx = Math.max(0, Math.min(max(), e.clientX - drag.x)); k.style.transform = `translateX(${drag.dx}px)`; });
+    const end = (e) => { if (!drag || e.pointerId !== drag.id) return; const done = e.type === "pointerup" && drag.dx >= max() * 0.88; drag = null;
+      if (done) chLiveLock(false); else { k.classList.add("back"); k.style.transform = ""; } };
+    k.addEventListener("pointerup", end); k.addEventListener("pointercancel", end); k.addEventListener("lostpointercapture", end);
+    // Clavier (ordinateur) : Entrée ou Espace sur le curseur déverrouille ; un clic de souris ou un toucher ne suffit pas
+    k.addEventListener("click", (e) => { if (e.detail === 0) chLiveLock(false); });
+    document.addEventListener("keydown", (e) => {
+      if (!chLiveOn()) return;
+      if (chLiveLocked()) { if (e.target !== k || !/^(Enter| |Tab)$/.test(e.key)) { e.preventDefault(); e.stopPropagation(); } if (e.key === "Tab") { e.preventDefault(); k.focus(); } return; }
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); chLiveShow(false); }
+    }, true);
+    let rz = 0; addEventListener("resize", () => { if (!chLiveOn()) return; clearTimeout(rz); rz = setTimeout(chLiveRender, 150); });
+  }
   function chBind() {
+    chLiveBind();
     const host = $("#v-charge");
     $("#chImportIn").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) chImportFile(f); });
     host.addEventListener("click", (e) => {
@@ -14495,6 +14694,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
   try { history.replaceState({ v: view, base: true }, ""); history.pushState({ v: view }, ""); } catch (e) { /* ignore */ }
   addEventListener("popstate", (e) => {
+    if (chLivePop()) return;
     const st = e.state || {};
     if (st.base) {
       try { history.pushState({ v: view }, ""); } catch (err) { /* ignore */ }
