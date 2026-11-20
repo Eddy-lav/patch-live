@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "f0f98479ee";</script>
+<script>window.PL_VER = "81972b4849";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -969,6 +969,58 @@ table.bq .bq-in { color: var(--muted); font-size: var(--fs-xs); margin-right: 6p
 .printform .prchecks { display: flex; flex-wrap: wrap; gap: 6px 16px; width: 100%; }
 .printform .prchecks label { display: flex; gap: 6px; align-items: center; font-size: var(--fs-md); }
 #printRoot { display: none; }
+/* Mode chargement : la fiche en plein écran, écran allumé, verrou « poche » (touchers ignorés) */
+#chLive { position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column; background: #373737; color: #fff; font-family: var(--font-ui); }
+#chLive[hidden], #chLock[hidden] { display: none; }
+html.chlive-on, html.chlive-on body { overflow: hidden; }
+#chLive .chlbar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 6px calc(10px + env(safe-area-inset-left)); }
+#chLive .chlt { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+#chLive .chlname { font: 700 19px/1.1 "Barlow Semi Condensed", var(--font-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chLive .chlt { order: 1; flex-basis: calc(100% - 56px); }
+#chLive #chLiveClose { order: 2; width: 40px; padding: 0; justify-content: center; }
+#chLive .chlwake { order: 3; flex: 1 1 auto; font-size: 12px; line-height: 1.2; color: #c7dfc5; white-space: nowrap; }
+#chLive .chlwake.no { color: #fce694; white-space: normal; }
+#chLive #chLiveLay { order: 4; } #chLive #chLiveLock { order: 5; }
+@media (min-width: 760px) { #chLive .chlbar { flex-wrap: nowrap; } #chLive .chlt { flex-basis: auto; } #chLive #chLiveClose { order: 6; } #chLive .chlwake { flex: none; } }
+#chLive button { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 600 15px/1 var(--font-ui); min-height: 40px; padding: 0 14px; border-radius: var(--r-pill); border: 1px solid rgb(255 255 255 / 0.3); background: transparent; color: #fff; cursor: pointer; }
+#chLive button[aria-pressed="true"] { background: #c1dbe3; color: #373737; border-color: #c1dbe3; }
+#chLive button.chllk { background: #fce694; color: #373737; border-color: #fce694; }
+#chLive button:focus-visible, #chLock button:focus-visible { outline: 3px solid #f6feaa; outline-offset: 2px; }
+#chLive button svg { width: 18px; height: 18px; }
+#chLive .chlscroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; background: #dfe7ea; }
+#chLive .chlscroll.page { overflow: hidden; display: grid; place-items: center; }
+#chLive .chlpaper { background: #fff; color: #1d1d1d; }
+#chLive .chlscroll.liste .chlpaper { max-width: 980px; margin: 0 auto; padding: 12px 12px calc(110px + env(safe-area-inset-bottom)); min-height: 100%; box-sizing: border-box; }
+#chLive .chlscroll.page .chlpaper { overflow: hidden; box-shadow: 0 2px 14px rgb(0 0 0 / 0.35); }
+#chLive .chlscroll.page .chf { transform-origin: 0 0; }
+#chLive .chlempty { color: #373737; padding: 24px 16px; font-size: 17px; }
+/* Rang par rang : la fiche en une seule colonne, texte grand, croquis sur toute la largeur */
+#chLive .chf.live .pg { width: auto; height: auto; overflow: visible; --f: 5.6mm; gap: 3mm; }
+#chLive .chf.live .top { flex-wrap: wrap; height: auto; row-gap: 2mm; }
+#chLive .chf.live .top h1 { display: none; }
+#chLive .chf.live .top .lane { order: 5; flex: 1 1 100%; height: 9mm; line-height: 9mm; }
+#chLive .chf.live .top .who { margin-left: auto; }
+#chLive .chf.live .rows { flex-direction: column; gap: 3mm; }
+#chLive .chf.live .row { flex: none; }
+#chLive .chf.live .row.solo { grid-template-columns: 16mm minmax(0, 1fr); }
+#chLive .chf.live .num b { font-size: 8mm; }
+#chLive .chf.live .num small { font-size: 3.6mm; }
+#chLive .chf.live .body, #chLive .chf.live .row.wide .body { display: flex; flex-direction: column; overflow: visible; padding: 1.8mm 2.6mm; }
+#chLive .chf.live .fv { flex: none; height: auto; margin: 0; padding-top: 2mm; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); grid-template-rows: none; }
+#chLive .chf.live .fv figure { display: block; }
+#chLive .chf.live .fv svg { flex: none; height: auto; max-height: 62vh; }
+#chLive .chf.live .fv figcaption { font-size: 3.8mm; }
+#chLive .chf.live .foot { flex-wrap: wrap; gap: 2mm 6mm; font-size: 3.8mm; }
+/* Verrou « poche » : une vitre sur tout l'écran, on ne la retire qu'en faisant glisser le curseur */
+#chLock { position: fixed; inset: 0; z-index: 901; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: calc(10px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); box-shadow: inset 0 0 0 4px #fce694; font-family: var(--font-ui); }
+#chLock .chlkst { display: inline-flex; align-items: center; gap: 8px; background: #fce694; color: #373737; font: 600 14px/1.2 var(--font-ui); padding: 8px 14px; border-radius: var(--r-pill); box-shadow: 0 2px 10px rgb(0 0 0 / 0.25); }
+#chLock .chlkst svg { width: 16px; height: 16px; flex: none; }
+#chLock .chlktr { position: relative; width: min(340px, 100%); height: 64px; border-radius: 32px; background: rgb(55 55 55 / 0.94); box-shadow: 0 4px 18px rgb(0 0 0 / 0.35); color: #fff; }
+#chLock .chlktr span { position: absolute; inset: 0 18px 0 76px; display: flex; align-items: center; justify-content: center; font: 600 15px/1.2 var(--font-ui); color: rgb(255 255 255 / 0.82); text-align: center; pointer-events: none; }
+#chLock .chlkk { position: absolute; left: 6px; top: 6px; width: 52px; height: 52px; border-radius: 50%; border: 0; padding: 0; background: #fce694; color: #373737; display: grid; place-items: center; touch-action: none; cursor: grab; }
+#chLock .chlkk svg { width: 24px; height: 24px; }
+#chLock .chlkk.back { transition: transform 0.22s ease-out; }
+@media (prefers-reduced-motion: reduce) { #chLock .chlkk.back { transition: none; } }
 @media print {
   body > *:not(#printRoot) { display: none !important; }
   #printRoot { display: block; }
@@ -2126,6 +2178,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
     <button id="chFiche" class="btn small" type="button" title="Une page par camion, rang par rang, à imprimer ou à enregistrer en PDF pour le chargement">Fiche une page</button>
+    <button id="chLiveBtn" class="btn small" type="button" title="La fiche en plein écran sur le téléphone : l'écran reste allumé et un verrou « poche » ignore les touchers">Mode chargement</button>
     <button id="chImport" class="btn small" type="button" title="Reprendre les camions d'un autre fichier Excel de l'appli (par exemple un plan fait sur une version de test)">Importer un plan…</button><input id="chImportIn" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
     <span id="chMode" class="tdflt" role="group" aria-label="Affichage"><button type="button" data-chmode="3d">3D</button><button type="button" data-chmode="rangs">Rangs</button></span>
   </div>
@@ -7727,6 +7780,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     return { used, kg: chKg(placed), all: chKg(t.cases), pool: t.cases.length - placed.length, bad: placed.filter((c) => chBad(t, c)).length };
   }
   function renderCharge() {
+    if (chLiveOn() && !chLiveLocked()) chLiveRender();
     const S = chState(), t = chTruck();
     $("#chTrucks").innerHTML = S.camions.map((x) => `<button type="button" class="chtab" data-chtruck="${x.id}" aria-pressed="${x === t ? "true" : "false"}">${esc(x.nom || "Camion")}</button>`).join("");
     $("#chAddRow").disabled = !t; $("#chAddIn").disabled = !t;
@@ -7909,7 +7963,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
         return `<div class="row${same[k] ? " solo" : ""}${!same[k] && n > 1 && lc[k] >= 8 ? " wide" : ""}" data-dem="${dem[k].toFixed(1)}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${!same[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
-      return `<section class="pg" style="--f:4.5mm">
+      return `<section class="pg" data-t="${t.id}" style="--f:4.5mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
         <div class="rows">${cells}</div>
         <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas). Croquis vu des portes, jardin à gauche.</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
@@ -8025,7 +8079,108 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     });
     chCommit(); notice(`${list.length > 1 ? list.length + " camions importés" : "Camion importé"} : ${list.map((t) => t.nom || "Camion").join(", ")}.`);
   }
+  // ---------- Mode chargement : la fiche plein écran sur le téléphone, écran allumé, verrou « poche » ----------
+  // Deux affichages : « Rang par rang » (une colonne, texte grand, se fait défiler) et « Page entière » (la fiche A4 réduite à l'écran).
+  // Verrou poche : une vitre capte tous les touchers (rien ne défile, rien ne s'ouvre) ; on la retire en faisant glisser le curseur jusqu'au bout.
+  const CHL_ICO = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="9" width="12" height="9" rx="1.6" fill="currentColor"/><path d="M6.8 9V6.4a3.2 3.2 0 0 1 6.4 0V9" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>';
+  let chLiveT = null, chLiveWake = false, chLiveSkip = false, chLiveSeq = 0;
+  const chLiveOn = () => { const el = document.getElementById("chLive"); return !!el && !el.hidden; };
+  const chLiveLocked = () => { const el = document.getElementById("chLock"); return !!el && !el.hidden; };
+  function chLiveLay() { let v = ""; try { v = localStorage.getItem("patch-live-chlive") || ""; } catch (e) { /* ignore */ } return v || (innerWidth >= 760 && innerWidth > innerHeight ? "page" : "liste"); }
+  async function chLiveRender() {
+    if (!chLiveOn()) return;
+    const seq = ++chLiveSeq, S = chState(), list = S.camions.filter((t) => t.cases.some((c) => c.rang)), box = $("#chLiveScroll"), bar = $("#chLiveTrucks"), lay = chLiveLay();
+    $("#chLiveLay").setAttribute("aria-pressed", lay === "page" ? "true" : "false");
+    if (!list.length) { bar.innerHTML = '<span class="chlname">Chargement</span>'; box.className = "chlscroll liste"; box.innerHTML = '<div class="chlpaper"><p class="chlempty">Aucune case chargée : range d\'abord des cases dans un rang.</p></div>'; return; }
+    const cur = chTruck(); if (!list.some((t) => t.id === chLiveT)) chLiveT = (cur && list.includes(cur) ? cur : list[0]).id;
+    bar.innerHTML = list.length > 1 ? list.map((t) => `<button type="button" data-chlt="${t.id}" aria-pressed="${t.id === chLiveT ? "true" : "false"}">${esc(t.nom || "Camion")}</button>`).join("") : `<span class="chlname">${esc(list[0].nom || "Camion")}</span>`;
+    try { await Promise.all(["600", "700"].map((w) => document.fonts.load(`${w} 20px "Barlow Semi Condensed"`)).concat(document.fonts.load('400 20px "Barlow"'))); } catch (e) { /* police système */ }
+    if (seq !== chLiveSeq || !chLiveOn()) return;
+    const keep = box.scrollTop; box.className = "chlscroll " + lay;
+    box.innerHTML = `<div class="chlpaper">${chFicheHtml()}</div>`;
+    const paper = box.firstElementChild, chf = paper.querySelector(".chf");
+    paper.querySelectorAll(".pg").forEach((p) => { if (p.dataset.t !== chLiveT) p.remove(); });
+    if (lay === "liste") { chf.classList.add("live"); box.scrollTop = keep; return; }
+    chFicheFit(paper);
+    const pg = paper.querySelector(".pg"), w = pg.offsetWidth, h = pg.offsetHeight, sc = Math.min((box.clientWidth - 12) / w, (box.clientHeight - 12) / h);
+    paper.style.width = Math.floor(w * sc) + "px"; paper.style.height = Math.floor(h * sc) + "px"; chf.style.transform = `scale(${sc})`;
+  }
+  function chLiveWakeTxt(ok) {
+    const el = $("#chLiveWake"); el.classList.toggle("no", !ok);
+    el.textContent = ok ? "Écran allumé" : "La veille n'est pas bloquée par ce navigateur";
+  }
+  async function chLiveShow(on) {
+    const el = $("#chLive");
+    if (on) {
+      if (chLiveOn()) return;
+      el.hidden = false; document.documentElement.classList.add("chlive-on"); chLiveT = null;
+      // Plein écran (Android) : demandé tout de suite, pendant le toucher ; l'iPhone ne le permet pas, sans gravité
+      // (toute la page, pas seulement la fiche : sinon la vitre du verrou passerait dessous)
+      const de = document.documentElement; if (matchMedia("(pointer: coarse)").matches && de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+      try { history.pushState({ v: view, chLive: 1 }, ""); } catch (e) { /* ignore */ }
+      chLiveRender();
+      // Écran allumé le temps du mode chargement, sans toucher au choix enregistré du bouton « Écran toujours allumé »
+      chLiveWake = !wake.on; if (chLiveWake) { wake.on = true; wakeShow(); }
+      chLiveWakeTxt(await wakeGrab());
+      $("#chLiveLock").focus();
+      return;
+    }
+    if (!chLiveOn()) return;
+    chLiveLock(false); el.hidden = true; document.documentElement.classList.remove("chlive-on"); $("#chLiveScroll").innerHTML = "";
+    if (chLiveWake) { wake.on = false; wakeShow(); wakeDrop(); chLiveWake = false; }
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (history.state && history.state.chLive) { chLiveSkip = true; history.back(); }
+    const b = $("#chLiveBtn"); if (b) b.focus();
+  }
+  function chLiveLock(on) {
+    const L = $("#chLock"); if (!L) return;
+    L.hidden = !on; const k = L.querySelector(".chlkk"); k.classList.remove("back"); k.style.transform = "";
+    if (on) { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); k.focus({ preventScroll: true }); }
+    else if (chLiveOn()) $("#chLiveLock").focus({ preventScroll: true });
+  }
+  // « Précédent » (bouton ou geste du téléphone) : ferme le mode chargement, sauf s'il est verrouillé
+  function chLivePop() {
+    if (chLiveSkip) { chLiveSkip = false; return true; }
+    if (!chLiveOn()) return false;
+    if (chLiveLocked()) { try { history.pushState({ v: view, chLive: 1 }, ""); } catch (e) { /* ignore */ } return true; }
+    chLiveShow(false); return true;
+  }
+  function chLiveBind() {
+    const el = document.createElement("div"); el.id = "chLive"; el.hidden = true; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Mode chargement");
+    el.innerHTML = `<div class="chlbar"><div class="chlt" id="chLiveTrucks"></div><span class="chlwake" id="chLiveWake" aria-live="polite"></span><button type="button" id="chLiveLay" aria-pressed="false" title="Toute la fiche réduite à l'écran (mieux en paysage) ; recliquer pour revenir rang par rang">Page entière</button><button type="button" id="chLiveLock" class="chllk" title="Mettre le téléphone dans la poche : l'écran ignore les touchers">${CHL_ICO}Verrouiller</button><button type="button" id="chLiveClose" aria-label="Fermer le mode chargement" title="Fermer (Échap)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div><div class="chlscroll liste" id="chLiveScroll"></div>`;
+    const L = document.createElement("div"); L.id = "chLock"; L.hidden = true;
+    L.innerHTML = `<div class="chlkst" role="status">${CHL_ICO}Verrouillé : les touchers sont ignorés</div><div class="chlktr"><button type="button" class="chlkk" aria-label="Déverrouiller">${CHL_ICO}</button><span>Glisser pour déverrouiller</span></div>`;
+    document.body.append(el, L);
+    $("#chLiveBtn").addEventListener("click", () => chLiveShow(true));
+    el.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "chLiveClose") chLiveShow(false);
+      else if (b.id === "chLiveLock") chLiveLock(true);
+      else if (b.id === "chLiveLay") { try { localStorage.setItem("patch-live-chlive", chLiveLay() === "page" ? "liste" : "page"); } catch (err) { /* ignore */ } $("#chLiveScroll").scrollTop = 0; chLiveRender(); }
+      else if (b.dataset.chlt) { chLiveT = b.dataset.chlt; $("#chLiveScroll").scrollTop = 0; chLiveRender(); }
+    });
+    // La vitre avale tout : pas de défilement, pas de zoom, pas de clic dessous
+    ["touchstart", "touchmove", "touchend", "gesturestart", "gesturechange", "wheel", "contextmenu", "dblclick", "selectstart"].forEach((t) => L.addEventListener(t, (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false }));
+    L.addEventListener("click", (e) => { e.stopPropagation(); if (!e.target.closest(".chlkk")) e.preventDefault(); });
+    // Curseur : il faut le faire glisser presque jusqu'au bout (un tissu qui appuie ne le fait pas)
+    const k = L.querySelector(".chlkk"); let drag = null;
+    const max = () => k.parentElement.clientWidth - k.offsetWidth - 12;
+    k.addEventListener("pointerdown", (e) => { e.preventDefault(); drag = { x: e.clientX, id: e.pointerId, dx: 0 }; k.classList.remove("back"); try { k.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ } });
+    k.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; drag.dx = Math.max(0, Math.min(max(), e.clientX - drag.x)); k.style.transform = `translateX(${drag.dx}px)`; });
+    const end = (e) => { if (!drag || e.pointerId !== drag.id) return; const done = e.type === "pointerup" && drag.dx >= max() * 0.88; drag = null;
+      if (done) chLiveLock(false); else { k.classList.add("back"); k.style.transform = ""; } };
+    k.addEventListener("pointerup", end); k.addEventListener("pointercancel", end); k.addEventListener("lostpointercapture", end);
+    // Clavier (ordinateur) : Entrée ou Espace sur le curseur déverrouille ; un clic de souris ou un toucher ne suffit pas
+    k.addEventListener("click", (e) => { if (e.detail === 0) chLiveLock(false); });
+    document.addEventListener("keydown", (e) => {
+      if (!chLiveOn()) return;
+      if (chLiveLocked()) { if (e.target !== k || !/^(Enter| |Tab)$/.test(e.key)) { e.preventDefault(); e.stopPropagation(); } if (e.key === "Tab") { e.preventDefault(); k.focus(); } return; }
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); chLiveShow(false); }
+    }, true);
+    let rz = 0; addEventListener("resize", () => { if (!chLiveOn()) return; clearTimeout(rz); rz = setTimeout(chLiveRender, 150); });
+  }
   function chBind() {
+    chLiveBind();
     const host = $("#v-charge");
     $("#chImportIn").addEventListener("change", (e) => { const f = e.target.files && e.target.files[0]; if (f) chImportFile(f); });
     host.addEventListener("click", (e) => {
@@ -14553,6 +14708,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Garde-fou : un « Précédent » de trop ne quitte pas l'appli sans prévenir
   try { history.replaceState({ v: view, base: true }, ""); history.pushState({ v: view }, ""); } catch (e) { /* ignore */ }
   addEventListener("popstate", (e) => {
+    if (chLivePop()) return;
     const st = e.state || {};
     if (st.base) {
       try { history.pushState({ v: view }, ""); } catch (err) { /* ignore */ }
