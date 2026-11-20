@@ -1636,6 +1636,10 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
 .ch3step input { flex: 1 1 auto; min-width: 100px; }
 .ch3stage { position: relative; height: min(68vh, 640px); min-height: 320px; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: #eef2f3; }
 .ch3stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.ch3lock { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-pill); background: color-mix(in srgb, var(--surface) 94%, transparent); color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
+@media (max-width: 760px) { .ch3lock { min-height: 44px; } }
+.ch3lock svg { width: 18px; height: 18px; flex: none; }
+.ch3lock[aria-pressed="true"] { background: #373737; color: #fce694; border-color: #373737; }
 #ch3Msg { position: absolute; inset: auto 0 0 0; margin: 0; padding: 10px; background: var(--surface); }
 @media (max-width: 760px) { .ch3stage { height: 58vh; } }
 .ch3tools { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: var(--r-md); }
@@ -2116,9 +2120,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <div class="plan-wrap">
     <div><div id="chPool"></div>
       <div id="ch3Wrap" class="panel ch3wrap" hidden>
-        <div class="ch3bar"><span class="ch3views" role="group" aria-label="Point de vue"><button type="button" class="btn small" data-ch3v="portes">Portes</button><button type="button" class="btn small" data-ch3v="cote">Côté</button><button type="button" class="btn small" data-ch3v="dessus">Dessus</button><button type="button" class="btn small" data-ch3v="cabine">Cabine</button></span>
+        <div class="ch3bar"><span class="ch3views" role="group" aria-label="Point de vue"><button type="button" class="btn small" data-ch3v="portes">Portes</button><button type="button" class="btn small" data-ch3v="cote">Côté</button><button type="button" class="btn small" data-ch3v="dessus">Dessus</button><button type="button" class="btn small" data-ch3v="cabine">Cabine</button></span><button id="ch3Lock" class="ch3lock" type="button" aria-pressed="false" title="Verrouiller les cases : on peut tourner et se déplacer dans la vue sans rien bouger"></button>
           <label class="ch3step"><span id="ch3StepTxt"></span><input id="ch3Step" type="range" min="0" max="1" step="1" aria-label="Rangs affichés, dans l'ordre de chargement"></label></div>
-        <div id="ch3Stage" class="ch3stage"><canvas id="ch3Canvas" aria-label="Camion en 3D : glisse une case pour la ranger"></canvas><div id="ch3Tools" class="ch3tools" hidden></div><p id="ch3Msg" class="hint" hidden></p></div>
+        <div id="ch3Stage" class="ch3stage"><canvas id="ch3Canvas" aria-label="Camion en 3D : glisse une case pour la ranger, glisse à côté pour tourner, à deux doigts (ou clic droit, ou Maj) pour te déplacer"></canvas><div id="ch3Tools" class="ch3tools" hidden></div><p id="ch3Msg" class="hint" hidden></p></div>
         <p class="hint" style="margin:6px 0 0">Glisse une case au sol pour la ranger : elle rejoint le rang sous le doigt (un nouveau rang après le dernier) et se pose sur ce qui est dessous. Fond : tourner autour du camion ; molette ou deux doigts : zoom. R : tourner la case, Maj+R : la coucher.</p>
       </div>
       <div id="chRows" class="chrows"></div>
@@ -7822,7 +7826,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .lane .r { text-align: center; border-right: 0.3mm solid rgb(55 55 55 / 0.35); min-width: 0; overflow: hidden; }
   .chf .lane .free { background: repeating-linear-gradient(90deg, #fff 0 4mm, #f1f3f4 4mm 8mm); }
   .chf .top .over { color: #b71c1c; font-weight: 700; }
-  .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; }
+  .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; grid-auto-flow: row dense; }
   .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; break-inside: avoid; }
   .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.2mm 2mm 0; border-bottom: 0.35mm solid #373737; }
   .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
@@ -7835,7 +7839,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .fv figcaption { font-size: 3mm; line-height: 1.15; color: #373737; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chf .fv figcaption b { font: 700 1.3em "Barlow Semi Condensed", ${PLAN_FONT}; color: #1d1d1d; }
   .chf .row.wide { grid-column: span 2; }
-  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; }
+  .chf .row.big { grid-row: span 2; }
+  .chf .body.cols2 .tx { column-count: 2; column-gap: 3mm; }
+  .chf .body.cols2 .it, .chf .body.cols2 .lay { break-inside: avoid; }
+  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; grid-template-rows: minmax(0, 1fr); }
   .chf .row.wide .fv { margin: 0; padding: 0; max-height: none; min-height: 0; height: 100%; }
   .chf .fv svg { flex: 1 1 0; min-width: 0; min-height: 0; width: 100%; height: 100%; max-width: none; display: block; }
   .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
@@ -7868,15 +7875,18 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
       const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
       // Un rang très chargé prend deux colonnes : son texte à gauche, son croquis à droite
-      const wide = lc.map((x) => n > 1 && x >= 8), slots = n + wide.filter(Boolean).length;
+      const wide = lc.map((x) => n > 1 && x >= 8), slots0 = n + wide.filter(Boolean).length;
       // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
-      lnsWant = slots <= 4 ? 1 : slots <= 12 ? 2 : 3, cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.ceil(slots / cols), cellH = (193 - 8 - 6 - 2 * 3 - (lns - 1) * 2.2) / lns;
+      const hOf = (l) => (193 - 8 - 6 - 2 * 3 - (l - 1) * 2.2) / l, lnsWant = slots0 <= 4 ? 1 : slots0 <= 12 ? 2 : 3;
+      // Sur trois lignes, un rang très chargé dont la liste ne tiendrait pas en 3 mm prend aussi deux lignes de haut
+      const big = lc.map((x, k) => lnsWant >= 3 && wide[k] && x * 1.2 * 3 + 12 > hOf(lnsWant)), slots = slots0 + 2 * big.filter(Boolean).length;
+      const cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.max(big.some(Boolean) ? 2 : 1, Math.ceil(slots / cols)), cellH = hOf(lns);
       const f = Math.max(2.6, Math.min(8, (cellH - 9) / (lines * 1.2 + 0.4))), num = Math.max(5.5, Math.min(7.5, cellH * 0.09)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
       const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn">${x.s}</span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row${wide[k] ? " wide" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${wide[k] ? " wide" : ""}${big[k] ? " big" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${sv || wide[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
       return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
@@ -7906,6 +7916,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const fits = () => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1;
       const fit = () => { let f = 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
       if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
+      // La liste ne tient toujours pas : plus de largeur pour le texte, puis sans croquis et sur deux colonnes
+      if (!fits() && row.classList.contains("wide")) { b.style.gridTemplateColumns = "minmax(0, 1.6fr) minmax(0, 1fr)"; fit(); }
+      if (!fits() && fv) { fv.classList.add("off"); b.style.gridTemplateColumns = "minmax(0, 1fr)"; fit(); }
+      if (!fits()) { b.classList.add("cols2"); fit(); }
       if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
       if (fv && !fv.classList.contains("off")) chFicheArrange(fv);
     });
@@ -8166,7 +8180,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const CH3_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
   let chMode = "3d";
   try { if (localStorage.getItem("patch-live-chmode") === "rangs") chMode = "rangs"; } catch (e) { /* ignore */ }
-  const ch3 = { ok: false, loading: null, fail: false, theta: -0.55, phi: 1.05, zoom: 1, tgt: null, upTo: 0, upTruck: null, meshes: new Map(), drag: null, ptrs: new Map(), dirty: true };
+  const ch3 = { ok: false, loading: null, fail: false, theta: -0.55, phi: 1.05, zoom: 1, tgt: null, upTo: 0, upTruck: null, meshes: new Map(), drag: null, ptrs: new Map(), dirty: true, panX: 0, panZ: 0, lock: (() => { try { return localStorage.getItem("patch-live-chlock") === "1"; } catch (e) { return false; } })() };
   function ch3Load() {
     if (window.THREE) return Promise.resolve();
     if (ch3.loading) return ch3.loading;
@@ -8259,8 +8273,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Cadrage sur la partie chargée (plus 3 m), pas sur tout le camion vide
   const ch3Span = (t) => Math.min(Math.max(t.L, ch3Len(t)), ch3Len(t) + 300);
   const ch3Dist0 = (t) => Math.max(t.l, ch3Span(t), t.h) * 1.35 + 150;
-  function ch3Camera(cam, t, theta, phi, dist) {
-    const tgt = new THREE.Vector3(t.l / 2, t.h * 0.35, ch3Span(t) / 2);
+  function ch3Camera(cam, t, theta, phi, dist, panX, panZ) {
+    const tgt = new THREE.Vector3(t.l / 2 + (panX || 0), t.h * 0.35, ch3Span(t) / 2 + (panZ || 0));
     cam.position.set(tgt.x + dist * Math.sin(phi) * Math.sin(theta), tgt.y + dist * Math.cos(phi), tgt.z + dist * Math.sin(phi) * Math.cos(theta));
     cam.lookAt(tgt);
   }
@@ -8281,7 +8295,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const st = $("#ch3Stage"), w = st.clientWidth, h = st.clientHeight; if (!w || !h) return;
     const sz = ch3.renderer.getSize(new THREE.Vector2()); if (sz.x !== w || sz.y !== h) ch3.renderer.setSize(w, h, false);
     ch3.cam.aspect = w / h; ch3.cam.updateProjectionMatrix();
-    ch3Camera(ch3.cam, t, ch3.theta, ch3.phi, ch3Dist0(t) * ch3.zoom);
+    ch3Camera(ch3.cam, t, ch3.theta, ch3.phi, ch3Dist0(t) * ch3.zoom, ch3.panX, ch3.panZ);
     ch3.renderer.render(ch3.scene, ch3.cam);
   }
   function ch3Rebuild() {
@@ -8344,38 +8358,57 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const y = chSupport(t, o.r.id, c, x, 9999); if (keep) c.z = keep; else delete c.z;
     return { rid: o.r.id, x, y, z, z0: o.z0 };
   }
+  // Se déplacer : la vue glisse avec le doigt, à plat sur le plancher
+  function ch3PanBy(dx, dy) {
+    const t = chTruck(), st = $("#ch3Stage"); if (!t || !st) return;
+    const k = (2 * ch3Dist0(t) * ch3.zoom * Math.tan((ch3.cam.fov * Math.PI) / 360)) / Math.max(1, st.clientHeight);
+    // Le plancher suit le doigt : à droite → la scène part à droite ; vers le bas → elle vient vers soi
+    const rx = Math.cos(ch3.theta), rz = -Math.sin(ch3.theta), fx = -Math.sin(ch3.theta), fz = -Math.cos(ch3.theta), v = Math.min(3, 1 / Math.max(0.33, Math.cos(ch3.phi)));
+    ch3.panX += (-dx * rx + dy * v * fx) * k; ch3.panZ += (-dx * rz + dy * v * fz) * k;
+    const lim = Math.max(t.L, t.l) * 1.2; ch3.panX = Math.max(-lim, Math.min(lim, ch3.panX)); ch3.panZ = Math.max(-lim, Math.min(lim, ch3.panZ));
+  }
   function ch3Bind() {
     const cv = $("#ch3Canvas");
     cv.addEventListener("pointerdown", (e) => {
-      if (e.button === 2) return;
       ch3.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
-      if (ch3.ptrs.size === 2) { ch3.orbit = null; if (chDrag) { chDrag = null; ch3.drag = null; ch3Rebuild(); } const [a, b] = [...ch3.ptrs.values()]; ch3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ch3.zoom }; return; }
-      // Clic molette (ou droit maintenu ailleurs) : on tourne la vue, on n'attrape jamais une case
+      // Deux doigts : pincer pour zoomer, glisser pour se déplacer
+      if (ch3.ptrs.size === 2) { ch3.orbit = null; ch3.pan = null; if (chDrag) { chDrag = null; ch3.drag = null; ch3Rebuild(); } const [a, b] = [...ch3.ptrs.values()]; ch3.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ch3.zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, px: ch3.panX, pz: ch3.panZ }; return; }
+      // Clic droit ou Maj + glisser : se déplacer dans la vue
+      if (e.button === 2 || (e.button === 0 && e.shiftKey && e.pointerType === "mouse")) { ch3.pan = { x: e.clientX, y: e.clientY, px: ch3.panX, pz: ch3.panZ }; e.preventDefault(); return; }
+      // Clic molette : on tourne la vue, on n'attrape jamais une case. Cases verrouillées : un appui les sélectionne sans les bouger
       const t = chTruck(), id = e.button === 0 ? ch3Pick(e) : null, c = id && t.cases.find((x) => x.id === id);
-      if (c) { const p = ch3Floor(e), r0 = ch3Rows(t).find((q) => q.r.id === c.rang); chDrag = { c, in3: true, offX: p ? p.x - c.x : c.w / 2, offZ: p && r0 ? Math.max(0, Math.min(c.d, p.z - r0.z0 - chZ(c))) : c.d / 2, moved: false, x0: e.clientX, y0: e.clientY }; ch3.drag = {}; }
+      if (c && ch3.lock) { ch3.orbit = { x: e.clientX, y: e.clientY, th: ch3.theta, ph: ch3.phi, moved: false, btn: e.button, pick: c.id }; }
+      else if (c) { const p = ch3Floor(e), r0 = ch3Rows(t).find((q) => q.r.id === c.rang); chDrag = { c, in3: true, offX: p ? p.x - c.x : c.w / 2, offZ: p && r0 ? Math.max(0, Math.min(c.d, p.z - r0.z0 - chZ(c))) : c.d / 2, moved: false, x0: e.clientX, y0: e.clientY }; ch3.drag = {}; }
       else ch3.orbit = { x: e.clientX, y: e.clientY, th: ch3.theta, ph: ch3.phi, moved: false, btn: e.button };
       e.preventDefault();
     });
     cv.addEventListener("pointermove", (e) => {
       if (ch3.ptrs.has(e.pointerId)) ch3.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (ch3.pinch && ch3.ptrs.size === 2) { const [a, b] = [...ch3.ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); ch3.zoom = Math.max(0.2, Math.min(4, ch3.pinch.z * (ch3.pinch.d / Math.max(1, d)))); ch3Draw(); return; }
+      if (ch3.pinch && ch3.ptrs.size === 2) { const P = ch3.pinch, [a, b] = [...ch3.ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); ch3.zoom = Math.max(0.2, Math.min(4, P.z * (P.d / Math.max(1, d)))); ch3.panX = P.px; ch3.panZ = P.pz; ch3PanBy((a.x + b.x) / 2 - P.mx, (a.y + b.y) / 2 - P.my); ch3Draw(); return; }
+      if (ch3.pan) { const P = ch3.pan; ch3.panX = P.px; ch3.panZ = P.pz; ch3PanBy(e.clientX - P.x, e.clientY - P.y); ch3Draw(); return; }
       const o = ch3.orbit; if (!o) return;
       if (Math.hypot(e.clientX - o.x, e.clientY - o.y) > 3) o.moved = true;
       ch3.theta = o.th - (e.clientX - o.x) * 0.008; ch3.phi = Math.max(0.12, Math.min(1.52, o.ph - (e.clientY - o.y) * 0.006)); ch3Draw();
     });
     const up = (e) => {
       ch3.ptrs.delete(e.pointerId); if (ch3.ptrs.size < 2) ch3.pinch = null;
+      if (ch3.ptrs.size === 0) ch3.pan = null;
       const o = ch3.orbit; ch3.orbit = null;
-      if (o && !o.moved && !o.btn && chSel) { chSel = null; renderCharge(); }
+      if (o && !o.moved && o.pick) { chSel = chSel === o.pick ? null : o.pick; renderCharge(); }
+      else if (o && !o.moved && !o.btn && chSel) { chSel = null; renderCharge(); }
     };
+    cv.addEventListener("contextmenu", (e) => e.preventDefault());
+    const lockUi = () => { const b = $("#ch3Lock"); b.setAttribute("aria-pressed", ch3.lock ? "true" : "false"); b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="${ch3.lock ? "M8 11V7a4 4 0 0 1 8 0v4" : "M8 11V7a4 4 0 0 1 7.5-2"}"/></svg>${ch3.lock ? "Cases verrouillées" : "Verrouiller"}`; };
+    lockUi();
+    $("#ch3Lock").addEventListener("click", () => { ch3.lock = !ch3.lock; try { localStorage.setItem("patch-live-chlock", ch3.lock ? "1" : "0"); } catch (e) { /* navigation privée */ } lockUi(); notice(ch3.lock ? "Cases verrouillées : tu peux tourner et te déplacer dans la vue sans rien bouger." : "Cases déverrouillées : glisse une case pour la ranger."); });
     cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
     cv.addEventListener("mousedown", (e) => { if (e.button === 1) e.preventDefault(); }); cv.addEventListener("auxclick", (e) => { if (e.button === 1) e.preventDefault(); });
     cv.addEventListener("wheel", (e) => { e.preventDefault(); ch3.zoom = Math.max(0.2, Math.min(4, ch3.zoom * (e.deltaY > 0 ? 1.1 : 0.91))); ch3Draw(); }, { passive: false });
     $("#ch3Wrap").addEventListener("click", (e) => {
       const b = e.target.closest("[data-ch3v]"); if (!b) return;
       const v = { portes: [-0.35, 1.0], cote: [-Math.PI / 2, 1.1], dessus: [0, 0.14], cabine: [Math.PI - 0.5, 1.0] }[b.dataset.ch3v];
-      ch3.theta = v[0]; ch3.phi = v[1]; ch3.zoom = 1; ch3Draw();
+      ch3.theta = v[0]; ch3.phi = v[1]; ch3.zoom = 1; ch3.panX = 0; ch3.panZ = 0; ch3Draw();
     });
     $("#ch3Step").addEventListener("input", (e) => { ch3.upTo = Number(e.target.value) || 0; ch3.upAll = false; ch3Rebuild(); });
   }
