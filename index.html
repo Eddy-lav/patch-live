@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "ccfadaa69c";</script>
+<script>window.PL_VER = "f0f98479ee";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -7840,28 +7840,27 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .lane .r { text-align: center; border-right: 0.3mm solid rgb(55 55 55 / 0.35); min-width: 0; overflow: hidden; }
   .chf .lane .free { background: repeating-linear-gradient(90deg, #fff 0 4mm, #f1f3f4 4mm 8mm); }
   .chf .top .over { color: #b71c1c; font-weight: 700; }
-  .chf .rows { flex: 1; display: grid; gap: 2.2mm; min-height: 0; grid-auto-flow: row dense; }
-  .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; break-inside: avoid; }
+  .chf .rows { flex: 1; display: flex; gap: 2.2mm; min-height: 0; }
+  .chf .col { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 2.2mm; }
+  .chf .row { display: grid; grid-template-rows: auto minmax(0, 1fr); border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; min-height: 0; flex: 1 1 0; }
   .chf .num { display: flex; align-items: baseline; gap: 2mm; padding: 0.2mm 2mm 0; border-bottom: 0.35mm solid #373737; }
-  .chf .num b { font: 700 var(--n)/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
+  .chf .num b { font: 700 6.5mm/1 "Barlow Semi Condensed", ${PLAN_FONT}; letter-spacing: -0.02em; }
   .chf .num small { font-size: 3mm; color: #373737; margin-left: auto; white-space: nowrap; }
   .chf .body { padding: 1.2mm 2mm; min-width: 0; min-height: 0; font-size: var(--f); line-height: 1.1; overflow: hidden; display: flex; flex-direction: column; }
-  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: var(--svmin, 0); max-height: var(--sv); }
+  .chf .fv { margin-top: auto; padding-top: 1.5mm; flex: 1 1 0; min-height: 0; display: grid; gap: 1.5mm 2mm; grid-template-rows: minmax(0, 1fr); }
   .chf .fv.off { display: none; }
-  .chf .fv { display: grid; gap: 1.5mm 2mm; grid-template-rows: minmax(0, 1fr); }
   .chf .fv figure { margin: 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   .chf .fv figcaption { font-size: 3mm; line-height: 1.15; color: #373737; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chf .fv figcaption b { font: 700 1.3em "Barlow Semi Condensed", ${PLAN_FONT}; color: #1d1d1d; }
-  .chf .row.wide { grid-column: span 2; }
-  .chf .row { grid-row: span 2; }
-  .chf .row.half { grid-row: span 1; }
-  .chf .row.big { grid-row: span 4; }
-  .chf .row.solo .body { justify-content: center; text-align: center; }
-  .chf .row.solo .it { justify-content: center; }
+  /* Rang d'un seul type de case : une bande d'une ligne, le numéro à gauche */
+  .chf .row.solo { grid-template-rows: none; grid-template-columns: 13mm minmax(0, 1fr); flex: 0 0 auto; }
+  .chf .row.solo .num { flex-direction: column; align-items: center; justify-content: center; gap: 0.3mm; padding: 0.8mm 0; border-bottom: 0; border-right: 0.35mm solid #373737; }
+  .chf .row.solo .num small { margin: 0; font-size: 2.6mm; }
+  .chf .row.solo .body { justify-content: center; padding: 0.8mm 2.5mm; }
+  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 3mm; }
+  .chf .row.wide .fv { margin: 0; padding: 0; min-height: 0; height: 100%; }
   .chf .body.cols2 .tx { column-count: 2; column-gap: 3mm; }
   .chf .body.cols2 .it, .chf .body.cols2 .lay { break-inside: avoid; }
-  .chf .row.wide .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3mm; grid-template-rows: minmax(0, 1fr); }
-  .chf .row.wide .fv { margin: 0; padding: 0; max-height: none; min-height: 0; height: 100%; }
   .chf .fv svg { flex: 1 1 0; min-width: 0; min-height: 0; width: 100%; height: 100%; max-width: none; display: block; }
   .chf .it { display: flex; flex-wrap: wrap; gap: 0 1.4mm; align-items: baseline; padding: 0.35mm 0; }
   .chf .it .q { font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; }
@@ -7898,27 +7897,22 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Un rang à sous-rangs (2A au fond, 2B devant) : une section par sous-rang
       const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
       const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
-      // Un rang très chargé prend deux colonnes : son texte à gauche, son croquis à droite
-      // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis et ne prend qu'une demi-case de haut
+      // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis, sur une bande d'une ligne
       const same = g.map((secs) => secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
-      const wide = lc.map((x) => n > 1 && x >= 8), nSolo = same.filter(Boolean).length, slotsF = n + wide.filter(Boolean).length, slots0 = slotsF - (slotsF > 4 ? nSolo / 2 : 0);
-      // Grille : assez de colonnes pour que chaque case reste lisible, puis la plus grande police qui tient
-      const hOf = (l) => (193 - 8 - 6 - 2 * 3 - (l - 1) * 2.2) / l, lnsWant = slotsF <= 4 ? 1 : slotsF <= 12 ? 2 : 3;
-      // Sur trois lignes, un rang très chargé dont la liste ne tiendrait pas en 3 mm prend aussi deux lignes de haut
-      const big = lc.map((x, k) => lnsWant >= 3 && wide[k] && x * 1.2 * 3 + 12 > hOf(lnsWant)), slots = slots0 + 2 * big.filter(Boolean).length;
-      const cols = Math.max(wide.some(Boolean) ? 2 : 1, Math.ceil(slots / lnsWant)), lns = Math.max(big.some(Boolean) ? 2 : 1, Math.ceil(slots / cols)), cellH = hOf(lns), half = slotsF > 4 && lns > 1;
-      const f = Math.max(2.6, Math.min(8, (cellH - 9) / (lines * 1.2 + 0.4))), num = Math.max(5.5, Math.min(7.5, cellH * 0.09)), sv = cellH >= 55 ? Math.min(90, cellH * 0.5) : 0;
+      // Place voulue par rang (mm à 4,5 mm de texte) : sert à répartir les rangs en colonnes, dans l'ordre de chargement
+      // Un rang très chargé (8 lignes et plus) : texte à gauche, croquis à droite, dans une colonne deux fois plus large
+      const dem = lc.map((x, k) => (same[k] ? 15 : n > 1 && x >= 8 ? (9 + x * 1.2 * 4.5) / 2 + 4 : 9 + x * 1.2 * 4.5 + 32));
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
       const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn" title="${x.s}">${chSensIco(x.s)}<span class="sw">${x.s}</span></span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
-        return `<div class="row${wide[k] ? " wide" : ""}${big[k] ? " big" : ""}${same[k] ? " solo" : ""}${same[k] && half ? " half" : ""}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${!same[k] && (sv || wide[k]) ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
+        return `<div class="row${same[k] ? " solo" : ""}${!same[k] && n > 1 && lc[k] >= 8 ? " wide" : ""}" data-dem="${dem[k].toFixed(1)}"><div class="num" style="background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${i}</b><small>${dd} cm</small></div><div class="body"><div class="tx">${g[k].map((gg) => sec({ ...gg, r: r.id })).join("")}${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}</div>${!same[k] ? `<div class="fv">${chFicheSketches(t, r)}</div>` : ""}</div></div>`; }).join("");
       const pool = chIn(t, ""), bad = t.cases.filter((c) => c.rang && chBad(t, c));
-      return `<section class="pg" style="--f:${f.toFixed(2)}mm;--n:${num.toFixed(1)}mm;--sv:${sv.toFixed(1)}mm;--svmin:${(sv ? Math.min(sv, Math.max(18, cellH * 0.32)) : 0).toFixed(1)}mm">
+      return `<section class="pg" style="--f:4.5mm">
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
-        <div class="rows" style="grid-template-columns:repeat(${cols},minmax(0,1fr));grid-template-rows:repeat(${lns * 2},minmax(0,1fr))">${cells}</div>
-        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas).${sv ? " Croquis vu des portes, jardin à gauche." : ""}</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
+        <div class="rows">${cells}</div>
+        <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas). Croquis vu des portes, jardin à gauche.</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
       </section>`;
     }).join("");
     return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
@@ -7936,21 +7930,56 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (bs * 60 < 26) { fv.classList.add("off"); return; }
     fv.style.gridTemplateColumns = `repeat(${best}, minmax(0, 1fr))`; fv.style.gridTemplateRows = `repeat(${Math.ceil(k / best)}, minmax(0, 1fr))`;
   }
+  // Mise en page en colonnes : les rangs coulent dans l'ordre de chargement (de haut en bas, puis colonne suivante).
+  // Dans une colonne, tous les rangs ont la même taille de texte, la plus grande qui tient ; un croquis garde au moins
+  // CHF_SK mm et prend la place qui reste. Un rang d'un seul type de case n'est qu'une bande d'une ligne.
+  const CHF_SK = 30;
+  const chfSolo = (r) => r.classList.contains("solo");
+  const chfFv = (r) => { const fv = r.querySelector(".fv"); return fv && !fv.classList.contains("off") ? fv : null; };
+  function chFicheColFit(col) {
+    const rows = [...col.children];
+    const setF = (F) => rows.forEach((r) => r.style.setProperty("--f", (chfSolo(r) ? Math.min(8, F * 1.3) : F).toFixed(2) + "mm"));
+    const prep = () => rows.forEach((r) => { r.style.flex = "0 0 auto"; const b = r.querySelector(".body"), fv = chfFv(r);
+      b.style.gridTemplateColumns = r.classList.contains("wide") && fv ? "" : "minmax(0, 1fr)";
+      if (fv && !r.classList.contains("wide")) { fv.style.flex = "none"; fv.style.height = CHF_SK + "mm"; fv.style.minHeight = ""; } });
+    const ok = () => col.scrollHeight <= col.clientHeight + 1 && rows.every((r) => { const b = r.querySelector(".body"); return b.scrollWidth <= b.clientWidth + 1 && b.scrollHeight <= b.clientHeight + 1; });
+    const search = () => { let lo = 2.4, hi = 6.5; setF(hi); if (ok()) return hi; for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; setF(m); if (ok()) lo = m; else hi = m; } setF(lo); return lo; };
+    prep(); let F = search();
+    // Trop serré : on retire les croquis, en commençant par le rang le plus chargé
+    while (F < 3.4) { const r = rows.filter(chfFv).sort((a, b) => b.querySelector(".tx").offsetHeight - a.querySelector(".tx").offsetHeight)[0]; if (!r) break; chfFv(r).classList.add("off"); prep(); F = search(); }
+    // La place qui reste va aux croquis (ou, sans croquis, aux rangs eux-mêmes)
+    const grow = rows.filter((r) => chfFv(r));
+    grow.forEach((r) => { r.style.flex = "1 1 auto"; const fv = chfFv(r); if (!r.classList.contains("wide")) { fv.style.height = ""; fv.style.flex = "1 1 0"; fv.style.minHeight = CHF_SK + "mm"; } });
+    if (!grow.length) rows.filter((r) => !chfSolo(r)).forEach((r) => (r.style.flex = "1 1 auto"));
+    rows.forEach((r) => { const fv = chfFv(r); if (fv) { chFicheArrange(fv); if (fv.classList.contains("off")) r.querySelector(".body").style.gridTemplateColumns = "minmax(0, 1fr)"; } });
+    return { F, sk: rows.filter(chfFv).length, can: rows.filter((r) => r.querySelector(".fv")).length };
+  }
+  function chFicheCols(box, k, dem) {
+    const rows = [...box.querySelectorAll(".row")], n = rows.length;
+    // Découpage en k colonnes consécutives qui équilibre la hauteur voulue (programmation dynamique)
+    const pre = [0]; dem.forEach((d) => pre.push(pre[pre.length - 1] + d));
+    const best = Array.from({ length: k + 1 }, () => Array(n + 1).fill(Infinity)), cut = Array.from({ length: k + 1 }, () => Array(n + 1).fill(0)); best[0][0] = 0;
+    for (let c = 1; c <= k; c++) for (let i = 1; i <= n; i++) for (let j = c - 1; j < i; j++) { const v = Math.max(best[c - 1][j], pre[i] - pre[j]); if (v < best[c][i]) { best[c][i] = v; cut[c][i] = j; } }
+    const bounds = []; for (let c = k, i = n; c > 0; c--) { const j = cut[c][i]; bounds.unshift([j, i]); i = j; }
+    box.innerHTML = ""; return bounds.map(([a, b]) => { const col = document.createElement("div"); col.className = "col"; rows.slice(a, b).forEach((r) => col.appendChild(r)); if (col.querySelector(".wide")) col.style.flexGrow = "2"; box.appendChild(col); return col; });
+  }
   function chFicheFit(root) {
     const keep = root.style.cssText; root.style.cssText = "display:block;position:absolute;left:-10000px;top:0;visibility:hidden";
-    // Chaque case de rang a sa propre taille de texte : un rang chargé ne fait pas rétrécir les autres.
-    // Le croquis garde sa place tant que le texte reste à 4,5 mm ou plus ; sinon il rétrécit, puis disparaît.
-    root.querySelectorAll(".pg .row").forEach((row) => {
-      const b = row.querySelector(".body"), fv = row.querySelector(".fv");
-      const fits = () => b.scrollHeight <= b.clientHeight + 1 && b.scrollWidth <= b.clientWidth + 1;
-      const fit = () => { let f = row.classList.contains("solo") ? 9 : 7; row.style.setProperty("--f", f + "mm"); while (!fits() && f > 2.4) { f -= 0.25; row.style.setProperty("--f", f + "mm"); } return f; };
-      if (fit() < 4.5 && fv) { fv.style.minHeight = "0"; fit(); }
-      // La liste ne tient toujours pas : plus de largeur pour le texte, puis sans croquis et sur deux colonnes
-      if (!fits() && row.classList.contains("wide")) { b.style.gridTemplateColumns = "minmax(0, 1.6fr) minmax(0, 1fr)"; fit(); }
-      if (!fits() && fv) { fv.classList.add("off"); b.style.gridTemplateColumns = "minmax(0, 1fr)"; fit(); }
-      if (!fits()) { b.classList.add("cols2"); fit(); }
-      if (fv && fv.getBoundingClientRect().height < 60) fv.classList.add("off");
-      if (fv && !fv.classList.contains("off")) { chFicheArrange(fv); if (fv.classList.contains("off")) { b.style.gridTemplateColumns = "minmax(0, 1fr)"; b.classList.remove("cols2"); fit(); if (!fits()) { b.classList.add("cols2"); fit(); } } }
+    root.querySelectorAll(".pg .rows").forEach((box) => {
+      const orig = box.innerHTML, n = box.querySelectorAll(".row").length; let pick = null;
+      const run = (k) => {
+        box.innerHTML = orig;
+        // Hauteur voulue de chaque rang à 4,5 mm de texte, dans une colonne de la bonne largeur
+        const probe = document.createElement("div"); probe.className = "col"; probe.style.cssText = `flex:none;width:${(box.clientWidth / k).toFixed(0)}px;height:auto`;
+        [...box.querySelectorAll(".row")].forEach((r) => probe.appendChild(r)); box.innerHTML = ""; box.appendChild(probe);
+        [...probe.children].forEach((r) => { r.style.flex = "0 0 auto"; r.style.setProperty("--f", chfSolo(r) ? "6mm" : "4.5mm"); const fv = r.querySelector(".fv"); if (fv && !r.classList.contains("wide")) { fv.style.flex = "none"; fv.style.height = CHF_SK + "mm"; } });
+        const dem = [...probe.children].map((r) => r.offsetHeight / (r.classList.contains("wide") ? 1.6 : 1));
+        box.innerHTML = orig; const cols = chFicheCols(box, k, dem);
+        const res = cols.map(chFicheColFit), F = Math.min(...res.map((x) => x.F)), sk = res.reduce((a, x) => a + x.sk, 0), can = res.reduce((a, x) => a + x.can, 0);
+        return F + 0.25 * res.reduce((a, x) => a + x.F, 0) / res.length + 1.2 * (can ? sk / can : 0);
+      };
+      for (let k = Math.min(2, n); k <= Math.min(6, n); k++) { const sc = run(k); if (!pick || sc > pick.sc) pick = { k, sc }; }
+      run(pick.k);
     });
     root.style.cssText = keep;
   }
