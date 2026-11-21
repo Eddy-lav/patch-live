@@ -1015,6 +1015,9 @@ html.ro body { padding: 0 !important; background: #dfe7ea; }
 #roView .roact svg { width: 18px; height: 18px; }
 #roView .ropaper { max-width: 1180px; margin: 0 auto; padding: 14px calc(14px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left)); background: #fff; min-height: calc(100vh - 60px); box-sizing: border-box; }
 #roView .rowhen { margin: 0 0 10px; color: #5a6166; font-size: 13px; }
+#roView .rowhen.ronew { animation: ronew 2.4s ease-out; }
+@keyframes ronew { 0%, 30% { background: #f6feaa; color: #1d1d1d; } 100% { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { #roView .rowhen.ronew { animation: none; } }
 #roView .pr { font-size: 15px; line-height: 1.4; }
 #roView .pr h2 { font: 700 19px/1.2 "Barlow Semi Condensed", var(--font-ui); margin: 16px 0 6px; }
 #roView .pr h3 { font-size: 16px; margin: 12px 0 4px; }
@@ -1032,6 +1035,7 @@ html.ro body { padding: 0 !important; background: #dfe7ea; }
 .rodlg input { width: 100%; font-family: var(--font-mono, monospace); font-size: var(--fs-sm); }
 .rodlg .hint { margin: 0; }
 .rodlg .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rodlg a.btn { text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
 /* Verrou « poche » : une vitre sur tout l'écran, on ne la retire qu'en faisant glisser le curseur */
 #chLock { position: fixed; inset: 0; z-index: 901; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: calc(10px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); box-shadow: inset 0 0 0 4px #fce694; font-family: var(--font-ui); }
 #chLock .chlkst { display: inline-flex; align-items: center; gap: 8px; background: #fce694; color: #373737; font: 600 14px/1.2 var(--font-ui); padding: 8px 14px; border-radius: var(--r-pill); box-shadow: 0 2px 10px rgb(0 0 0 / 0.25); }
@@ -1885,7 +1889,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <p class="tdnew-h"><strong id="roH">Partager en lecture seule</strong><span id="roFor"></span></p>
     <label class="field"><span>Lien</span><input id="roUrl" type="text" readonly></label>
     <p class="hint" id="roNote"></p>
-    <div class="actions"><button class="btn primary" type="button" id="roCopy">Copier le lien</button><button class="btn" type="button" id="roSys" hidden>Envoyer…</button><a class="btn" id="roOpen" target="_blank" rel="noopener">Voir la page</a><button class="btn" value="close">Fermer</button></div>
+    <div class="actions"><button class="btn primary" type="button" id="roCopy">Copier le lien</button><button class="btn" type="button" id="roSys" hidden>Envoyer…</button><button class="btn danger" type="button" id="roStop" hidden>Arrêter ce partage</button><a class="btn" id="roOpen" target="_blank" rel="noopener">Voir la page</a><button class="btn" value="close">Fermer</button></div>
   </form>
 </dialog>
 <dialog id="dbxDlg" class="dbxdlg" aria-labelledby="dbxTitle">
@@ -11345,7 +11349,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function roSnap(part) {
     const s = JSON.parse(JSON.stringify(state));
     if (part === "charge") Object.keys(s).forEach((k) => { if (!["v", "dossier", "chargement", "rackplan", "racks"].includes(k)) delete s[k]; });
-    ["bibliotheque", "etiq", "savedAt", "exemple"].forEach((k) => delete s[k]);
+    ["bibliotheque", "etiq", "savedAt", "exemple", "partages"].forEach((k) => delete s[k]);
     if (part !== "todo") delete s.todos;
     if (part !== "journal") delete s.journal;
     if (s.dossier) delete s.dossier.cover;
@@ -11374,9 +11378,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     part = part || RO_PART[view] || "";
     if (!part) { notice("Cette page ne se partage pas encore en lecture seule. On peut partager : master patch, sorties, HF, boîtiers, racks, liste matériel, plan de scène, synoptique, plans de rack, chargement, local console, intercom, réseau, to-do, journal.", true); return; }
     const t = roTitle(part), nm = (state.dossier && state.dossier.nom) || "Dossier";
-    let url; try { url = await roLink(part); } catch (e) { notice("Ce navigateur n'a pas pu fabriquer le lien.", true); return; }
+    let url = "", why = "";
+    // Dossier dans Dropbox : lien qui suit le dossier ; sinon (ou si Dropbox refuse) copie figée dans le lien
+    if (roLiveOk()) { try { url = await roLiveLink(part); } catch (e) { why = roLiveWhy(e); } }
+    else why = DBX_ON ? "Pour un lien qui se met à jour tout seul, le dossier doit être enregistré dans Dropbox (Dossier › Dropbox)." : "";
+    if (!url) try { url = await roLink(part); } catch (e) { notice("Ce navigateur n'a pas pu fabriquer le lien.", true); return; }
+    roWhy = why;
     // Téléphone : la feuille de partage du système (Messages, WhatsApp, mail…) tout de suite
-    if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+    if (navigator.share && matchMedia("(pointer: coarse)").matches && !why) {
       try { await navigator.share({ title: `${nm} · ${t}`, text: `${nm} · ${t} (lecture seule)`, url }); return; }
       catch (e) { if (e && e.name === "AbortError") return; }
     }
@@ -11387,9 +11396,13 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#roFor").textContent = `${(state.dossier && state.dossier.nom) || "Dossier"} · ${t}`;
     $("#roUrl").value = url; $("#roOpen").href = url;
     $("#roSys").hidden = !navigator.share;
-    $("#roNote").textContent = (part === "charge" ? "Le lien ouvre la fiche en mode chargement plein écran, avec l'écran allumé et le verrou poche. " : "Le lien ouvre cette page, lisible sur téléphone. ")
-      + "Personne ne peut rien y modifier, et il n'y a besoin ni de compte ni de l'appli. Il garde la page telle qu'elle est maintenant : après une modif, renvoie un nouveau lien."
-      + (url.length > 20000 ? ` Lien long (${Math.round(url.length / 1000)} 000 caractères) : envoie-le par WhatsApp, Messages ou mail plutôt que par SMS.` : "");
+    const live = /#voir=d/.test(url);
+    $("#roStop").hidden = !live; $("#roStop").dataset.p = part; $("#roStop").classList.remove("armed"); $("#roStop").textContent = "Arrêter ce partage";
+    $("#roNote").innerHTML = esc((part === "charge" ? "Le lien ouvre la fiche en mode chargement plein écran, avec l'écran allumé et le verrou poche. " : "Le lien ouvre cette page, lisible sur téléphone. ")
+      + "Personne ne peut rien y modifier, et il n'y a besoin ni de compte ni de l'appli. ")
+      + (live ? "<b>Le lien suit le dossier</b> : chaque modif enregistrée dans Dropbox (par toi ou un collègue) y arrive toute seule, en moins d'une minute. Pas besoin de renvoyer le lien."
+        : esc("Il garde la page telle qu'elle est maintenant : après une modif, renvoie un nouveau lien.") + (roWhy ? `<br><b>${esc(roWhy)}</b>` : "")
+          + (url.length > 20000 ? esc(` Lien long (${Math.round(url.length / 1000)} 000 caractères) : envoie-le par WhatsApp, Messages ou mail plutôt que par SMS.`) : ""));
     try { d.showModal(); } catch (e) { d.setAttribute("open", ""); }
     $("#roUrl").select();
   }
@@ -11402,6 +11415,11 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const ok = await roCopy($("#roUrl").value), b = $("#roCopy");
       b.textContent = ok ? "Lien copié" : "Copie impossible : sélectionne le lien"; setTimeout(() => { b.textContent = "Copier le lien"; }, 2200);
     });
+    $("#roStop").addEventListener("click", async (e) => {
+      const b = e.currentTarget; if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmer : le lien ne marchera plus"; return; }
+      try { await roLiveStop(b.dataset.p); $("#roDlg").close(); notice("Partage arrêté : le lien ne montre plus rien."); }
+      catch (err) { notice("Le partage n'a pas pu être arrêté : " + esc(dbxErr(err) || (err && (err.summary || err.message)) || ""), true); }
+    });
     $("#roSys").addEventListener("click", () => { navigator.share({ title: $("#roFor").textContent, url: $("#roUrl").value }).catch(() => {}); });
   }
   // Dans la page reçue : la faire suivre à quelqu'un d'autre (même lien)
@@ -11410,33 +11428,143 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (navigator.share) { try { await navigator.share({ title: t, text: `${t} (lecture seule)`, url }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
     notice((await roCopy(url)) ? "Lien copié : colle-le dans un message." : "Copie impossible : copie l'adresse de la page dans la barre du navigateur.");
   }
+  // ---------- Lien qui suit le dossier (Dropbox) ----------
+  // La page est écrite dans un petit fichier .json rangé à côté du dossier (sous-dossier « _partages patch live »),
+  // ouvert à tous par un lien Dropbox en lecture. Après chaque enregistrement dans Dropbox, l'appli (de n'importe quel
+  // collègue) réécrit ce fichier : la personne qui a le lien voit les modifs sans rien recevoir de nouveau.
+  // Le lien de l'appli porte seulement l'adresse du fichier : #voir=d<adresse en base64url>.
+  let roWhy = "";
+  const roPushed = {};
+  const roLiveOk = () => DBX_ON && !!dbx.file && !!dbx.tok;
+  function roShares() { if (!Array.isArray(state.partages)) state.partages = []; return state.partages; }
+  const roPath = (sh) => dbx.file.path.replace(/\/[^/]*$/, "") + "/_partages patch live/" + sh.name;
+  function roLiveWhy(e) {
+    const m = (e && (e.summary || e.message)) || "";
+    if (/missing_scope/.test(m)) return "Pour un lien qui se met à jour tout seul, la clé Dropbox doit avoir le droit de créer des liens : sur dropbox.com/developers/apps, appli Patch Live, onglet Permissions, coche sharing.write et sharing.read, clique sur Submit, puis dans l'appli Dropbox › Se déconnecter et reconnecte-toi. En attendant, voici un lien figé.";
+    if (/settings_error|access_denied|not_allowed|team/.test(m)) return "Dropbox refuse les liens publics sur ce dossier (réglage du compte ou de l'équipe). Voici un lien figé à la place.";
+    return "Dropbox n'a pas pu créer le lien qui suit le dossier" + (dbxErr(e) ? " (" + dbxErr(e) + ")" : "") + ". Voici un lien figé à la place.";
+  }
+  async function roUpload(sh, force) {
+    const snap = JSON.stringify(roSnap(sh.p)), path = roPath(sh);
+    if (!force && roPushed[path] === snap) return;
+    const body = `{"app":"patch-live","p":${JSON.stringify(sh.p)},"at":${JSON.stringify(new Date().toISOString())},"s":${snap}}`;
+    await dbxCall("files/upload", { path, mode: "overwrite", mute: true, autorename: false }, { content: true, body: new Blob([body], { type: "application/octet-stream" }) });
+    roPushed[path] = snap;
+  }
+  async function roLiveLink(part) {
+    const S = roShares(); let sh = S.find((x) => x.p === part);
+    const fresh = !sh;
+    if (fresh) sh = { id: nid(), p: part, name: `${(dbx.file.name || "dossier").replace(/\.xlsx$/i, "")} - ${roTitle(part)}.json`.replace(/[\\/:*?"<>|]+/g, " ") };
+    await roUpload(sh, true);
+    if (!sh.url) {
+      const path = roPath(sh); let url = "";
+      try { url = (await dbxCall("sharing/create_shared_link_with_settings", { path, settings: { audience: "public", access: "viewer", allow_download: true } })).url; }
+      catch (e) { if (!/shared_link_already_exists/.test((e && e.summary) || "")) throw e; const l = await dbxCall("sharing/list_shared_links", { path, direct_only: true }); url = (l.links && l.links[0] && l.links[0].url) || ""; }
+      if (!url) throw new Error("pas de lien");
+      sh.url = url;
+    }
+    if (fresh) S.push(sh);
+    if (fresh || !S.includes(sh)) commit();
+    else { persist(); dbxDirty(); }
+    return RO_BASE + "#voir=d" + b64u.enc(new TextEncoder().encode(sh.url));
+  }
+  async function roLiveStop(part) {
+    const S = roShares(), sh = S.find((x) => x.p === part); if (!sh) return;
+    if (sh.url) await dbxCall("sharing/revoke_shared_link", { url: sh.url }).catch((e) => { if (!/not_found/.test((e && e.summary) || "")) throw e; });
+    await dbxCall("files/delete_v2", { path: roPath(sh) }).catch(() => {});
+    state.partages = S.filter((x) => x !== sh); commit();
+  }
+  // Après chaque enregistrement réussi dans Dropbox : on réécrit les pages partagées qui ont changé
+  let roPushing = false;
+  async function roPushAll() {
+    if (!roLiveOk() || roPushing || !roShares().length) return;
+    roPushing = true;
+    try { for (const sh of roShares().slice()) { try { await roUpload(sh); } catch (e) { /* réessayé au prochain enregistrement */ } } }
+    finally { roPushing = false; }
+  }
+  // Côté personne qui a le lien : on va chercher le fichier, puis on revérifie régulièrement
+  const roRaw = (url) => { const u = new URL(url); u.hostname = "dl.dropboxusercontent.com"; u.searchParams.delete("dl"); u.searchParams.delete("raw"); return u.href; };
+  async function roFetch(url) {
+    const r = await fetch(roRaw(url) + (roRaw(url).includes("?") ? "&" : "?") + "_=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw Object.assign(new Error("HTTP " + r.status), { status: r.status });
+    return r.json();
+  }
   async function roStart() {
     document.documentElement.classList.add("ro");
     const host = document.createElement("div"); host.id = "roView"; document.body.append(host);
     host.append($("#notice"));
     let o = null;
-    try { o = await roUnpack(decodeURIComponent(location.hash.replace(/^#voir=/, "").split("&")[0])); } catch (e) { o = null; }
+    const tok = decodeURIComponent(location.hash.replace(/^#voir=/, "").split("&")[0]);
+    if (tok[0] === "d") {
+      // Lien qui suit le dossier : dernière version gardée sur cet appareil (hors réseau), puis celle de Dropbox
+      try { roUrl = new TextDecoder().decode(b64u.dec(tok.slice(1))); } catch (e) { roUrl = ""; }
+      const ck = "patch-live-voir:" + roUrl;
+      try { o = JSON.parse(localStorage.getItem(ck) || "null"); } catch (e) { o = null; }
+      if (roUrl) try { o = await roFetch(roUrl); roOk = Date.now(); try { localStorage.setItem(ck, JSON.stringify(o)); } catch (e) { /* ignore */ } } catch (e) { roFail = e; if (roGone(e)) { o = null; try { localStorage.removeItem(ck); } catch (err) { /* ignore */ } } }
+      if (roUrl) roPoll(ck);
+    } else try { o = await roUnpack(tok); } catch (e) { o = null; }
     if (!o || !o.s || !PRINT_SRC[o.p]) {
+      if (roGone(roFail)) {
+        host.insertAdjacentHTML("afterbegin", `<header class="robar"><div class="rot"><span class="rotag">Lecture seule</span><div class="rotx"><b class="ronm">Patch Live</b></div></div></header><main class="ropaper"><p class="roempty">Ce partage a été arrêté par la personne qui l'a envoyé.</p></main>`);
+        return;
+      }
+      if (roFail) {
+        host.insertAdjacentHTML("afterbegin", `<header class="robar"><div class="rot"><span class="rotag">Lecture seule</span><div class="rotx"><b class="ronm">Patch Live</b></div></div></header><main class="ropaper"><p class="roempty">La page n'a pas pu être chargée (pas de réseau ?). Elle s'affichera dès que la connexion revient.</p></main>`);
+        return;
+      }
       host.insertAdjacentHTML("afterbegin", `<header class="robar"><div class="rot"><span class="rotag">Lecture seule</span><div class="rotx"><b class="ronm">Patch Live</b></div></div></header><main class="ropaper"><p class="roempty">Ce lien est incomplet : il a sans doute été coupé en route. Demande à la personne qui l'a envoyé de le renvoyer (par WhatsApp, Messages ou mail plutôt que par SMS).</p></main>`);
       return;
     }
+    roSet(o);
+    roPaint();
+    if (o.p === "charge" && chState().camions.some((t) => t.cases.some((c) => c.rang))) chLiveShow(true);
+  }
+  let roUrl = "", roOk = 0, roFail = null;
+  const roGone = (e) => !!e && [404, 409, 410].includes(e.status);
+  function roSet(o) {
     roData = o;
     state = Object.assign(vide(), o.s, { exemple: false });
     state.sorties = state.sorties || []; state.musiciens = state.musiciens || [];
     try { tidyPersons(state); } catch (e) { /* ignore */ }
     document.title = `${state.dossier.nom || "Dossier"} · ${roTitle(o.p)}`;
-    roPaint();
-    if (o.p === "charge" && chState().camions.some((t) => t.cases.some((c) => c.rang))) chLiveShow(true);
+  }
+  // Toutes les 30 s quand la page est à l'écran, et au retour sur la page ou du réseau
+  function roPoll(ck) {
+    let last = 0;
+    const tick = async (force) => {
+      if (document.hidden || (!force && Date.now() - last < 25000)) return; last = Date.now();
+      try {
+        const o = await roFetch(roUrl); roOk = Date.now(); roFail = null;
+        if (!o || !o.s || !PRINT_SRC[o.p]) return;
+        const same = roData && JSON.stringify(roData.s) === JSON.stringify(o.s);
+        try { localStorage.setItem(ck, JSON.stringify(o)); } catch (e) { /* ignore */ }
+        if (!roData) { location.reload(); return; }
+        if (same) { roData.at = o.at; roStamp(); return; }
+        const y = scrollY; roSet(o); roPaint(); scrollTo(0, y);
+        if (chLiveOn()) chLiveRender();
+        const f = $("#roView .rowhen"); if (f) { f.classList.remove("ronew"); void f.offsetWidth; f.classList.add("ronew"); }
+      } catch (e) { roFail = e; if (roGone(e)) { try { localStorage.removeItem(ck); } catch (err) { /* ignore */ } location.reload(); return; } roStamp(); }
+    };
+    setInterval(() => tick(), 30000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(true); });
+    addEventListener("online", () => tick(true));
+  }
+  function roWhen(at) { return at ? new Date(at).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : ""; }
+  function roStamp() {
+    const f = $("#roView .rowhen"); if (!f || !roData) return;
+    f.textContent = roUrl
+      ? (roFail && !roOk ? `Pas de réseau : version du ${roWhen(roData.at)} gardée sur cet appareil.` : roFail ? `Pas de réseau pour l'instant : version du ${roWhen(roData.at)}. Elle se mettra à jour au retour du réseau.` : `Version du ${roWhen(roData.at)}. Elle se met à jour toute seule.`)
+      : `Copie envoyée le ${roWhen(roData.at)}. Elle ne se met pas à jour toute seule.`;
   }
   function roPaint() {
     const host = $("#roView"), o = roData, d = state.dossier || {}, t = roTitle(o.p);
-    const when = o.at ? new Date(o.at).toLocaleString("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "";
     let body = ""; try { body = PRINT_SRC[o.p]() || ""; } catch (e) { body = ""; }
     const live = o.p === "charge" ? `<button type="button" class="rolive" id="roLive">${CHL_ICO}Mode chargement</button>` : "";
     host.querySelectorAll(".robar, .ropaper, style.rocss").forEach((x) => x.remove());
     host.insertAdjacentHTML("afterbegin", `<style class="rocss">${PRINT_CSS}</style><header class="robar"><div class="rot"><span class="rotag">Lecture seule</span><div class="rotx"><b class="ronm">${esc(d.nom || "Dossier")}</b><span class="ropg">${esc([t, d.version, d.lieu].filter(Boolean).join(" · "))}</span></div></div>
       <div class="roact">${live}<button type="button" id="roPdf">Imprimer ou PDF</button><button type="button" id="roFwd">${RO_ICO}Partager</button></div></header>
-      <main class="ropaper pr">${when ? `<p class="rowhen">Copie envoyée le ${esc(when)}. Elle ne se met pas à jour toute seule.</p>` : ""}${body || '<p class="roempty">Cette page est vide.</p>'}</main>`);
+      <main class="ropaper pr"><p class="rowhen" aria-live="polite"></p>${body || '<p class="roempty">Cette page est vide.</p>'}</main>`);
+    roStamp();
     // Tableaux larges : ils défilent en largeur sur le téléphone, la page ne déborde pas
     host.querySelectorAll("main table").forEach((tb) => { if (tb.closest(".rotw")) return; const w = document.createElement("div"); w.className = "rotw" + ((tb.rows[0] && tb.rows[0].cells.length) >= 6 ? " wide" : ""); tb.before(w); w.append(tb); });
     host.querySelector(".robar").addEventListener("click", (e) => {
@@ -13509,6 +13637,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         dbx.lastClash = clJ;
       }
       dbxPaint("ok");
+      roPushAll();
     } catch (e) {
       if (e && e.code === "auth") dbxPaint("auth");
       else if (e && e.code === "trop-recent") { dbxPaint("err"); notice("Un collègue a enregistré ce dossier avec une version plus récente de Patch Live : la synchro est en pause sur cet appareil. Ferme complètement l'appli et rouvre-la pour la mettre à jour.", true); }
