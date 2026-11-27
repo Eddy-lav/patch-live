@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "c18a7da317";</script>
+<script>window.PL_VER = "ace3923dfd";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -255,6 +255,33 @@ body.hide-mus .c-mus, body.hide-pied .c-pied, body.hide-pad .c-pad, body.hide-48
 .dbxit small { color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
 .dbxsave { display: flex; gap: 8px; align-items: flex-end; padding: 10px 14px 14px; border-top: 1px solid var(--line); }
 .dbxsave input { width: 100%; }
+/* Changer de dossier : recherche, récents datés, dossiers partagés pas encore ajoutés */
+.dbxq { padding: 0 14px 8px; }
+.dbxq input { width: 100%; }
+.dbxit.cur span::after { content: " · ouvert"; color: var(--muted); font-size: var(--fs-xs); }
+.dbxshare { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 8px; font-size: var(--fs-md); }
+.dbxshare span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.docrec small { display: block; color: var(--muted); font-size: var(--fs-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.docrec.cur { font-weight: 700; }
+#docMenu button small { display: block; color: var(--muted); font-size: var(--fs-xs); font-weight: 400; }
+.docrec.cur::before { content: "✓ "; }
+/* Bienvenue : première ouverture de l'appli, ou lien d'un collègue sans Dropbox connecté */
+.weldlg { width: min(520px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow-y: auto; padding: 26px 26px 20px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+.weldlg::backdrop { background: rgb(0 0 0 / 0.55); }
+.weldlg .weltag { display: inline-block; padding: 4px 14px 6px; background: var(--tape, #fce694); color: var(--tape-ink, #373737); font: 700 26px/1.1 "Barlow Semi Condensed", var(--font-ui); transform: rotate(-2deg); clip-path: polygon(1.5% 0, 100% 6%, 98.5% 100%, 0 92%); margin: 0 0 14px -4px; }
+.weldlg .wellead { margin: 0 0 16px; font-size: var(--fs-base); color: var(--muted); max-width: 46ch; }
+.weldlg ol { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.weldlg li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.weldlg li .wk { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm); }
+.weldlg li:first-child .wk { border-color: var(--tape, #fce694); }
+.weldlg li b { display: block; font-size: var(--fs-base); }
+.weldlg li small { color: var(--muted); font-size: var(--fs-sm); }
+.weldlg .welgo { display: flex; flex-direction: column; gap: 8px; }
+.weldlg .welgo .btn.primary { font-size: var(--fs-base); padding: 11px 14px; }
+.weldlg .welalt { display: flex; flex-wrap: wrap; gap: 8px; }
+.weldlg .welalt .btn { flex: 1 1 140px; }
+.weldlg .welnote { margin: 14px 0 0; font-size: var(--fs-xs); color: var(--muted); }
+@media (max-width: 760px) { .weldlg { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border: 0; padding: max(22px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); } .weldlg[open] { display: flex; flex-direction: column; } .weldlg .welgo { margin-top: auto; } }
 .example-tag { display: inline-block; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 6px; border-radius: var(--r-sm); background: var(--accent-soft); color: var(--ink); margin-left: 6px; vertical-align: middle; }
 
 .navs { position: sticky; top: 0; z-index: 20; background: var(--bg); margin-top: 10px; }
@@ -1878,6 +1905,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <button id="newBtn" type="button" role="menuitem">Nouveau dossier</button>
   <label class="mi file-btn" role="menuitem"><span>Ouvrir un fichier Excel de l'appareil…<small>fait par l'appli, ou un ancien patch à reprendre</small></span><input id="fileIn" type="file" accept=".xlsx"></label>
   <div id="docDbx"></div>
+  <hr id="welcomeHr" hidden><button id="welcomeBtn" type="button" role="menuitem" hidden>Premiers pas…<small>comment démarrer, à envoyer à un collègue</small></button>
 </div>
 <div id="dbxMenu" class="dbxmenu" role="menu" hidden></div>
 <div id="ctxMenu" class="dbxmenu appmenu" role="menu" hidden></div>
@@ -1908,9 +1936,27 @@ tr.flash > td { animation: flash 1.6s ease-out; }
 </dialog>
 <dialog id="dbxDlg" class="dbxdlg" aria-labelledby="dbxTitle">
   <div class="dbxtop"><strong id="dbxTitle">Dropbox</strong><button class="btn small" type="button" data-dclose>Fermer</button></div>
+  <div id="dbxQRow" class="dbxq" hidden><input id="dbxQ" type="search" placeholder="Chercher un dossier par son nom (DH, Taratata…)" aria-label="Chercher un dossier dans Dropbox" autocomplete="off"></div>
   <div id="dbxCrumbs" class="dbxcrumbs"></div>
-  <div class="dbxbody"><div id="dbxRecent"></div><div id="dbxList"></div></div>
+  <div class="dbxbody"><div id="dbxShared"></div><div id="dbxRecent"></div><div id="dbxList"></div></div>
   <form id="dbxSaveRow" class="dbxsave" hidden><label class="field" style="flex:1"><span>Nom du fichier</span><input id="dbxName" type="text" required></label><button class="btn primary" type="submit">Enregistrer ici</button></form>
+</dialog>
+<dialog id="welDlg" class="weldlg" aria-labelledby="welTitle">
+  <h1 id="welTitle" class="weltag">Bienvenue dans Patch Live</h1>
+  <p id="welLead" class="wellead">Les dossiers techniques de la tournée, à plusieurs, sur ordinateur et téléphone. Rien à installer.</p>
+  <ol>
+    <li><span class="wk">1</span><span><b>Connecte ton Dropbox</b><small>Sur le site de Dropbox, avec ton compte habituel. Une seule fois par appareil.</small></span></li>
+    <li><span class="wk">2</span><span><b id="welStep2">Choisis le dossier du projet</b><small id="welStep2s">Dans le dossier Dropbox partagé par l'équipe. L'appli te montre ceux qu'on t'a partagés.</small></span></li>
+    <li><span class="wk">3</span><span><b>C'est tout</b><small>Chaque modif s'enregistre toute seule et arrive chez les collègues. Ça marche aussi hors ligne.</small></span></li>
+  </ol>
+  <div class="welgo">
+    <button id="welLogin" class="btn primary" type="button">Se connecter à Dropbox</button>
+    <div id="welAlt" class="welalt">
+      <button class="btn" type="button" data-wel="example">Découvrir avec un exemple</button>
+      <button class="btn" type="button" data-wel="file">Ouvrir un fichier Excel</button>
+    </div>
+  </div>
+  <p class="welnote">Pas de Dropbox ? Tu peux tout faire sans : « Découvrir avec un exemple », puis Dossier › Nouveau dossier. Tu enregistres alors en Excel.</p>
 </dialog>
 <dialog id="impDlg" class="impdlg" aria-labelledby="impTitle">
   <div class="imptop"><div><strong id="impTitle">Reprendre un ancien Excel</strong><span id="impFile" class="impfile"></span></div><button class="btn small" type="button" data-iclose>Fermer</button></div>
@@ -12576,8 +12622,28 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const titre = `${d.nom}${d.version ? " · " + d.version : ""}`;
 
     const info = wb.addWorksheet("Infos");
-    info.columns = [{ width: 18 }, { width: 50 }];
+    info.columns = [{ width: 18 }, { width: 72 }];
     info.addRow([d.nom]).font = { bold: true, size: 16 };
+    info.addRow([]);
+    // Mode d'emploi en tête : comment rouvrir ce fichier dans l'appli (lien direct si le dossier est dans Dropbox)
+    const appUrl = DBX_ON ? dbxRedirect() : "https://eddy-lav.github.io/patch-live/";
+    const inDbx = DBX_ON && dbx.file && !xlNoLink, JAUNE = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFCE694" } };
+    const guideRow = (a, b, link) => {
+      const r = info.addRow([a, link ? { text: b, hyperlink: link } : b]);
+      r.eachCell((c) => { c.fill = JAUNE; c.font = { color: { argb: "FF373737" }, ...(link ? { underline: true, color: { argb: "FF1F4E9A" } } : {}) }; c.alignment = { vertical: "top", wrapText: true }; });
+      r.getCell(1).font = { bold: true, color: { argb: "FF373737" } };
+      return r;
+    };
+    const gh = info.addRow(["Ouvrir ce dossier dans l'appli Patch Live"]); gh.getCell(1).font = { bold: true, size: 13, color: { argb: "FF373737" } };
+    gh.getCell(1).fill = JAUNE; gh.getCell(2).fill = JAUNE; info.mergeCells(`A${gh.number}:B${gh.number}`);
+    if (inDbx) {
+      guideRow("Lien direct", dbxRedirect() + "#dbx=" + encodeURIComponent(dbx.file.id), dbxRedirect() + "#dbx=" + encodeURIComponent(dbx.file.id));
+      guideRow("La première fois", "Le lien ouvre l'appli (ordinateur ou téléphone, rien à installer). Connecte ton Dropbox : ce dossier s'ouvre tout seul. Il doit être dans un dossier Dropbox partagé avec toi.").height = 45;
+      guideRow("Ensuite", "Dossier › Dossiers récents pour le retrouver. Tes modifs s'enregistrent dans ce fichier et arrivent chez toute l'équipe.").height = 30;
+    } else {
+      guideRow("1. Ouvre l'appli", appUrl, appUrl);
+      guideRow("2. Ouvre le fichier", "Dans l'appli : Dossier (en haut, au-dessus du nom) › Ouvrir un fichier Excel de l'appareil, puis choisis ce fichier. S'il est dans Dropbox : connecte ton Dropbox puis Dossier › Changer de dossier.").height = 45;
+    }
     info.addRow([]);
     [["Type", d.type], ["Version", d.version], ["Enregistré le", new Date().toLocaleString("fr-FR")], ["Sources", state.lignes.length], ["Boîtiers", state.boites.length], ["Stage racks et I/O", state.racks.length], ...loops().map((L) => [L.nom, `${L.freq === "96" ? "96" : "48"} kHz · ${(LOOP_KINDS.find((k) => k[0] === (L.kind || "digico")) || [, ""])[1]} · ${loopUse(L).tot} canaux utilisés sur ${Number(L.max) || "?"}`])].forEach((r) => { const row = info.addRow(r); row.getCell(1).font = { bold: true }; });
     info.addRow([]);
@@ -13358,7 +13424,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       armedNew = false; e.target.textContent = "Nouveau dossier"; e.target.classList.remove("danger", "armed");
       const was = DBX_ON && dbx.file ? (state.dossier && state.dossier.nom) || "le dossier" : "";
       dbxDetach(); state = vide(); state.dossier.guide = "on"; markSave("new"); record(); persist(); closeMenus(); setView("materiel");
-      notice(`Dossier vide créé.${was ? ` « ${esc(was)} » est intact dans Dropbox : « Ouvrir depuis Dropbox » pour y revenir.` : ""} Les étapes sont ci-dessous, dans l'ordre que tu veux.`);
+      notice(`Dossier vide créé.${was ? ` « ${esc(was)} » est intact dans Dropbox : Dossier › Dossiers récents pour y revenir.` : ""} Les étapes sont ci-dessous, dans l'ordre que tu veux.`);
     });
   }
   function focusLastIn(tbl, n, f) {
@@ -13418,6 +13484,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     dbx.tok = { access: j.access_token, exp: Date.now() + j.expires_in * 1000, refresh: j.refresh_token };
     lsSet("patch-live-dbx", dbx.tok);
     notice("Connecté à Dropbox.");
+    return true;
   }
   function dbxLogout() {
     const t = dbx.tok; dbx.tok = null; lsSet("patch-live-dbx", null); dbxDetach();
@@ -13453,7 +13520,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   async function stateBlob(st) { const keep = state; state = st; try { return await (await buildWorkbook()).xlsx.writeBuffer(); } finally { state = keep; } }
   function dbxSetFile(meta) {
     dbx.file = meta ? { id: meta.id, rev: meta.rev, path: meta.path_lower, name: meta.name } : null; lsSet("patch-live-dbxfile", dbx.file);
-    if (meta) { const rec = (lsGet("patch-live-dbxrecent") || []).filter((x) => x.id !== meta.id); rec.unshift({ id: meta.id, name: meta.name, path: meta.path_display || meta.path_lower }); lsSet("patch-live-dbxrecent", rec.slice(0, 8)); }
+    if (meta) { const rec = (lsGet("patch-live-dbxrecent") || []).filter((x) => x.id !== meta.id); rec.unshift({ id: meta.id, name: meta.name, path: meta.path_display || meta.path_lower, t: Date.now() }); lsSet("patch-live-dbxrecent", rec.slice(0, 12)); }
   }
   function dbxSetBase(st) { dbx.base = st == null ? null : JSON.stringify(st); try { if (dbx.base == null) localStorage.removeItem("patch-live-dbxbase"); else localStorage.setItem("patch-live-dbxbase", dbx.base); } catch (e) { /* ignore */ } }
   function dbxDetach() { if (!dbx.file) return; dbxSetFile(null); dbxSetBase(null); dbx.gen++; clearTimeout(dbx.timer); dbxPaint(); }
@@ -13706,16 +13773,18 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       dbxPaint("err");
       if (e && e.code === "trop-recent") { notice("Ce dossier a été enregistré par une version plus récente de Patch Live. Ferme complètement l'appli et rouvre-la pour la mettre à jour, puis rouvre le dossier.", true); return false; }
       if (e && e.code === "pas-appli" && e.buf) { dbxPaint(); if ($("#dbxDlg").open) $("#dbxDlg").close(); try { await impOpen(e.buf, String(idOrPath).split("/").pop()); } catch (err) { notice("Impossible de lire ce fichier Excel.", true); } return false; }
-      notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? "Ce fichier est introuvable dans ton Dropbox. Vérifie que le dossier partagé a bien été ajouté à ton Dropbox." : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
+      notice(e && e.code === "pas-appli" ? "Ce fichier n'a pas été créé par l'appli." : e && e.code === "auth" ? "Connecte-toi à Dropbox pour ouvrir ce dossier." : e && e.status === 409 ? `Ce fichier est introuvable dans ton Dropbox : le dossier partagé n'y est sans doute pas encore ajouté. <button class="btn small primary" type="button" data-dbx="open">Voir les dossiers partagés avec moi</button>` : dbxErrMsg("Impossible d'ouvrir ce fichier depuis Dropbox.", e), true);
       return false;
     }
   }
+  let xlNoLink = false; // copie vers un nouveau fichier : pas encore d'adresse, pas de lien direct dans l'Excel
   async function dbxSaveAs(dir, name) {
     const fname = (name.replace(/[\\/:*?"<>|]+/g, " ").trim() || "Dossier").replace(/\.xlsx$/i, "") + ".xlsx";
     try {
       dbxPaint("sync");
       const snap = JSON.parse(J(state)); snap.exemple = false;
-      const up = await dbxCall("files/upload", { path: (dir || "") + "/" + fname, mode: { ".tag": "add" }, autorename: true, mute: false }, { content: true, body: await stateBlob(snap) });
+      xlNoLink = true; let blob; try { blob = await stateBlob(snap); } finally { xlNoLink = false; }
+      const up = await dbxCall("files/upload", { path: (dir || "") + "/" + fname, mode: { ".tag": "add" }, autorename: true, mute: false }, { content: true, body: blob });
       state.exemple = false; persist(); renderHeader();
       dbxSetFile(up); dbxSetBase(snap);
       notice(`Enregistré dans Dropbox : ${esc(up.path_display || up.name)}. Les prochaines modifs s'y enregistrent toutes seules. « Dropbox › Copier le lien » pour l'envoyer à l'équipe.`);
@@ -13736,20 +13805,69 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const dbxErrMsg = (base, e) => { const t = dbxErr(e), raw = (e && (e.summary || e.message)) || ""; return `${base} ${esc(t)}${raw ? ` <small>(code : ${esc(raw)})</small>` : ""}`; };
   const dbxLink = () => dbxRedirect() + "#dbx=" + encodeURIComponent(dbx.file.id);
 
+  // « il y a 2 h », « hier », « le 3 nov. »
+  function dbxAgo(t) {
+    if (!t) return ""; const m = Math.round((Date.now() - t) / 60000);
+    if (m < 2) return "à l'instant"; if (m < 60) return `il y a ${m} min`; if (m < 24 * 60) return `il y a ${Math.round(m / 60)} h`;
+    if (m < 48 * 60) return "hier"; if (m < 7 * 24 * 60) return `il y a ${Math.round(m / 1440)} jours`;
+    return "le " + new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  }
+  const dbxRecItem = (x) => { const cur = dbx.file && dbx.file.id === x.id, dir = (x.path || "").replace(/\/[^/]*$/, "") || "/"; return `<button type="button" class="dbxit${cur ? " cur" : ""}" data-dfile="${esc(x.id)}"><span>📄 ${esc(x.name.replace(/\.xlsx$/i, ""))}</span><small title="${esc(dir)}">${esc(x.t ? dbxAgo(x.t) + " · " : "")}${esc(dir.split("/").pop() || "/")}</small></button>`; };
+  // Recherche par nom dans tout le Dropbox (fichiers .xlsx)
+  let dbxQTimer = 0, dbxQGen = 0;
+  async function dbxSearch() {
+    const q = $("#dbxQ").value.trim(), g = ++dbxQGen;
+    if (!q) { dbxBrowse("open"); return; }
+    $("#dbxCrumbs").innerHTML = `Résultats pour <b>${esc(q)}</b> · <button type="button" class="lnk" data-dqclear>tout le Dropbox</button>`;
+    $("#dbxRecent").innerHTML = ""; $("#dbxShared").innerHTML = ""; $("#dbxList").innerHTML = `<p class="hint">Recherche…</p>`;
+    try {
+      const j = await dbxCall("files/search_v2", { query: q, options: { file_extensions: ["xlsx"], max_results: 40, file_status: "active" } });
+      if (g !== dbxQGen) return;
+      const es = (j.matches || []).map((m) => m.metadata && m.metadata.metadata).filter((e) => e && e[".tag"] === "file");
+      $("#dbxList").innerHTML = es.map((e) => `<button type="button" class="dbxit${dbx.file && dbx.file.id === e.id ? " cur" : ""}" data-dfile="${esc(e.id)}"><span>📄 ${esc(e.name.replace(/\.xlsx$/i, ""))}</span><small title="${esc(e.path_display || "")}">${esc(((e.path_display || "").replace(/\/[^/]*$/, "").split("/").pop()) || "/")}</small></button>`).join("")
+        || `<p class="hint">Aucun fichier .xlsx ne contient « ${esc(q)} ». Si le dossier vient d'un collègue, vérifie qu'il est bien ajouté à ton Dropbox (plus bas, sans recherche).</p>`;
+    } catch (e) { if (g === dbxQGen) $("#dbxList").innerHTML = `<p class="hint warn">${dbxErrMsg("La recherche n'a pas abouti.", e)}</p>`; }
+  }
+  // Dossiers partagés avec soi mais pas encore ajoutés à son Dropbox : invisibles sinon, c'est le piège de la première fois
+  let dbxShares = null;
+  async function dbxSharedPaint(mode, root) {
+    const el = $("#dbxShared"); el.innerHTML = "";
+    if (!root || dbxShares === "off") return;
+    try {
+      if (!dbxShares) { const j = await dbxCall("sharing/list_folders", { limit: 200 }); dbxShares = (j.entries || []).filter((f) => !f.path_lower); }
+      if (dlgMode !== mode || dlgPath || !$("#dbxDlg").open || $("#dbxQ").value.trim()) return;
+      el.innerHTML = dbxShares.length ? `<div class="dbxh">Partagés avec toi, pas encore dans ton Dropbox</div>${dbxShares.map((f) => `<div class="dbxshare"><span>📁 ${esc(f.name)}</span><button type="button" class="btn small primary" data-dmount="${esc(f.shared_folder_id)}">Ajouter à mon Dropbox</button></div>`).join("")}` : "";
+    } catch (e) { dbxShares = "off"; } // droit sharing.read absent : on n'affiche simplement pas cette partie
+  }
+  async function dbxMount(id, btn) {
+    btn.disabled = true; btn.textContent = "Ajout…";
+    try {
+      const f = await dbxCall("sharing/mount_folder", { shared_folder_id: id });
+      dbxShares = Array.isArray(dbxShares) ? dbxShares.filter((x) => x.shared_folder_id !== id) : dbxShares;
+      dbxBrowse(dlgMode, f.path_display || f.path_lower || "");
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "Ajouter à mon Dropbox";
+      const m = (e && e.summary) || "";
+      $("#dbxShared").insertAdjacentHTML("beforeend", `<p class="hint warn">${/missing_scope/.test(m) ? "L'appli n'a pas le droit d'ajouter ce dossier pour toi : ouvre l'invitation dans ton mail ou sur dropbox.com (Partagé), clique sur « Ajouter à Dropbox », puis reviens ici." : dbxErrMsg("Le dossier n'a pas pu être ajouté.", e)}</p>`);
+    }
+  }
   // Fenêtre de navigation dans Dropbox
   let dlgMode = "open", dlgPath = "";
   async function dbxBrowse(mode, path) {
     dlgMode = mode; dlgPath = path == null ? dlgPath : path;
     const d = $("#dbxDlg");
-    if (!d.open) { d.showModal(); }
-    $("#dbxTitle").textContent = mode === "save" ? "Enregistrer dans Dropbox" : "Ouvrir depuis Dropbox";
+    if (!d.open) { d.showModal(); if (mode === "open" && matchMedia("(pointer: fine)").matches) setTimeout(() => $("#dbxQ").focus(), 0); }
+    $("#dbxTitle").textContent = mode === "save" ? "Enregistrer dans Dropbox" : dbx.first ? "Choisis ton dossier" : "Changer de dossier";
     $("#dbxSaveRow").hidden = mode !== "save";
+    $("#dbxQRow").hidden = mode !== "open";
+    if ($("#dbxQ").value.trim() && mode === "open") { dbxSearch(); return; }
+    dbxSharedPaint(mode, !dlgPath);
     if (mode === "save" && !$("#dbxName").value) $("#dbxName").value = dbxNameOf();
     const crumbs = [["", "Dropbox"]]; let acc = "";
     dlgPath.split("/").filter(Boolean).forEach((p) => { acc += "/" + p; crumbs.push([acc, p]); });
     $("#dbxCrumbs").innerHTML = crumbs.map(([p, n], i) => i === crumbs.length - 1 ? `<b>${esc(n)}</b>` : `<button type="button" class="lnk" data-dpath="${esc(p)}">${esc(n)}</button> › `).join("");
     const rec = mode === "open" && !dlgPath ? (lsGet("patch-live-dbxrecent") || []) : [];
-    $("#dbxRecent").innerHTML = rec.length ? `<div class="dbxh">Récents</div>${rec.map((x) => `<button type="button" class="dbxit" data-dfile="${esc(x.id)}"><span>📄 ${esc(x.name)}</span><small>${esc(x.path.replace(/\/[^/]*$/, "") || "/")}</small></button>`).join("")}<div class="dbxh">Tout le Dropbox</div>` : "";
+    $("#dbxRecent").innerHTML = rec.length ? `<div class="dbxh">Ouverts récemment</div>${rec.map(dbxRecItem).join("")}<div class="dbxh">Tout le Dropbox</div>` : dbx.first ? `<p class="hint">Va dans le dossier Dropbox du projet (souvent un dossier partagé par l'équipe) et touche le fichier .xlsx. Ou cherche-le par son nom ci-dessus.</p>` : "";
     const list = $("#dbxList"); list.innerHTML = `<p class="hint">Chargement…</p>`;
     try {
       const es = (await dbxListFolder(dlgPath)).filter((e) => e[".tag"] === "folder" || (mode === "open" && /\.xlsx$/i.test(e.name)));
@@ -13774,7 +13892,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function dbxMenu(btn) {
     const m = $("#dbxMenu"); if (!m.hidden) { m.hidden = true; return; }
     m.innerHTML = !dbx.tok ? `<button type="button" data-dbx="login">Se connecter à Dropbox</button>` :
-      `<button type="button" data-dbx="open">Ouvrir depuis Dropbox…</button><button type="button" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>${dbx.file ? `<button type="button" data-dbx="link">Copier le lien du dossier</button><button type="button" data-dbx="sync">Synchroniser maintenant</button><button type="button" data-dbx="revs">Versions précédentes…</button><button type="button" data-dbx="detach">Ne plus synchroniser ce dossier</button>` : ""}<button type="button" data-dbx="logout">Se déconnecter de Dropbox</button>`;
+      `<button type="button" data-dbx="open">Changer de dossier…</button><button type="button" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>${dbx.file ? `<button type="button" data-dbx="link">Copier le lien du dossier</button><button type="button" data-dbx="sync">Synchroniser maintenant</button><button type="button" data-dbx="revs">Versions précédentes…</button><button type="button" data-dbx="detach">Ne plus synchroniser ce dossier</button>` : ""}<button type="button" data-dbx="logout">Se déconnecter de Dropbox</button>`;
     m.innerHTML += `<button type="button" data-dbx="local" class="dbxlocal">Ouvrir un fichier Excel de l'appareil…</button>`;
     m.hidden = false;
     const r = btn.getBoundingClientRect(); m.style.top = r.bottom + 4 + "px"; m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + "px";
@@ -13809,10 +13927,17 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       }
     });
     $("#dbxDlg").addEventListener("click", (e) => {
+      const mt = e.target.closest("[data-dmount]"); if (mt) { dbxMount(mt.dataset.dmount, mt); return; }
+      if (e.target.closest("[data-dqclear]")) { $("#dbxQ").value = ""; dbxBrowse("open", ""); return; }
       const p = e.target.closest("[data-dpath]"); if (p) { dbxBrowse(dlgMode, p.dataset.dpath); return; }
       const f = e.target.closest("[data-dfile]"); if (f) { $("#dbxDlg").close(); dbxOpen(f.dataset.dfile); return; }
       if (e.target.closest("[data-dclose]") || e.target === $("#dbxDlg")) $("#dbxDlg").close();
     });
+    $("#dbxQ").addEventListener("input", () => { clearTimeout(dbxQTimer); dbxQTimer = setTimeout(dbxSearch, 350); });
+    $("#dbxDlg").addEventListener("close", () => { dbx.first = false; $("#dbxQ").value = ""; });
+    // Cmd/Ctrl+O : changer de dossier
+    document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (e.key === "o" || e.key === "O")) { e.preventDefault(); closeMenus(); if (dbx.tok) dbxBrowse("open", ""); else welOpen(); } });
+    welBind();
     $("#dbxSaveRow").addEventListener("submit", (e) => { e.preventDefault(); $("#dbxDlg").close(); dbxSaveAs(dlgPath, $("#dbxName").value); });
     // Choisir l'autre valeur d'un conflit
     $("#notice").addEventListener("click", (e) => {
@@ -13826,21 +13951,49 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     document.addEventListener("visibilitychange", () => { if (!document.hidden) dbxSync(); else if (/pending/.test(dbx.status || "")) { clearTimeout(dbx.timer); dbxSync(true); } });
     setInterval(() => { if (!document.hidden) dbxSync(); }, 60000);
   }
+  // ---------- Bienvenue : la première fois, en trois étapes ----------
+  function welOpen(kind) {
+    const d = $("#welDlg"); if (!d || d.open) return;
+    const link = kind === "link";
+    $("#welTitle").textContent = link ? "Un dossier t'attend" : "Bienvenue dans Patch Live";
+    $("#welLead").textContent = link ? "Un collègue t'a envoyé le lien d'un dossier technique. Connecte ton Dropbox et tu arrives directement dessus." : "Les dossiers techniques de la tournée, à plusieurs, sur ordinateur et téléphone. Rien à installer.";
+    $("#welStep2").textContent = link ? "Le dossier s'ouvre tout seul" : "Choisis le dossier du projet";
+    $("#welStep2s").textContent = link ? "Il doit être dans un dossier Dropbox partagé avec toi. Sinon, l'appli te montre ceux qu'on t'a partagés." : "Dans le dossier Dropbox partagé par l'équipe. L'appli te montre ceux qu'on t'a partagés.";
+    $("#welLogin").textContent = dbx.tok ? "Choisir un dossier dans Dropbox" : "Se connecter à Dropbox";
+    $("#welAlt").hidden = link; d.querySelector(".welnote").hidden = link;
+    d.showModal(); $("#welLogin").focus();
+  }
+  function welBind() {
+    const d = $("#welDlg");
+    d.addEventListener("close", () => lsSet("patch-live-welcome", 1));
+    $("#welLogin").addEventListener("click", () => { d.close(); if (dbx.tok) { dbx.first = true; dbxBrowse("open", ""); } else dbxLogin(); });
+    d.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-wel]"); if (!b) return;
+      d.close();
+      if (b.dataset.wel === "file") $("#fileIn").click();
+    });
+    $("#welcomeBtn").hidden = $("#welcomeHr").hidden = false;
+    $("#welcomeBtn").addEventListener("click", () => { closeMenus(); welOpen(); });
+  }
   async function dbxInit() {
     if (!DBX_ON) return;
     dbxBind();
-    try { await dbxCallback(); } catch (e) { notice("La connexion à Dropbox n'a pas abouti.", true); }
+    let logged = false;
+    try { logged = await dbxCallback(); } catch (e) { notice("La connexion à Dropbox n'a pas abouti.", true); }
     dbxPaint();
     const h = location.hash.match(/dbx=([^&]+)/);
     if (h) {
       const id = decodeURIComponent(h[1]);
       history.replaceState(null, "", dbxRedirect());
-      if (!dbx.tok) { notice(`Ce lien ouvre un dossier rangé dans Dropbox. <button class="btn small primary" type="button" data-dbx="login">Se connecter à Dropbox</button>`); lsSet("patch-live-pending", id); return; }
+      if (!dbx.tok) { notice(`Ce lien ouvre un dossier rangé dans Dropbox. <button class="btn small primary" type="button" data-dbx="login">Se connecter à Dropbox</button>`); lsSet("patch-live-pending", id); welOpen("link"); return; }
       if (!dbx.file || dbx.file.id !== id) { await dbxOpen(id); return; }
     }
     if (!dbx.tok && state.exemple) notice(`Ceci est un dossier d'exemple pour découvrir l'appli. Pour travailler à plusieurs, range tes dossiers dans Dropbox : <button class="btn small primary" type="button" data-dbx="login">Se connecter à Dropbox</button>`);
     const pend = lsGet("patch-live-pending");
     if (pend && dbx.tok) { lsSet("patch-live-pending", null); if (!dbx.file || dbx.file.id !== pend) { await dbxOpen(pend); return; } }
+    // Tout premier lancement : on accueille. Juste après la connexion : on propose tout de suite de choisir son dossier
+    if (logged && !dbx.file) { dbx.first = true; dbxBrowse("open", ""); }
+    else if (!dbx.tok && state.exemple && !lsGet("patch-live-welcome")) welOpen();
     dbxStart();
   }
 
@@ -14004,12 +14157,18 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const setPref = (k, v) => { try { localStorage.setItem("patch-live-" + k, v); } catch (e) { /* ignore */ } };
   // Menu « … » de l'en-tête
   function closeMenus() { $("#appMenu").hidden = true; $("#menuBtn").setAttribute("aria-expanded", "false"); $("#ctxMenu").hidden = true; $("#docMenu").hidden = true; $("#docMenuBtn").setAttribute("aria-expanded", "false"); }
+  // Dossiers Dropbox récents, en un clic depuis le menu « Dossier ▾ »
+  function docRecents() {
+    const rec = (lsGet("patch-live-dbxrecent") || []).slice(0, 5); if (!rec.length) return "";
+    return `<div class="dbxh">Dossiers récents</div>${rec.map((x) => { const cur = dbx.file && dbx.file.id === x.id; return `<button type="button" role="menuitem" class="docrec${cur ? " cur" : ""}"${cur ? ' aria-current="true"' : ` data-docrec="${esc(x.id)}"`}>${esc(x.name.replace(/\.xlsx$/i, ""))}<small>${esc(cur ? "ouvert" : [dbxAgo(x.t), ((x.path || "").replace(/\/[^/]*$/, "").split("/").pop())].filter(Boolean).join(" · "))}</small></button>`; }).join("")}<hr>`;
+  }
+  $("#docMenu").addEventListener("click", (e) => { const r = e.target.closest("[data-docrec]"); if (r) dbxOpen(r.dataset.docrec); });
   // Menu « Dossier ▾ » : tout ce qui change de dossier (nouveau, ouvrir un Excel, Dropbox)
   $("#docMenuBtn").addEventListener("click", (e) => {
     e.stopPropagation(); const m = $("#docMenu"); if (!m.hidden) { closeMenus(); return; }
     closeMenus();
     const on = typeof DBX_ON !== "undefined" && DBX_ON;
-    $("#docDbx").innerHTML = !on ? "" : `<hr>${!dbx.tok ? `<button type="button" role="menuitem" data-dbx="login">Se connecter à Dropbox</button>` : `<button type="button" role="menuitem" data-dbx="open">Ouvrir depuis Dropbox…</button><button type="button" role="menuitem" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>`}`;
+    $("#docDbx").innerHTML = !on ? "" : `<hr>${!dbx.tok ? `<button type="button" role="menuitem" data-dbx="login">Se connecter à Dropbox<small>pour retrouver les dossiers de l'équipe et passer de l'un à l'autre</small></button>` : `${docRecents()}<button type="button" role="menuitem" data-dbx="open">Changer de dossier…<small>tous tes dossiers Dropbox, recherche par nom · ${/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘" : "Ctrl+"}O</small></button><button type="button" role="menuitem" data-dbx="save">${dbx.file ? "Enregistrer une copie dans Dropbox…" : "Enregistrer dans Dropbox…"}</button>`}`;
     const r = e.currentTarget.getBoundingClientRect(); placeMenu(m, r.left, r.bottom + 4); m.style.width = "300px";
     e.currentTarget.setAttribute("aria-expanded", "true");
     const f = m.querySelector("button, label"); if (f && e.detail === 0) f.focus();
