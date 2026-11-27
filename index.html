@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "2f1275f56b";</script>
+<script>window.PL_VER = "c18a7da317";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -2223,7 +2223,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <div class="toolbar chtop">
     <span id="chTrucks" class="chtrucks" role="group" aria-label="Camions"></span>
     <button id="chAddTruck" class="btn small" type="button">+ Camion</button>
-    <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
+    <span class="chaddw"><input id="chAddIn" type="text" data-suggest="dlCh" autocomplete="off" placeholder="Ajouter une case : malle longue, 4x K2, rack FOH…" aria-label="Case à ajouter"><button id="chAddBtn" class="btn small primary" type="button">Ajouter</button></span>
     <button id="chAddRow" class="btn small" type="button">+ Rang</button>
     <button id="chFiche" class="btn small" type="button" title="Une page par camion, rang par rang, à imprimer ou à enregistrer en PDF pour le chargement">Fiche une page</button>
     <button id="chLiveBtn" class="btn small" type="button" title="La fiche en plein écran sur le téléphone : l'écran reste allumé et un verrou « poche » ignore les touchers">Mode chargement</button>
@@ -7615,11 +7615,14 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const CH_CATS = { malle: ["Malle", "#fce694"], rack: ["Flight rack", "#c1dbe3"], console: ["Console", "#f6feaa"], diff: ["Enceintes", "#c7dfc5"], ampli: ["Amplis", "#a9c7d2"], backline: ["Backline", "#ead7c3"], autre: ["Autre", "#e5e7eb"] };
   // Cases types [nom, catégorie, largeur vue de face, profondeur, hauteur (cm), kg] : dimensions indicatives, à corriger
   // une fois (elles sont retenues dans ce navigateur pour les dossiers suivants)
-  const CH_PRESETS = [["Malle", "malle", 120, 60, 60, 80], ["Demi-malle", "malle", 60, 60, 60, 45], ["Malle câble", "malle", 120, 60, 70, 120], ["Tool", "malle", 120, 60, 90, 120], ["Console en flight", "console", 190, 100, 80, 250], ["Rack ampli", "ampli", 60, 80, 100, 200], ["Chariot de 4 enceintes", "diff", 135, 80, 150, 320], ["Sub sur roulettes", "diff", 140, 75, 60, 160], ["Malle backline", "backline", 120, 60, 80, 90]];
+  const CH_PRESETS = [["Malle longue", "malle", 120, 60, 60, 80], ["Malle carrée", "malle", 60, 60, 60, 45], ["Malle câble", "malle", 120, 60, 70, 120], ["Tool", "malle", 120, 60, 90, 120], ["Console en flight", "console", 190, 100, 80, 250], ["Rack ampli", "ampli", 60, 80, 100, 200], ["Chariot de 4 enceintes", "diff", 135, 80, 150, 320], ["Sub sur roulettes", "diff", 140, 75, 60, 160], ["Malle backline", "backline", 120, 60, 80, 90]];
+  // Anciens noms des cases types (Eddy, 27/11) : « malle » = malle longue, « demi-malle » = malle carrée
+  const CH_RENAME = { "malle": "Malle longue", "demi malle": "Malle carrée" };
   const CH_LIB_KEY = "patch-live-cases";
   let chLib = {};
   try { chLib = JSON.parse(localStorage.getItem(CH_LIB_KEY) || "{}") || {}; } catch (e) { chLib = {}; }
   const chKey = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  Object.keys(CH_RENAME).forEach((k) => { const x = chLib[k]; if (!x) return; delete chLib[k]; const nk = chKey(CH_RENAME[k]); if (!chLib[nk]) chLib[nk] = { ...x, nom: CH_RENAME[k] }; try { localStorage.setItem(CH_LIB_KEY, JSON.stringify(chLib)); } catch (e) { /* ignore */ } });
   function chLearn(c) {
     if (!c || !c.nom || c.ref) return;
     const n = chNative(c); chLib[chKey(c.nom)] = { nom: c.nom, cat: c.cat, w: n[0], h: n[1], d: n[2], kg: c.kg || 0, ...(c.nogerb ? { nogerb: true } : {}) };
@@ -7628,7 +7631,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   function chState() {
     if (!state.chargement || typeof state.chargement !== "object") state.chargement = {};
     const S = state.chargement; if (!Array.isArray(S.camions)) S.camions = [];
-    S.camions.forEach((t) => { if (!Array.isArray(t.rangs)) t.rangs = []; if (!Array.isArray(t.cases)) t.cases = []; });
+    S.camions.forEach((t) => { if (!Array.isArray(t.rangs)) t.rangs = []; if (!Array.isArray(t.cases)) t.cases = [];
+      t.cases.forEach((c) => { const nn = CH_RENAME[chKey(c.nom)]; if (nn) c.nom = nn; }); });
     return S;
   }
   let chCur = null, chSel = null, chDrag = null, chRowTo = null;
@@ -7714,7 +7718,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const t = chTruck(); if (!t) return;
     let s = String(txt || "").trim(); if (!s) return;
     let n = 1; const m = s.match(/^(\d{1,2})\s*[x×]\s*(.+)$/i); if (m) { n = Math.max(1, Math.min(40, Number(m[1]))); s = m[2].trim(); }
-    const k = chKey(s), rk = rpState().cases.find((c) => chKey(c.nom || "Rack") === k), lb = chLib[k], pr = CH_PRESETS.find((p) => chKey(p[0]) === k);
+    const k = CH_RENAME[chKey(s)] ? chKey(CH_RENAME[chKey(s)]) : chKey(s), rk = rpState().cases.find((c) => chKey(c.nom || "Rack") === k), lb = chLib[k], pr = CH_PRESETS.find((p) => chKey(p[0]) === k);
     const base = rk ? { nom: rk.nom || "Rack", cat: "rack", ref: rk.id, ...chRackDims(rk) } : lb ? { ...lb } : pr ? { nom: pr[0], cat: pr[1], w: pr[2], d: pr[3], h: pr[4], kg: pr[5] } : { nom: s, cat: "malle", w: 120, d: 60, h: 60, kg: 0 };
     if (rk && t.cases.some((c) => c.ref === rk.id)) delete base.ref; // un rack déjà chargé : la copie devient une case libre
     if (!rid && rid !== "") rid = chRowTo && t.rangs.some((r) => r.id === chRowTo) ? chRowTo : (t.rangs[t.rangs.length - 1] || {}).id || "";
@@ -7994,7 +7998,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   // Sens d'entrée en pictogramme (vu de dessus, portes en bas) : la case large = hamburger, la case en long = hot dog
   const chSensIco = (s) => `<svg class="si" viewBox="0 0 20 20" aria-hidden="true">${s === "hamburger" ? '<rect x="1.5" y="6" width="17" height="8" rx="1.2"/>' : '<rect x="6" y="1.5" width="8" height="17" rx="1.2"/>'}<path d="M1 19.2H19" stroke-width="1.4" stroke-dasharray="2 1.6"/></svg>`;
-  function chFicheHtml() {
+  function chFicheHtml(live) {
     const S = chState(), d = state.dossier || {}, today = new Date().toLocaleDateString("fr-FR");
     const list = S.camions.filter((t) => t.cases.some((c) => c.rang)); if (!list.length) return "";
     const pages = list.map((t) => {
@@ -8003,7 +8007,8 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
       const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
       // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis, sur une bande d'une ligne
-      const same = g.map((secs) => secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
+      // Le Mode chargement rang par rang (live) a la place : chaque rang y garde son croquis
+      const same = g.map((secs) => !live && secs.length === 1 && secs[0].floor.length + secs[0].up.length === 1);
       // Place voulue par rang (mm à 4,5 mm de texte) : sert à répartir les rangs en colonnes, dans l'ordre de chargement
       // Un rang très chargé (8 lignes et plus) : texte à gauche, croquis à droite, dans une colonne deux fois plus large
       const dem = lc.map((x, k) => (same[k] ? 15 : n > 1 && x >= 8 ? (9 + x * 1.2 * 4.5) / 2 + 4 : 9 + x * 1.2 * 4.5 + 32));
@@ -8148,7 +8153,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     try { await Promise.all(["600", "700"].map((w) => document.fonts.load(`${w} 20px "Barlow Semi Condensed"`)).concat(document.fonts.load('400 20px "Barlow"'))); } catch (e) { /* police système */ }
     if (seq !== chLiveSeq || !chLiveOn()) return;
     const keep = box.scrollTop; box.className = "chlscroll " + lay;
-    box.innerHTML = `<div class="chlpaper">${chFicheHtml()}</div>`;
+    box.innerHTML = `<div class="chlpaper">${chFicheHtml(lay === "liste")}</div>`;
     const paper = box.firstElementChild, chf = paper.querySelector(".chf");
     paper.querySelectorAll(".pg").forEach((p) => { if (p.dataset.t !== chLiveT) p.remove(); });
     if (lay === "liste") { chf.classList.add("live"); box.scrollTop = keep; return; }
