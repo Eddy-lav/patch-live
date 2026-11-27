@@ -11,7 +11,7 @@
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
 <body>
-<script>window.PL_VER = "295304eabd";</script>
+<script>window.PL_VER = "aae1ec97b7";</script>
 <script>/* Taille du texte choisie, posée avant l'affichage */ try { const z = Number(localStorage.getItem("patch-live-textsize")); if (z >= 0.8 && z <= 1.5) document.documentElement.style.setProperty("--ts", String(z)); } catch (e) { /* ignore */ }</script>
 <script>/* Thème sombre par défaut, posé avant l'affichage pour éviter un éclair clair */ try { const t = localStorage.getItem("patch-live-theme"); const v = t == null ? "dark" : t; if (v) document.documentElement.dataset.theme = v; } catch (e) { document.documentElement.dataset.theme = "dark"; }</script>
 <title>Patch Live</title>
@@ -1789,6 +1789,15 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
 .cdh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .cdh input[data-cdf="nom"] { flex: 1 1 auto; min-width: 0; font-weight: 700; font-size: var(--fs-base); }
 .cdh .hint { flex: none; font-size: var(--fs-xs); }
+.cdflt { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.cdflt:empty { display: none; }
+.cdtags { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 0 0 8px; }
+.cdtag { --tg: var(--surface); border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--muted); font: inherit; font-size: var(--fs-xs); font-weight: 600; padding: 3px 10px; min-height: 26px; cursor: pointer; }
+.cdtag span { font-weight: 400; opacity: 0.75; }
+.cdtag[aria-pressed="true"] { background: var(--tg); border-color: var(--tg); color: #373737; }
+.cdtag.free[aria-pressed="true"], .cdtag.all[aria-pressed="true"] { background: #373737; border-color: #fce694; color: #fce694; }
+.cdtags input[data-cdnewtag] { width: 6.5em; min-height: 26px; padding: 2px 8px; font-size: var(--fs-xs); border-radius: var(--r-pill); }
+@media (max-width: 760px) { .cdtag, .cdtags input[data-cdnewtag] { min-height: 36px; } }
 .cdwhere { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 8px; }
 .cdwhere button { border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--muted); font: inherit; font-size: var(--fs-xs); padding: 2px 10px; cursor: pointer; }
 .cdwhere button:hover { color: var(--text); border-color: var(--accent); }
@@ -2295,6 +2304,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="cdFromCh" class="btn small" type="button" title="Une fiche pour chaque malle du plan de chargement qui n'en a pas encore (les flight racks ont leur plan de rack)">Reprendre les malles du chargement</button>
     <input type="search" id="cdQ" class="cdq" placeholder="Chercher : XLR, DI, malle…" aria-label="Chercher dans le conditionnement" autocomplete="off">
   </div>
+  <div id="cdFlt" class="cdflt" role="group" aria-label="Filtrer par tag"></div>
   <datalist id="dlCd"></datalist>
   <div id="cdList" class="cdgrid"></div>
 </section>
@@ -8545,8 +8555,15 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   const cdCases = (m) => { const k = chKey(m.nom); return k ? chState().camions.flatMap((t) => t.cases.filter((c) => !c.ref && chKey(chLabel(c)) === k).map((c) => ({ t, c }))) : []; };
   const cdFor = (c) => { const k = chKey(chLabel(c)); return k ? cdList().find((m) => chKey(m.nom) === k) : null; };
   const cdChNames = () => { const out = [], seen = new Set(); chState().camions.forEach((t) => t.cases.forEach((c) => { if (c.ref) return; const n = chLabel(c), k = chKey(n); if (k && !seen.has(k)) { seen.add(k); out.push(n); } })); return out; };
+  // Tags : où va la malle (FOH, Diff, Monitor, Plateau) ; on peut en créer d'autres, ils restent tant qu'une malle les porte
+  const CD_TAGS = [["FOH", "#c1dbe3"], ["Diff", "#f6feaa"], ["Monitor", "#c7dfc5"], ["Plateau", "#fce694"]];
+  const cdTags = (m) => (Array.isArray(m.tags) ? m.tags : []).filter(Boolean);
+  const cdHas = (m, tg) => cdTags(m).some((x) => chKey(x) === chKey(tg));
+  function cdTagsAll() { const out = CD_TAGS.map((x) => x[0]); cdList().forEach((m) => cdTags(m).forEach((tg) => { if (!out.some((x) => chKey(x) === chKey(tg))) out.push(tg); })); return out; }
+  const cdTagCol = (tg) => (CD_TAGS.find((x) => chKey(x[0]) === chKey(tg)) || [, ""])[1];
+  const cdChip = (tg, on, attr) => { const c = cdTagCol(tg); return `<button type="button" class="cdtag${c ? "" : " free"}" ${attr} aria-pressed="${on ? "true" : "false"}"${c ? ` style="--tg:${c}"` : ""}>${esc(tg)}</button>`; };
   function cdNew(nom) { const m = { id: nid(), nom: String(nom || "").trim() || `Malle ${cdState().length + 1}`, contenu: [] }; cdState().push(m); return m; }
-  let cdQ = "", cdFocus = null;
+  let cdQ = "", cdFocus = null, cdTag = "";
   function renderCond() {
     const L = cdList(), have = new Set(L.map((m) => chKey(m.nom)));
     $("#dlCd").innerHTML = cdChNames().filter((n) => !have.has(chKey(n))).concat(chSugg().filter((n) => !have.has(chKey(n)))).filter((v, i, a) => a.indexOf(v) === i).map((v) => `<option value="${esc(v)}">`).join("");
@@ -8554,13 +8571,16 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#cdFromCh").disabled = !left; $("#cdFromCh").textContent = left ? `Reprendre les malles du chargement (${left})` : "Reprendre les malles du chargement";
     const words = cdQ.toLowerCase().split(/\s+/).filter(Boolean);
     const match = (txt) => words.every((w) => txt.toLowerCase().includes(w));
-    const shown = L.filter((m) => !words.length || match([m.nom, m.notes, ...cdItems(m).map((x) => x.nom)].join(" ")));
+    const all = cdTagsAll(); if (cdTag && !all.some((x) => chKey(x) === chKey(cdTag))) cdTag = "";
+    $("#cdFlt").innerHTML = L.length ? `<button type="button" class="cdtag all" data-cdflt="" aria-pressed="${cdTag ? "false" : "true"}">Toutes <span>${L.length}</span></button>${all.map((tg) => { const n = L.filter((m) => cdHas(m, tg)).length; return cdChip(tg, chKey(cdTag) === chKey(tg), `data-cdflt="${esc(tg)}"`).replace("</button>", ` <span>${n}</span></button>`); }).join("")}${L.some((m) => !cdTags(m).length) ? `<button type="button" class="cdtag all" data-cdflt="-" aria-pressed="${cdTag === "-" ? "true" : "false"}">Sans tag <span>${L.filter((m) => !cdTags(m).length).length}</span></button>` : ""}` : "";
+    const shown = L.filter((m) => (!cdTag || (cdTag === "-" ? !cdTags(m).length : cdHas(m, cdTag))) && (!words.length || match([m.nom, m.notes, ...cdTags(m), ...cdItems(m).map((x) => x.nom)].join(" "))));
     if (!L.length) { $("#cdList").innerHTML = `<div class="empty-state cdempty"><h3>Aucune malle</h3><p class="hint">Décris ici ce qu'il y a dans chaque malle : câbles, DI, pieds, micros… Ajoute une malle par son nom, ou reprends celles du plan de chargement. Le contenu part dans l'Excel et le PDF du dossier.</p>${cdChNames().length ? '<div class="es-go"><button type="button" class="btn small primary" data-cdfromch>Reprendre les malles du chargement</button></div>' : ""}</div>`; return; }
-    if (!shown.length) { $("#cdList").innerHTML = `<p class="hint cdempty">Aucune malle ne contient « ${esc(cdQ)} ».</p>`; return; }
+    if (!shown.length) { $("#cdList").innerHTML = `<p class="hint cdempty">${cdQ ? `Aucune malle ne contient « ${esc(cdQ)} »${cdTag ? " avec ce tag" : ""}.` : "Aucune malle avec ce tag."}</p>`; return; }
     $("#cdList").innerHTML = shown.map((m) => {
       const its = cdItems(m), n = its.reduce((a, x) => a + (Number(x.q) || 1), 0), where = cdCases(m);
       return `<article class="panel cdc" data-cd="${m.id}">
         <div class="cdh"><input type="text" data-cdf="nom" value="${esc(m.nom || "")}" aria-label="Nom de la malle" autocomplete="off" data-suggest="dlCd"><span class="hint">${its.length ? `${n} pièce${n > 1 ? "s" : ""}` : "vide"}</span></div>
+        <div class="cdtags" role="group" aria-label="Tags de ${esc(m.nom || "la malle")}">${all.map((tg) => cdChip(tg, cdHas(m, tg), `data-cdtg="${esc(tg)}" title="${cdHas(m, tg) ? "Retirer" : "Mettre"} le tag ${esc(tg)}"`)).join("")}<input type="text" data-cdnewtag autocomplete="off" enterkeyhint="done" placeholder="+ tag" aria-label="Nouveau tag pour ${esc(m.nom || "la malle")}" title="Un tag à toi (ex. Backline, Lumière) puis Entrée"></div>
         ${where.length ? `<div class="cdwhere">${where.map(({ t, c }) => `<button type="button" data-cdgo="${c.id}" title="Voir cette malle dans le plan de chargement">${esc(t.nom || "Camion")} · ${esc(chRangName(t, c.rang))}</button>`).join("")}</div>` : ""}
         ${its.length ? `<ul class="chctl">${its.map((x) => `<li data-cdi="${x.id}"${words.length && match(x.nom) ? ' class="hit"' : ""}><input type="number" min="1" max="9999" step="1" inputmode="numeric" data-cdq value="${Number(x.q) || 1}" aria-label="Quantité de ${esc(x.nom)}"><input type="text" data-cdn value="${esc(x.nom)}" aria-label="Désignation" autocomplete="off" data-suggest="dlBanque"><button type="button" class="chcdel" data-cddi="${x.id}" title="Retirer de la malle" aria-label="Retirer ${esc(x.nom)}">×</button></li>`).join("")}</ul>` : ""}
         <input type="text" data-cdadd autocomplete="off" enterkeyhint="done" data-suggest="dlBanque" placeholder="+ Ajouter : 6 XLR 10 m, DI, pieds…" aria-label="Ajouter dans ${esc(m.nom || "la malle")}" title="Tape un nom puis Entrée. Un nombre en tête est la quantité (« 6 XLR 10 m »). La liste propose la liste matériel et la banque.">
@@ -8581,8 +8601,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     host.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
       if (b.id === "cdFromCh" || "cdfromch" in b.dataset) { fromCh(); return; }
+      if ("cdflt" in b.dataset) { cdTag = chKey(cdTag) === chKey(b.dataset.cdflt) && cdTag !== "-" ? "" : b.dataset.cdflt; if (b.dataset.cdflt === "-" && cdTag === "-" && b.getAttribute("aria-pressed") === "true") cdTag = ""; renderCond(); return; }
       if (b.dataset.cdgo) { const f = chFind(b.dataset.cdgo); if (f) chSetCur(f.t.id); chSel = b.dataset.cdgo; setView("charge"); return; }
       const m = mOf(b); if (!m) return;
+      if (b.dataset.cdtg) { const tg = b.dataset.cdtg; if (cdHas(m, tg)) { m.tags = cdTags(m).filter((x) => chKey(x) !== chKey(tg)); if (!m.tags.length) delete m.tags; } else m.tags = [...cdTags(m), tg]; commit(true); return; }
       if (b.dataset.cddi) { m.contenu = (m.contenu || []).filter((x) => x.id !== b.dataset.cddi); cdFocus = m.id; commit(true); return; }
       if ("cdnote" in b.dataset) { m.notes = ""; commit(true); const t = document.querySelector(`#cdList [data-cd="${m.id}"] textarea`); if (t) t.focus(); return; }
       if ("cddup" in b.dataset) { const L = cdState(), n = { ...JSON.parse(JSON.stringify(m)), id: nid(), nom: rpNextName(m.nom || "Malle", L.map((z) => z.nom)) }; (n.contenu || []).forEach((x) => { x.id = nid(); }); L.splice(L.indexOf(m) + 1, 0, n); cdFocus = n.id; commit(true); return; }
@@ -8592,7 +8614,9 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       }
     });
     host.addEventListener("keydown", (e) => {
-      const el = e.target; if (e.key !== "Enter" || e.isComposing || !el.matches || !el.matches("[data-cdadd]")) return;
+      const el = e.target; if (e.key !== "Enter" || e.isComposing || !el.matches) return;
+      if (el.matches("[data-cdnewtag]")) { e.preventDefault(); const m = mOf(el), v = el.value.trim().replace(/\s+/g, " ").slice(0, 24); if (!m || !v) return; const ex = cdTagsAll().find((x) => chKey(x) === chKey(v)) || v; if (!cdHas(m, ex)) m.tags = [...cdTags(m), ex]; el.value = ""; commit(true); return; }
+      if (!el.matches("[data-cdadd]")) return;
       e.preventDefault(); const m = mOf(el), v = el.value.trim(); if (!m || !v) return;
       el.value = ""; cdAddItem(m, v); cdFocus = m.id; commit(true);
     });
@@ -8614,16 +8638,16 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     ws.addRow([`Conditionnement · ${titre}`]).font = { bold: true, size: 14 };
     ws.addRow(["Ce qu'il y a dans chaque malle. Une ligne par article."]);
     ws.addRow([]);
-    [26, 10, 40, 30, 30].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-    styleHead(ws.addRow(["Malle", "Quantité", "Désignation", "Note de la malle", "Chargement"]));
+    [26, 18, 10, 40, 30, 30].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    styleHead(ws.addRow(["Malle", "Tags", "Quantité", "Désignation", "Note de la malle", "Chargement"]));
     L.forEach((m) => { const where = cdCases(m).map(({ t, c }) => `${t.nom || "Camion"} · ${chRangName(t, c.rang)}`).join(", "), its = cdItems(m);
-      (its.length ? its : [null]).forEach((x, i) => ws.addRow([m.nom || "", x ? Number(x.q) || 1 : "", x ? x.nom : "(vide)", i ? "" : m.notes || "", i ? "" : where])); });
+      (its.length ? its : [null]).forEach((x, i) => ws.addRow([m.nom || "", cdTags(m).join(", "), x ? Number(x.q) || 1 : "", x ? x.nom : "(vide)", i ? "" : m.notes || "", i ? "" : where])); });
     page(ws, false);
   }
   function cdPrint() {
     const L = cdList().filter((m) => cdItems(m).length); if (!L.length) return "";
     return `<div class="cols">${L.map((m) => { const where = cdCases(m).map(({ t, c }) => `${t.nom || "Camion"} · ${chRangName(t, c.rang)}`).join(", ");
-      return `<div class="blk"><h3>${esc(m.nom || "Malle")}${where ? ` <span class="muted">· ${esc(where)}</span>` : ""}</h3><table><tbody>${cdItems(m).map((x) => `<tr><td style="width:3em;text-align:right"><b>${Number(x.q) || 1}</b></td><td>${esc(x.nom)}</td></tr>`).join("")}</tbody></table>${m.notes ? `<p class="muted">${esc(m.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
+      return `<div class="blk"><h3>${esc(m.nom || "Malle")}${cdTags(m).length ? ` <span class="muted">[${esc(cdTags(m).join(", "))}]</span>` : ""}${where ? ` <span class="muted">· ${esc(where)}</span>` : ""}</h3><table><tbody>${cdItems(m).map((x) => `<tr><td style="width:3em;text-align:right"><b>${Number(x.q) || 1}</b></td><td>${esc(x.nom)}</td></tr>`).join("")}</tbody></table>${m.notes ? `<p class="muted">${esc(m.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
   }
 
   // ---------- Chargement en 3D : on fait le plan directement dans le camion ----------
@@ -13725,7 +13749,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const k = path[path.length - 1]; if (isObj(k)) return false;
     o[k] = v; return true;
   }
-  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", chargement: "Chargement", camions: "", cases: "", rangs: "", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens", malles: "Conditionnement", contenu: "contenu", q: "quantité" };
+  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", chargement: "Chargement", camions: "", cases: "", rangs: "", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens", malles: "Conditionnement", contenu: "contenu", q: "quantité", tags: "tags" };
   const conflictWhere = (c) => c.labels.map((x) => (x in FIELD_FR ? FIELD_FR[x] : x)).filter(Boolean).join(" › ");
   const conflictVal = (v) => (v == null || v === "" ? "vide" : typeof v === "object" ? (v.b ? boxAddr(v) : v.r ? rackAddr(v) : "autre valeur") : v === true ? "oui" : v === false ? "non" : String(v));
   let lastConflicts = [];
@@ -14888,7 +14912,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     m: { k: "Matériel", all: () => (state.materiel || []).map((x) => ({ id: x.id, t: x.nom || "(matériel)", d: [x.qte ? "×" + x.qte : "", x.cat].filter(Boolean).join(" · ") })), go: (id) => { setView("liste"); tdFlashSel(`#manTbl tr[data-mid="${id}"]`); } },
     fx: { k: "Local / intercom", all: () => ["locaux", "com"].flatMap((k) => freeState(k).rows.filter(fxFilled).map((r) => ({ id: r.id, t: [r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", d: k === "com" ? "Intercom" : "Local console" }))), go: (id) => { setView(freeState("com").rows.some((r) => r.id === id) ? "com" : "local"); tdFlashSel(`tr[data-fr="${id}"]`); } },
     ch: { k: "Chargement", all: () => chState().camions.flatMap((t) => t.cases.map((c) => ({ id: c.id, t: chLabel(c), d: `${t.nom || "Camion"} · ${chRangName(t, c.rang)}` }))), go: (id) => { const f = chFind(id); if (f) chSetCur(f.t.id); chSel = id; setView("charge"); } },
-    cd: { k: "Malle", all: () => cdList().map((m) => ({ id: m.id, t: m.nom || "Malle", d: cdItems(m).map(cdLine).join(", ") })), go: (id) => cdGoTo(id) },
+    cd: { k: "Malle", all: () => cdList().map((m) => ({ id: m.id, t: m.nom || "Malle", d: [cdTags(m).join(", "), cdItems(m).map(cdLine).join(", ")].filter(Boolean).join(" · ") })), go: (id) => cdGoTo(id) },
     n: { k: "Réseau", all: () => netState().extra.map((x) => ({ id: x.id, t: x.nom || "Appareil", d: x.ip || "" })), go: (id) => { setView("net"); tdFlashSel(`#netTbl tr[data-nk="e:${CSS.escape(id)}"]`); } },
     v: { k: "Page", all: tdViews, go: (id) => { setView(id); scrollTo({ top: 0 }); } }
   };
