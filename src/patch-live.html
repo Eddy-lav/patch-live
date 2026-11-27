@@ -1768,17 +1768,29 @@ section[data-dens="aere"] .box li.bhead { min-height: 0 !important; font-size: v
 #chMode button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .plan-side .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .chturn { flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-.chct { margin: 0 0 8px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); }
-.chcth { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; font-size: var(--fs-sm); }
-.chcth .hint { margin-left: auto; font-size: var(--fs-xs); }
-#chSide .chctl { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; }
-.chctl li { display: grid; grid-template-columns: 4.2em minmax(0, 1fr) auto; gap: 4px; align-items: center; }
-.chctl input { width: 100%; min-width: 0; }
-.chctl input[data-chcq] { text-align: right; }
+/* ---------- Conditionnement : ce qu'il y a dans chaque malle ---------- */
+.cdtop .cdq { flex: 1 1 200px; min-width: 0; max-width: 320px; }
+.cdgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+.cdc { margin: 0; padding: 10px 12px; }
+.cdh { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.cdh input[data-cdf="nom"] { flex: 1 1 auto; min-width: 0; font-weight: 700; font-size: var(--fs-base); }
+.cdh .hint { flex: none; font-size: var(--fs-xs); }
+.cdwhere { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 8px; }
+.cdwhere button { border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--muted); font: inherit; font-size: var(--fs-xs); padding: 2px 10px; cursor: pointer; }
+.cdwhere button:hover { color: var(--text); border-color: var(--accent); }
+.cdc .chctl { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; }
+.cdc .chctl li { display: grid; grid-template-columns: 4.2em minmax(0, 1fr) auto; gap: 4px; align-items: center; }
+.cdc .chctl input { width: 100%; min-width: 0; }
+.cdc .chctl input[data-cdq] { text-align: right; }
+.cdc .chctl li.hit input[data-cdn] { border-color: var(--accent); }
 .chcdel { width: 28px; align-self: stretch; min-height: 28px; padding: 0; border: 1px solid var(--line); border-radius: var(--r-sm); background: none; color: var(--muted); font-size: var(--fs-base); line-height: 1; cursor: pointer; }
 .chcdel:hover { color: var(--danger); border-color: var(--danger); }
+.cdc input[data-cdadd] { width: 100%; }
+.cdc textarea { width: 100%; margin-top: 6px; resize: vertical; }
+.cdfoot { display: flex; justify-content: flex-end; margin-top: 6px; }
+.cdempty { grid-column: 1 / -1; }
+.chcond { margin: 0 0 8px; }
 @media (max-width: 760px) { .chcdel { width: 40px; } }
-.chct input[data-chcadd] { width: 100%; }
 :root[data-theme="regie"] .chstage { filter: brightness(0.6); }
 /* ---------- To-do ---------- */
 nav.spaces button { position: relative; }
@@ -2015,6 +2027,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   <button role="tab" data-v="plan" aria-selected="false">Plan de scène</button>
   <button role="tab" data-v="liste" aria-selected="false">Liste matériel</button>
   <button role="tab" data-v="etiq" aria-selected="false">Étiquettes</button>
+  <button role="tab" data-v="cond" aria-selected="false">Conditionnement<span class="count" id="cCond"></span></button>
   <button role="tab" data-v="charge" aria-selected="false">Chargement<span class="count" id="cCharge"></span></button>
   <button role="tab" data-v="todo" aria-selected="false">To-do<span class="count" id="cTodo"></span></button>
   <button role="tab" data-v="infos" aria-selected="false">Infos</button>
@@ -2260,6 +2273,16 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     <button id="etqStop" class="btn small danger" type="button" hidden>Arrêter</button>
     <button id="etqGo" class="btn primary" type="button">Imprimer</button>
   </div>
+</section>
+
+<section id="v-cond" hidden>
+  <div class="toolbar cdtop">
+    <span class="chaddw"><input id="cdAddIn" type="text" data-suggest="dlCd" autocomplete="off" enterkeyhint="done" placeholder="Ajouter une malle : malle câbles 1, malle DI…" aria-label="Malle à ajouter"><button id="cdAddBtn" class="btn small primary" type="button">Ajouter</button></span>
+    <button id="cdFromCh" class="btn small" type="button" title="Une fiche pour chaque malle du plan de chargement qui n'en a pas encore (les flight racks ont leur plan de rack)">Reprendre les malles du chargement</button>
+    <input type="search" id="cdQ" class="cdq" placeholder="Chercher : XLR, DI, malle…" aria-label="Chercher dans le conditionnement" autocomplete="off">
+  </div>
+  <datalist id="dlCd"></datalist>
+  <div id="cdList" class="cdgrid"></div>
 </section>
 
 <section id="v-charge" hidden>
@@ -7709,18 +7732,6 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (c.ref) { const r = rpState().cases.find((x) => x.id === c.ref); if (r) return r.nom || "Rack"; }
     return c.nom || "Case";
   }
-  // Contenu d'une malle : lignes { id, q, nom } (l'id permet la fusion Dropbox ligne par ligne)
-  const chCt = (c) => (Array.isArray(c.contenu) ? c.contenu : []).filter((x) => x && String(x.nom || "").trim());
-  const chCtLine = (x) => `${Number(x.q) > 1 ? x.q + "× " : ""}${x.nom}`;
-  const chCtTxt = (c) => chCt(c).map(chCtLine).join(", ");
-  // « 6 XLR 10 m », « 6x XLR », « 6 × DI » : la quantité en tête est lue ; « 12N » reste un nom
-  function chCtParse(v) { const m = String(v).trim().match(/^(\d{1,4})(?:\s*[x*]\s+|\s*×\s*|\s+)(\S.*)$/i); return m ? { q: Math.max(1, Number(m[1])), nom: m[2].trim() } : { q: 1, nom: String(v).trim() }; }
-  function chCtAdd(c, v) {
-    const it = chCtParse(v); if (!it.nom) return;
-    if (!Array.isArray(c.contenu)) c.contenu = [];
-    const same = c.contenu.find((x) => String(x.nom || "").trim().toLowerCase() === it.nom.toLowerCase());
-    if (same) same.q = (Number(same.q) || 1) + it.q; else c.contenu.push({ id: nid(), q: it.q, nom: it.nom });
-  }
   function chNewTruck(type) {
     const T = CH_TRUCKS.find((x) => x[0] === type) || CH_TRUCKS[0], S = chState();
     const t = { id: nid(), nom: S.camions.length ? `Camion ${S.camions.length + 1}` : "Camion son", type: T[0], L: T[2], l: T[3], h: T[4], rangs: [{ id: nid() }], cases: [] };
@@ -7921,10 +7932,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const rows = [], tot = { n: 0, kg: 0 };
     [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || chZ(a) - chZ(b) || a.x - b.x).forEach((c) => {
       if (rid) { tot.n++; tot.kg += Number(c.kg) || 0; }
-      rows.push(`<tr${forPrint ? "" : ` data-chc="${c.id}"${chSel === c.id ? ' class="on"' : ""}`}><td>${esc(chRangName(t, rid))}</td><td>${forPrint ? "" : `<span class="sw" style="background:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}"></span>`}${esc(chLabel(c))}</td><td>${esc((CH_CATS[c.cat] || CH_CATS.autre)[0])}</td><td class="n">${c.w} × ${c.d} × ${c.h}</td><td class="n">${c.kg ? chKgTxt(c.kg) : ""}</td><td>${rid ? esc(chPos(c, t)) : ""}</td><td>${esc(chCtTxt(c))}</td><td>${esc(c.notes || "")}</td></tr>`);
+      rows.push(`<tr${forPrint ? "" : ` data-chc="${c.id}"${chSel === c.id ? ' class="on"' : ""}`}><td>${esc(chRangName(t, rid))}</td><td>${forPrint ? "" : `<span class="sw" style="background:${(CH_CATS[c.cat] || CH_CATS.autre)[1]}"></span>`}${esc(chLabel(c))}</td><td>${esc((CH_CATS[c.cat] || CH_CATS.autre)[0])}</td><td class="n">${c.w} × ${c.d} × ${c.h}</td><td class="n">${c.kg ? chKgTxt(c.kg) : ""}</td><td>${rid ? esc(chPos(c, t)) : ""}</td><td>${esc(c.notes || "")}</td></tr>`);
     }));
-    return `<table><thead><tr><th>Rang</th><th>Case</th><th>Catégorie</th><th class="n">L × P × H (cm)</th><th class="n">Poids</th><th>Position</th><th>Contenu</th><th>Notes</th></tr></thead><tbody>${rows.join("")}</tbody>
-      <tfoot><tr><td></td><td>${tot.n} case${tot.n > 1 ? "s" : ""} chargée${tot.n > 1 ? "s" : ""}</td><td></td><td></td><td class="n">${chKgTxt(tot.kg)}</td><td colspan="3"></td></tr></tfoot></table>`;
+    return `<table><thead><tr><th>Rang</th><th>Case</th><th>Catégorie</th><th class="n">L × P × H (cm)</th><th class="n">Poids</th><th>Position</th><th>Notes</th></tr></thead><tbody>${rows.join("")}</tbody>
+      <tfoot><tr><td></td><td>${tot.n} case${tot.n > 1 ? "s" : ""} chargée${tot.n > 1 ? "s" : ""}</td><td></td><td></td><td class="n">${chKgTxt(tot.kg)}</td><td colspan="2"></td></tr></tfoot></table>`;
   }
   function renderChList(t) {
     const el = $("#chList"); if (!el) return;
@@ -7949,10 +7960,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         ${c.rang && chFront(t, c.rang, c) > 0 ? `<label>Recul dans le rang (cm depuis le fond, 0 à ${chFront(t, c.rang, c)})<input type="number" min="0" max="${chFront(t, c.rang, c)}" step="1" inputmode="numeric" data-chf="z" value="${chZ(c)}"></label>` : ""}
         <label class="inl chgerb"><input type="checkbox" data-chf="nogerb"${c.nogerb ? " checked" : ""}> Non gerbable : rien ne se pose dessus</label>
         <div class="actions chturn"><button class="btn small" type="button" data-chrot="wd" title="Largeur ↔ profondeur : passe de hamburger à hot dog">Tourner</button><button class="btn small" type="button" data-chrot="hd" title="Hauteur ↔ profondeur (hamburger)">Coucher</button><button class="btn small" type="button" data-chrot="wh" title="Largeur ↔ hauteur">Sur le côté</button></div>
-        <div class="chct"><div class="chcth"><b>Contenu</b><span class="hint">${chCt(c).length ? `${chCt(c).length} ligne${chCt(c).length > 1 ? "s" : ""}` : "ce qu'il y a dedans"}</span></div>
-          ${chCt(c).length ? `<ul class="chctl">${chCt(c).map((x) => `<li data-chci="${x.id}"><input type="number" min="1" max="9999" step="1" inputmode="numeric" data-chcq value="${Number(x.q) || 1}" aria-label="Quantité de ${esc(x.nom)}"><input type="text" data-chcn value="${esc(x.nom)}" aria-label="Désignation" autocomplete="off" data-suggest="dlBanque"><button type="button" class="chcdel" data-chcdel="${x.id}" title="Retirer de la malle" aria-label="Retirer ${esc(x.nom)}">×</button></li>`).join("")}</ul>` : ""}
-          <input type="text" data-chcadd autocomplete="off" enterkeyhint="done" data-suggest="dlBanque" placeholder="+ Ajouter : 6 XLR 10 m, DI, pieds…" aria-label="Ajouter au contenu de ${esc(chLabel(c))}" title="Tape un nom puis Entrée. Un nombre en tête est la quantité (« 6 XLR 10 m »). La liste propose la liste matériel et la banque.">
-        </div>
+        ${c.ref ? "" : (() => { const m = cdFor(c); return `<p class="chcond"><button type="button" class="btn small" data-chcond title="Ce qu'il y a dans cette malle, dans Matériel › Conditionnement">${m ? `Contenu : ${cdItems(m).length ? `${cdItems(m).length} ligne${cdItems(m).length > 1 ? "s" : ""}` : "vide"} ↗` : "Décrire son contenu ↗"}</button></p>`; })()}
         <label>Notes<textarea rows="2" data-chf="notes">${esc(c.notes || "")}</textarea></label>
         <div class="actions" style="margin-top:6px"><button class="btn small" type="button" data-chdup>Dupliquer</button>${c.rang ? '<button class="btn small" type="button" data-chout>Sortir du rang</button>' : ""}<button class="btn small danger" type="button" data-chdel>Supprimer</button></div>`;
       return;
@@ -7988,9 +7996,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
   function chMoveRow(t, rid, dir) { const i = t.rangs.findIndex((r) => r.id === rid), j = i + dir; if (i < 0 || j < 0 || j >= t.rangs.length) return; const [r] = t.rangs.splice(i, 1); t.rangs.splice(j, 0, r); chCommit(); }
   function chDelRow(t, rid) { chIn(t, rid).forEach((c) => { c.rang = ""; delete c.z; }); t.rangs = t.rangs.filter((r) => r.id !== rid); if (chRowTo === rid) chRowTo = null; chCommit(); }
-  // Après un ajout ou un retrait dans le contenu : on reste dans la case « + Ajouter », pour enchaîner
-  const chCtFocus = () => { const i = $("#chSide [data-chcadd]"); if (i) i.focus({ preventScroll: true }); };
-  function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; if (Array.isArray(c.contenu)) x.contenu = c.contenu.map((y) => ({ ...y, id: nid() })); x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
+  function chDupCase(t, c) { const x = { ...c, id: nid() }; delete x.ref; x.nom = chLabel(c); if (!c.rang || !chAutoPlace(t, c.rang, x)) { x.rang = ""; x.x = 0; x.y = 0; } t.cases.push(x); chSel = x.id; chCommit(); }
   // ---------- Fiche de chargement : une page par camion, lisible à bout de bras dans le camion ----------
   // Bandeau du camion (cabine → portes, rangs à l'échelle) puis une case par rang, dans l'ordre de chargement :
   // gros numéro, ce qui va au sol de jardin à cour, puis ce qui se pose dessus. La taille du texte s'adapte pour tenir sur la page.
@@ -8051,39 +8057,21 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   .chf .sep { border-top: 0.3mm dashed #8d969a; margin: 0.8mm 0 0.5mm; }
   .chf .note { font-size: 0.7em; color: #373737; font-style: italic; margin-top: 0.6mm; }
   .chf .foot { display: flex; gap: 6mm; font-size: 3.2mm; color: #373737; }
-  .chf .foot b { color: #1d1d1d; }
-  .chf .it .ct { flex: 1 1 100%; font-size: 0.72em; color: #373737; line-height: 1.2; padding-left: 0.3em; border-left: 0.5mm solid #c7dfc5; }
-  .chf .cts { flex: 1 1 0; min-height: 0; overflow: hidden; column-width: 62mm; column-gap: 3mm; column-fill: balance; font-size: var(--f); line-height: 1.15; }
-  .chf .ctc { break-inside: avoid; border: 0.35mm solid #373737; border-radius: 1.5mm; overflow: hidden; margin-bottom: 2.2mm; }
-  .chf .cth { display: flex; align-items: baseline; gap: 2mm; padding: 0.6mm 2mm; border-bottom: 0.35mm solid #373737; }
-  .chf .cth b { font: 700 1.2em "Barlow Semi Condensed", ${PLAN_FONT}; min-width: 0; }
-  .chf .cth .rg { margin-left: auto; font-size: 0.78em; font-weight: 600; white-space: nowrap; }
-  .chf .ctc ul { list-style: none; margin: 0; padding: 0.8mm 2mm 1mm; }
-  .chf .ctc li { display: flex; gap: 1.6mm; padding: 0.25mm 0; }
-  .chf .ctc li + li { border-top: 0.2mm solid #e3e7e9; }
-  .chf .ctc .q { flex: none; min-width: 1.8em; font: 700 1em "Barlow Semi Condensed", ${PLAN_FONT}; color: #373737; text-align: right; }`;
-  function chFicheGroups(t, rid, lz, withCt) {
+  .chf .foot b { color: #1d1d1d; }`;
+  function chFicheGroups(t, rid, lz) {
     const L = chIn(t, rid).filter((c) => lz == null || chZ(c) === lz), floor = L.filter((c) => c.y <= 0).sort((a, b) => (chZ(a) > 0) - (chZ(b) > 0) || a.x - b.x || chZ(a) - chZ(b)), up = L.filter((c) => c.y > 0).sort((a, b) => a.y - b.y || a.x - b.x);
-    const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), on = top ? chOnTxt(t, c) : "", ct = withCt ? chCt(c).map(chCtLine) : [], k = [chLabel(c), !!c.nogerb, fr, chSens(c), on, ct.join("\n")].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, on, s: chSens(c), ct }); }); return out; };
+    const pack = (list, top) => { const out = []; list.forEach((c) => { const fr = lz == null && !!chZ(c), on = top ? chOnTxt(t, c) : "", k = [chLabel(c), !!c.nogerb, fr, chSens(c), on].join("|"), g = out[out.length - 1]; if (g && g.k === k) g.n++; else out.push({ k, n: 1, nm: chLabel(c), ng: !!c.nogerb, fr, up: top, on, s: chSens(c) }); }); return out; };
     return { floor: pack(floor, false), up: pack(up, true) };
   }
   // Sens d'entrée en pictogramme (vu de dessus, portes en bas) : la case large = hamburger, la case en long = hot dog
   const chSensIco = (s) => `<svg class="si" viewBox="0 0 20 20" aria-hidden="true">${s === "hamburger" ? '<rect x="1.5" y="6" width="17" height="8" rx="1.2"/>' : '<rect x="6" y="1.5" width="8" height="17" rx="1.2"/>'}<path d="M1 19.2H19" stroke-width="1.4" stroke-dasharray="2 1.6"/></svg>`;
-  // Page « Contenu des malles » après la fiche d'un camion : chaque case qui a un contenu, dans l'ordre de chargement
-  function chCtPage(t, d, today) {
-    const list = [...t.rangs.map((r) => r.id), ""].flatMap((rid) => chIn(t, rid).filter((c) => chCt(c).length).sort((a, b) => a.y - b.y || chZ(a) - chZ(b) || a.x - b.x).map((c) => ({ c, rid })));
-    if (!list.length) return "";
-    const cards = list.map(({ c, rid }) => { const i = chRangN(t, rid);
-      return `<div class="ctc"><div class="cth" style="background:${!i ? "#f1f3f4" : i % 2 ? "#c1dbe3" : "#c7dfc5"}"><b>${esc(chLabel(c))}</b><span class="rg">${i ? `Rang ${i}` : "Hors plan"}</span></div><ul>${chCt(c).map((x) => `<li><span class="q">${Number(x.q) > 1 ? x.q + "×" : ""}</span><span>${esc(x.nom)}</span></li>`).join("")}</ul></div>`; }).join("");
-    return `<section class="pg ctp" data-t="${t.id}" style="--f:4mm"><div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>Contenu des malles</b><br>${list.length} case${list.length > 1 ? "s" : ""}</span><span class="who" style="margin-left:auto">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div><div class="cts">${cards}</div></section>`;
-  }
-  function chFicheHtml(live, ctPage = !live) {
+  function chFicheHtml(live) {
     const S = chState(), d = state.dossier || {}, today = new Date().toLocaleDateString("fr-FR");
     const list = S.camions.filter((t) => t.cases.some((c) => c.rang)); if (!list.length) return "";
     const pages = list.map((t) => {
       const rows = t.rangs.filter((r) => chIn(t, r.id).length), tot = chTotals(t), n = rows.length || 1;
       // Un rang à sous-rangs (2A au fond, 2B devant) : une section par sous-rang
-      const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz, live) })); });
+      const g = rows.map((r) => { const zs = chLayers(t, r.id); return zs.map((lz) => ({ lz, zs, ...chFicheGroups(t, r.id, lz) })); });
       const lc = g.map((secs) => secs.reduce((n, x) => n + x.floor.length + x.up.length + (x.up.length && x.floor.length ? 0.4 : 0) + (x.lz != null ? 1 : 0), 0)), lines = Math.max(1, ...lc);
       // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis, sur une bande d'une ligne
       // Le Mode chargement rang par rang (live) a la place : chaque rang y garde son croquis
@@ -8092,7 +8080,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       // Un rang très chargé (8 lignes et plus) : texte à gauche, croquis à droite, dans une colonne deux fois plus large
       const dem = lc.map((x, k) => (same[k] ? 15 : n > 1 && x >= 8 ? (9 + x * 1.2 * 4.5) / 2 + 4 : 9 + x * 1.2 * 4.5 + 32));
       const L = Math.max(t.L, tot.used), lane = rows.map((r) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id); return `<div class="r" style="flex:${dd} 1 0;background:${i % 2 ? "#c1dbe3" : "#c7dfc5"}">${i}</div>`; }).join("");
-      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn" title="${x.s}">${chSensIco(x.s)}<span class="sw">${x.s}</span></span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}${x.ct && x.ct.length ? `<span class="ct">${x.ct.map(esc).join(" · ")}</span>` : ""}</div>`;
+      const it = (x) => `<div class="it${x.up ? " up" : ""}"><span class="q">${x.n > 1 ? x.n + "×" : ""}</span><span class="nm">${esc(x.nm)}</span>${x.s ? `<span class="tg sn" title="${x.s}">${chSensIco(x.s)}<span class="sw">${x.s}</span></span>` : ""}${x.up ? `<span class="tg dz">${esc(x.on)}</span>` : ""}${x.fr ? '<span class="tg fr">devant</span>' : ""}${x.ng ? '<span class="tg ng">non gerbable</span>' : ""}</div>`;
       const sec = (gg) => `${gg.lz != null ? `<div class="lay"><b>${chRangN(t, gg.r)}${chLayerTag(gg.zs, gg.lz)}</b> ${chLayerTxt(gg.lz)}</div>` : ""}${gg.floor.map(it).join("")}${gg.up.length && gg.floor.length ? '<div class="sep"></div>' : ""}${gg.up.map(it).join("")}`;
       // Un rang d'un seul type de case (4× K2, 3× chariots…) se lit sans croquis
       const cells = rows.map((r, k) => { const i = chRangN(t, r.id), dd = chDepth(t, r.id);
@@ -8102,7 +8090,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <div class="top"><h1>${esc(t.nom || "Camion")}</h1><span class="k"><b>${n}</b> rang${n > 1 ? "s" : ""}, <b>${chKgTxt(tot.kg)}</b><br><b>${chM(tot.used)}</b> sur ${chM(t.L)}${tot.used > t.L ? `<span class="over">, dépasse de ${chM(tot.used - t.L)}</span>` : ""}</span><div class="lane"><span class="end">Cabine</span>${lane}${tot.used < t.L ? `<span class="free" style="flex:${t.L - tot.used} 1 0"></span>` : ""}<span class="end">Portes</span></div><span class="who">${esc(d.nom || "")}${d.lieu ? ` · ${esc(d.lieu)}` : ""}<br>imprimé le ${today}</span></div>
         <div class="rows">${cells}</div>
         <div class="foot"><span>Chaque rang : au sol de jardin à cour, puis ce qui se pose dessus. ${chSensIco("hamburger")} hamburger, ${chSensIco("hot dog")} hot dog (vu de dessus, portes en bas). Croquis vu des portes, jardin à gauche.</span>${pool.length ? `<span><b>Hors plan :</b> ${esc(chRowText(t, ""))}</span>` : ""}${bad.length ? `<span><b>À vérifier :</b> ${esc(bad.map((c) => chLabel(c)).join(", "))}</span>` : ""}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div>
-      </section>${ctPage ? chCtPage(t, d, today) : ""}`;
+      </section>`;
     }).join("");
     return `<style>${CHF_CSS}</style><div class="chf">${pages}</div>`;
   }
@@ -8170,13 +8158,6 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       for (let k = Math.min(2, n); k <= Math.min(6, n); k++) { const sc = run(k); if (!pick || sc > pick.sc) pick = { k, sc }; }
       run(pick.k);
     });
-    // Contenu des malles : le plus grand texte qui tient sur la page (les colonnes en trop débordent sur le côté)
-    root.querySelectorAll(".pg.ctp").forEach((pg) => {
-      const box = pg.querySelector(".cts"), ok = () => box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1;
-      let lo = 2.4, hi = 5.2; pg.style.setProperty("--f", hi + "mm"); if (ok()) return;
-      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; pg.style.setProperty("--f", m.toFixed(2) + "mm"); if (ok()) lo = m; else hi = m; }
-      pg.style.setProperty("--f", lo.toFixed(2) + "mm");
-    });
     root.style.cssText = keep;
   }
   async function chFicheFile(inner) {
@@ -8239,7 +8220,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     try { await Promise.all(["600", "700"].map((w) => document.fonts.load(`${w} 20px "Barlow Semi Condensed"`)).concat(document.fonts.load('400 20px "Barlow"'))); } catch (e) { /* police système */ }
     if (seq !== chLiveSeq || !chLiveOn()) return;
     const keep = box.scrollTop; box.className = "chlscroll " + lay;
-    box.innerHTML = `<div class="chlpaper">${chFicheHtml(lay === "liste", false)}</div>`;
+    box.innerHTML = `<div class="chlpaper">${chFicheHtml(lay === "liste")}</div>`;
     const paper = box.firstElementChild, chf = paper.querySelector(".chf");
     paper.querySelectorAll(".pg").forEach((p) => { if (p.dataset.t !== chLiveT) p.remove(); });
     if (lay === "liste") { chf.classList.add("live"); box.scrollTop = keep; return; }
@@ -8347,20 +8328,15 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       const f = chSel && chFind(chSel), c = f && f.c;
       if (b.dataset.chrot && c) { chRot(c, b.dataset.chrot); if (c.rang && chBad(t, c)) { const r = c.rang; if (!chAutoPlace(t, r, c)) c.rang = r; } chLearn(c); chCommit(); return; }
       if ("chdup" in b.dataset && c) { chDupCase(t, c); return; }
-      if (b.dataset.chcdel && c) { c.contenu = (c.contenu || []).filter((y) => y.id !== b.dataset.chcdel); if (!c.contenu.length) delete c.contenu; commit(true); chCtFocus(); return; }
+      if ("chcond" in b.dataset && c) { let m = cdFor(c); if (!m) { m = cdNew(chLabel(c)); commit(false); } cdFocus = m.id; cdGoTo(m.id); return; }
       if ("chgerb" in b.dataset && c) { if (c.nogerb) delete c.nogerb; else c.nogerb = true; chLearn(c); chCommit(); return; }
       if ("chout" in b.dataset && c) { c.rang = ""; c.x = 0; c.y = 0; delete c.z; chCommit(); return; }
       if ("chdel" in b.dataset && c) { t.cases = t.cases.filter((x) => x !== c); chSel = null; chCommit(); return; }
-      if ("chtdup" in b.dataset) { const map = {}, n = JSON.parse(JSON.stringify(t)); n.id = nid(); n.nom = (t.nom || "Camion") + " (copie)"; n.rangs.forEach((r) => { map[r.id] = r.id = nid(); }); n.cases.forEach((c) => { c.id = nid(); c.rang = c.rang ? map[c.rang] : ""; delete c.ref; (c.contenu || []).forEach((y) => { y.id = nid(); }); }); S.camions.push(n); chSetCur(n.id); chCommit(); return; }
+      if ("chtdup" in b.dataset) { const map = {}, n = JSON.parse(JSON.stringify(t)); n.id = nid(); n.nom = (t.nom || "Camion") + " (copie)"; n.rangs.forEach((r) => { map[r.id] = r.id = nid(); }); n.cases.forEach((c) => { c.id = nid(); c.rang = c.rang ? map[c.rang] : ""; delete c.ref; }); S.camions.push(n); chSetCur(n.id); chCommit(); return; }
       if ("chtdel" in b.dataset) {
         if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmer la suppression"; return; }
         S.camions = S.camions.filter((x) => x !== t); chSetCur(null); chCommit();
       }
-    });
-    host.addEventListener("keydown", (e) => {
-      const el = e.target; if (e.key !== "Enter" || e.isComposing || !el.matches || !el.matches("[data-chcadd]")) return;
-      e.preventDefault(); const c = chSel && (chFind(chSel) || {}).c, v = el.value.trim(); if (!c || !v) return;
-      el.value = ""; chCtAdd(c, v); commit(true); chCtFocus();
     });
     const addIn = $("#chAddIn");
     const doAdd = () => { const v = addIn.value; if (!v.trim()) return; addIn.value = ""; chAdd(v); addIn.focus(); };
@@ -8376,16 +8352,6 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         chCommit(); return;
       }
       if ("chrnote" in el.dataset) { const r = t.rangs.find((x) => x.id === el.closest("[data-chrow]").dataset.chrow); if (r) { r.notes = el.value.trim(); commit(false); } return; }
-      // Contenu de la malle : une ligne modifiée, ou une désignation choisie dans la liste (un nom libre attend Entrée)
-      if ("chcq" in el.dataset || "chcn" in el.dataset || "chcadd" in el.dataset) {
-        const c = chSel && (chFind(chSel) || {}).c; if (!c) return;
-        if ("chcadd" in el.dataset) { const v = el.value.trim(), dl = $("#dlBanque"); if (!v || !dl || ![...dl.options].some((o) => o.value === v)) return; el.value = ""; chCtAdd(c, v); commit(true); chCtFocus(); return; }
-        const x = (c.contenu || []).find((y) => y.id === el.closest("[data-chci]").dataset.chci); if (!x) return;
-        if ("chcq" in el.dataset) x.q = Math.max(1, Math.min(9999, Math.round(Number(String(el.value).replace(",", ".")) || 1)));
-        else { const v = el.value.trim(); if (v) x.nom = v; else c.contenu = c.contenu.filter((y) => y !== x); }
-        if (!c.contenu.length) delete c.contenu;
-        commit(true); return;
-      }
       const f = el.dataset.chf, c = chSel && (chFind(chSel) || {}).c; if (!f || !c) return;
       if (f === "nom" || f === "notes") c[f] = el.value.trim();
       else if (f === "nogerb") { if (el.checked) c.nogerb = true; else delete c.nogerb; }
@@ -8507,10 +8473,10 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     });
   }
-  const CH_HEAD = ["Rang", "Case", "Catégorie", "Largeur (cm)", "Profondeur (cm)", "Hauteur (cm)", "Poids (kg)", "Depuis la gauche (cm)", "Posée à (cm)", "Recul dans le rang (cm)", "Contenu", "Notes"];
+  const CH_HEAD = ["Rang", "Case", "Catégorie", "Largeur (cm)", "Profondeur (cm)", "Hauteur (cm)", "Poids (kg)", "Depuis la gauche (cm)", "Posée à (cm)", "Recul dans le rang (cm)", "Notes"];
   function chRows(t) {
     const out = [];
-    [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach((c) => out.push([chRangName(t, rid), chLabel(c), (CH_CATS[c.cat] || CH_CATS.autre)[0], c.w, c.d, c.h, c.kg || "", rid ? c.x : "", rid ? c.y : "", rid && chZ(c) ? chZ(c) : "", chCtTxt(c), c.notes || ""])));
+    [...t.rangs.map((r) => r.id), ""].forEach((rid) => chIn(t, rid).slice().sort((a, b) => a.y - b.y || a.x - b.x).forEach((c) => out.push([chRangName(t, rid), chLabel(c), (CH_CATS[c.cat] || CH_CATS.autre)[0], c.w, c.d, c.h, c.kg || "", rid ? c.x : "", rid ? c.y : "", rid && chZ(c) ? chZ(c) : "", c.notes || ""])));
     return out;
   }
   async function chSheet(wb, titre) {
@@ -8518,7 +8484,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     try { await Promise.race([ch3Load(), new Promise((res, rej) => setTimeout(rej, 4000))]); } catch (e) { /* sans 3D */ }
     const ws = wb.addWorksheet("Chargement");
     ws.addRow([`Plan de chargement · ${titre}`]).font = { bold: true, size: 14 };
-    [10, 30, 14, 12, 14, 12, 11, 18, 13, 16, 40, 34].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    [10, 30, 14, 12, 14, 12, 11, 18, 13, 16, 34].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
     for (const t of S.camions) {
       if (!t.cases.length) continue;
       const tot = chTotals(t);
@@ -8529,9 +8495,6 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       t.rangs.forEach((r, i) => ws.addRow([`Rang ${i + 1}`, chRowText(t, r.id), "", "", "", "", chKg(chIn(t, r.id)) || "", chDepth(t, r.id) || "", "", "", r.notes || ""]));
       ws.addRow([]);
       styleHead(ws.addRow(CH_HEAD)); chRows(t).forEach((r) => ws.addRow(r));
-      // Contenu des malles, une ligne par article : se trie et se filtre dans Excel
-      const ct = [...t.rangs.map((r) => r.id), ""].flatMap((rid) => chIn(t, rid).filter((c) => chCt(c).length).flatMap((c) => chCt(c).map((x) => [chRangName(t, rid), chLabel(c), Number(x.q) || 1, x.nom])));
-      if (ct.length) { ws.addRow([]); ws.addRow(["Contenu des malles"]).font = { bold: true, size: 12 }; styleHead(ws.addRow(["Rang", "Case", "Quantité", "Désignation"])); ct.forEach((r) => ws.addRow(r)); }
       const shot = ch3Shot(t, 1600, 820);
       if (shot) { ws.addRow([]); const r0 = ws.rowCount, id = wb.addImage({ base64: shot, extension: "png" }); ws.addImage(id, { tl: { col: 0, row: r0 }, ext: { width: 1000, height: 512 } }); for (let i = 0; i < 27; i++) ws.addRow([]); }
       const png = await chPng(t);
@@ -8547,6 +8510,106 @@ tr.flash > td { animation: flash 1.6s ease-out; }
         <h3>Liste du chargement</h3>${chListHtml(t, true)}
         ${(() => { const u = ch3Shot(t, 1600, 820); return u ? `<div class="blk"><img src="${u}" alt="" style="width:100%;max-height:115mm;object-fit:contain"></div>` : ""; })()}
         <div class="chgrid">${t.rangs.filter((r) => chIn(t, r.id).length).flatMap((r) => chRowStages(t, r, true)).map((r) => `<div class="blk">${r.svg.replace(/ width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, ' style="width:100%;height:auto"')}</div>`).join("")}</div></div>`; }).join("");
+  }
+
+  // ---------- Conditionnement : ce qu'il y a dans chaque malle ----------
+  // state.malles = [{ id, nom, notes?, contenu: [{ id, q, nom }] }] ; les id permettent la fusion Dropbox ligne par ligne.
+  // Le lien avec le plan de chargement se fait par le nom : « Malle câbles 1 » ici = la case « Malle câbles 1 » du camion.
+  const cdState = () => { if (!Array.isArray(state.malles)) state.malles = []; return state.malles; };
+  const cdList = () => (Array.isArray(state.malles) ? state.malles : []);
+  const cdItems = (m) => (Array.isArray(m.contenu) ? m.contenu : []).filter((x) => x && String(x.nom || "").trim());
+  const cdLine = (x) => `${Number(x.q) > 1 ? x.q + "× " : ""}${x.nom}`;
+  // « 6 XLR 10 m », « 6x XLR », « 6 × DI » : la quantité en tête est lue ; « 12N » reste un nom
+  function cdParse(v) { const m = String(v).trim().match(/^(\d{1,4})(?:\s*[x*]\s+|\s*×\s*|\s+)(\S.*)$/i); return m ? { q: Math.max(1, Number(m[1])), nom: m[2].trim() } : { q: 1, nom: String(v).trim() }; }
+  function cdAddItem(m, v) {
+    const it = cdParse(v); if (!it.nom) return;
+    if (!Array.isArray(m.contenu)) m.contenu = [];
+    const same = m.contenu.find((x) => chKey(x.nom) === chKey(it.nom));
+    if (same) same.q = (Number(same.q) || 1) + it.q; else m.contenu.push({ id: nid(), q: it.q, nom: it.nom });
+  }
+  // Cases du chargement qui portent le nom de la malle
+  const cdCases = (m) => { const k = chKey(m.nom); return k ? chState().camions.flatMap((t) => t.cases.filter((c) => !c.ref && chKey(chLabel(c)) === k).map((c) => ({ t, c }))) : []; };
+  const cdFor = (c) => { const k = chKey(chLabel(c)); return k ? cdList().find((m) => chKey(m.nom) === k) : null; };
+  const cdChNames = () => { const out = [], seen = new Set(); chState().camions.forEach((t) => t.cases.forEach((c) => { if (c.ref) return; const n = chLabel(c), k = chKey(n); if (k && !seen.has(k)) { seen.add(k); out.push(n); } })); return out; };
+  function cdNew(nom) { const m = { id: nid(), nom: String(nom || "").trim() || `Malle ${cdState().length + 1}`, contenu: [] }; cdState().push(m); return m; }
+  let cdQ = "", cdFocus = null;
+  function renderCond() {
+    const L = cdList(), have = new Set(L.map((m) => chKey(m.nom)));
+    $("#dlCd").innerHTML = cdChNames().filter((n) => !have.has(chKey(n))).concat(chSugg().filter((n) => !have.has(chKey(n)))).filter((v, i, a) => a.indexOf(v) === i).map((v) => `<option value="${esc(v)}">`).join("");
+    const left = cdChNames().filter((n) => !have.has(chKey(n))).length;
+    $("#cdFromCh").disabled = !left; $("#cdFromCh").textContent = left ? `Reprendre les malles du chargement (${left})` : "Reprendre les malles du chargement";
+    const words = cdQ.toLowerCase().split(/\s+/).filter(Boolean);
+    const match = (txt) => words.every((w) => txt.toLowerCase().includes(w));
+    const shown = L.filter((m) => !words.length || match([m.nom, m.notes, ...cdItems(m).map((x) => x.nom)].join(" ")));
+    if (!L.length) { $("#cdList").innerHTML = `<div class="empty-state cdempty"><h3>Aucune malle</h3><p class="hint">Décris ici ce qu'il y a dans chaque malle : câbles, DI, pieds, micros… Ajoute une malle par son nom, ou reprends celles du plan de chargement. Le contenu part dans l'Excel et le PDF du dossier.</p>${cdChNames().length ? '<div class="es-go"><button type="button" class="btn small primary" data-cdfromch>Reprendre les malles du chargement</button></div>' : ""}</div>`; return; }
+    if (!shown.length) { $("#cdList").innerHTML = `<p class="hint cdempty">Aucune malle ne contient « ${esc(cdQ)} ».</p>`; return; }
+    $("#cdList").innerHTML = shown.map((m) => {
+      const its = cdItems(m), n = its.reduce((a, x) => a + (Number(x.q) || 1), 0), where = cdCases(m);
+      return `<article class="panel cdc" data-cd="${m.id}">
+        <div class="cdh"><input type="text" data-cdf="nom" value="${esc(m.nom || "")}" aria-label="Nom de la malle" autocomplete="off" data-suggest="dlCd"><span class="hint">${its.length ? `${n} pièce${n > 1 ? "s" : ""}` : "vide"}</span></div>
+        ${where.length ? `<div class="cdwhere">${where.map(({ t, c }) => `<button type="button" data-cdgo="${c.id}" title="Voir cette malle dans le plan de chargement">${esc(t.nom || "Camion")} · ${esc(chRangName(t, c.rang))}</button>`).join("")}</div>` : ""}
+        ${its.length ? `<ul class="chctl">${its.map((x) => `<li data-cdi="${x.id}"${words.length && match(x.nom) ? ' class="hit"' : ""}><input type="number" min="1" max="9999" step="1" inputmode="numeric" data-cdq value="${Number(x.q) || 1}" aria-label="Quantité de ${esc(x.nom)}"><input type="text" data-cdn value="${esc(x.nom)}" aria-label="Désignation" autocomplete="off" data-suggest="dlBanque"><button type="button" class="chcdel" data-cddi="${x.id}" title="Retirer de la malle" aria-label="Retirer ${esc(x.nom)}">×</button></li>`).join("")}</ul>` : ""}
+        <input type="text" data-cdadd autocomplete="off" enterkeyhint="done" data-suggest="dlBanque" placeholder="+ Ajouter : 6 XLR 10 m, DI, pieds…" aria-label="Ajouter dans ${esc(m.nom || "la malle")}" title="Tape un nom puis Entrée. Un nombre en tête est la quantité (« 6 XLR 10 m »). La liste propose la liste matériel et la banque.">
+        ${m.notes != null ? `<textarea rows="1" data-cdf="notes" placeholder="Note (ex. piles neuves, à vérifier au retour)">${esc(m.notes || "")}</textarea>` : ""}
+        <div class="cdfoot"><span class="actions">${m.notes == null ? '<button type="button" class="btn small" data-cdnote>+ Note</button>' : ""}<button type="button" class="btn small" data-cddup>Dupliquer</button><button type="button" class="btn small danger" data-cddel>Supprimer</button></span></div>
+      </article>`; }).join("");
+    if (cdFocus) { const el = document.querySelector(`#cdList [data-cd="${cdFocus}"] [data-cdadd]`); cdFocus = null; if (el) el.focus({ preventScroll: true }); }
+  }
+  function cdGoTo(id) { setView("cond"); requestAnimationFrame(() => tdFlashBox(document.querySelector(`#cdList [data-cd="${id}"]`))); }
+  function cdBind() {
+    const host = $("#v-cond"), addIn = $("#cdAddIn");
+    const doAdd = () => { const v = addIn.value.trim(); if (!v) return; addIn.value = ""; const ex = cdList().find((m) => chKey(m.nom) === chKey(v)); const m = ex || cdNew(v); cdFocus = m.id; cdQ = ""; $("#cdQ").value = ""; commit(true); if (ex) tdFlashBox(document.querySelector(`#cdList [data-cd="${m.id}"]`)); };
+    addIn.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); doAdd(); } });
+    $("#cdAddBtn").addEventListener("click", doAdd);
+    $("#cdQ").addEventListener("input", (e) => { cdQ = e.target.value; renderCond(); });
+    const fromCh = () => { const have = new Set(cdList().map((m) => chKey(m.nom))), add = cdChNames().filter((n) => !have.has(chKey(n))); add.forEach(cdNew); commit(true); notice(add.length ? `${add.length} malle${add.length > 1 ? "s" : ""} reprise${add.length > 1 ? "s" : ""} du plan de chargement.` : "Toutes les malles du chargement ont déjà leur fiche."); };
+    const mOf = (el) => { const card = el.closest("[data-cd]"); return card && cdList().find((m) => m.id === card.dataset.cd); };
+    host.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "cdFromCh" || "cdfromch" in b.dataset) { fromCh(); return; }
+      if (b.dataset.cdgo) { const f = chFind(b.dataset.cdgo); if (f) chSetCur(f.t.id); chSel = b.dataset.cdgo; setView("charge"); return; }
+      const m = mOf(b); if (!m) return;
+      if (b.dataset.cddi) { m.contenu = (m.contenu || []).filter((x) => x.id !== b.dataset.cddi); cdFocus = m.id; commit(true); return; }
+      if ("cdnote" in b.dataset) { m.notes = ""; commit(true); const t = document.querySelector(`#cdList [data-cd="${m.id}"] textarea`); if (t) t.focus(); return; }
+      if ("cddup" in b.dataset) { const L = cdState(), n = { ...JSON.parse(JSON.stringify(m)), id: nid(), nom: rpNextName(m.nom || "Malle", L.map((z) => z.nom)) }; (n.contenu || []).forEach((x) => { x.id = nid(); }); L.splice(L.indexOf(m) + 1, 0, n); cdFocus = n.id; commit(true); return; }
+      if ("cddel" in b.dataset) {
+        if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmer"; return; }
+        state.malles = cdList().filter((x) => x !== m); commit(true);
+      }
+    });
+    host.addEventListener("keydown", (e) => {
+      const el = e.target; if (e.key !== "Enter" || e.isComposing || !el.matches || !el.matches("[data-cdadd]")) return;
+      e.preventDefault(); const m = mOf(el), v = el.value.trim(); if (!m || !v) return;
+      el.value = ""; cdAddItem(m, v); cdFocus = m.id; commit(true);
+    });
+    host.addEventListener("change", (e) => {
+      const el = e.target, m = mOf(el); if (!m) return;
+      if ("cdadd" in el.dataset) { const v = el.value.trim(), dl = $("#dlBanque"); if (!v || !dl || ![...dl.options].some((o) => o.value === v)) return; el.value = ""; cdAddItem(m, v); cdFocus = m.id; commit(true); return; }
+      if (el.dataset.cdf === "nom") { const v = el.value.trim(); if (v) m.nom = v; commit(true); return; }
+      if (el.dataset.cdf === "notes") { m.notes = el.value.trim(); commit(false); return; }
+      const li = el.closest("[data-cdi]"), x = li && (m.contenu || []).find((y) => y.id === li.dataset.cdi); if (!x) return;
+      if ("cdq" in el.dataset) x.q = Math.max(1, Math.min(9999, Math.round(Number(String(el.value).replace(",", ".")) || 1)));
+      else { const v = el.value.trim(); if (v) x.nom = v; else m.contenu = m.contenu.filter((y) => y !== x); }
+      commit(true);
+    });
+  }
+  // Excel : une ligne par article (se trie et se filtre), la malle répétée sur chaque ligne
+  function cdSheet(wb, titre) {
+    const L = cdList().filter((m) => m.nom || cdItems(m).length); if (!L.length) return;
+    const ws = wb.addWorksheet("Conditionnement");
+    ws.addRow([`Conditionnement · ${titre}`]).font = { bold: true, size: 14 };
+    ws.addRow(["Ce qu'il y a dans chaque malle. Une ligne par article."]);
+    ws.addRow([]);
+    [26, 10, 40, 30, 30].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    styleHead(ws.addRow(["Malle", "Quantité", "Désignation", "Note de la malle", "Chargement"]));
+    L.forEach((m) => { const where = cdCases(m).map(({ t, c }) => `${t.nom || "Camion"} · ${chRangName(t, c.rang)}`).join(", "), its = cdItems(m);
+      (its.length ? its : [null]).forEach((x, i) => ws.addRow([m.nom || "", x ? Number(x.q) || 1 : "", x ? x.nom : "(vide)", i ? "" : m.notes || "", i ? "" : where])); });
+    page(ws, false);
+  }
+  function cdPrint() {
+    const L = cdList().filter((m) => cdItems(m).length); if (!L.length) return "";
+    return `<div class="cols">${L.map((m) => { const where = cdCases(m).map(({ t, c }) => `${t.nom || "Camion"} · ${chRangName(t, c.rang)}`).join(", ");
+      return `<div class="blk"><h3>${esc(m.nom || "Malle")}${where ? ` <span class="muted">· ${esc(where)}</span>` : ""}</h3><table><tbody>${cdItems(m).map((x) => `<tr><td style="width:3em;text-align:right"><b>${Number(x.q) || 1}</b></td><td>${esc(x.nom)}</td></tr>`).join("")}</tbody></table>${m.notes ? `<p class="muted">${esc(m.notes)}</p>` : ""}</div>`; }).join("")}</div>`;
   }
 
   // ---------- Chargement en 3D : on fait le plan directement dans le camion ----------
@@ -11365,7 +11428,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   }
 
   // ---------- Impression ----------
-  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["charge", "Plan de chargement", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
+  const PRINT_PARTS = [["master", "Master patch", true], ["sorties", "Sorties", true], ["hf", "Distribution HF", true], ["boites", "Boîtiers", true], ["racks", "Racks et I/O", true], ["liste", "Liste matériel", true], ["plan", "Plan de scène", true], ["syn", "Synoptique", true], ["rackplan", "Plans de rack", true], ["cond", "Conditionnement", true], ["charge", "Plan de chargement", true], ["local", "Local console", true], ["com", "Intercom", true], ["net", "Réseau", true], ["todo", "To-do", false], ["journal", "Journal", false]];
   const PRINT_CSS = `@page { size: A4 landscape; margin: 10mm; }
     .rpblk { display: grid; grid-template-columns: 1.3fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; margin-bottom: 6mm; } .rpblk tr.muted td { color: #9aa3ad; }
     .prcover { height: 32mm; margin-bottom: 4mm; border-radius: 2mm; background-size: cover; background-repeat: no-repeat; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -11429,6 +11492,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     plan: () => (planState().items.length ? planSvgMarkup(true) : ""),
     rackplan: () => rpState().cases.map((c) => `<div class="blk rpblk"><div class="rpimg">${rpCaseSvg(c, true).replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:170mm"')}</div><table><thead><tr>${rpHead().map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rpRows(c).map((r) => `<tr${r[1] === "libre" ? ' class="muted"' : ""}>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`).join(""),
     syn: () => { const svg = synSvg(true); if (!svg || (!synState().links.length && state.racks.length < 2)) return ""; const rows = synLinkRows(); return `<div class="blk">${svg.replace(/ width="\d+" height="\d+"/, ' style="width:100%;height:auto;max-height:150mm"')}</div>${rows.length ? `<h2>Liaisons</h2><table><thead><tr>${SYN_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>` : ""}<h2>Horloge</h2><table><thead><tr>${CLK_HEAD.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${synClockRows().map((r) => `<tr>${r.map((v) => `<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`; },
+    cond: () => cdPrint(),
     charge: () => chPrint(),
     local: () => freePrint("locaux"),
     com: () => freePrint("com"),
@@ -11464,7 +11528,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   // Le lien porte une copie compressée de la page, après le « # » : elle ne passe par aucun serveur (GitHub ne la reçoit pas).
   // La personne l'ouvre sur son téléphone ou son ordinateur, sans compte Dropbox ni appli, et ne peut rien modifier.
   // Son propre dossier, si elle utilise aussi l'appli, n'est pas touché (rien n'est enregistré sur son appareil).
-  const RO_PART = { master: "master", sorties: "sorties", hf: "hf", hfrx: "hf", hftx: "hf", boites: "boites", racks: "racks", liste: "liste", plan: "plan", syn: "syn", rackplan: "rackplan", charge: "charge", local: "local", com: "com", net: "net", todo: "todo", journal: "journal" };
+  const RO_PART = { master: "master", sorties: "sorties", hf: "hf", hfrx: "hf", hftx: "hf", boites: "boites", racks: "racks", liste: "liste", plan: "plan", syn: "syn", rackplan: "rackplan", cond: "cond", charge: "charge", local: "local", com: "com", net: "net", todo: "todo", journal: "journal" };
   // Lien officiel, même quand l'appli tourne ailleurs (version de test) ; en local, le serveur local
   const RO_BASE = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? location.origin + location.pathname : "https://eddy-lav.github.io/patch-live/";
   const RO_ICO = '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="15" cy="4.5" r="2.4" fill="currentColor"/><circle cx="5" cy="10" r="2.4" fill="currentColor"/><circle cx="15" cy="15.5" r="2.4" fill="currentColor"/><path d="M7.2 8.9l5.6-3.2M7.2 11.1l5.6 3.2" stroke="currentColor" stroke-width="1.7"/></svg>';
@@ -12476,6 +12540,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     $("#cHf").textContent = hfState().reduce((n, g) => n + g.rows.length, 0) || "";
     $("#cHfRx").textContent = hfDevs().filter((d) => d.kind === "rx").length || ""; $("#cHfTx").textContent = hfDevs().filter((d) => d.kind === "tx").length || "";
     $("#cJournal").textContent = state.journal.length;
+    $("#cCond").textContent = cdList().length || "";
     $("#cCharge").textContent = ((state.chargement && state.chargement.camions) || []).reduce((n, t) => n + ((t && t.cases) || []).length, 0) || "";
     { const n = tds().filter((x) => !x.done).length, late = tds().filter(tdLate).length; $("#cTodo").textContent = n || ""; const sp = $("#cTodoS"); sp.hidden = !n; sp.textContent = n; sp.classList.toggle("late", !!late); sp.title = n ? `${n} tâche${n > 1 ? "s" : ""} à faire${late ? `, dont ${late} en retard` : ""}` : ""; }
     paintSave(); renderGuide();
@@ -12541,6 +12606,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     if (view === "liste") renderListe();
     if (view === "etiq") renderEtiq();
     if (view === "charge") renderCharge();
+    if (view === "cond") renderCond();
     if (view === "journal") renderJournal();
     if (view === "infos") renderInfos();
     if (view === "todo") renderTodo();
@@ -12618,7 +12684,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
   document.addEventListener("click", (e) => { const g = e.target.closest("[data-go]"); if (!g) return; setView(g.dataset.go); scrollTo({ top: 0 }); });
   // Chaque onglet est une étape de l'historique : « Précédent » (bouton, geste du trackpad ou du téléphone) revient à l'onglet d'avant
   // Espaces : chaque espace regroupe ses onglets ; on revient sur le dernier onglet ouvert de l'espace
-  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq", "charge"], dossier: ["todo", "infos", "journal"] };
+  const SPACES = { patch: ["master", "sorties", "boites", "porteurs", "reglbox"], hf: ["hf", "hfrx", "hftx"], regie: ["racks", "syn", "materiel", "rackplan", "local", "com", "net"], scene: ["plan"], mat: ["liste", "etiq", "cond", "charge"], dossier: ["todo", "infos", "journal"] };
   const spaceOf = (v) => Object.keys(SPACES).find((k) => SPACES[k].includes(v)) || "patch";
   const lastIn = {};
   const densMap = (() => { let m = {}; try { m = JSON.parse(localStorage.getItem("patch-live-density") || "{}") || {}; } catch (e) { /* ignore */ } try { if (!("master" in m) && localStorage.getItem("patch-live-dense") === "1") m.master = "serre"; } catch (e) { /* ignore */ } return m; })();
@@ -12648,7 +12714,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     densApply();
     const tb = document.querySelector(`nav.tabs button[data-v="${v}"]`), nav = tb && tb.parentNode;
     if (nav && nav.scrollWidth > nav.clientWidth) nav.scrollTo({ left: tb.offsetLeft - nav.clientWidth / 2 + tb.offsetWidth / 2, behavior: "smooth" });
-    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "charge", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
+    ["master", "sorties", "hf", "hfrx", "hftx", "boites", "porteurs", "reglbox", "racks", "materiel", "rackplan", "local", "com", "net", "liste", "etiq", "cond", "charge", "plan", "syn", "todo", "infos", "journal"].forEach((k) => { $("#v-" + k).hidden = k !== v; });
     $("#v-master-2").hidden = v !== "master";
     if (v === "hf") hfGrowAll($("#v-hf"));
     // La vue racks reprend la barre d'outils, la sélection et l'affectation de plage du master
@@ -12907,6 +12973,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       sy.addImage(id, { tl: { col: 0, row: sy.rowCount + 1 }, ext: { width: sp.w * scale, height: sp.h * scale } });
       page(sy, true);
     }
+    cdSheet(wb, titre);
     await chSheet(wb, titre);
     freeSheet(wb, "locaux", titre);
     freeSheet(wb, "com", titre);
@@ -13446,7 +13513,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
       commit(true);
     });
     $("#manTbl").addEventListener("click", (e) => { const b = e.target.closest("button[data-delman]"); if (!b) return; state.materiel = state.materiel.filter((m) => m.id !== b.dataset.delman); commit(true); });
-    planBind(); rackplanBind(); tdBind(); chBind();
+    planBind(); rackplanBind(); tdBind(); chBind(); cdBind();
     synBind();
     hfBind(); kbBind(); spxPatchBind();
     ["#v-materiel", "#v-reglbox"].forEach((sel) => { const setup = $(sel); setup.addEventListener("change", onSetupChange); setup.addEventListener("click", onSetupClick); });
@@ -13644,7 +13711,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     const k = path[path.length - 1]; if (isObj(k)) return false;
     o[k] = v; return true;
   }
-  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", chargement: "Chargement", camions: "", cases: "", rangs: "", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens", contenu: "contenu", q: "quantité" };
+  const FIELD_FR = { lignes: "Master", sorties: "Sorties", racks: "Racks", boites: "Boîtiers", hf: "HF", rows: "", materiel: "Matériel", dossier: "Dossier", plan: "Plan", items: "", source: "source", musicien: "musicien", micro: "micro", pied: "pied", pad: "pad", p48: "48V", notes: "notes", box: "entrée de boîtier", sr: "entrée de stage rack", nom: "nom", mix: "mix", base: "base", rf: "RF", iem: "codec ears", mic: "codec micro", dest: "destinataire", type: "type", version: "version", todos: "To-do", chargement: "Chargement", camions: "", cases: "", rangs: "", txt: "tâche", done: "fait", qui: "qui", pour: "échéance", links: "liens", malles: "Conditionnement", contenu: "contenu", q: "quantité" };
   const conflictWhere = (c) => c.labels.map((x) => (x in FIELD_FR ? FIELD_FR[x] : x)).filter(Boolean).join(" › ");
   const conflictVal = (v) => (v == null || v === "" ? "vide" : typeof v === "object" ? (v.b ? boxAddr(v) : v.r ? rackAddr(v) : "autre valeur") : v === true ? "oui" : v === false ? "non" : String(v));
   let lastConflicts = [];
@@ -14807,6 +14874,7 @@ tr.flash > td { animation: flash 1.6s ease-out; }
     m: { k: "Matériel", all: () => (state.materiel || []).map((x) => ({ id: x.id, t: x.nom || "(matériel)", d: [x.qte ? "×" + x.qte : "", x.cat].filter(Boolean).join(" · ") })), go: (id) => { setView("liste"); tdFlashSel(`#manTbl tr[data-mid="${id}"]`); } },
     fx: { k: "Local / intercom", all: () => ["locaux", "com"].flatMap((k) => freeState(k).rows.filter(fxFilled).map((r) => ({ id: r.id, t: [r.port, r.nom].filter(Boolean).join(" · ") || "Ligne", d: k === "com" ? "Intercom" : "Local console" }))), go: (id) => { setView(freeState("com").rows.some((r) => r.id === id) ? "com" : "local"); tdFlashSel(`tr[data-fr="${id}"]`); } },
     ch: { k: "Chargement", all: () => chState().camions.flatMap((t) => t.cases.map((c) => ({ id: c.id, t: chLabel(c), d: `${t.nom || "Camion"} · ${chRangName(t, c.rang)}` }))), go: (id) => { const f = chFind(id); if (f) chSetCur(f.t.id); chSel = id; setView("charge"); } },
+    cd: { k: "Malle", all: () => cdList().map((m) => ({ id: m.id, t: m.nom || "Malle", d: cdItems(m).map(cdLine).join(", ") })), go: (id) => cdGoTo(id) },
     n: { k: "Réseau", all: () => netState().extra.map((x) => ({ id: x.id, t: x.nom || "Appareil", d: x.ip || "" })), go: (id) => { setView("net"); tdFlashSel(`#netTbl tr[data-nk="e:${CSS.escape(id)}"]`); } },
     v: { k: "Page", all: tdViews, go: (id) => { setView(id); scrollTo({ top: 0 }); } }
   };
